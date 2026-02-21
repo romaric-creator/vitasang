@@ -1,0 +1,36 @@
+module.exports = (sequelize, DataTypes) => {
+  const LogNotification = sequelize.define(
+    "LogNotification",
+    {
+      id_notification: {
+        type: DataTypes.INTEGER,
+        primaryKey: true,
+        autoIncrement: true,
+      },
+      date_envoi: { type: DataTypes.DATE, defaultValue: DataTypes.NOW },
+      statut_reception: {
+        type: DataTypes.ENUM("envoye", "lu", "accepte", "ignore"),
+        defaultValue: "envoye",
+      },
+      canal: { type: DataTypes.ENUM("push", "email", "sms") },
+    },
+    { tableName: "Notifications_Log", timestamps: false },
+  );
+
+  LogNotification.associate = (models) => {
+    // Une notification est envoyée à un utilisateur
+    LogNotification.belongsTo(models.Utilisateur, {
+      foreignKey: "id_utilisateur",
+      as: "destinataire",
+    });
+
+    // Une notification peut être déclenchée par une alerte
+    LogNotification.belongsTo(models.Alerte, {
+      foreignKey: "id_alerte",
+      as: "alerte",
+      allowNull: true, // Une notification n'est pas toujours liée à une alerte
+    });
+  };
+
+  return LogNotification;
+};
