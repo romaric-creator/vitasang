@@ -293,3 +293,30 @@ exports.getUsersByBloodGroup = async (req, res) => {
     res.status(500).json({ error: error.message, stack: error.stack });
   }
 };
+
+
+
+exports.searchUsers = async (req, res) => {
+  try {
+    const query = req.params.query;
+
+    const users = await Utilisateur.findAll({
+      where: {
+        [db.Sequelize.Op.or]: [
+          { nom: { [db.Sequelize.Op.like]: `%${query}%` } },
+          { prenom: { [db.Sequelize.Op.like]: `%${query}%` } },
+          { email: { [db.Sequelize.Op.like]: `%${query}%` } },
+        ],
+      },
+      include: [
+        { model: ProfilDonneur, as: "profilDonneur" },
+        { model: Centre },
+      ],
+      attributes: { exclude: ['mot_de_passe'] } // Exclure le mot de passe
+    });
+
+    res.status(200).json(users);
+  } catch (error) {
+    res.status(500).json({ error: error.message, stack: error.stack });
+  }
+};
