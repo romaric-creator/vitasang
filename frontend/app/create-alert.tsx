@@ -104,7 +104,7 @@ export default function CreateAlert() {
       alert(`Succès : ${result.message}`);
       router.replace({
         pathname: "/alert-tracking/[id]",
-        params: { id: result.alertId }
+        params: { id: result.alertId, notifiedDonors: JSON.stringify(result.notifiedDonors) }
       });
     } catch (error: any) {
       alert(error.message || "Une erreur est survenue lors de la diffusion.");

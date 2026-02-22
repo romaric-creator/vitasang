@@ -5,11 +5,19 @@ import { TabBarIcon } from "@/components/TabBarIcon";
 import { color } from "@/constant/color";
 import { getAlertStatus } from "@/services/user.service";
 
+interface NotifiedDonor {
+    id: number;
+    username: string;
+    distance: string;
+}
+
 export default function AlertTracking() {
-    const { id } = useLocalSearchParams();
+    const params = useLocalSearchParams();
+    const { id, notifiedDonors: notifiedDonorsParam } = params;
     const router = useRouter();
     const [loading, setLoading] = useState(true);
     const [data, setData] = useState<any>(null);
+    const [notifiedDonors, setNotifiedDonors] = useState<NotifiedDonor[]>([]);
 
     const fetchStatus = async () => {
         try {
@@ -23,10 +31,17 @@ export default function AlertTracking() {
     };
 
     useEffect(() => {
+        if (notifiedDonorsParam && typeof notifiedDonorsParam === 'string') {
+            try {
+                setNotifiedDonors(JSON.parse(notifiedDonorsParam));
+            } catch (e) {
+                console.error("Failed to parse notifiedDonorsParam", e);
+            }
+        }
         fetchStatus();
         const interval = setInterval(fetchStatus, 5000); // Polling toutes les 5s
         return () => clearInterval(interval);
-    }, [id]);
+    }, [id, notifiedDonorsParam]);
 
     if (loading || !data) {
         return (
@@ -63,7 +78,19 @@ export default function AlertTracking() {
                     <StatBox label="Acceptés" value={stats.accepte} color="#2ECC71" />
                 </View>
 
-                <Text style={styles.sectionTitle}>Détails des Donneurs ({details.length})</Text>
+                {notifiedDonors.length > 0 && (
+                    <>
+                        <Text style={styles.sectionTitle}>Donneurs Notifiés ({notifiedDonors.length})</Text>
+                        {notifiedDonors.map((donor, index) => (
+                            <View key={donor.id} style={styles.donorRow}>
+                                <Text style={styles.donorName}>Donneur {index + 1}</Text>
+                                <Text style={styles.donorPhone}>{donor.distance} km</Text>
+                            </View>
+                        ))}
+                    </>
+                )}
+
+                <Text style={styles.sectionTitle}>Détails des Notifications ({details.length})</Text>
                 {details.map((item: any, index: number) => (
                     <View key={index} style={styles.donorRow}>
                         <View>
@@ -170,3 +197,4 @@ const styles = StyleSheet.create({
     },
     footerBtnText: { fontWeight: "bold", color: "#333" },
 });
+

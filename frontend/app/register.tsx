@@ -12,8 +12,10 @@ import {
 } from "react-native";
 import { color } from "@/constant/color";
 import { router } from "expo-router";
-import { registerUser } from "@/services/user.service";
+import { registerUser, updatePushToken } from "@/services/user.service";
 import { TabBarIcon } from "@/components/TabBarIcon";
+import { registerForPushNotificationsAsync } from "@/utils/pushNotifications"; // NEW IMPORT
+import { storeData } from "@/utils/storage"; // NEW IMPORT
 
 const BloodGroupBadge = ({
   label,
@@ -73,6 +75,22 @@ export default function Register() {
         "donneur",
       );
       console.log("Registration successful:", data);
+
+      // --- NEW: Register for push notifications and send token to backend ---
+      const user = data.user; // Assuming data.user is returned by registerUser
+      if (user && user.id_utilisateur) {
+        const pushToken = await registerForPushNotificationsAsync();
+        if (pushToken) {
+          try {
+            await updatePushToken(user.id_utilisateur, pushToken);
+            console.log("Push token sent to backend successfully after registration.");
+          } catch (tokenError) {
+            console.error("Failed to send push token to backend after registration:", tokenError);
+          }
+        }
+      }
+      // --- END NEW ---
+
       router.replace("/login");
     } catch (err: any) {
       console.error("Registration error:", err.message);

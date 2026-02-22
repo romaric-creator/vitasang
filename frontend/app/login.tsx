@@ -12,8 +12,9 @@ import {
 } from "react-native";
 import { color } from "@/constant/color";
 import { router } from "expo-router";
-import { loginUser } from "@/services/user.service";
+import { loginUser, updatePushToken } from "@/services/user.service";
 import { storeData } from "@/utils/storage";
+import { registerForPushNotificationsAsync } from "@/utils/pushNotifications"; // NEW IMPORT
 
 export default function Index() {
   const [telephone, setTelephone] = useState("");
@@ -35,6 +36,19 @@ export default function Index() {
         id_utilisateur: data.user.id || data.user.id_utilisateur,
       };
       await storeData("user", userToStore);
+
+      // --- NEW: Register for push notifications and send token to backend ---
+      const pushToken = await registerForPushNotificationsAsync();
+      if (pushToken && userToStore.id_utilisateur) {
+        try {
+          await updatePushToken(userToStore.id_utilisateur, pushToken);
+          console.log("Push token sent to backend successfully.");
+        } catch (tokenError) {
+          console.error("Failed to send push token to backend:", tokenError);
+        }
+      }
+      // --- END NEW ---
+
       router.replace("/(tabs)");
     } catch (err: any) {
       console.error("Login error:", err.message);

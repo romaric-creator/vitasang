@@ -127,3 +127,19 @@ export const getUserProfile = async (userId: number) => {
     throw new Error(error.response?.data?.message || "Erreur lors de la récupération du profil");
   }
 };
+
+export const updatePushToken = async (userId: number, pushToken: string) => {
+  try {
+    const response = await axios.put(`${process.env.EXPO_PUBLIC_API_BASE_URL}/users/${userId}/push-token`, {
+      pushToken,
+    }, {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+    return response.data;
+  } catch (error: any) {
+    console.error('Erreur lors de la mise à jour du token push:', error);
+    throw new Error(error.response?.data?.message || "Erreur lors de la mise à jour du token push");
+  }
+};

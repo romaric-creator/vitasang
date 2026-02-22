@@ -10,5 +10,6 @@ router.get("/search", controller.searchUsers);
 router.get("/groupe-sanguin/:groupe", controller.getUsersByBloodGroup);
 router.get("/:id/profile", controller.getUserProfile);
 router.get("/:id", controller.getUserById);
+router.put("/:id/push-token", controller.updatePushToken);
 
 module.exports = router;

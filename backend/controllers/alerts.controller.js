@@ -4,6 +4,9 @@ const Utilisateur = db.Utilisateur;
 const ProfilDonneur = db.ProfilDonneur;
 const LogNotification = db.LogNotification;
 const { calculateDistance } = require("../utils/geoHelpers");
+const { Expo } = require('expo-server-sdk'); // Import Expo SDK
+
+let expo = new Expo(); // Initialize Expo SDK
 
 const bloodCompatibility = {
     'O-': ['O-', 'O+', 'A-', 'A+', 'B-', 'B+', 'AB-', 'AB+'],
@@ -43,7 +46,9 @@ exports.createAlertAndNotify = async (req, res) => {
             }]
         });
 
+        let messages = [];
         const notifiedDonors = [];
+
         for (const donor of donors) {
             if (donor.profilDonneur && donor.profilDonneur.lat_actuelle && donor.profilDonneur.long_actuelle) {
                 const distance = calculateDistance(
@@ -54,32 +59,57 @@ exports.createAlertAndNotify = async (req, res) => {
                 );
 
                 if (distance <= (radius || 10)) {
-                    // 3. Créer un log de notification
+                    // 3. Préparer la notification push si le token existe
+                    if (donor.token_firebase && Expo.isExpoPushToken(donor.token_firebase)) {
+                        messages.push({
+                            to: donor.token_firebase,
+                            sound: 'default',
+                            body: `Urgence sang ${bloodType} à ${distance.toFixed(2)} km de votre position !`,
+                            data: { alertId: alerte.id_alerte, bloodType, distance: distance.toFixed(2) },
+                        });
+                    }
+
+                    // 4. Créer un log de notification (statut initial 'pending' ou 'envoye')
                     await LogNotification.create({
                         id_utilisateur: donor.id_utilisateur,
                         id_alerte: alerte.id_alerte,
                         canal: 'push',
-                        statut_reception: 'envoye'
+                        statut_reception: 'envoye' // Sera mis à jour après l'envoi réel
                     });
 
                     notifiedDonors.push({
                         id: donor.id_utilisateur,
-                        nom: donor.nom,
+                        username: donor.nom, // Changed from 'nom' to 'username' for consistency with frontend
                         distance: distance.toFixed(2)
                     });
-
-                    // Simulation Notification Push
-                    console.log(`[PUSH NOTIFICATION] Alerte envoyée à ${donor.nom} (${donor.telephone}) - Groupe: ${donor.profilDonneur.groupe_sanguin} - Distance: ${distance.toFixed(2)}km`);
                 }
             }
         }
+
+        // 5. Envoyer toutes les notifications en une seule fois
+        let chunks = expo.chunkPushNotifications(messages);
+        let tickets = [];
+        (async () => {
+            for (let chunk of chunks) {
+                try {
+                    let ticketChunk = await expo.sendPushNotificationsAsync(chunk);
+                    tickets.push(...ticketChunk);
+                    // NOTE: If a ticket contains an error code in ticket.details.error, you
+                    // must handle it appropriately. The error codes are listed in the Expo
+                    // documentation:
+                    // https://docs.expo.io/push-notifications/sending-notifications/#individual-errors
+                } catch (error) {
+                    console.error(`Error sending push notification chunk: ${error}`);
+                }
+            }
+        })();
 
         res.status(201).json({
             success: true,
             message: `${notifiedDonors.length} donneurs ont été notifiés.`,
             alertId: alerte.id_alerte,
             donorsCount: notifiedDonors.length,
-            donors: notifiedDonors
+            notifiedDonors: notifiedDonors // Changed from 'donors' to 'notifiedDonors' for consistency
         });
 
     } catch (error) {
