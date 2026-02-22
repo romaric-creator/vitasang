@@ -4,12 +4,17 @@ import {
   View,
   TouchableOpacity,
   ScrollView,
+  Alert,
+  ActivityIndicator,
 } from "react-native";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import ThemedView from "@/components/ThemedView";
 import { TabBarIcon } from "@/components/TabBarIcon";
 import { color } from "@/constant/color";
-import { profile, profileItems } from "@/data/profileData";
+import { profileItems } from "@/data/profileData";
+import { getData, removeData, getUserIdFromStorage } from "@/utils/storage";
+import { getUserProfile } from "@/services/user.service";
+import { useRouter } from "expo-router";
 
 const ProfileItem = ({ icon, label }: { icon: string; label: string }) => (
   <TouchableOpacity style={styles.menuItem}>
@@ -24,6 +29,57 @@ const ProfileItem = ({ icon, label }: { icon: string; label: string }) => (
 );
 
 export default function Profile() {
+  const router = useRouter();
+  const [userData, setUserData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const loadProfile = async () => {
+      try {
+        const userId = await getUserIdFromStorage();
+        if (userId) {
+          const res = await getUserProfile(userId);
+          if (res.success) setUserData(res.user);
+        }
+      } catch (error) {
+        console.error("Erreur chargement profil :", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadProfile();
+  }, []);
+
+  const handleLogout = () => {
+    Alert.alert("Déconnexion", "Êtes-vous sûr de vouloir vous déconnecter ?", [
+      { text: "Annuler", style: "cancel" },
+      {
+        text: "Déconnecter",
+        style: "destructive",
+        onPress: async () => {
+          await removeData("token");
+          await removeData("user");
+          router.replace("/login");
+        },
+      },
+    ]);
+  };
+
+  if (loading) {
+    return (
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+        <ActivityIndicator size="large" color={color.primary} />
+      </View>
+    );
+  }
+
+  const fullName = userData
+    ? `${userData.prenom || ""} ${userData.nom || ""}`.trim()
+    : "Utilisateur";
+  const bloodType = userData?.groupe_sanguin || "—";
+  const donsCount = userData?.donsCount ?? 0;
+  const alertesCount = userData?.alertesCount ?? 0;
+
   return (
     <ThemedView style={styles.container}>
       <ScrollView showsVerticalScrollIndicator={false}>
@@ -35,25 +91,25 @@ export default function Profile() {
               <TabBarIcon name="user" size={60} color={color.textWhite} />
             </View>
             <TouchableOpacity style={styles.editBadge}>
-              <TabBarIcon name="edit-2" size={14} color={color.textWhite} />
+              <TabBarIcon name="edit" size={14} color={color.textWhite} />
             </TouchableOpacity>
           </View>
 
-          <Text style={styles.userName}>{profile.name}</Text>
+          <Text style={styles.userName}>{fullName}</Text>
           <View style={styles.bloodBadge}>
             <TabBarIcon name="heart" size={14} color={color.primary} />
-            <Text style={styles.bloodText}>Groupe {profile.bloodType}</Text>
+            <Text style={styles.bloodText}>Groupe {bloodType}</Text>
           </View>
         </View>
 
         <View style={styles.statsSection}>
           <View style={styles.statItem}>
-            <Text style={styles.statValue}>12</Text>
+            <Text style={styles.statValue}>{donsCount}</Text>
             <Text style={styles.statLabel}>Dons</Text>
           </View>
           <View style={styles.dividerVertical} />
           <View style={styles.statItem}>
-            <Text style={styles.statValue}>3</Text>
+            <Text style={styles.statValue}>{alertesCount}</Text>
             <Text style={styles.statLabel}>Alertes</Text>
           </View>
           <View style={styles.dividerVertical} />
@@ -70,8 +126,8 @@ export default function Profile() {
           ))}
         </View>
 
-        <TouchableOpacity style={styles.logoutBtn}>
-          <TabBarIcon name="log-out" size={20} color={color.primary} />
+        <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
+          <TabBarIcon name="sign-out" size={20} color={color.primary} />
           <Text style={styles.logoutText}>Déconnexion</Text>
         </TouchableOpacity>
       </ScrollView>
@@ -80,8 +136,8 @@ export default function Profile() {
 }
 
 const styles = StyleSheet.create({
-  container: { 
-    flex: 1, 
+  container: {
+    flex: 1,
     paddingHorizontal: 20,
     paddingTop: 16,
     backgroundColor: color.background,
@@ -93,15 +149,15 @@ const styles = StyleSheet.create({
     marginBottom: 28,
     letterSpacing: 0.3,
   },
-  profileHeader: { 
-    alignItems: "center", 
+  profileHeader: {
+    alignItems: "center",
     marginBottom: 32,
     paddingBottom: 24,
     borderBottomWidth: 1,
     borderBottomColor: color.border,
   },
-  avatarWrapper: { 
-    position: "relative", 
+  avatarWrapper: {
+    position: "relative",
     marginBottom: 18,
   },
   avatarPlaceholder: {
@@ -132,8 +188,8 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 5,
   },
-  userName: { 
-    fontSize: 22, 
+  userName: {
+    fontSize: 22,
     fontWeight: "800",
     color: color.textMain,
     marginBottom: 12,
@@ -147,8 +203,8 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderRadius: 20,
   },
-  bloodText: { 
-    color: color.primary, 
+  bloodText: {
+    color: color.primary,
     fontWeight: "700",
     fontSize: 13,
   },
@@ -189,8 +245,8 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
     textTransform: "uppercase",
   },
-  menuContainer: { 
-    gap: 10, 
+  menuContainer: {
+    gap: 10,
     marginBottom: 30,
   },
   menuItem: {
@@ -204,17 +260,17 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: color.border,
   },
-  menuLeft: { 
-    flexDirection: "row", 
-    alignItems: "center", 
+  menuLeft: {
+    flexDirection: "row",
+    alignItems: "center",
     gap: 14,
   },
-  iconContainer: { 
-    backgroundColor: color.surface, 
-    padding: 10, 
+  iconContainer: {
+    backgroundColor: color.surface,
+    padding: 10,
     borderRadius: 10,
   },
-  menuLabel: { 
+  menuLabel: {
     fontSize: 14,
     color: color.textMain,
     fontWeight: "600",
@@ -229,9 +285,9 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: color.border,
   },
-  logoutText: { 
-    color: color.primary, 
-    fontWeight: "700", 
+  logoutText: {
+    color: color.primary,
+    fontWeight: "700",
     fontSize: 14,
   },
 });

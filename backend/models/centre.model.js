@@ -27,9 +27,12 @@ module.exports = (sequelize, DataTypes) => {
       },
       contact_urgence: {
         type: DataTypes.STRING(20),
+        allowNull: false,
       },
       capacite_stockage_max: {
         type: DataTypes.INTEGER,
+        allowNull: false,
+        defaultValue: 0, // Valeur par défaut si non spécifiée
         comment: "Nombre maximum de poches que le centre peut contenir",
       },
     },

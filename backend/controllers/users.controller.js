@@ -4,6 +4,7 @@ const ProfilDonneur = db.ProfilDonneur;
 const Centre = db.Centre;
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const { calculateDistance } = require('../utils/geoHelpers');
 
 exports.addUser = async (req, res) => {
   try {
@@ -46,6 +47,8 @@ exports.addUser = async (req, res) => {
             profilDonneur: {
               // Sequelize va créer le profil associé grâce à l'association
               groupe_sanguin,
+              lat_actuelle: 0, // Valeur par défaut
+              long_actuelle: 0, // Valeur par défaut
               // poids,
               // taille,
             },
@@ -59,8 +62,8 @@ exports.addUser = async (req, res) => {
           .status(201)
           .json({ message: "Donneur créé avec succès", user });
       } catch (error) {
-        console.error("Erreur lors de la création de l'utilisateur :", error);
-        return res.status(500).json({ error: "Erreur lors de la création de l'utilisateur", details: error });
+        console.error("Erreur lors de la création de l'utilisateur (donneur) :", error); // Log interne pour le débogage
+        return next(error); // Passe l'erreur au middleware suivant
       }
     }
 
@@ -164,11 +167,10 @@ exports.addUser = async (req, res) => {
     // Gestion des erreurs de validation Sequelize (ex: email unique)
     if (error.name === "SequelizeUniqueConstraintError") {
       return res.status(409).json({
-        message: "L'email ou le téléphone existe déjà.",
-        details: error.errors,
+        message: "Un utilisateur avec cet email ou numéro de téléphone existe déjà.",
       });
     }
-    res.status(500).json({ error: error.message, stack: error.stack });
+    next(error); // Passe toutes les autres erreurs au middleware de gestion d'erreurs global
   }
 };
 
@@ -216,6 +218,7 @@ exports.login = async (req, res) => {
       nom: user.nom,
       prenom: user.prenom,
       email: user.email,
+      telephone: user.telephone,
       role: user.role,
     };
 
@@ -229,12 +232,16 @@ exports.login = async (req, res) => {
       userResponse.centre = user.Centre;
     }
 
+    // RENVOI DE LA RÉPONSE
     res.status(200).json({
+      success: true,
+      message: "Connexion réussie",
       token,
       user: userResponse,
     });
+
   } catch (error) {
-    res.status(500).json({ error: error.message, stack: error.stack });
+    next(error);
   }
 };
 
@@ -245,11 +252,11 @@ exports.getAllUsers = async (req, res) => {
         { model: ProfilDonneur, as: "profilDonneur" },
         { model: Centre },
       ],
-      attributes: { exclude: ['mot_de_passe'] } // Exclure le mot de passe
+      attributes: { exclude: ['mot_de_passe', 'id_centre'] } // Exclure le mot de passe
     });
     res.status(200).json(users);
   } catch (error) {
-    res.status(500).json({ error: error.message, stack: error.stack });
+    next(error);
   }
 };
 
@@ -260,7 +267,7 @@ exports.getUserById = async (req, res) => {
         { model: ProfilDonneur, as: "profilDonneur" },
         { model: Centre },
       ],
-      attributes: { exclude: ['mot_de_passe'] } // Exclure le mot de passe
+      attributes: { exclude: ['mot_de_passe', 'id_centre'] } // Exclure le mot de passe
     });
     if (user) {
       res.status(200).json(user);
@@ -268,7 +275,7 @@ exports.getUserById = async (req, res) => {
       res.status(404).json({ message: "Utilisateur non trouvé" });
     }
   } catch (error) {
-    res.status(500).json({ error: error.message, stack: error.stack });
+    next(error);
   }
 };
 
@@ -286,37 +293,150 @@ exports.getUsersByBloodGroup = async (req, res) => {
           required: true, // INNER JOIN pour ne retourner que les donneurs
         },
       ],
-      attributes: { exclude: ['mot_de_passe'] } // Exclure le mot de passe
+      attributes: { exclude: ['mot_de_passe', 'id_centre'] } // Exclure le mot de passe
     });
     res.status(200).json(users);
   } catch (error) {
-    res.status(500).json({ error: error.message, stack: error.stack });
+    next(error);
   }
 };
 
+// Table de compatibilité sanguine (Qui peut donner à qui)
+const bloodCompatibility = {
+  'O-': ['O-', 'O+', 'A-', 'A+', 'B-', 'B+', 'AB-', 'AB+'],
+  'O+': ['O+', 'A+', 'B+', 'AB+'],
+  'A-': ['A-', 'A+', 'AB-', 'AB+'],
+  'A+': ['A+', 'AB+'],
+  'B-': ['B-', 'B+', 'AB-', 'AB+'],
+  'B+': ['B+', 'AB+'],
+  'AB-': ['AB-', 'AB+'],
+  'AB+': ['AB+']
+};
 
-
+/**
+ * Recherche les donneurs par groupe sanguin et par proximité géographique.
+ * Gère la compatibilité des groupes sanguins.
+ */
 exports.searchUsers = async (req, res) => {
   try {
-    const query = req.params.query;
+    // 1. Récupération et validation des paramètres
+    const { lat, long, blood, rayon } = req.query;
 
-    const users = await Utilisateur.findAll({
-      where: {
-        [db.Sequelize.Op.or]: [
-          { nom: { [db.Sequelize.Op.like]: `%${query}%` } },
-          { prenom: { [db.Sequelize.Op.like]: `%${query}%` } },
-          { email: { [db.Sequelize.Op.like]: `%${query}%` } },
-        ],
-      },
+    if (!lat || !long || !blood || !rayon) {
+      return res.status(400).json({
+        message: "Les paramètres lat, long, blood et rayon sont requis."
+      });
+    }
+
+    const userLat = parseFloat(lat);
+    const userLong = parseFloat(long);
+    const searchRayon = parseFloat(rayon);
+    // On décode l'URL et on remplace l'espace (qui vient du '+') par un vrai '+'
+    const targetBlood = decodeURIComponent(blood).replace(' ', '+');
+
+    // Trouver quels groupes peuvent donner au groupe cible
+    const compatibleGroups = Object.keys(bloodCompatibility).filter(group =>
+      bloodCompatibility[group].includes(targetBlood)
+    );
+
+    // 2. Recherche SQL : Filtrage par groupes sanguins compatibles
+    const potentialDonors = await Utilisateur.findAll({
+      where: { role: 'donneur' },
       include: [
-        { model: ProfilDonneur, as: "profilDonneur" },
-        { model: Centre },
+        {
+          model: ProfilDonneur,
+          as: "profilDonneur",
+          where: {
+            groupe_sanguin: compatibleGroups
+          },
+          required: true
+        }
       ],
-      attributes: { exclude: ['mot_de_passe'] } // Exclure le mot de passe
+      attributes: { exclude: ['mot_de_passe', 'id_centre'] }
     });
 
-    res.status(200).json(users);
+    // 3. Filtrage par Proximité et calcul de distance
+    const matchedDonors = [];
+
+    potentialDonors.forEach(donor => {
+      if (donor.profilDonneur && donor.profilDonneur.lat_actuelle && donor.profilDonneur.long_actuelle) {
+        const distance = calculateDistance(
+          userLat,
+          userLong,
+          donor.profilDonneur.lat_actuelle,
+          donor.profilDonneur.long_actuelle
+        );
+
+        if (distance <= searchRayon) {
+          const donorData = donor.toJSON();
+          donorData.distance = parseFloat(distance.toFixed(2));
+          matchedDonors.push(donorData);
+        }
+      }
+    });
+
+    // 4. Tri par distance (du plus proche au plus loin)
+    matchedDonors.sort((a, b) => a.distance - b.distance);
+
+    // 5. Réponse finale au front-end
+    res.status(200).json({
+      success: true,
+      count: matchedDonors.length,
+      donors: matchedDonors
+    });
+
   } catch (error) {
-    res.status(500).json({ error: error.message, stack: error.stack });
+    console.error("Erreur détaillée dans searchUsers:", error);
+    next(error);
+  }
+};
+
+exports.getUserProfile = async (req, res) => {
+  const { id } = req.params;
+  try {
+    const user = await Utilisateur.findByPk(id, {
+      attributes: { exclude: ['mot_de_passe'] },
+      include: [
+        {
+          model: ProfilDonneur,
+          as: 'profilDonneur',
+        },
+        {
+          model: db.HistoriqueDon,
+          as: 'historiqueDons',
+          include: [{ model: db.TypeDon, as: 'typeDon' }]
+        }
+      ]
+    });
+
+    if (!user) {
+      return res.status(404).json({ success: false, message: "Utilisateur non trouvé" });
+    }
+
+    // Nombre d'alertes lancées par cet utilisateur
+    const alertesCount = await db.Alerte.count({ where: { id_initiateur: id } });
+
+    res.json({
+      success: true,
+      user: {
+        id_utilisateur: user.id_utilisateur,
+        nom: user.nom,
+        prenom: user.prenom,
+        telephone: user.telephone,
+        email: user.email,
+        region: user.region,
+        role: user.role,
+        groupe_sanguin: user.profilDonneur?.groupe_sanguin || null,
+        disponible: user.profilDonneur?.disponible ?? true,
+        lat: user.profilDonneur?.lat_actuelle,
+        long: user.profilDonneur?.long_actuelle,
+        donsCount: user.historiqueDons?.length || 0,
+        alertesCount,
+        historiqueDons: user.historiqueDons || []
+      }
+    });
+  } catch (error) {
+    console.error("Erreur getUserProfile:", error);
+    res.status(500).json({ success: false, error: error.message });
   }
 };

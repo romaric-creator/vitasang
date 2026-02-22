@@ -47,7 +47,8 @@ const BloodGroupBadge = ({
 );
 
 export default function Register() {
-  const [nomComplet, setNomComplet] = useState("");
+  const [nom, setNom] = useState("");
+  const [prenom, setPrenom] = useState("");
   const [telephone, setTelephone] = useState("");
   const [motDePasse, setMotDePasse] = useState("");
   const [groupeSanguin, setGroupeSanguin] = useState("");
@@ -55,7 +56,7 @@ export default function Register() {
   const [error, setError] = useState("");
 
   const handleRegister = async () => {
-    if (!nomComplet || !telephone || !motDePasse || !groupeSanguin) {
+    if (!nom || !prenom || !telephone || !motDePasse || !groupeSanguin) {
       setError("Veuillez remplir tous les champs.");
       return;
     }
@@ -64,7 +65,8 @@ export default function Register() {
 
     try {
       const data = await registerUser(
-        nomComplet,
+        nom,
+        prenom,
         telephone,
         motDePasse,
         groupeSanguin,
@@ -98,12 +100,22 @@ export default function Register() {
 
           {/* Input Fields */}
           <View style={styles.inputContainer}>
-            <Text style={styles.label}>NOM COMPLET</Text>
+            <Text style={styles.label}>NOM</Text>
             <TextInput
-              placeholder="Ex: Kenfack Paul"
+              placeholder="Ex: Kenfack"
               style={styles.input}
-              value={nomComplet}
-              onChangeText={setNomComplet}
+              value={nom}
+              onChangeText={setNom}
+              placeholderTextColor={color.textLight}
+            />
+          </View>
+          <View style={styles.inputContainer}>
+            <Text style={styles.label}>PRÉNOM</Text>
+            <TextInput
+              placeholder="Ex: Paul"
+              style={styles.input}
+              value={prenom}
+              onChangeText={setPrenom}
               placeholderTextColor={color.textLight}
             />
           </View>

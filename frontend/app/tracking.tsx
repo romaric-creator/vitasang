@@ -13,7 +13,7 @@ import { useRouter } from "expo-router";
 
 const { width, height } = Dimensions.get("window");
 
-export default function TrackingScreen({ navigation }: any) {
+export default function TrackingScreen() {
   const router = useRouter();
   // Simulation de coordonnées (Douala)
   const userPos = { latitude: 4.058, longitude: 9.712 };

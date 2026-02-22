@@ -12,7 +12,6 @@ module.exports = (sequelize, DataTypes) => {
       region: { type: DataTypes.STRING(100) },
       email: {
         type: DataTypes.STRING(150),
-        unique: true,
         allowNull: true,
         defaultValue: null,
         validate: { isEmail: true },

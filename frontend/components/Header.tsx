@@ -3,18 +3,20 @@ import React from "react";
 import { TabBarIcon } from "./TabBarIcon";
 import { color } from "@/constant/color";
 
-export default function Header() {
+export default function Header({ userName = "Utilisateur", notificationCount = 0 }: { userName?: string; notificationCount?: number }) {
   return (
     <View style={styles.header}>
       <View>
         <Text style={styles.welcomeText}>Bienvenue,</Text>
-        <Text style={styles.name}>INGENIEUR CHRIS</Text>
+        <Text style={styles.name}>{userName}</Text>
       </View>
       <View style={styles.notificationCircle}>
         <TabBarIcon name="bell" color={color.textMain} size={22} />
-        <View style={styles.badge}>
-          <Text style={styles.badgeText}>2</Text>
-        </View>
+        {notificationCount > 0 && (
+          <View style={styles.badge}>
+            <Text style={styles.badgeText}>{notificationCount}</Text>
+          </View>
+        )}
       </View>
     </View>
   );

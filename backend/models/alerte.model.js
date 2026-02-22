@@ -24,6 +24,12 @@ module.exports = (sequelize, DataTypes) => {
   );
 
   Alerte.associate = (models) => {
+    // Une alerte peut déclencher plusieurs notifications
+    Alerte.hasMany(models.LogNotification, {
+      foreignKey: "id_alerte",
+      as: "notifications",
+    });
+
     // Une alerte est émise par un centre
     Alerte.belongsTo(models.Centre, {
       foreignKey: "id_centre",

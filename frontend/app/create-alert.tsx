@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   StyleSheet,
   Text,
@@ -6,10 +6,15 @@ import {
   TouchableOpacity,
   TextInput,
   ScrollView,
+  ActivityIndicator,
 } from "react-native";
 import { TabBarIcon } from "@/components/TabBarIcon";
 import { color } from "@/constant/color";
+import { useRouter } from "expo-router";
 import ThemedView from "@/components/ThemedView";
+import * as Location from 'expo-location';
+import { searchDonors, sendAlert } from "@/services/user.service";
+import { getData } from "@/utils/storage";
 
 const BloodOption = ({ label, selected, onSelect }: any) => (
   <TouchableOpacity
@@ -22,16 +27,96 @@ const BloodOption = ({ label, selected, onSelect }: any) => (
   </TouchableOpacity>
 );
 
-export default function CreateAlert({ navigation }: any) {
+export default function CreateAlert() {
+  const router = useRouter();
   const [selectedGroup, setSelectedGroup] = useState("O-");
+  const [poches, setPoches] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [donorCount, setDonorCount] = useState<number | null>(null);
+  const [location, setLocation] = useState<Location.LocationObject | null>(null);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
   const groups = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
 
+  useEffect(() => {
+    (async () => {
+      let { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        setErrorMsg('Permission de localisation refusée');
+        return;
+      }
 
+      let location = await Location.getCurrentPositionAsync({});
+      setLocation(location);
+    })();
+  }, []);
+
+  useEffect(() => {
+    if (location && selectedGroup) {
+      handleSearch();
+    }
+  }, [selectedGroup, location]);
+
+  const handleSearch = async () => {
+    if (!location) return;
+
+    setLoading(true);
+    try {
+      const data = await searchDonors(
+        location.coords.latitude,
+        location.coords.longitude,
+        selectedGroup,
+        10 // Rayon de 10km par défaut
+      );
+      setDonorCount(data.count);
+    } catch (error) {
+      console.error(error);
+      setDonorCount(0);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDiffusion = async () => {
+    if (!poches || parseInt(poches) <= 0) {
+      alert("Veuillez indiquer le nombre de poches requis.");
+      return;
+    }
+
+    if (!location) {
+      alert("Localisation non disponible");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const user = await getData("user");
+      const result = await sendAlert({
+        latitude: location.coords.latitude,
+        longitude: location.coords.longitude,
+        bloodType: selectedGroup,
+        radius: 10,
+        degree: "Urgent",
+        poches: parseInt(poches),
+        id_initiateur: user?.id_utilisateur
+      });
+
+      alert(`Succès : ${result.message}`);
+      router.replace({
+        pathname: "/alert-tracking/[id]",
+        params: { id: result.alertId }
+      });
+    } catch (error: any) {
+      alert(error.message || "Une erreur est survenue lors de la diffusion.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <ThemedView style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
+        <TouchableOpacity onPress={() => router.back()}>
           <TabBarIcon name="close" size={24} color="black" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Nouvelle Alerte NHR</Text>
@@ -51,47 +136,35 @@ export default function CreateAlert({ navigation }: any) {
           ))}
         </View>
 
-        <Text style={styles.label}>Hôpital / Lieu</Text>
-        <View style={styles.inputContainer}>
-          <TabBarIcon name="hospital-o" size={18} color="gray" />
-          <TextInput
-            style={styles.input}
-            placeholder="Nom de l&apos;établissement"
-          />
-        </View>
-
-        <Text style={styles.label}>Nombre de poches (Optionnel)</Text>
+        <Text style={styles.label}>Nombre de poches (Obligatoire)</Text>
         <TextInput
-          style={[styles.input, { paddingLeft: 15 }]}
+          style={[styles.input, { paddingLeft: 15, backgroundColor: "#F8F9FA", borderRadius: 15, height: 55 }]}
           placeholder="Ex: 2"
           keyboardType="numeric"
-        />
-
-        <Text style={styles.label}>Message d'urgence</Text>
-        <TextInput
-          style={styles.textArea}
-          placeholder="Décrivez l'urgence ici..."
-          multiline
-          numberOfLines={4}
+          value={poches}
+          onChangeText={setPoches}
         />
 
         <View style={styles.warningBox}>
           <TabBarIcon name="info-circle" size={18} color={color.primary} />
-          <Text style={styles.warningText}>
-            Cette alerte sera envoyée à tous les donneurs compatibles dans un
-            rayon de 10km.
-          </Text>
+          {loading ? (
+            <ActivityIndicator size="small" color={color.primary} />
+          ) : (
+            <Text style={styles.warningText}>
+              {donorCount !== null
+                ? `${donorCount} donneurs compatibles trouvés dans un rayon de 10km.`
+                : "Recherche de donneurs compatibles dans un rayon de 10km..."}
+            </Text>
+          )}
         </View>
+        {errorMsg && <Text style={{ color: 'red', fontSize: 12, marginTop: 10 }}>{errorMsg}</Text>}
       </ScrollView>
 
       <TouchableOpacity
         style={styles.btnSend}
-        onPress={() => {
-          alert("Alerte diffusée avec succès !");
-          navigation.goBack();
-        }}
+        onPress={handleDiffusion}
       >
-        <Text style={styles.btnSendText}>DIFFUSER L&apos;ALERTE</Text>
+        <Text style={styles.btnSendText}>DIFFUSER L'ALERTE</Text>
       </TouchableOpacity>
     </ThemedView>
   );
@@ -152,6 +225,7 @@ const styles = StyleSheet.create({
     padding: 15,
     borderRadius: 15,
     marginTop: 25,
+    alignItems: 'center'
   },
   warningText: { flex: 1, fontSize: 12, color: color.primary, lineHeight: 18 },
   btnSend: {
@@ -163,3 +237,4 @@ const styles = StyleSheet.create({
   },
   btnSendText: { color: "white", fontWeight: "bold", fontSize: 16 },
 });
+

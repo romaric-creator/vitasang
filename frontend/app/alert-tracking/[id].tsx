@@ -1,0 +1,172 @@
+import React, { useEffect, useState } from "react";
+import { StyleSheet, View, Text, TouchableOpacity, ScrollView, ActivityIndicator } from "react-native";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import { TabBarIcon } from "@/components/TabBarIcon";
+import { color } from "@/constant/color";
+import { getAlertStatus } from "@/services/user.service";
+
+export default function AlertTracking() {
+    const { id } = useLocalSearchParams();
+    const router = useRouter();
+    const [loading, setLoading] = useState(true);
+    const [data, setData] = useState<any>(null);
+
+    const fetchStatus = async () => {
+        try {
+            const res = await getAlertStatus(Number(id));
+            setData(res);
+        } catch (error) {
+            console.error(error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchStatus();
+        const interval = setInterval(fetchStatus, 5000); // Polling toutes les 5s
+        return () => clearInterval(interval);
+    }, [id]);
+
+    if (loading || !data) {
+        return (
+            <View style={styles.center}>
+                <ActivityIndicator size="large" color={color.primary} />
+            </View>
+        );
+    }
+
+    const { stats, alerte, details } = data;
+
+    return (
+        <View style={styles.container}>
+            <View style={styles.header}>
+                <TouchableOpacity onPress={() => router.back()}>
+                    <TabBarIcon name="arrow-left" size={24} color="black" />
+                </TouchableOpacity>
+                <Text style={styles.headerTitle}>Suivi de l'Alerte</Text>
+                <TouchableOpacity onPress={fetchStatus}>
+                    <TabBarIcon name="refresh" size={20} color={color.primary} />
+                </TouchableOpacity>
+            </View>
+
+            <ScrollView contentContainerStyle={styles.content}>
+                <View style={styles.mainCard}>
+                    <Text style={styles.bloodType}>{alerte.groupe}</Text>
+                    <Text style={styles.statusBadge}>{alerte.statut.toUpperCase()}</Text>
+                    <Text style={styles.date}>Lancée le {new Date(alerte.createdAt).toLocaleTimeString()}</Text>
+                </View>
+
+                <View style={styles.statsGrid}>
+                    <StatBox label="Notifiés" value={stats.total} color="#3498DB" />
+                    <StatBox label="Lus" value={stats.lu} color="#F1C40F" />
+                    <StatBox label="Acceptés" value={stats.accepte} color="#2ECC71" />
+                </View>
+
+                <Text style={styles.sectionTitle}>Détails des Donneurs ({details.length})</Text>
+                {details.map((item: any, index: number) => (
+                    <View key={index} style={styles.donorRow}>
+                        <View>
+                            <Text style={styles.donorName}>{item.donneur}</Text>
+                            <Text style={styles.donorPhone}>{item.telephone}</Text>
+                        </View>
+                        <View style={[styles.statutPill, { backgroundColor: getStatutColor(item.statut) }]}>
+                            <Text style={styles.statutText}>{item.statut.toUpperCase()}</Text>
+                        </View>
+                    </View>
+                ))}
+            </ScrollView>
+
+            <TouchableOpacity style={styles.footerBtn} onPress={() => router.replace("/(tabs)")}>
+                <Text style={styles.footerBtnText}>Retour à l'accueil</Text>
+            </TouchableOpacity>
+        </View>
+    );
+}
+
+const StatBox = ({ label, value, color }: any) => (
+    <View style={[styles.statBox, { borderColor: color }]}>
+        <Text style={[styles.statValue, { color }]}>{value}</Text>
+        <Text style={styles.statLabel}>{label}</Text>
+    </View>
+);
+
+const getStatutColor = (statut: string) => {
+    switch (statut) {
+        case 'accepte': return '#2ECC71';
+        case 'lu': return '#F1C40F';
+        case 'envoye': return '#BDC3C7';
+        default: return '#E74C3C';
+    }
+};
+
+const styles = StyleSheet.create({
+    container: { flex: 1, backgroundColor: "#F8F9FA" },
+    center: { flex: 1, justifyContent: "center", alignItems: "center" },
+    header: {
+        flexDirection: "row",
+        justifyContent: "space-between",
+        alignItems: "center",
+        paddingHorizontal: 20,
+        paddingTop: 50,
+        paddingBottom: 20,
+        backgroundColor: "white",
+    },
+    headerTitle: { fontSize: 18, fontWeight: "bold" },
+    content: { padding: 20 },
+    mainCard: {
+        backgroundColor: "white",
+        borderRadius: 20,
+        padding: 25,
+        alignItems: "center",
+        elevation: 4,
+        marginBottom: 20,
+    },
+    bloodType: { fontSize: 48, fontWeight: "900", color: color.primary },
+    statusBadge: {
+        backgroundColor: "#E6F4FE",
+        color: color.primary,
+        paddingHorizontal: 12,
+        paddingVertical: 4,
+        borderRadius: 10,
+        fontSize: 12,
+        fontWeight: "bold",
+        marginTop: 10,
+    },
+    date: { fontSize: 12, color: "#95A5A6", marginTop: 10 },
+    statsGrid: { flexDirection: "row", justifyContent: "space-between", marginBottom: 30 },
+    statBox: {
+        backgroundColor: "white",
+        width: "30%",
+        padding: 15,
+        borderRadius: 15,
+        borderWidth: 2,
+        alignItems: "center",
+    },
+    statValue: { fontSize: 20, fontWeight: "800" },
+    statLabel: { fontSize: 11, color: "#7F8C8D", marginTop: 5 },
+    sectionTitle: { fontSize: 16, fontWeight: "bold", marginBottom: 15, color: "#2C3E50" },
+    donorRow: {
+        flexDirection: "row",
+        justifyContent: "space-between",
+        alignItems: "center",
+        backgroundColor: "white",
+        padding: 15,
+        borderRadius: 12,
+        marginBottom: 10,
+    },
+    donorName: { fontSize: 15, fontWeight: "600" },
+    donorPhone: { fontSize: 12, color: "#95A5A6" },
+    statutPill: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6 },
+    statutText: { color: "white", fontSize: 9, fontWeight: "bold" },
+    footerBtn: {
+        backgroundColor: "white",
+        margin: 20,
+        padding: 18,
+        borderRadius: 15,
+        borderWidth: 1,
+        borderColor: "#DDD",
+        alignItems: "center",
+    },
+    footerBtnText: { fontWeight: "bold", color: "#333" },
+});

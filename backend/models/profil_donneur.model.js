@@ -12,13 +12,14 @@ module.exports = (sequelize, DataTypes) => {
       },
       groupe_sanguin: {
         type: DataTypes.ENUM("A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"),
+        allowNull: false,
       },
       poids: { type: DataTypes.DECIMAL(5, 2) },
       taille: { type: DataTypes.DECIMAL(5, 2) },
       dernier_don: { type: DataTypes.DATEONLY },
       prochain_don_possible: { type: DataTypes.DATEONLY },
-      lat_actuelle: { type: DataTypes.DOUBLE },
-      long_actuelle: { type: DataTypes.DOUBLE },
+      lat_actuelle: { type: DataTypes.DOUBLE, allowNull: true },
+      long_actuelle: { type: DataTypes.DOUBLE, allowNull: true },
     },
     { tableName: "Profils_Donneurs", timestamps: false },
   );

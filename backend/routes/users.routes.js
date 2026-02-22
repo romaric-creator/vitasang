@@ -6,8 +6,9 @@ router.post("/register", controller.addUser);
 router.post("/login", controller.login);
 
 router.get("/", controller.getAllUsers);
+router.get("/search", controller.searchUsers);
 router.get("/groupe-sanguin/:groupe", controller.getUsersByBloodGroup);
+router.get("/:id/profile", controller.getUserProfile);
 router.get("/:id", controller.getUserById);
-router.get("/search/:query", controller.searchUsers);
 
 module.exports = router;

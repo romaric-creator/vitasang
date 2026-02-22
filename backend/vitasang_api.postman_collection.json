@@ -6,66 +6,118 @@
   },
   "item": [
     {
-      "name": "Register Donneur",
-      "request": {
-        "method": "POST",
-        "header": [
-          {
-            "key": "Content-Type",
-            "value": "application/json",
-            "type": "text"
-          }
-        ],
-        "body": {
-          "mode": "raw",
-          "raw": "{\n    \"role\": \"donneur\",\n    \"nom\": \"Dupont\",\n    \"prenom\": \"Jean\",\n    \"email\": \"jean.dupont@example.com\",\n    \"mot_de_passe\": \"password123\",\n    \"telephone\": \"0123456789\",\n    \"region\": \"Île-de-France\",\n    \"groupe_sanguin\": \"O+\",\n    \"poids\": 75,\n    \"taille\": 180\n}"
+      "name": "User Management",
+      "item": [
+        {
+          "name": "Register Donneur",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"role\": \"donneur\",\n    \"nom\": \"Dupont\",\n    \"prenom\": \"Jean\",\n    \"email\": \"jean.dupont@example.com\",\n    \"mot_de_passe\": \"password123\",\n    \"telephone\": \"0123456789\",\n    \"region\": \"Île-de-France\",\n    \"groupe_sanguin\": \"O+\",\n    \"poids\": 75,\n    \"taille\": 180\n}"
+            },
+            "url": {
+              "raw": "http://localhost:3000/api/users/register",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "3000",
+              "path": [
+                "api",
+                "users",
+                "register"
+              ]
+            }
+          },
+          "response": []
         },
-        "url": {
-          "raw": "http://localhost:3000/api/users/register",
-          "protocol": "http",
-          "host": [
-            "localhost"
-          ],
-          "port": "3000",
-          "path": [
-            "api",
-            "users",
-            "register"
-          ]
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"telephone\": \"0600000001\",\n    \"mot_de_passe\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:3000/api/users/login",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "3000",
+              "path": [
+                "api",
+                "users",
+                "login"
+              ]
+            }
+          },
+          "response": []
         }
-      },
-      "response": []
+      ]
     },
     {
-      "name": "Login",
-      "request": {
-        "method": "POST",
-        "header": [
-          {
-            "key": "Content-Type",
-            "value": "application/json",
-            "type": "text"
-          }
-        ],
-        "body": {
-          "mode": "raw",
-          "raw": "{\n    \"email\": \"jean.dupont@example.com\",\n    \"mot_de_passe\": \"password123\"\n}"
-        },
-        "url": {
-          "raw": "http://localhost:3000/api/users/login",
-          "protocol": "http",
-          "host": [
-            "localhost"
-          ],
-          "port": "3000",
-          "path": [
-            "api",
-            "users",
-            "login"
-          ]
+      "name": "Alerts",
+      "item": [
+        {
+          "name": "Recherche Donneur par Proximité (A+)",
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          },
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:3000/api/users/search?lat=48.8566&long=2.3522&blood=A%2B&rayon=5",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "3000",
+              "path": [
+                "api",
+                "users",
+                "search"
+              ],
+              "query": [
+                {
+                  "key": "lat",
+                  "value": "48.8566"
+                },
+                {
+                  "key": "long",
+                  "value": "2.3522"
+                },
+                {
+                  "key": "blood",
+                  "value": "A+"
+                },
+                {
+                  "key": "rayon",
+                  "value": "5"
+                }
+              ]
+            }
+          },
+          "response": []
         }
-      },
-      "response": []
+      ]
     }
   ]
 }

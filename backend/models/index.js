@@ -11,14 +11,13 @@ const db = {};
 const sequelize = new Sequelize(dbConfig.DB, dbConfig.USER, dbConfig.PASSWORD, {
   host: dbConfig.HOST,
   dialect: dbConfig.dialect,
-  operatorsAliases: 0, // Sequelize v5+ doesn't require this, but good for compatibility
   pool: {
     max: dbConfig.pool.max,
     min: dbConfig.pool.min,
     acquire: dbConfig.pool.acquire,
     idle: dbConfig.pool.idle,
   },
-  logging: false,
+  logging: process.env.DB_LOGGING === 'true' ? console.log : false,
 });
 
 fs.readdirSync(__dirname)

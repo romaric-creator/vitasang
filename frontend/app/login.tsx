@@ -27,7 +27,14 @@ export default function Index() {
 
     try {
       const data = await loginUser(telephone, motDePasse);
+      // Sauvegarder le token
       await storeData("token", data.token);
+      // Sauvegarder l'objet user en normalisant l'id (backend renvoie "id" pas "id_utilisateur")
+      const userToStore = {
+        ...data.user,
+        id_utilisateur: data.user.id || data.user.id_utilisateur,
+      };
+      await storeData("user", userToStore);
       router.replace("/(tabs)");
     } catch (err: any) {
       console.error("Login error:", err.message);

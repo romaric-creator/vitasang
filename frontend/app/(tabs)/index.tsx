@@ -1,26 +1,82 @@
-import { Link } from "expo-router";
+import { Link, useRouter } from "expo-router";
 import {
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
   ScrollView,
+  ActivityIndicator,
 } from "react-native";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import ThemedView from "@/components/ThemedView";
 import Header from "@/components/Header";
 import { TabBarIcon } from "@/components/TabBarIcon";
 import { color } from "@/constant/color";
 import { urgentNeed, stat, collections } from "@/data/data";
+import { getMyAlerts, getUserProfile } from "@/services/user.service";
+import { getData, getUserIdFromStorage } from "@/utils/storage";
 
 export default function Index() {
+  const router = useRouter();
+  const [myAlerts, setMyAlerts] = useState<any[]>([]);
+  const [loadingAlerts, setLoadingAlerts] = useState(true);
+  const [userName, setUserName] = useState("Utilisateur");
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const userId = await getUserIdFromStorage();
+        if (userId) {
+          const profileRes = await getUserProfile(userId);
+          if (profileRes.success) {
+            const u = profileRes.user;
+            setUserName(`${u.prenom || ""} ${u.nom || ""}`.trim() || "Utilisateur");
+          }
+          const alertsRes = await getMyAlerts(userId);
+          setMyAlerts(alertsRes.alerts);
+        }
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setLoadingAlerts(false);
+      }
+    };
+    fetchData();
+  }, []);
+
   return (
     <ThemedView style={styles.container}>
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: 120 }}
       >
-        <Header />
+        <Header userName={userName} />
+
+        {/* Section Mes Alertes Actives */}
+        {myAlerts.length > 0 && (
+          <View style={{ marginTop: 20 }}>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>Mes Alertes</Text>
+            </View>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginHorizontal: -20, paddingHorizontal: 20 }}>
+              {myAlerts.map((alert) => (
+                <TouchableOpacity
+                  key={alert.id}
+                  style={styles.myAlertCard}
+                  onPress={() => router.push(`/alert-tracking/${alert.id}`)}
+                >
+                  <View style={styles.alertCircle}>
+                    <Text style={styles.alertBlood}>{alert.groupe}</Text>
+                  </View>
+                  <View>
+                    <Text style={styles.alertStatus}>{alert.statut.toUpperCase()}</Text>
+                    <Text style={styles.alertStats}>{alert.acceptedCount} acceptés</Text>
+                  </View>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+        )}
 
         {/* Section Besoin Urgent */}
         <View style={styles.boxUrgent}>
@@ -144,9 +200,9 @@ const styles = StyleSheet.create({
     alignItems: "flex-start",
     gap: 16,
   },
-  bloodGroup: { 
-    color: "white", 
-    fontSize: 36, 
+  bloodGroup: {
+    color: "white",
+    fontSize: 36,
     fontWeight: "800",
     marginBottom: 8,
   },
@@ -156,8 +212,8 @@ const styles = StyleSheet.create({
     gap: 6,
     marginBottom: 6,
   },
-  locationText: { 
-    color: "white", 
+  locationText: {
+    color: "white",
     fontSize: 14,
     fontWeight: "600",
   },
@@ -178,15 +234,15 @@ const styles = StyleSheet.create({
     shadowRadius: 5,
     elevation: 4,
   },
-  btnText: { 
-    color: color.primary, 
+  btnText: {
+    color: color.primary,
     fontWeight: "700",
     fontSize: 13,
     letterSpacing: 0.3,
   },
-  statsContainer: { 
-    flexDirection: "row", 
-    gap: 16, 
+  statsContainer: {
+    flexDirection: "row",
+    gap: 16,
     marginVertical: 32,
   },
   statCard: {
@@ -212,14 +268,14 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 12,
   },
-  statNumber: { 
-    fontSize: 22, 
+  statNumber: {
+    fontSize: 22,
     fontWeight: "800",
     color: color.textMain,
     marginBottom: 4,
   },
-  statLabel: { 
-    color: color.textSecondary, 
+  statLabel: {
+    color: color.textSecondary,
     fontSize: 12,
     fontWeight: "500",
     textAlign: "center",
@@ -236,8 +292,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 18,
   },
-  sectionTitle: { 
-    fontSize: 18, 
+  sectionTitle: {
+    fontSize: 18,
     fontWeight: "700",
     color: color.textMain,
     letterSpacing: 0.3,
@@ -271,19 +327,19 @@ const styles = StyleSheet.create({
     width: 56,
     justifyContent: "center",
   },
-  dateDay: { 
-    color: color.primary, 
-    fontSize: 16, 
+  dateDay: {
+    color: color.primary,
+    fontSize: 16,
     fontWeight: "800",
   },
-  dateMonth: { 
-    color: color.primary, 
-    fontSize: 11, 
+  dateMonth: {
+    color: color.primary,
+    fontSize: 11,
     fontWeight: "600",
     marginTop: 2,
   },
-  collecteTitle: { 
-    fontWeight: "700", 
+  collecteTitle: {
+    fontWeight: "700",
     fontSize: 14,
     color: color.textMain,
     marginBottom: 8,
@@ -312,42 +368,79 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 4,
   },
-  timeText: { 
-    fontSize: 11, 
+  timeText: {
+    fontSize: 11,
     color: color.textLight,
     fontWeight: "500",
   },
 
-  // STYLE DU BOUTON FLOTTANT
+  // STYLE DU BOUTON FLOTTANT AMÉLIORÉ
   fabNHR: {
     position: "absolute",
-    bottom: 30,
-    alignSelf: "center",
-    backgroundColor: color.secondary,
+    bottom: 25,
+    right: 20,
+    backgroundColor: color.primary,
     flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: 24,
-    paddingVertical: 16,
-    borderRadius: 30,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.35,
-    shadowRadius: 8,
-    elevation: 10,
+    paddingHorizontal: 20,
+    paddingVertical: 14,
+    borderRadius: 28,
+    shadowColor: color.primary,
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.4,
+    shadowRadius: 12,
+    elevation: 12,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.2)",
   },
   nhrIconBg: {
-    backgroundColor: color.primary,
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    backgroundColor: "rgba(255,255,255,0.2)",
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     justifyContent: "center",
     alignItems: "center",
-    marginRight: 12,
+    marginRight: 10,
   },
   fabText: {
     color: color.textWhite,
-    fontWeight: "700",
+    fontWeight: "800",
     fontSize: 12,
-    letterSpacing: 0.5,
+    letterSpacing: 0.8,
+  },
+  myAlertCard: {
+    backgroundColor: "white",
+    borderRadius: 20,
+    padding: 15,
+    marginRight: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    borderWidth: 1,
+    borderColor: "#F0F0F0",
+    minWidth: 160,
+  },
+  alertCircle: {
+    width: 45,
+    height: 45,
+    borderRadius: 22.5,
+    backgroundColor: "#FFF5F5",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  alertBlood: {
+    color: color.primary,
+    fontWeight: "900",
+    fontSize: 16,
+  },
+  alertStatus: {
+    fontSize: 10,
+    fontWeight: "bold",
+    color: color.primary,
+  },
+  alertStats: {
+    fontSize: 12,
+    color: color.textSecondary,
+    marginTop: 2,
   },
 });
