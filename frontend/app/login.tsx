@@ -38,15 +38,15 @@ export default function Index() {
       await storeData("user", userToStore);
 
       // --- NEW: Register for push notifications and send token to backend ---
-      const pushToken = await registerForPushNotificationsAsync();
-      if (pushToken && userToStore.id_utilisateur) {
-        try {
-          await updatePushToken(userToStore.id_utilisateur, pushToken);
-          console.log("Push token sent to backend successfully.");
-        } catch (tokenError) {
-          console.error("Failed to send push token to backend:", tokenError);
-        }
-      }
+      // const pushToken = await registerForPushNotificationsAsync();
+      // if (pushToken && userToStore.id_utilisateur) {
+      //   try {
+      //     await updatePushToken(userToStore.id_utilisateur, pushToken);
+      //     console.log("Push token sent to backend successfully.");
+      //   } catch (tokenError) {
+      //     console.error("Failed to send push token to backend:", tokenError);
+      //   }
+      // }
       // --- END NEW ---
 
       router.replace("/(tabs)");

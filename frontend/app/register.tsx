@@ -76,19 +76,27 @@ export default function Register() {
       );
       console.log("Registration successful:", data);
 
+      // Store the user object with id_utilisateur for later retrieval
+      const userToStore = {
+        ...data.user,
+        id_utilisateur: data.user.user.id_utilisateur, // Ensure id_utilisateur is explicitly set from data.user.user
+      };
+      await storeData("user", userToStore); // Store the user object
+
       // --- NEW: Register for push notifications and send token to backend ---
-      const user = data.user; // Assuming data.user is returned by registerUser
-      if (user && user.id_utilisateur) {
-        const pushToken = await registerForPushNotificationsAsync();
-        if (pushToken) {
-          try {
-            await updatePushToken(user.id_utilisateur, pushToken);
-            console.log("Push token sent to backend successfully after registration.");
-          } catch (tokenError) {
-            console.error("Failed to send push token to backend after registration:", tokenError);
-          }
-        }
-      }
+      // (This part is currently commented out, but the user object needs to be stored correctly for it to work later)
+      // const user = data.user;
+      // if (user && user.id_utilisateur) {
+      //   const pushToken = await registerForPushNotificationsAsync();
+      //   if (pushToken) {
+      //     try {
+      //       await updatePushToken(user.id_utilisateur, pushToken);
+      //       console.log("Push token sent to backend successfully after registration.");
+      //     } catch (tokenError) {
+      //       console.error("Failed to send push token to backend after registration:", tokenError);
+      //     }
+      //   }
+      // }
       // --- END NEW ---
 
       router.replace("/login");

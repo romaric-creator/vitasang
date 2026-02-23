@@ -48,7 +48,9 @@ export const removeData = async (key: string) => {
 export const getUserIdFromStorage = async (): Promise<number | null> => {
   // 1. Essai depuis l'objet user sauvegardé
   const user = await getData('user');
-  if (user?.id_utilisateur) return user.id_utilisateur;
+  if (user?.id_utilisateur) {
+    return user.id_utilisateur;
+  }
 
   // 2. Fallback : décode le token JWT (format base64) sans vérification de signature
   const token = await getData('token');
@@ -57,7 +59,8 @@ export const getUserIdFromStorage = async (): Promise<number | null> => {
     const payload = token.split('.')[1];
     const decoded = JSON.parse(atob(payload));
     return decoded.id || null;
-  } catch {
+  } catch (e) {
+    console.error('Failed to decode token or parse payload', e);
     return null;
   }
 };

@@ -33,9 +33,10 @@ export default function AlertTracking() {
     useEffect(() => {
         if (notifiedDonorsParam && typeof notifiedDonorsParam === 'string') {
             try {
-                setNotifiedDonors(JSON.parse(notifiedDonorsParam));
+                const parsedDonors = JSON.parse(notifiedDonorsParam);
+                setNotifiedDonors(parsedDonors);
             } catch (e) {
-                console.error("Failed to parse notifiedDonorsParam", e);
+                console.error("AlertTracking: Failed to parse notifiedDonorsParam", e);
             }
         }
         fetchStatus();
@@ -80,7 +81,7 @@ export default function AlertTracking() {
 
                 {notifiedDonors.length > 0 && (
                     <>
-                        <Text style={styles.sectionTitle}>Donneurs Notifiés ({notifiedDonors.length})</Text>
+                        <Text style={[styles.sectionTitle, { marginTop: 20 }]}>Donneurs Notifiés ({notifiedDonors.length})</Text>
                         {notifiedDonors.map((donor, index) => (
                             <View key={donor.id} style={styles.donorRow}>
                                 <Text style={styles.donorName}>Donneur {index + 1}</Text>
@@ -140,7 +141,7 @@ const styles = StyleSheet.create({
         backgroundColor: "white",
     },
     headerTitle: { fontSize: 18, fontWeight: "bold" },
-    content: { padding: 20 },
+    content: { padding: 20, flexGrow: 1, backgroundColor: '#F8F9FA' },
     mainCard: {
         backgroundColor: "white",
         borderRadius: 20,

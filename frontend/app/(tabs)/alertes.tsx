@@ -45,9 +45,11 @@ export default function AlertesScreen() {
             if (userId) {
                 const res = await getMyAlerts(userId);
                 setAlerts(res.alerts || []);
+            } else {
+                setAlerts([]);
             }
         } catch (error) {
-            console.error(error);
+            console.error("AlertesScreen: Error fetching alerts:", error);
         } finally {
             setLoading(false);
             setRefreshing(false);

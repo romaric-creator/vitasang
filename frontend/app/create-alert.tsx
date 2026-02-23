@@ -91,6 +91,7 @@ export default function CreateAlert() {
     setLoading(true);
     try {
       const user = await getData("user");
+
       const result = await sendAlert({
         latitude: location.coords.latitude,
         longitude: location.coords.longitude,

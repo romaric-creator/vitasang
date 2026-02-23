@@ -28,7 +28,7 @@ exports.createAlertAndNotify = async (req, res) => {
             groupe_requis: bloodType,
             degre_urgence: degree || "Normal",
             rayon_action_km: radius || 10,
-            id_initiateur: id_initiateur || null,
+            id_initiateur: id_initiateur,
             statut: "en_cours"
         });
 
