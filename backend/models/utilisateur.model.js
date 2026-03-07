@@ -31,6 +31,11 @@ module.exports = (sequelize, DataTypes) => {
           key: 'id_centre'
         },
         allowNull: true
+      },
+      photo_profil: {
+        type: DataTypes.STRING(255),
+        allowNull: true,
+        defaultValue: null
       }
     },
     { tableName: "Utilisateurs", timestamps: true },
