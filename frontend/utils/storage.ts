@@ -6,6 +6,10 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
  * @param value The value to store. Can be any type, as it will be JSON.stringified.
  */
 export const storeData = async (key: string, value: any) => {
+  if (value === undefined || value === null) {
+    console.warn(`[Storage] Tentative de sauvegarde d'une valeur nulle ou indéfinie pour la clé: ${key}. Opération annulée.`);
+    return;
+  }
   try {
     const jsonValue = JSON.stringify(value);
     await AsyncStorage.setItem(key, jsonValue);
