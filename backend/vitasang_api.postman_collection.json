@@ -69,6 +69,44 @@
             }
           },
           "response": []
+        },
+        {
+          "name": "Update Push Token",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"pushToken\": \"ExponentPushToken[xxxxxxxxxxxxxxxxxxxxxx]\"\n}"
+            },
+            "url": {
+              "raw": "http://localhost:3000/api/users/:id/push-token",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "3000",
+              "path": [
+                "api",
+                "users",
+                ":id",
+                "push-token"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "1"
+                }
+              ]
+            }
+          },
+          "response": []
         }
       ]
     },
@@ -111,6 +149,92 @@
                 {
                   "key": "rayon",
                   "value": "5"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create Alert and Notify Donors",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"latitude\": 48.8566,\n    \"longitude\": 2.3522,\n    \"bloodType\": \"O+\",\n    \"radius\": 10,\n    \"degree\": \"Urgent\",\n    \"poches\": 2,\n    \"id_initiateur\": 1\n}"
+            },
+            "url": {
+              "raw": "http://localhost:3000/api/alerts/search",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "3000",
+              "path": [
+                "api",
+                "alerts",
+                "search"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Alert Status",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:3000/api/alerts/:id/status",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "3000",
+              "path": [
+                "api",
+                "alerts",
+                ":id",
+                "status"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "1"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get My Alerts",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "http://localhost:3000/api/alerts/my-alerts?id_utilisateur=:id",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "3000",
+              "path": [
+                "api",
+                "alerts",
+                "my-alerts"
+              ],
+              "query": [
+                {
+                  "key": "id_utilisateur",
+                  "value": "1"
                 }
               ]
             }
