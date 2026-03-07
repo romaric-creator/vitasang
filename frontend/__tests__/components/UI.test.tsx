@@ -1,7 +1,7 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react-native';
-import ErrorAlert from '../../components/ErrorAlert';
-import LoadingSpinner from '../../components/LoadingSpinner';
+import { ErrorAlert } from '../../components/ErrorAlert';
+import { LoadingSpinner } from '../../components/LoadingSpinner';
 
 describe('ErrorAlert Component Tests', () => {
   it('should not render when visible is false', () => {
