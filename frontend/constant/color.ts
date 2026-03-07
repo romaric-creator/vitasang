@@ -1,26 +1,34 @@
 export const color = {
-  // Couleurs principales - Design VitaSang
-  primary: "#DC2626",      // Rouge vibrant (don, urgent)
-  secondary: "#1F2937",    // Gris-noir profond
-  success: "#10B981",      // Vert (garde uniquement pour les statuts positifs)
-  
+  // Couleurs principales - Design VitaSang Premium
+  primary: "#E11D48",      // Rose-Rouge moderne (don, urgent)
+  secondary: "#0F172A",    // Bleu-Gris très sombre (Slate 900)
+  success: "#10B981",      // Vert émeraude
+  warning: "#F59E0B",      // Amber
+  info: "#3B82F6",         // Blue
+
   // Couleurs de fond
-  background: "#FFFFFF",
-  surface: "#F9FAFB",      // Gris ultra-clair pour les cartes
-  dangerLight: "#FEE2E2",  // Rouge très pâle pour les alertes
-  
+  background: "#FAFAFA",
+  screenBackground: "#F8FAFC", // Slate 50
+  surface: "#FFFFFF",      // Blanc pur pour les cartes
+  surfaceDark: "#F1F5F9",  // Slate 100
+  dangerLight: "#FFF1F2",  // Rose très pâle
+  successLight: "#ECFDF5",
+  warningLight: "#FFFBEB",
+  infoLight: "#EFF6FF",
+
   // Couleurs de texte
-  textMain: "#1F2937",
-  textSecondary: "#6B7280",
-  textLight: "#9CA3AF",
+  text: "#0F172A",         // Slate 900
+  textMain: "#1E293B",     // Slate 800
+  textSecondary: "#64748B",// Slate 500
+  textLight: "#94A3B8",    // Slate 400
   textWhite: "#FFFFFF",
-  
-  // Couleurs additionnelles
-  border: "#E5E7EB",
-  divider: "#D1D5DB",
+
+  // Éléments
+  border: "#E2E8F0",       // Slate 200
+  divider: "#F1F5F9",      // Slate 100
   shadow: "rgba(0, 0, 0, 0.08)",
-  
+
   // États
-  disabled: "#D1D5DB",
-  error: "#EF4444"
+  disabled: "#CBD5E1",     // Slate 300
+  error: "#F43F5E"         // Rose 500
 };

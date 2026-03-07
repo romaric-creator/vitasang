@@ -3,6 +3,9 @@ import { Stack } from "expo-router";
 import { useEffect, useState } from "react";
 import { View } from "react-native";
 
+// Initialisation i18n
+import '../i18n';
+
 export default function RootLayout() {
   const [isAuth, setAuth] = useState<boolean | null>(null);
   const [loading, setLoading] = useState(true);
@@ -35,6 +38,11 @@ export default function RootLayout() {
       <Stack.Screen name="create-alert" options={{ presentation: 'modal' }} />
       <Stack.Screen name="alert-tracking/[id]" />
       <Stack.Screen name="tracking" />
+      <Stack.Screen name="edit-profile" />
+      <Stack.Screen name="alert-response/[id]" />
+      <Stack.Screen name="historique" />
+      <Stack.Screen name="rendezvous" />
+      <Stack.Screen name="centres" />
     </Stack>
   );
 }

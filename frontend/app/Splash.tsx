@@ -9,7 +9,7 @@ export default function Splash() {
     <ThemedView style={styles.container}>
       <View style={styles.content}>
         <Image
-          source={require("@/assets/images/icon.png")}
+          source={require("@/assets/images/Capture d’écran du 2026-01-31 23-07-03.png")}
           style={styles.logo}
         />
         <Text style={styles.appName}>VitaSang</Text>
