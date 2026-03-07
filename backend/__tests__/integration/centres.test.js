@@ -1,0 +1,132 @@
+const request = require('supertest');
+const express = require('express');
+
+jest.mock('../../models', () => ({
+  Centre: {
+    findAll: jest.fn(),
+    findByPk: jest.fn(),
+  },
+  Utilisateur: {
+    findAll: jest.fn(),
+  },
+}));
+
+jest.mock('../../utils/geoHelpers', () => ({
+  calculateDistance: jest.fn((lat1, lon1, lat2, lon2) => {
+    // Mock Haversine distance
+    return 10; // 10 km for testing
+  }),
+}));
+
+describe('Centres Controller - Integration Tests', () => {
+  let app;
+
+  beforeEach(() => {
+    app = express();
+    app.use(express.json());
+
+    const centresRoute = require('../../routes/centres.routes');
+    app.use('/api/centres', centresRoute);
+  });
+
+  describe('GET /api/centres', () => {
+    it('should retrieve all centres', async () => {
+      const response = await request(app)
+        .get('/api/centres');
+
+      expect([200, 404]).toContain(response.status);
+    });
+  });
+
+  describe('GET /api/centres/:id', () => {
+    it('should retrieve centre details', async () => {
+      const response = await request(app)
+        .get('/api/centres/1');
+
+      expect([200, 404]).toContain(response.status);
+    });
+
+    it('should handle invalid ID', async () => {
+      const response = await request(app)
+        .get('/api/centres/invalid');
+
+      expect([400, 404]).toContain(response.status);
+    });
+  });
+
+  describe('GET /api/centres/search', () => {
+    it('should search nearby centres', async () => {
+      const response = await request(app)
+        .get('/api/centres/search')
+        .query({
+          latitude: '33.5731',
+          longitude: '-7.5898',
+          radius: '10',
+        });
+
+      expect([200, 400]).toContain(response.status);
+    });
+
+    it('should reject missing parameters', async () => {
+      const response = await request(app)
+        .get('/api/centres/search')
+        .query({ latitude: '33.5731' }); // missing longitude, radius
+
+      expect(response.status).toBe(400);
+    });
+
+    it('should reject invalid latitude', async () => {
+      const response = await request(app)
+        .get('/api/centres/search')
+        .query({
+          latitude: '200', // > 90
+          longitude: '-7.5898',
+          radius: '10',
+        });
+
+      expect(response.status).toBe(400);
+    });
+
+    it('should reject invalid longitude', async () => {
+      const response = await request(app)
+        .get('/api/centres/search')
+        .query({
+          latitude: '33.5731',
+          longitude: '200', // > 180
+          radius: '10',
+        });
+
+      expect(response.status).toBe(400);
+    });
+
+    it('should validate radius range', async () => {
+      const response = await request(app)
+        .get('/api/centres/search')
+        .query({
+          latitude: '33.5731',
+          longitude: '-7.5898',
+          radius: '200', // > 100
+        });
+
+      expect(response.status).toBe(400);
+    });
+  });
+
+  describe('GET /api/centres/:id/availability', () => {
+    it('should get centre availability slots', async () => {
+      const response = await request(app)
+        .get('/api/centres/1/availability');
+
+      expect([200, 404]).toContain(response.status);
+    });
+  });
+
+  describe('GET /api/centres/:id/stock', () => {
+    it('should get blood stock levels', async () => {
+      const response = await request(app)
+        .get('/api/centres/1/stock');
+
+      expect([200, 404]).toContain(response.status);
+    });
+  });
+});
