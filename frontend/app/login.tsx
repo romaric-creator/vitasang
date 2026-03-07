@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import {
   Text,
-  TextInput,
   View,
   ScrollView,
   TouchableOpacity,
@@ -10,49 +9,54 @@ import {
   Platform,
   ActivityIndicator,
 } from "react-native";
+import { Formik } from "formik";
 import { color } from "@/constant/color";
 import { router } from "expo-router";
 import { loginUser, updatePushToken } from "@/services/user.service";
 import { storeData } from "@/utils/storage";
-import { registerForPushNotificationsAsync } from "@/utils/pushNotifications"; // NEW IMPORT
+import { registerForPushNotificationsAsync } from "@/utils/pushNotifications";
+import { loginValidationSchema } from "@/validation/ValidationSchemas";
+import FormField from "@/components/FormField";
+import { PrimaryButton } from "@/components/PrimaryButton";
+import { formStyles } from "@/styles/formStyles";
 
-export default function Index() {
-  const [telephone, setTelephone] = useState("");
-  const [motDePasse, setMotDePasse] = useState("");
+import { useTranslation } from "react-i18next";
+
+export default function LoginScreen() {
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [generalError, setGeneralError] = useState("");
 
-  const handleLogin = async () => {
-    setError("");
+  const handleLogin = async (values: { telephone: string; mot_de_passe: string }) => {
+    setGeneralError("");
     setLoading(true);
 
     try {
-      const data = await loginUser(telephone, motDePasse);
+      const data = await loginUser(values.telephone, values.mot_de_passe);
       // Sauvegarder le token
       await storeData("token", data.token);
-      // Sauvegarder l'objet user en normalisant l'id (backend renvoie "id" pas "id_utilisateur")
+      // Sauvegarder l'objet user en normalisant l'id
       const userToStore = {
         ...data.user,
         id_utilisateur: data.user.id || data.user.id_utilisateur,
       };
       await storeData("user", userToStore);
 
-      // --- NEW: Register for push notifications and send token to backend ---
-      // const pushToken = await registerForPushNotificationsAsync();
-      // if (pushToken && userToStore.id_utilisateur) {
-      //   try {
-      //     await updatePushToken(userToStore.id_utilisateur, pushToken);
-      //     console.log("Push token sent to backend successfully.");
-      //   } catch (tokenError) {
-      //     console.error("Failed to send push token to backend:", tokenError);
-      //   }
-      // }
-      // --- END NEW ---
+      // Register for push notifications
+      try {
+        const pushToken = await registerForPushNotificationsAsync();
+        if (pushToken && userToStore.id_utilisateur) {
+          await updatePushToken(userToStore.id_utilisateur, pushToken);
+          console.log("Push token envoyé au backend après connexion.");
+        }
+      } catch (tokenError) {
+        console.error("Échec de l'envoi du push token au backend:", tokenError);
+      }
 
       router.replace("/(tabs)");
     } catch (err: any) {
       console.error("Login error:", err.message);
-      setError(err.message || "Une erreur inattendue est survenue.");
+      setGeneralError(err.message || t('login.error'));
     } finally {
       setLoading(false);
     }
@@ -65,69 +69,76 @@ export default function Index() {
     >
       <ScrollView
         contentContainerStyle={{ flexGrow: 1 }}
-        style={{ backgroundColor: color.background }}
+        style={{ backgroundColor: color.surface }}
       >
         <View style={styles.container}>
           {/* Header Section */}
           <View style={styles.headerSection}>
-            <Text style={styles.title}>VitaSang</Text>
-            <Text style={styles.subtitle}>Connectez-vous à votre compte</Text>
+            <Text style={styles.title}>{t('login.title')}</Text>
+            <Text style={styles.subtitle}>{t('login.subtitle')}</Text>
           </View>
 
-          {/* Form Section */}
-          <View style={styles.formContainer}>
-            <View style={styles.inputContainer}>
-              <Text style={styles.label}>TÉLÉPHONE</Text>
-              <TextInput
-                placeholder="Ex: 67XXXXXXX"
-                style={styles.input}
-                keyboardType="phone-pad"
-                placeholderTextColor={color.textLight}
-                value={telephone}
-                onChangeText={setTelephone}
-              />
-            </View>
+          {/* Form Section with Formik */}
+          <Formik
+            initialValues={{
+              telephone: "",
+              mot_de_passe: "",
+            }}
+            validationSchema={loginValidationSchema}
+            onSubmit={handleLogin}
+          >
+            {({ values, errors, touched, handleChange, handleBlur, handleSubmit }) => (
+              <View style={styles.formContainer}>
+                <FormField
+                  label={t('login.fields.phone')}
+                  value={values.telephone}
+                  onChangeText={handleChange("telephone")}
+                  onBlur={handleBlur("telephone")}
+                  placeholder={t('login.placeholders.phone')}
+                  error={errors.telephone}
+                  touched={touched.telephone}
+                  keyboardType="phone-pad"
+                  required
+                />
 
-            <View style={[styles.inputContainer, { marginTop: 28 }]}>
-              <Text style={styles.label}>MOT DE PASSE</Text>
-              <TextInput
-                placeholder="Ex: ************"
-                style={styles.input}
-                secureTextEntry={true}
-                placeholderTextColor={color.textLight}
-                value={motDePasse}
-                onChangeText={setMotDePasse}
-              />
-            </View>
+                <FormField
+                  label={t('login.fields.password')}
+                  value={values.mot_de_passe}
+                  onChangeText={handleChange("mot_de_passe")}
+                  onBlur={handleBlur("mot_de_passe")}
+                  placeholder={t('login.placeholders.password')}
+                  error={errors.mot_de_passe}
+                  touched={touched.mot_de_passe}
+                  secureTextEntry
+                  required
+                />
 
-            {/* Display Error Message */}
-            {error ? <Text style={styles.errorText}>{error}</Text> : null}
+                {/* Display general error message */}
+                {generalError ? (
+                  <Text style={styles.errorText}>{generalError}</Text>
+                ) : null}
 
-            {/* Mot de passe oublié */}
-            <TouchableOpacity style={styles.forgotBtn}>
-              <Text style={styles.forgotText}>Mot de passe oublié ?</Text>
-            </TouchableOpacity>
+                {/* Forgot Password Link */}
+                <TouchableOpacity style={styles.forgotBtn}>
+                  <Text style={styles.forgotText}>{t('login.forgotPassword')}</Text>
+                </TouchableOpacity>
 
-            {/* Login Button */}
-            <TouchableOpacity
-              style={styles.mainButton}
-              activeOpacity={0.8}
-              onPress={handleLogin}
-              disabled={loading}
-            >
-              {loading ? (
-                <ActivityIndicator color={color.textWhite} />
-              ) : (
-                <Text style={styles.buttonText}>CONNEXION</Text>
-              )}
-            </TouchableOpacity>
-          </View>
+                {/* Login Button */}
+                <PrimaryButton
+                  title={t('login.submit')}
+                  onPress={() => handleSubmit()}
+                  loading={loading}
+                  style={{ marginTop: 24 }}
+                />
+              </View>
+            )}
+          </Formik>
 
           {/* Footer - Switch to Register */}
           <View style={styles.footer}>
-            <Text style={styles.footerText}>Pas de compte ? </Text>
+            <Text style={styles.footerText}>{t('login.noAccount')} </Text>
             <TouchableOpacity onPress={() => router.replace("/register")}>
-              <Text style={styles.registerLink}>Inscrivez-vous ici</Text>
+              <Text style={styles.registerLink}>{t('login.registerLink')}</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -138,75 +149,38 @@ export default function Index() {
 
 const styles = StyleSheet.create({
   container: {
-    flexGrow: 1,
-    paddingHorizontal: 24,
-    paddingVertical: 60,
+    flex: 1,
+    paddingHorizontal: 16,
+    paddingTop: 40,
+    paddingBottom: 20,
   },
   headerSection: {
-    marginBottom: 48,
+    marginBottom: 32,
   },
   title: {
     color: color.primary,
     fontWeight: "800",
-    fontSize: 40,
+    fontSize: 32,
     letterSpacing: -0.8,
     marginBottom: 8,
   },
   subtitle: {
     fontWeight: "600",
     color: color.textSecondary,
-    fontSize: 16,
+    fontSize: 14,
   },
   formContainer: {
     flex: 1,
     justifyContent: "flex-start",
   },
-  inputContainer: {
-    width: "100%",
-  },
-  label: {
-    fontWeight: "700",
-    fontSize: 12,
-    color: color.textSecondary,
-    letterSpacing: 0.5,
-    marginBottom: 10,
-    textTransform: "uppercase",
-  },
-  input: {
-    borderBottomWidth: 2,
-    borderColor: color.primary,
-    paddingVertical: 12,
-    paddingHorizontal: 0,
-    fontSize: 16,
-    color: color.textMain,
-    fontWeight: "500",
-  },
   forgotBtn: {
     alignSelf: "flex-end",
-    marginTop: 14,
+    marginTop: 12,
   },
   forgotText: {
     color: color.primary,
     fontWeight: "700",
-    fontSize: 13,
-  },
-  mainButton: {
-    backgroundColor: color.primary,
-    paddingVertical: 16,
-    borderRadius: 12,
-    marginTop: 40,
-    alignItems: "center",
-    shadowColor: color.primary,
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.35,
-    shadowRadius: 8,
-    elevation: 8,
-  },
-  buttonText: {
-    color: color.textWhite,
-    fontWeight: "800",
-    fontSize: 15,
-    letterSpacing: 1,
+    fontSize: 12,
   },
   errorText: {
     color: color.error,
@@ -231,6 +205,6 @@ const styles = StyleSheet.create({
   registerLink: {
     color: color.primary,
     fontWeight: "800",
-    fontSize: 14,
+    fontSize: 13,
   },
 });

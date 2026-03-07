@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import {
   Text,
-  TextInput,
   View,
   ScrollView,
   TouchableOpacity,
@@ -10,99 +9,62 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from "react-native";
+import { Formik } from "formik";
 import { color } from "@/constant/color";
 import { router } from "expo-router";
 import { registerUser, updatePushToken } from "@/services/user.service";
 import { TabBarIcon } from "@/components/TabBarIcon";
-import { registerForPushNotificationsAsync } from "@/utils/pushNotifications"; // NEW IMPORT
-import { storeData } from "@/utils/storage"; // NEW IMPORT
+import { registerForPushNotificationsAsync } from "@/utils/pushNotifications";
+import { storeData } from "@/utils/storage";
+import { registerValidationSchema } from "@/validation/ValidationSchemas";
+import FormField from "@/components/FormField";
+import { PrimaryButton } from "@/components/PrimaryButton";
+import { BloodGroupSelector } from "@/components/BloodGroupSelector";
+import { formStyles } from "@/styles/formStyles";
 
-const BloodGroupBadge = ({
-  label,
-  isSelected,
-  onPress,
-}: {
-  label: string;
-  isSelected: boolean;
-  onPress: () => void;
-}) => (
-  <TouchableOpacity
-    style={[
-      styles.bloodGroupCard,
-      { 
-        backgroundColor: isSelected ? color.primary : color.background,
-        borderColor: isSelected ? color.primary : color.border,
-        borderWidth: isSelected ? 0 : 1,
-      },
-    ]}
-    onPress={onPress}
-  >
-    <Text
-      style={[
-        styles.bloodGroupText,
-        { color: isSelected ? "white" : color.textMain },
-      ]}
-    >
-      {label}
-    </Text>
-  </TouchableOpacity>
-);
+import { useTranslation } from "react-i18next";
 
-export default function Register() {
-  const [nom, setNom] = useState("");
-  const [prenom, setPrenom] = useState("");
-  const [telephone, setTelephone] = useState("");
-  const [motDePasse, setMotDePasse] = useState("");
-  const [groupeSanguin, setGroupeSanguin] = useState("");
+export default function RegisterScreen() {
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [generalError, setGeneralError] = useState("");
 
-  const handleRegister = async () => {
-    if (!nom || !prenom || !telephone || !motDePasse || !groupeSanguin) {
-      setError("Veuillez remplir tous les champs.");
-      return;
-    }
-    setError("");
+  const handleRegister = async (values: any) => {
+    setGeneralError("");
     setLoading(true);
 
     try {
       const data = await registerUser(
-        nom,
-        prenom,
-        telephone,
-        motDePasse,
-        groupeSanguin,
-        "donneur",
+        values.nom,
+        values.prenom,
+        values.telephone,
+        values.mot_de_passe,
+        values.groupe_sanguin,
+        "donneur"
       );
-      console.log("Registration successful:", data);
 
-      // Store the user object with id_utilisateur for later retrieval
       const userToStore = {
         ...data.user,
-        id_utilisateur: data.user.user.id_utilisateur, // Ensure id_utilisateur is explicitly set from data.user.user
+        id_utilisateur: data.user.id || data.user.id_utilisateur,
       };
-      await storeData("user", userToStore); // Store the user object
+      await storeData("user", userToStore);
+      await storeData("token", data.token);
 
-      // --- NEW: Register for push notifications and send token to backend ---
-      // (This part is currently commented out, but the user object needs to be stored correctly for it to work later)
-      // const user = data.user;
-      // if (user && user.id_utilisateur) {
-      //   const pushToken = await registerForPushNotificationsAsync();
-      //   if (pushToken) {
-      //     try {
-      //       await updatePushToken(user.id_utilisateur, pushToken);
-      //       console.log("Push token sent to backend successfully after registration.");
-      //     } catch (tokenError) {
-      //       console.error("Failed to send push token to backend after registration:", tokenError);
-      //     }
-      //   }
-      // }
-      // --- END NEW ---
+      // Enregistrement des notifications push après inscription
+      try {
+        const pushToken = await registerForPushNotificationsAsync();
+        if (pushToken && userToStore.id_utilisateur) {
+          await updatePushToken(userToStore.id_utilisateur, pushToken);
+          console.log("Push token envoyé au backend après inscription.");
+        }
+      } catch (tokenError) {
+        console.error("Échec de l'envoi du push token au backend:", tokenError);
+      }
 
-      router.replace("/login");
+      router.replace("/(tabs)");
     } catch (err: any) {
       console.error("Registration error:", err.message);
-      setError(err.message || "Une erreur inattendue est survenue.");
+      setGeneralError(err.message || t('register.error'));
     } finally {
       setLoading(false);
     }
@@ -115,106 +77,110 @@ export default function Register() {
     >
       <ScrollView
         contentContainerStyle={{ flexGrow: 1 }}
-        style={{ backgroundColor: color.background }}
+        style={{ backgroundColor: color.surface }}
+        showsVerticalScrollIndicator={false}
       >
         <View style={styles.container}>
-          {/* Header Section */}
           <View style={styles.headerSection}>
-            <Text style={styles.title}>VitaSang</Text>
-            <Text style={styles.subtitle}>Créez votre profil de donneur</Text>
+            <Text style={styles.title}>{t('register.title')}</Text>
+            <Text style={styles.subtitle}>{t('register.subtitle')}</Text>
           </View>
 
-          {/* Input Fields */}
-          <View style={styles.inputContainer}>
-            <Text style={styles.label}>NOM</Text>
-            <TextInput
-              placeholder="Ex: Kenfack"
-              style={styles.input}
-              value={nom}
-              onChangeText={setNom}
-              placeholderTextColor={color.textLight}
-            />
-          </View>
-          <View style={styles.inputContainer}>
-            <Text style={styles.label}>PRÉNOM</Text>
-            <TextInput
-              placeholder="Ex: Paul"
-              style={styles.input}
-              value={prenom}
-              onChangeText={setPrenom}
-              placeholderTextColor={color.textLight}
-            />
-          </View>
-
-          <View style={styles.inputContainer}>
-            <Text style={styles.label}>TÉLÉPHONE</Text>
-            <TextInput
-              placeholder="Ex: 67XXXXXXX"
-              style={styles.input}
-              keyboardType="phone-pad"
-              value={telephone}
-              onChangeText={setTelephone}
-              placeholderTextColor={color.textLight}
-            />
-          </View>
-
-          <View style={styles.inputContainer}>
-            <Text style={styles.label}>MOT DE PASSE</Text>
-            <TextInput
-              placeholder="Ex: ************"
-              style={styles.input}
-              secureTextEntry={true}
-              value={motDePasse}
-              onChangeText={setMotDePasse}
-              placeholderTextColor={color.textLight}
-            />
-          </View>
-
-          {/* Blood Group Selection */}
-          <View style={styles.bloodGroupSection}>
-            <Text style={styles.sectionTitle}>
-              <TabBarIcon name="heart" size={14} color={color.primary} />{" "}
-              Votre groupe sanguin
-            </Text>
-            <View style={styles.bloodGroupGrid}>
-              {["A+", "A-", "AB+", "AB-", "B+", "B-", "O+", "O-"].map(
-                (group) => (
-                  <BloodGroupBadge
-                    key={group}
-                    label={group}
-                    isSelected={groupeSanguin === group}
-                    onPress={() => setGroupeSanguin(group)}
-                  />
-                ),
-              )}
-            </View>
-          </View>
-
-          {/* Display Error Message */}
-          {error ? <Text style={styles.errorText}>{error}</Text> : null}
-
-          {/* Final Button */}
-          <TouchableOpacity
-            style={styles.mainButton}
-            onPress={handleRegister}
-            disabled={loading}
+          <Formik
+            initialValues={{
+              nom: "",
+              prenom: "",
+              telephone: "",
+              mot_de_passe: "",
+              groupe_sanguin: "",
+            }}
+            validationSchema={registerValidationSchema}
+            onSubmit={handleRegister}
           >
-            {loading ? (
-              <ActivityIndicator color={color.textWhite} />
-            ) : (
-              <Text style={styles.buttonText}>CRÉER MON COMPTE</Text>
+            {({ values, errors, touched, handleChange, handleBlur, handleSubmit }) => (
+              <View style={styles.formContainer}>
+                <View style={styles.row}>
+                  <View style={{ flex: 1 }}>
+                    <FormField
+                      label={t('register.fields.lastName')}
+                      value={values.nom}
+                      onChangeText={handleChange("nom")}
+                      onBlur={handleBlur("nom")}
+                      placeholder={t('register.placeholders.lastName')}
+                      error={errors.nom}
+                      touched={touched.nom}
+                      required
+                    />
+                  </View>
+                  <View style={{ width: 12 }} />
+                  <View style={{ flex: 1 }}>
+                    <FormField
+                      label={t('register.fields.firstName')}
+                      value={values.prenom}
+                      onChangeText={handleChange("prenom")}
+                      onBlur={handleBlur("prenom")}
+                      placeholder={t('register.placeholders.firstName')}
+                      error={errors.prenom}
+                      touched={touched.prenom}
+                      required
+                    />
+                  </View>
+                </View>
+
+                <FormField
+                  label={t('register.fields.phone')}
+                  value={values.telephone}
+                  onChangeText={handleChange("telephone")}
+                  onBlur={handleBlur("telephone")}
+                  placeholder={t('register.placeholders.phone')}
+                  error={errors.telephone}
+                  touched={touched.telephone}
+                  keyboardType="phone-pad"
+                  required
+                />
+                <Text style={styles.hintText}>{t('register.hintPhone')}</Text>
+
+                <FormField
+                  label={t('register.fields.password')}
+                  value={values.mot_de_passe}
+                  onChangeText={handleChange("mot_de_passe")}
+                  onBlur={handleBlur("mot_de_passe")}
+                  placeholder={t('register.placeholders.password')}
+                  error={errors.mot_de_passe}
+                  touched={touched.mot_de_passe}
+                  secureTextEntry
+                  required
+                />
+
+                <BloodGroupSelector
+                  value={values.groupe_sanguin}
+                  onSelect={(group) => handleChange("groupe_sanguin")(group)}
+                  error={errors.groupe_sanguin}
+                  touched={touched.groupe_sanguin}
+                />
+
+                {generalError ? (
+                  <Text style={styles.errorText}>{generalError}</Text>
+                ) : null}
+
+                <PrimaryButton
+                  title={t('register.submit')}
+                  onPress={() => handleSubmit()}
+                  loading={loading}
+                  style={{ marginTop: 20 }}
+                />
+
+                <TouchableOpacity onPress={() => router.replace("/login")}>
+                  <Text style={styles.loginLinkText}>
+                    {t('register.alreadyRegistered')}{" "}
+                    <Text style={styles.loginLinkHighlight}>
+                      {t('register.loginLink')}
+                    </Text>
+                  </Text>
+                </TouchableOpacity>
+              </View>
             )}
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.loginLink}
-            onPress={() => router.replace("/login")}
-          >
-            <Text style={styles.loginLinkText}>
-              Déjà inscrit ?{" "}
-              <Text style={styles.loginLinkHighlight}>Connectez-vous ici</Text>
-            </Text>
-          </TouchableOpacity>
+          </Formik>
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
@@ -223,105 +189,38 @@ export default function Register() {
 
 const styles = StyleSheet.create({
   container: {
-    flexGrow: 1,
-    paddingHorizontal: 24,
-    paddingVertical: 40,
+    flex: 1,
+    paddingHorizontal: 16,
+    paddingTop: 40,
+    paddingBottom: 20,
   },
   headerSection: {
-    marginBottom: 40,
+    marginBottom: 24,
   },
   title: {
     color: color.primary,
     fontWeight: "800",
-    fontSize: 40,
+    fontSize: 32,
     letterSpacing: -0.8,
-    marginBottom: 8,
+    marginBottom: 4,
   },
   subtitle: {
     fontWeight: "600",
     color: color.textSecondary,
-    fontSize: 16,
-  },
-  inputContainer: {
-    marginTop: 24,
-  },
-  label: {
-    fontWeight: "700",
-    fontSize: 12,
-    color: color.textSecondary,
-    letterSpacing: 0.5,
-    marginBottom: 10,
-    textTransform: "uppercase",
-  },
-  input: {
-    borderBottomWidth: 2,
-    borderColor: color.primary,
-    paddingVertical: 12,
-    paddingHorizontal: 0,
-    fontSize: 16,
-    color: color.textMain,
-    fontWeight: "500",
-  },
-  bloodGroupSection: {
-    marginTop: 32,
-  },
-  sectionTitle: {
-    fontWeight: "700",
-    marginBottom: 16,
     fontSize: 14,
-    color: color.textMain,
-    letterSpacing: 0.3,
-    textTransform: "uppercase",
   },
-  bloodGroupGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    justifyContent: "space-between",
-    gap: 10,
+  formContainer: {
+    flex: 1,
   },
-  bloodGroupCard: {
-    width: "23%",
-    paddingVertical: 16,
-    borderRadius: 12,
-    alignItems: "center",
-    shadowColor: color.shadow,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  bloodGroupText: {
-    fontSize: 16,
-    fontWeight: "800",
-    letterSpacing: 0.3,
-  },
-  mainButton: {
-    backgroundColor: color.primary,
-    paddingVertical: 16,
-    borderRadius: 12,
-    marginTop: 36,
-    alignItems: "center",
-    shadowColor: color.primary,
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.35,
-    shadowRadius: 8,
-    elevation: 8,
-  },
-  buttonText: {
-    color: color.textWhite,
-    fontWeight: "800",
-    fontSize: 15,
-    letterSpacing: 1,
-  },
-  loginLink: {
-    marginTop: 20,
-    alignItems: "center",
-    paddingVertical: 14,
+  row: {
+    flexDirection: 'row',
   },
   loginLinkText: {
     color: color.textSecondary,
     fontWeight: "500",
-    fontSize: 14,
+    fontSize: 13,
+    textAlign: "center",
+    marginTop: 16,
   },
   loginLinkHighlight: {
     color: color.primary,
@@ -330,8 +229,15 @@ const styles = StyleSheet.create({
   errorText: {
     color: color.error,
     textAlign: "center",
-    marginTop: 16,
-    fontSize: 13,
+    marginTop: 12,
+    fontSize: 12,
     fontWeight: "600",
+  },
+  hintText: {
+    color: color.textSecondary,
+    fontSize: 10,
+    marginTop: -10,
+    marginBottom: 12,
+    fontStyle: "italic",
   },
 });
