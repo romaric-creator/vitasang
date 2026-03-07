@@ -60,13 +60,17 @@ const schemas = {
 
   // Create alert validation
   createAlert: Joi.object({
-    latitude: Joi.number().required().messages({
+    latitude: Joi.number().required().min(-90).max(90).messages({
       'number.base': 'La latitude doit être un nombre',
       'any.required': 'La latitude est requise',
+      'number.min': 'La latitude doit être entre -90 et 90',
+      'number.max': 'La latitude doit être entre -90 et 90',
     }),
-    longitude: Joi.number().required().messages({
+    longitude: Joi.number().required().min(-180).max(180).messages({
       'number.base': 'La longitude doit être un nombre',
       'any.required': 'La longitude est requise',
+      'number.min': 'La longitude doit être entre -180 et 180',
+      'number.max': 'La longitude doit être entre -180 et 180',
     }),
     groupe_sanguin: Joi.string()
       .valid('A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-')

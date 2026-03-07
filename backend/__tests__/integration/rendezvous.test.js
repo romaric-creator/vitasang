@@ -32,6 +32,40 @@ describe('Rendez-vous Controller - Integration Tests', () => {
       { expiresIn: '24h' }
     );
 
+    // Setup mock return values
+    const { Rendezvous, Utilisateur, Centre } = require('../../models');
+
+    Rendezvous.create.mockResolvedValue({
+      id_rendezvous: 1,
+      id_utilisateur: userId,
+      id_centre: 1,
+      date_rendezvous: '2026-03-15',
+      heure_debut: '10:00',
+      statut: 'CONFIRMEE',
+    });
+
+    Rendezvous.findByPk.mockResolvedValue({
+      id_rendezvous: 1,
+      id_utilisateur: userId,
+      id_centre: 1,
+      date_rendezvous: '2026-03-15',
+      statut: 'CONFIRMEE',
+    });
+
+    Rendezvous.findAll.mockResolvedValue([]);
+
+    Utilisateur.findByPk.mockResolvedValue({
+      id_utilisateur: userId,
+      telephone: '+237612345678',
+    });
+
+    Centre.findByPk.mockResolvedValue({
+      id_centre: 1,
+      nom: 'Centre de Casablanca',
+      latitude: 33.5731,
+      longitude: -7.5898,
+    });
+
     app = express();
     app.use(express.json());
 

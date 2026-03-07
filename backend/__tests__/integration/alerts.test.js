@@ -43,6 +43,36 @@ describe('Alerts Controller - Integration Tests', () => {
       { expiresIn: '24h' }
     );
 
+    // Setup mock return values
+    const { Alerte, Utilisateur } = require('../../models');
+    
+    Alerte.create.mockResolvedValue({
+      id_alerte: 1,
+      id_utilisateur: userId,
+      groupe_sanguin: 'O+',
+      urgence: 'URGENT',
+      latitude: 33.5731,
+      longitude: -7.5898,
+      statut: 'ACTIVE',
+      created_at: new Date(),
+    });
+
+    Alerte.findByPk.mockResolvedValue({
+      id_alerte: 1,
+      id_utilisateur: userId,
+      groupe_sanguin: 'O+',
+      urgence: 'URGENT',
+      statut: 'ACTIVE',
+    });
+
+    Alerte.findAll.mockResolvedValue([]);
+
+    Utilisateur.findByPk.mockResolvedValue({
+      id_utilisateur: userId,
+      telephone: '+237612345678',
+      groupe_sanguin: 'O+',
+    });
+
     app = express();
     app.use(express.json());
 

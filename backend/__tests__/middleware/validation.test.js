@@ -120,10 +120,10 @@ describe('Validation Middleware', () => {
   describe('Search users validation', () => {
     test('should pass with valid search data', () => {
       const req = mockReq({
-        lat: 48.8566,
-        long: 2.3522,
-        blood: 'O+',
-        rayon: 10,
+        latitude: 48.8566,
+        longitude: 2.3522,
+        groupe_sanguin: 'O+',
+        radius: 10,
       });
       const res = mockRes();
 
@@ -135,9 +135,9 @@ describe('Validation Middleware', () => {
 
     test('should reject invalid coordinates', () => {
       const req = mockReq({
-        lat: 'invalid',
-        long: 2.3522,
-        blood: 'O+',
+        latitude: 'invalid',
+        longitude: 2.3522,
+        groupe_sanguin: 'O+',
       });
       const res = mockRes();
 

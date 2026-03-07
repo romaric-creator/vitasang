@@ -1,5 +1,5 @@
 describe('Authentication Middleware - verifyToken', () => {
-  const { verifyToken } = require('../utils/auth.middleware');
+  const { verifyToken } = require('../../utils/auth.middleware');
   const jwt = require('jsonwebtoken');
 
   // Mock JWT
