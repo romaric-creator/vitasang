@@ -4,70 +4,53 @@ import {
   Text,
   View,
   TouchableOpacity,
-  TextInput,
   ScrollView,
   ActivityIndicator,
 } from "react-native";
+import { Formik } from "formik";
 import { TabBarIcon } from "@/components/TabBarIcon";
 import { color } from "@/constant/color";
 import { useRouter } from "expo-router";
 import ThemedView from "@/components/ThemedView";
 import * as Location from 'expo-location';
 import { searchDonors, sendAlert } from "@/services/user.service";
-import { getData } from "@/utils/storage";
+import { createAlertValidationSchema } from "@/validation/ValidationSchemas";
+import FormField from "@/components/FormField";
+import { PageHeader } from "@/components/PageHeader";
+import { BloodGroupSelector } from "@/components/BloodGroupSelector";
+import { PrimaryButton } from "@/components/PrimaryButton";
+import { formStyles } from "@/styles/formStyles";
+import { useTranslation } from "react-i18next";
 
-const BloodOption = ({ label, selected, onSelect }: any) => (
-  <TouchableOpacity
-    style={[styles.bloodOption, selected === label && styles.bloodSelected]}
-    onPress={() => onSelect(label)}
-  >
-    <Text style={[styles.bloodLabel, selected === label && styles.textWhite]}>
-      {label}
-    </Text>
-  </TouchableOpacity>
-);
-
-export default function CreateAlert() {
+export default function CreateAlertScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
-  const [selectedGroup, setSelectedGroup] = useState("O-");
-  const [poches, setPoches] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [donorCount, setDonorCount] = useState<number | null>(null);
   const [location, setLocation] = useState<Location.LocationObject | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
-
-  const groups = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
+  const [loading, setLoading] = useState(false);
+  const [donorCount, setDonorCount] = useState<number | null>(null);
 
   useEffect(() => {
     (async () => {
       let { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== 'granted') {
-        setErrorMsg('Permission de localisation refusée');
+        setErrorMsg(t('alert.locationError'));
+        console.error('Location permission denied');
         return;
       }
 
       let location = await Location.getCurrentPositionAsync({});
+      console.log('Location fetched:', location);
       setLocation(location);
     })();
   }, []);
 
-  useEffect(() => {
-    if (location && selectedGroup) {
-      handleSearch();
-    }
-  }, [selectedGroup, location]);
-
-  const handleSearch = async () => {
-    if (!location) return;
+  const handleSearch = async (groupeSanguin: string, latitude: number, longitude: number) => {
+    if (!latitude || !longitude) return;
 
     setLoading(true);
     try {
-      const data = await searchDonors(
-        location.coords.latitude,
-        location.coords.longitude,
-        selectedGroup,
-        10 // Rayon de 10km par défaut
-      );
+      const data = await searchDonors(latitude, longitude, groupeSanguin, 10);
       setDonorCount(data.count);
     } catch (error) {
       console.error(error);
@@ -77,38 +60,38 @@ export default function CreateAlert() {
     }
   };
 
-  const handleDiffusion = async () => {
-    if (!poches || parseInt(poches) <= 0) {
-      alert("Veuillez indiquer le nombre de poches requis.");
-      return;
-    }
+  const handleSubmit = async (values: any) => {
+    console.log('handleSubmit called with values:', values);
 
     if (!location) {
-      alert("Localisation non disponible");
+      setErrorMsg(t('alert.locationError'));
+      console.error('No location');
       return;
     }
 
     setLoading(true);
     try {
-      const user = await getData("user");
-
       const result = await sendAlert({
         latitude: location.coords.latitude,
         longitude: location.coords.longitude,
-        bloodType: selectedGroup,
+        groupe_sanguin: values.groupe_sanguin,
         radius: 10,
-        degree: "Urgent",
-        poches: parseInt(poches),
-        id_initiateur: user?.id_utilisateur
+        urgence: values.urgence,
+        quantite_requise: parseInt(values.quantite_requise),
+        lieu: values.lieu,
+        description: values.description
       });
 
-      alert(`Succès : ${result.message}`);
-      router.replace({
-        pathname: "/alert-tracking/[id]",
-        params: { id: result.alertId, notifiedDonors: JSON.stringify(result.notifiedDonors) }
-      });
+      if (result.alertId) {
+        router.replace({
+          pathname: "/alert-tracking/[id]",
+          params: { id: result.alertId }
+        });
+      } else {
+        setErrorMsg(t('alert.idError'));
+      }
     } catch (error: any) {
-      alert(error.message || "Une erreur est survenue lors de la diffusion.");
+      setErrorMsg(error.message || t('alert.genericError'));
     } finally {
       setLoading(false);
     }
@@ -116,126 +99,181 @@ export default function CreateAlert() {
 
   return (
     <ThemedView style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()}>
-          <TabBarIcon name="close" size={24} color="black" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Nouvelle Alerte NHR</Text>
-        <View style={{ width: 24 }} />
-      </View>
+      <PageHeader title={t('alert.title')} />
+      <ScrollView contentContainerStyle={{ padding: 16 }} showsVerticalScrollIndicator={false}>
+        <Formik
+          initialValues={{
+            groupe_sanguin: "O+",
+            urgence: "URGENT",
+            lieu: "",
+            quantite_requise: "",
+            description: "",
+            latitude: location?.coords.latitude || 0,
+            longitude: location?.coords.longitude || 0,
+          }}
+          validationSchema={createAlertValidationSchema}
+          onSubmit={handleSubmit}
+          enableReinitialize={true}
+        >
+          {({ values, errors, touched, handleChange, handleBlur, handleSubmit }) => (
+            <View>
+              <BloodGroupSelector
+                value={values.groupe_sanguin}
+                onSelect={(group) => {
+                  handleChange("groupe_sanguin")(group);
+                  handleSearch(group, location?.coords.latitude || 0, location?.coords.longitude || 0);
+                }}
+                error={errors.groupe_sanguin}
+                touched={touched.groupe_sanguin}
+              />
 
-      <ScrollView contentContainerStyle={{ padding: 25 }}>
-        <Text style={styles.label}>Groupe Sanguin Requis</Text>
-        <View style={styles.grid}>
-          {groups.map((g) => (
-            <BloodOption
-              key={g}
-              label={g}
-              selected={selectedGroup}
-              onSelect={setSelectedGroup}
-            />
-          ))}
-        </View>
+              <FormField
+                label={t('alert.fields.location')}
+                value={values.lieu}
+                onChangeText={handleChange("lieu")}
+                onBlur={handleBlur("lieu")}
+                placeholder={t('alert.placeholders.location')}
+                error={errors.lieu}
+                touched={touched.lieu}
+                required
+              />
 
-        <Text style={styles.label}>Nombre de poches (Obligatoire)</Text>
-        <TextInput
-          style={[styles.input, { paddingLeft: 15, backgroundColor: "#F8F9FA", borderRadius: 15, height: 55 }]}
-          placeholder="Ex: 2"
-          keyboardType="numeric"
-          value={poches}
-          onChangeText={setPoches}
-        />
+              <FormField
+                label={t('alert.fields.quantity')}
+                value={values.quantite_requise}
+                onChangeText={handleChange("quantite_requise")}
+                onBlur={handleBlur("quantite_requise")}
+                placeholder={t('alert.placeholders.quantity')}
+                error={errors.quantite_requise}
+                touched={touched.quantite_requise}
+                keyboardType="numeric"
+                required
+              />
 
-        <View style={styles.warningBox}>
-          <TabBarIcon name="info-circle" size={18} color={color.primary} />
-          {loading ? (
-            <ActivityIndicator size="small" color={color.primary} />
-          ) : (
-            <Text style={styles.warningText}>
-              {donorCount !== null
-                ? `${donorCount} donneurs compatibles trouvés dans un rayon de 10km.`
-                : "Recherche de donneurs compatibles dans un rayon de 10km..."}
-            </Text>
+              <View style={formStyles.field}>
+                <Text style={formStyles.label}>
+                  {t('alert.fields.urgency')} <Text style={{ color: color.error }}>*</Text>
+                </Text>
+                <View style={styles.urgencyGrid}>
+                  {["NORMAL", "URGENT", "TRES_URGENT"].map((level) => (
+                    <TouchableOpacity
+                      key={level}
+                      style={[
+                        styles.urgencyOption,
+                        values.urgence === level && styles.urgencySelected,
+                      ]}
+                      onPress={() => handleChange("urgence")(level)}
+                      activeOpacity={0.7}
+                    >
+                      <Text
+                        style={[
+                          styles.urgencyLabel,
+                          values.urgence === level && styles.textWhite,
+                        ]}
+                      >
+                        {t(`alert.urgencyLevels.${level}`)}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+                {errors.urgence && touched.urgence && (
+                  <Text style={formStyles.errorText}>{errors.urgence}</Text>
+                )}
+              </View>
+
+              <FormField
+                label={t('alert.fields.description')}
+                value={values.description}
+                onChangeText={handleChange("description")}
+                onBlur={handleBlur("description")}
+                placeholder={t('alert.placeholders.description')}
+                error={errors.description}
+                touched={touched.description}
+              />
+
+              <View style={styles.warningBox}>
+                <TabBarIcon name="info-circle" size={16} color={color.primary} />
+                {loading ? (
+                  <ActivityIndicator size="small" color={color.primary} />
+                ) : (
+                  <Text style={styles.warningText}>
+                    {donorCount !== null
+                      ? t('alert.donorFound', { count: donorCount, group: values.groupe_sanguin })
+                      : t('alert.searchingDonors')}
+                  </Text>
+                )}
+              </View>
+
+              {errorMsg && (
+                <Text style={styles.errorText}>{errorMsg}</Text>
+              )}
+
+              <PrimaryButton
+                title={t('alert.submit')}
+                onPress={() => handleSubmit()}
+                loading={loading}
+                style={{ marginTop: 20 }}
+              />
+            </View>
           )}
-        </View>
-        {errorMsg && <Text style={{ color: 'red', fontSize: 12, marginTop: 10 }}>{errorMsg}</Text>}
+        </Formik>
       </ScrollView>
-
-      <TouchableOpacity
-        style={styles.btnSend}
-        onPress={handleDiffusion}
-      >
-        <Text style={styles.btnSendText}>DIFFUSER L'ALERTE</Text>
-      </TouchableOpacity>
     </ThemedView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "white" },
-  header: {
+  container: { flex: 1, backgroundColor: color.screenBackground },
+  textWhite: { color: "white" },
+  urgencyGrid: {
     flexDirection: "row",
     justifyContent: "space-between",
-    alignItems: "center",
-    paddingHorizontal: 20,
-    paddingTop: 50,
-    paddingBottom: 20,
+    gap: 8,
   },
-  headerTitle: { fontSize: 18, fontWeight: "bold" },
-  label: {
-    fontSize: 14,
-    fontWeight: "bold",
-    color: "#333",
-    marginTop: 20,
-    marginBottom: 10,
-  },
-  grid: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
-  bloodOption: {
-    width: "22%",
-    height: 50,
-    borderRadius: 15,
+  urgencyOption: {
+    flex: 1,
+    paddingVertical: 10,
+    borderRadius: 10,
     borderWidth: 1,
-    borderColor: "#DDD",
-    justifyContent: "center",
+    borderColor: color.border,
     alignItems: "center",
-    backgroundColor: "#F8F9FA",
+    backgroundColor: "white",
   },
-  bloodSelected: { backgroundColor: color.primary, borderColor: color.primary },
-  bloodLabel: { fontWeight: "bold", fontSize: 16 },
-  textWhite: { color: "white" },
-  inputContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#F8F9FA",
-    borderRadius: 15,
-    paddingHorizontal: 15,
-    height: 55,
+  urgencySelected: {
+    backgroundColor: color.primary,
+    borderColor: color.primary,
   },
-  input: { flex: 1, marginLeft: 10, fontSize: 15 },
-  textArea: {
-    backgroundColor: "#F8F9FA",
-    borderRadius: 15,
-    padding: 15,
-    height: 100,
-    textAlignVertical: "top",
+  urgencyLabel: {
+    fontSize: 10,
+    fontWeight: "700",
+    color: color.textMain,
+    textAlign: 'center',
   },
   warningBox: {
     flexDirection: "row",
     gap: 10,
     backgroundColor: "#FFF5F5",
-    padding: 15,
-    borderRadius: 15,
-    marginTop: 25,
-    alignItems: 'center'
+    padding: 12,
+    borderRadius: 10,
+    marginTop: 12,
+    marginBottom: 12,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#FFE4E6',
   },
-  warningText: { flex: 1, fontSize: 12, color: color.primary, lineHeight: 18 },
-  btnSend: {
-    backgroundColor: color.primary,
-    margin: 25,
-    padding: 20,
-    borderRadius: 20,
-    alignItems: "center",
+  warningText: {
+    flex: 1,
+    fontSize: 11,
+    color: color.primary,
+    lineHeight: 16,
+    fontWeight: '600',
   },
-  btnSendText: { color: "white", fontWeight: "bold", fontSize: 16 },
+  errorText: {
+    color: color.error,
+    fontSize: 12,
+    marginBottom: 16,
+    textAlign: 'center',
+    fontWeight: '600',
+  },
 });
 

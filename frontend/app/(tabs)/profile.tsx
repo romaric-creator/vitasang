@@ -11,13 +11,15 @@ import React, { useEffect, useState } from "react";
 import ThemedView from "@/components/ThemedView";
 import { TabBarIcon } from "@/components/TabBarIcon";
 import { color } from "@/constant/color";
-import { profileItems } from "@/data/profileData";
-import { getData, removeData, getUserIdFromStorage } from "@/utils/storage";
+import {removeData, getUserIdFromStorage } from "@/utils/storage";
 import { getUserProfile } from "@/services/user.service";
 import { useRouter } from "expo-router";
+import { Image } from "react-native";
 
-const ProfileItem = ({ icon, label }: { icon: string; label: string }) => (
-  <TouchableOpacity style={styles.menuItem}>
+import { useTranslation } from "react-i18next";
+
+const ProfileItem = ({ icon, label, onPress }: { icon: string; label: string; onPress?: () => void }) => (
+  <TouchableOpacity style={styles.menuItem} onPress={onPress}>
     <View style={styles.menuLeft}>
       <View style={styles.iconContainer}>
         <TabBarIcon name={icon as any} size={20} color={color.primary} />
@@ -30,6 +32,7 @@ const ProfileItem = ({ icon, label }: { icon: string; label: string }) => (
 
 export default function Profile() {
   const router = useRouter();
+  const { t } = useTranslation();
   const [userData, setUserData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
@@ -51,10 +54,10 @@ export default function Profile() {
   }, []);
 
   const handleLogout = () => {
-    Alert.alert("Déconnexion", "Êtes-vous sûr de vouloir vous déconnecter ?", [
-      { text: "Annuler", style: "cancel" },
+    Alert.alert(t('profile.logout'), t('profile.logoutConfirm'), [
+      { text: t('common.cancel'), style: "cancel" },
       {
-        text: "Déconnecter",
+        text: t('profile.logout'),
         style: "destructive",
         onPress: async () => {
           await removeData("token");
@@ -75,60 +78,97 @@ export default function Profile() {
 
   const fullName = userData
     ? `${userData.prenom || ""} ${userData.nom || ""}`.trim()
-    : "Utilisateur";
+    : t('profile.defaultUser');
   const bloodType = userData?.groupe_sanguin || "—";
   const donsCount = userData?.donsCount ?? 0;
   const alertesCount = userData?.alertesCount ?? 0;
+  const profileImage = userData?.photo_profil
+    ? { uri: process.env.EXPO_PUBLIC_API_BASE_URL?.replace('/api', '') + userData.photo_profil }
+    : null;
 
   return (
     <ThemedView style={styles.container}>
       <ScrollView showsVerticalScrollIndicator={false}>
-        <Text style={styles.title}>Mon Profil</Text>
+        <Text style={styles.title}>{t('profile.title')}</Text>
 
         <View style={styles.profileHeader}>
           <View style={styles.avatarWrapper}>
             <View style={styles.avatarPlaceholder}>
-              <TabBarIcon name="user" size={60} color={color.textWhite} />
+              {profileImage ? (
+                <Image source={profileImage} style={styles.avatarImage} />
+              ) : (
+                <TabBarIcon name="user" size={48} color={color.textWhite} />
+              )}
             </View>
-            <TouchableOpacity style={styles.editBadge}>
-              <TabBarIcon name="edit" size={14} color={color.textWhite} />
+            <TouchableOpacity
+              style={styles.editBadge}
+              onPress={() => router.push('/edit-profile')}
+            >
+              <TabBarIcon name="edit" size={12} color={color.textWhite} />
             </TouchableOpacity>
           </View>
 
           <Text style={styles.userName}>{fullName}</Text>
           <View style={styles.bloodBadge}>
-            <TabBarIcon name="heart" size={14} color={color.primary} />
-            <Text style={styles.bloodText}>Groupe {bloodType}</Text>
+            <TabBarIcon name="heart" size={12} color={color.primary} />
+            <Text style={styles.bloodText}>{bloodType}</Text>
           </View>
         </View>
 
         <View style={styles.statsSection}>
           <View style={styles.statItem}>
             <Text style={styles.statValue}>{donsCount}</Text>
-            <Text style={styles.statLabel}>Dons</Text>
+            <Text style={styles.statLabel}>{t('profile.donations')}</Text>
           </View>
           <View style={styles.dividerVertical} />
           <View style={styles.statItem}>
             <Text style={styles.statValue}>{alertesCount}</Text>
-            <Text style={styles.statLabel}>Alertes</Text>
+            <Text style={styles.statLabel}>{t('profile.alerts')}</Text>
           </View>
           <View style={styles.dividerVertical} />
           <View style={styles.statItem}>
             <Text style={styles.statValue}>4.8</Text>
-            <Text style={styles.statLabel}>Note</Text>
+            <Text style={styles.statLabel}>{t('profile.rating')}</Text>
           </View>
         </View>
 
-        <Text style={styles.sectionTitle}>Paramètres</Text>
+        <Text style={styles.sectionTitle}>{t('profile.menu')}</Text>
         <View style={styles.menuContainer}>
-          {profileItems.map((item, index) => (
-            <ProfileItem key={index} icon={item.icon} label={item.label} />
-          ))}
+          <ProfileItem
+            icon="pencil"
+            label={t('profile.edit')}
+            onPress={() => router.push('/edit-profile')}
+          />
+          <ProfileItem
+            icon="history"
+            label={t('profile.history')}
+            onPress={() => router.push('/historique')}
+          />
+          <ProfileItem
+            icon="calendar"
+            label={t('profile.appointments')}
+            onPress={() => router.push('/rendezvous')}
+          />
+          <ProfileItem
+            icon="hospital-o"
+            label={t('profile.centers')}
+            onPress={() => router.push('/(tabs)/map')}
+          />
+          <ProfileItem
+            icon="bell"
+            label={t('profile.notifications')}
+            onPress={() => router.push('/notifications-settings')}
+          />
+          <ProfileItem
+            icon="globe"
+            label={t('profile.language')}
+            onPress={() => router.push('/language-settings')}
+          />
         </View>
 
         <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
-          <TabBarIcon name="sign-out" size={20} color={color.primary} />
-          <Text style={styles.logoutText}>Déconnexion</Text>
+          <TabBarIcon name="sign-out" size={18} color={color.primary} />
+          <Text style={styles.logoutText}>{t('profile.logout')}</Text>
         </TouchableOpacity>
       </ScrollView>
     </ThemedView>
@@ -138,82 +178,87 @@ export default function Profile() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingHorizontal: 20,
-    paddingTop: 16,
+    paddingHorizontal: 16,
+    paddingTop: 10,
     backgroundColor: color.background,
   },
   title: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: "700",
     color: color.textMain,
-    marginBottom: 28,
+    marginBottom: 20,
     letterSpacing: 0.3,
   },
   profileHeader: {
     alignItems: "center",
-    marginBottom: 32,
-    paddingBottom: 24,
+    marginBottom: 24,
+    paddingBottom: 20,
     borderBottomWidth: 1,
     borderBottomColor: color.border,
   },
   avatarWrapper: {
     position: "relative",
-    marginBottom: 18,
+    marginBottom: 14,
   },
   avatarPlaceholder: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
+    width: 80,
+    height: 80,
+    borderRadius: 40,
     backgroundColor: color.primary,
     justifyContent: "center",
     alignItems: "center",
-    borderWidth: 3,
+    borderWidth: 2,
     borderColor: color.dangerLight,
+    overflow: 'hidden',
+  },
+  avatarImage: {
+    width: '100%',
+    height: '100%',
   },
   editBadge: {
     position: "absolute",
     bottom: 0,
     right: 0,
     backgroundColor: color.primary,
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
     justifyContent: "center",
     alignItems: "center",
-    borderWidth: 3,
+    borderWidth: 2,
     borderColor: color.background,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 5,
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
+    elevation: 3,
   },
   userName: {
-    fontSize: 22,
+    fontSize: 18,
     fontWeight: "800",
     color: color.textMain,
-    marginBottom: 12,
+    marginBottom: 8,
   },
   bloodBadge: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
+    gap: 6,
     backgroundColor: color.dangerLight,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 20,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
   },
   bloodText: {
     color: color.primary,
     fontWeight: "700",
-    fontSize: 13,
+    fontSize: 12,
   },
   statsSection: {
     flexDirection: "row",
     backgroundColor: color.surface,
-    borderRadius: 16,
-    marginBottom: 28,
-    paddingVertical: 20,
+    borderRadius: 14,
+    marginBottom: 20,
+    paddingVertical: 14,
     borderWidth: 1,
     borderColor: color.border,
   },
@@ -223,13 +268,13 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   statValue: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: "800",
     color: color.primary,
-    marginBottom: 4,
+    marginBottom: 2,
   },
   statLabel: {
-    fontSize: 12,
+    fontSize: 11,
     color: color.textSecondary,
     fontWeight: "600",
   },
@@ -238,40 +283,40 @@ const styles = StyleSheet.create({
     backgroundColor: color.border,
   },
   sectionTitle: {
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: "700",
     color: color.textSecondary,
-    marginBottom: 14,
+    marginBottom: 10,
     letterSpacing: 0.5,
     textTransform: "uppercase",
   },
   menuContainer: {
-    gap: 10,
-    marginBottom: 30,
+    gap: 8,
+    marginBottom: 20,
   },
   menuItem: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     backgroundColor: color.background,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    borderRadius: 14,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    borderRadius: 12,
     borderWidth: 1,
     borderColor: color.border,
   },
   menuLeft: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 14,
+    gap: 12,
   },
   iconContainer: {
     backgroundColor: color.surface,
-    padding: 10,
-    borderRadius: 10,
+    padding: 8,
+    borderRadius: 8,
   },
   menuLabel: {
-    fontSize: 14,
+    fontSize: 13,
     color: color.textMain,
     fontWeight: "600",
   },
@@ -279,15 +324,15 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: 10,
-    marginVertical: 20,
-    paddingVertical: 14,
+    gap: 8,
+    marginTop: 10,
+    paddingVertical: 12,
     borderTopWidth: 1,
     borderTopColor: color.border,
   },
   logoutText: {
     color: color.primary,
     fontWeight: "700",
-    fontSize: 14,
+    fontSize: 13,
   },
 });

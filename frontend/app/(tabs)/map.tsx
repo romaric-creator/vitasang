@@ -1,122 +1,292 @@
-import React from "react";
-import { StyleSheet, View, Text, TouchableOpacity } from "react-native";
-import MapView, { Marker, PROVIDER_GOOGLE } from "react-native-maps";
-import Header from "@/components/Header";
+import React, { useEffect, useState, useRef } from "react";
+import {
+  StyleSheet,
+  View,
+  Text,
+  TouchableOpacity,
+  ActivityIndicator,
+  FlatList,
+  RefreshControl,
+  TextInput,
+  Dimensions,
+} from "react-native";
+import MapView, { Marker, PROVIDER_GOOGLE, Callout } from "react-native-maps";
+import { useRouter } from "expo-router";
+import ThemedView from "@/components/ThemedView";
 import { TabBarIcon } from "@/components/TabBarIcon";
 import { color } from "@/constant/color";
-import { markers } from "@/data/mapData";
+import { getAllCentres, searchCentresNearby } from "@/services/user.service";
+import { useAlert } from "@/hooks/useAlert";
+import { getCurrentPositionAsync } from "@/utils/location";
+import { useTranslation } from "react-i18next";
+import { DataCard, DataCardRow } from "@/components/DataCard";
 
 export default function MapScreen() {
+  const { t } = useTranslation();
+  const router = useRouter();
+  const { showAlert } = useAlert();
+  const mapRef = useRef<MapView>(null);
+
+  const [centres, setCentres] = useState<any[]>([]);
+  const [allCentres, setAllCentres] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [viewMode, setViewMode] = useState<'map' | 'list'>('map');
+  const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number } | null>(null);
+
   const doualaRegion = {
     latitude: 4.0511,
     longitude: 9.7085,
-    latitudeDelta: 0.01,
-    longitudeDelta: 0.01,
+    latitudeDelta: 0.1,
+    longitudeDelta: 0.1,
+  };
+
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  const loadData = async () => {
+    setLoading(true);
+    await Promise.all([fetchCentres(), fetchUserLocation()]);
+    setLoading(false);
+  };
+
+  const fetchUserLocation = async () => {
+    try {
+      const loc = await getCurrentPositionAsync();
+      if (loc) setUserLocation(loc);
+    } catch (e) {
+      console.warn("Could not get location:", e);
+    }
+  };
+
+  const fetchCentres = async () => {
+    try {
+      const res = await getAllCentres();
+      if (res.success && res.centres) {
+        setAllCentres(res.centres);
+        setCentres(res.centres);
+      }
+    } catch (error) {
+      console.error("Error fetching centres:", error);
+    }
+  };
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await fetchCentres();
+    setRefreshing(false);
+  };
+
+  const handleSearch = (text: string) => {
+    setSearchQuery(text);
+    if (text.trim() === "") {
+      setCentres(allCentres);
+    } else {
+      const filtered = allCentres.filter(
+        (c) => c.nom.toLowerCase().includes(text.toLowerCase()) ||
+          c.ville.toLowerCase().includes(text.toLowerCase())
+      );
+      setCentres(filtered);
+    }
+  };
+
+  const renderCentreItem = ({ item }: { item: any }) => {
+    const data: DataCardRow[] = [
+      { label: t('centers.address'), value: item.adresse },
+      { label: t('centers.phone'), value: item.telephone, valueColor: color.primary }
+    ];
+
+    return (
+      <View style={{ marginHorizontal: 20, marginBottom: 12 }}>
+        <DataCard
+          title={item.nom}
+          subtitle={item.ville}
+          data={data}
+        />
+      </View>
+    );
   };
 
   return (
-    <View style={styles.container}>
-      <MapView
-        provider={PROVIDER_GOOGLE}
-        style={styles.map}
-        initialRegion={doualaRegion}
-      >
-        {markers.map((marker, index) => (
-          <Marker key={index} coordinate={marker.coordinate}>
-            <View style={styles.customMarker}>
-              <View style={styles.tooltip}>
-                <Text style={styles.tTitle}>{marker.title}</Text>
-                <Text style={styles.tSub}>{marker.subtitle}</Text>
-              </View>
-              <TabBarIcon 
-                name="map-pin" 
-                size={40} 
-                color={color.primary} 
-              />
+    <ThemedView style={styles.container}>
+      {/* Header & Search */}
+      <View style={styles.headerLayer}>
+        <View style={styles.searchBar}>
+          <TabBarIcon name="search" size={16} color={color.textLight} />
+          <TextInput
+            style={styles.searchInput}
+            placeholder={t('centers.searchPlaceholder')}
+            value={searchQuery}
+            onChangeText={handleSearch}
+            placeholderTextColor={color.textLight}
+          />
+          {searchQuery !== "" && (
+            <TouchableOpacity onPress={() => handleSearch("")}>
+              <TabBarIcon name="times-circle" size={16} color={color.textLight} />
+            </TouchableOpacity>
+          )}
+        </View>
+
+        <TouchableOpacity
+          style={styles.toggleBtn}
+          onPress={() => setViewMode(viewMode === 'map' ? 'list' : 'map')}
+        >
+          <TabBarIcon name={viewMode === 'map' ? "list" : "map"} size={20} color="white" />
+        </TouchableOpacity>
+      </View>
+
+      {viewMode === 'map' ? (
+        <View style={styles.mapContainer}>
+          <MapView
+            ref={mapRef}
+            provider={PROVIDER_GOOGLE}
+            style={styles.map}
+            initialRegion={userLocation ? {
+              ...userLocation,
+              latitudeDelta: 0.1,
+              longitudeDelta: 0.1
+            } : doualaRegion}
+            showsUserLocation={true}
+          >
+            {centres.map((centre) => (
+              <Marker
+                key={centre.id}
+                coordinate={{
+                  latitude: parseFloat(centre.latitude),
+                  longitude: parseFloat(centre.longitude),
+                }}
+              >
+                <View style={styles.markerContainer}>
+                  <View style={styles.markerPin}>
+                    <TabBarIcon name="hospital-o" size={14} color="white" />
+                  </View>
+                  <View style={styles.markerArrow} />
+                </View>
+                <Callout tooltip>
+                  <View style={styles.calloutContainer}>
+                    <Text style={styles.calloutTitle}>{centre.nom}</Text>
+                    <Text style={styles.calloutText}>{centre.adresse}</Text>
+                    <Text style={styles.calloutPhone}>{centre.telephone}</Text>
+                  </View>
+                </Callout>
+              </Marker>
+            ))}
+          </MapView>
+        </View>
+      ) : (
+        <FlatList
+          data={centres}
+          keyExtractor={(item) => item.id.toString()}
+          renderItem={renderCentreItem}
+          contentContainerStyle={styles.listContent}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[color.primary]} />
+          }
+          ListEmptyComponent={
+            <View style={styles.emptyContainer}>
+              <TabBarIcon name="hospital-o" size={48} color={color.textLight} />
+              <Text style={styles.emptyText}>{t('centers.noResults')}</Text>
             </View>
-          </Marker>
-        ))}
-      </MapView>
+          }
+        />
+      )}
 
-      <View style={styles.headerContainer}>
-        <Header />
-      </View>
-
-      <View style={styles.fabContainer}>
-        <TouchableOpacity style={styles.fab}>
-          <TabBarIcon name="layers" size={20} color={color.primary} />
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.fab}>
-          <TabBarIcon name="navigation-2" size={20} color={color.primary} />
-        </TouchableOpacity>
-      </View>
-    </View>
+      {loading && !refreshing && (
+        <View style={styles.loaderBg}>
+          <ActivityIndicator size="large" color={color.primary} />
+        </View>
+      )}
+    </ThemedView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { 
-    flex: 1 
-  },
-  map: { 
-    ...StyleSheet.absoluteFillObject 
-  },
-  headerContainer: { 
-    position: 'absolute', 
-    top: 50, 
-    left: 20, 
-    right: 20, 
-    backgroundColor: color.background, 
-    padding: 16, 
-    borderRadius: 16,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 12,
-  },
-  customMarker: { 
-    alignItems: 'center' 
-  },
-  tooltip: { 
-    backgroundColor: color.background, 
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    borderRadius: 12, 
-    marginBottom: 6,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.25,
-    shadowRadius: 6,
-    elevation: 6,
-  },
-  tTitle: { 
-    fontWeight: '700', 
-    fontSize: 12,
-    color: color.textMain,
-  },
-  tSub: { 
-    fontSize: 10, 
-    color: color.textSecondary,
-    marginTop: 2,
-  },
-  fabContainer: { 
-    position: 'absolute', 
-    right: 20, 
-    bottom: 100, 
+  container: { flex: 1, backgroundColor: color.background },
+  headerLayer: {
+    position: 'absolute',
+    top: 50,
+    left: 0,
+    right: 0,
+    zIndex: 10,
+    flexDirection: 'row',
+    paddingHorizontal: 20,
     gap: 12,
   },
-  fab: { 
-    backgroundColor: color.background, 
-    width: 48, 
-    height: 48, 
-    borderRadius: 12, 
-    justifyContent: 'center', 
+  searchBar: {
+    flex: 1,
+    flexDirection: 'row',
     alignItems: 'center',
+    backgroundColor: 'white',
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    height: 48,
+    elevation: 4,
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 6,
-    elevation: 8,
-  }
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  searchInput: {
+    flex: 1,
+    marginLeft: 8,
+    fontSize: 14,
+    color: color.textMain,
+  },
+  toggleBtn: {
+    width: 48,
+    height: 48,
+    backgroundColor: color.primary,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 4,
+  },
+  mapContainer: { flex: 1 },
+  map: { ...StyleSheet.absoluteFillObject },
+  listContent: { paddingTop: 120, paddingBottom: 100 },
+  markerContainer: { alignItems: 'center' },
+  markerPin: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: color.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: 'white',
+  },
+  markerArrow: {
+    width: 0,
+    height: 0,
+    backgroundColor: 'transparent',
+    borderStyle: 'solid',
+    borderLeftWidth: 6,
+    borderRightWidth: 6,
+    borderTopWidth: 8,
+    borderLeftColor: 'transparent',
+    borderRightColor: 'transparent',
+    borderTopColor: color.primary,
+    marginTop: -1,
+  },
+  calloutContainer: {
+    backgroundColor: 'white',
+    borderRadius: 12,
+    padding: 12,
+    width: 180,
+    borderWidth: 1,
+    borderColor: color.border,
+  },
+  calloutTitle: { fontWeight: '800', fontSize: 13, color: color.textMain, marginBottom: 4 },
+  calloutText: { fontSize: 11, color: color.textSecondary, marginBottom: 4 },
+  calloutPhone: { fontSize: 11, fontWeight: '700', color: color.primary },
+  emptyContainer: { marginTop: 100, alignItems: 'center' },
+  emptyText: { marginTop: 10, color: color.textSecondary, fontWeight: '600' },
+  loaderBg: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(255,255,255,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
 });
