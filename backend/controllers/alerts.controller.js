@@ -3,6 +3,7 @@ const Alerte = db.Alerte;
 const Utilisateur = db.Utilisateur;
 const ProfilDonneur = db.ProfilDonneur;
 const LogNotification = db.LogNotification;
+const logger = require("../config/logger");
 const { calculateDistance } = require("../utils/geoHelpers");
 const { Expo } = require('expo-server-sdk'); // Import Expo SDK
 
@@ -20,22 +21,35 @@ const bloodCompatibility = {
 };
 
 exports.createAlertAndNotify = async (req, res) => {
-    const { latitude, longitude, bloodType, radius, degree, poches, id_initiateur } = req.body;
+    // id_initiateur will now come from req.user.id, not req.body
+    const { latitude, longitude, groupe_sanguin, radius, urgence, quantite_requise, lieu, description } = req.body;
+    const id_initiateur = req.user.id; // Get initiator ID from authenticated user
 
     try {
+        logger.info('Creating alert', { userId: id_initiateur, groupe_sanguin, latitude, longitude, radius });
+
         // 1. Enregistrer l'alerte
         const alerte = await Alerte.create({
-            groupe_requis: bloodType,
-            degre_urgence: degree || "Normal",
+            groupe_requis: groupe_sanguin,
+            degre_urgence: urgence || "NORMAL",
             rayon_action_km: radius || 10,
             id_initiateur: id_initiateur,
+            latitude,
+            longitude,
+            lieu,
+            description,
+            quantite_requise: quantite_requise || 1,
             statut: "en_cours"
         });
 
+        logger.info('Alert created', { alertId: alerte.id_alerte });
+
         // 2. Trouver les donneurs compatibles
         const compatibleGroups = Object.keys(bloodCompatibility).filter(group =>
-            bloodCompatibility[group].includes(bloodType)
+            bloodCompatibility[group].includes(groupe_sanguin)
         );
+
+        logger.info('Compatible blood groups', { groupe_sanguin, compatible: compatibleGroups });
 
         const donors = await Utilisateur.findAll({
             where: { role: 'donneur' },
@@ -46,8 +60,12 @@ exports.createAlertAndNotify = async (req, res) => {
             }]
         });
 
+        logger.info('Donors found', { totalDonors: donors.length, bloodGroups: compatibleGroups });
+
         let messages = [];
         const notifiedDonors = [];
+        let donorsInRadius = 0;
+        let donorsWithToken = 0;
 
         for (const donor of donors) {
             if (donor.profilDonneur && donor.profilDonneur.lat_actuelle && donor.profilDonneur.long_actuelle) {
@@ -59,13 +77,28 @@ exports.createAlertAndNotify = async (req, res) => {
                 );
 
                 if (distance <= (radius || 10)) {
+                    donorsInRadius++;
+
                     // 3. Préparer la notification push si le token existe
                     if (donor.token_firebase && Expo.isExpoPushToken(donor.token_firebase)) {
+                        donorsWithToken++;
                         messages.push({
                             to: donor.token_firebase,
                             sound: 'default',
-                            body: `Urgence sang ${bloodType} à ${distance.toFixed(2)} km de votre position !`,
-                            data: { alertId: alerte.id_alerte, bloodType, distance: distance.toFixed(2) },
+                            body: `Urgence sang ${groupe_sanguin} à ${distance.toFixed(2)} km de votre position !`,
+                            data: { alertId: alerte.id_alerte, groupe_sanguin, distance: distance.toFixed(2) },
+                        });
+
+                        logger.info('Preparing notification', {
+                            donorId: donor.id_utilisateur,
+                            distance: distance.toFixed(2),
+                            hasToken: true
+                        });
+                    } else {
+                        logger.warn('Donor has no token', {
+                            donorId: donor.id_utilisateur,
+                            hasToken: !!donor.token_firebase,
+                            distance: distance.toFixed(2)
                         });
                     }
 
@@ -79,41 +112,57 @@ exports.createAlertAndNotify = async (req, res) => {
 
                     notifiedDonors.push({
                         id: donor.id_utilisateur,
-                        username: donor.nom, // Changed from 'nom' to 'username' for consistency with frontend
+                        username: donor.nom,
                         distance: distance.toFixed(2)
                     });
                 }
             }
         }
 
+        logger.info('Alert notification summary', {
+            alertId: alerte.id_alerte,
+            totalDonors: donors.length,
+            inRadius: donorsInRadius,
+            withToken: donorsWithToken,
+            toNotify: messages.length
+        });
+
         // 5. Envoyer toutes les notifications en une seule fois
-        let chunks = expo.chunkPushNotifications(messages);
-        let tickets = [];
-        (async () => {
-            for (let chunk of chunks) {
-                try {
-                    let ticketChunk = await expo.sendPushNotificationsAsync(chunk);
-                    tickets.push(...ticketChunk);
-                    // NOTE: If a ticket contains an error code in ticket.details.error, you
-                    // must handle it appropriately. The error codes are listed in the Expo
-                    // documentation:
-                    // https://docs.expo.io/push-notifications/sending-notifications/#individual-errors
-                } catch (error) {
-                    console.error(`Error sending push notification chunk: ${error}`);
+        if (messages.length > 0) {
+            let chunks = expo.chunkPushNotifications(messages);
+            let tickets = [];
+            (async () => {
+                for (let chunk of chunks) {
+                    try {
+                        logger.info('Sending notification chunk', { chunkSize: chunk.length });
+                        let ticketChunk = await expo.sendPushNotificationsAsync(chunk);
+                        tickets.push(...ticketChunk);
+                        logger.info('Notification chunk sent', { ticketCount: ticketChunk.length });
+                    } catch (error) {
+                        logger.error('Error sending push notification chunk', { error: error.message });
+                    }
                 }
-            }
-        })();
+            })();
+        } else {
+            logger.warn('No notifications to send', { alertId: alerte.id_alerte });
+        }
 
         res.status(201).json({
             success: true,
             message: `${notifiedDonors.length} donneurs ont été notifiés.`,
             alertId: alerte.id_alerte,
             donorsCount: notifiedDonors.length,
-            notifiedDonors: notifiedDonors // Changed from 'donors' to 'notifiedDonors' for consistency
+            summary: {
+                totalDonorsFound: donors.length,
+                donorsInRadius,
+                donorsWithToken,
+                notified: notifiedDonors.length
+            },
+            notifiedDonors: notifiedDonors
         });
 
     } catch (error) {
-        console.error("Erreur lors de la création de l'alerte:", error);
+        logger.error('Error creating alert', { error: error.message, userId: id_initiateur });
         res.status(500).json({
             success: false,
             message: "Erreur lors de la création de l'alerte",
@@ -123,7 +172,9 @@ exports.createAlertAndNotify = async (req, res) => {
 };
 
 exports.getAlertStatus = async (req, res) => {
-    const { id } = req.params;
+    const { id } = req.params; // Alert ID
+    const userId = req.user.id; // Authenticated user ID
+    const userRole = req.user.role; // Authenticated user role
 
     try {
         const alerte = await Alerte.findByPk(id, {
@@ -131,13 +182,25 @@ exports.getAlertStatus = async (req, res) => {
                 {
                     model: LogNotification,
                     as: 'notifications',
-                    include: [{ model: Utilisateur, as: 'destinataire', attributes: ['nom', 'prenom', 'telephone'] }]
+                    include: [
+                        { model: Utilisateur, as: 'destinataire', attributes: ['nom', 'prenom', 'telephone'] }
+                    ]
+                },
+                {
+                    model: Utilisateur,
+                    as: 'initiateur',
+                    attributes: ['nom', 'prenom', 'telephone']
                 }
             ]
         });
 
         if (!alerte) {
             return res.status(404).json({ success: false, message: "Alerte non trouvée" });
+        }
+
+        // Authorization check: Only initiator or admin can view status
+        if (alerte.id_initiateur !== userId && userRole !== 'admin') {
+            return res.status(403).json({ success: false, message: "Unauthorized: You do not have permission to view this alert status." });
         }
 
         const stats = {
@@ -154,24 +217,33 @@ exports.getAlertStatus = async (req, res) => {
                 id: alerte.id_alerte,
                 groupe: alerte.groupe_requis,
                 statut: alerte.statut,
-                createdAt: alerte.createdAt
+                lieu: alerte.lieu,
+                description: alerte.description,
+                createdAt: alerte.createdAt,
+                initiateur: {
+                    nom: alerte.initiateur.nom,
+                    prenom: alerte.initiateur.prenom,
+                    telephone: alerte.initiateur.telephone
+                }
             },
             stats,
-            details: alerte.notifications.map(n => ({
+            // Only return donor details if the user is the initiator or admin
+            details: (alerte.id_initiateur === userId || userRole === 'admin') ? alerte.notifications.map(n => ({
                 donneur: `${n.destinataire.prenom} ${n.destinataire.nom}`,
                 statut: n.statut_reception,
                 telephone: n.destinataire.telephone
-            }))
+            })) : [] // Return empty array if not authorized to see details
         });
 
     } catch (error) {
-        console.error("Erreur récup statut alerte:", error);
+        logger.error("Erreur récup statut alerte:", { error: error.message, alertId: req.params.id });
         res.status(500).json({ success: false, error: error.message });
     }
 };
 
 exports.getUserAlerts = async (req, res) => {
-    const { id_utilisateur } = req.query;
+    // id_utilisateur will now come from req.user.id, not req.query
+    const id_utilisateur = req.user.id; // Get user ID from authenticated user
 
     try {
         const alerts = await Alerte.findAll({
@@ -197,7 +269,154 @@ exports.getUserAlerts = async (req, res) => {
             }))
         });
     } catch (error) {
-        console.error("Erreur récup alertes utilisateur:", error);
+        logger.error("Erreur récup alertes utilisateur:", { error: error.message, userId: id_utilisateur });
+        res.status(500).json({ success: false, error: error.message });
+    }
+};
+
+exports.deleteAlert = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const userId = req.user.id;
+
+        const alerte = await Alerte.findByPk(id);
+        if (!alerte) {
+            return res.status(404).json({ success: false, message: "Alerte non trouvée" });
+        }
+
+        // Authorization check: Only initiator can cancel their alert
+        if (alerte.id_initiateur !== userId) {
+            return res.status(403).json({ success: false, message: "Vous ne pouvez annuler que vos propres alertes" });
+        }
+
+        // Soft delete - set statut to 'annulee'
+        alerte.statut = 'annulee';
+        await alerte.save();
+
+        res.status(200).json({
+            success: true,
+            message: "Alerte annulée avec succès"
+        });
+    } catch (error) {
+        logger.error("Erreur lors de l'annulation de l'alerte:", { error: error.message, alertId: id });
+        res.status(500).json({ success: false, error: error.message });
+    }
+};
+
+exports.updateAlert = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { statut } = req.body;
+        const userId = req.user.id;
+
+        const alerte = await Alerte.findByPk(id);
+        if (!alerte) {
+            return res.status(404).json({ success: false, message: "Alerte non trouvée" });
+        }
+
+        // Authorization check: Only initiator can update their alert
+        if (alerte.id_initiateur !== userId) {
+            return res.status(403).json({ success: false, message: "Vous ne pouvez mettre à jour que vos propres alertes" });
+        }
+
+        // Validate status value
+        const validStatuses = ['en_cours', 'satisfaite', 'annulee'];
+        if (statut && !validStatuses.includes(statut)) {
+            return res.status(400).json({
+                success: false,
+                message: `Le statut doit être l'un de: ${validStatuses.join(', ')}`
+            });
+        }
+
+        if (statut) {
+            alerte.statut = statut;
+            await alerte.save();
+        }
+
+        res.status(200).json({
+            success: true,
+            message: "Alerte mise à jour avec succès",
+            alerte: {
+                id: alerte.id_alerte,
+                statut: alerte.statut,
+                groupe: alerte.groupe_requis
+            }
+        });
+    } catch (error) {
+        logger.error("Erreur lors de la mise à jour de l'alerte:", { error: error.message, alertId: id });
+        res.status(500).json({ success: false, error: error.message });
+    }
+};
+
+exports.respondToAlert = async (req, res) => {
+    try {
+        const { id } = req.params; // Alert ID
+        const { response } = req.body; // 'accepte' or 'ignore'
+        const userId = req.user.id;
+
+        if (!['accepte', 'ignore'].includes(response)) {
+            return res.status(400).json({ success: false, message: "Réponse invalide. Utilisez 'accepte' ou 'ignore'." });
+        }
+
+        const notification = await LogNotification.findOne({
+            where: { id_alerte: id, id_utilisateur: userId }
+        });
+
+        if (!notification) {
+            return res.status(404).json({ success: false, message: "Vous n'êtes pas concerné par cette alerte." });
+        }
+
+        notification.statut_reception = response;
+        await notification.save();
+
+        logger.info('User responded to alert', { userId, alertId: id, response });
+
+        res.json({
+            success: true,
+            message: response === 'accepte' ? "Merci pour votre engagement !" : "Réponse enregistrée",
+            statut: notification.statut_reception
+        });
+    } catch (error) {
+        logger.error('Error responding to alert', { error: error.message });
+        res.status(500).json({ success: false, error: error.message });
+    }
+};
+
+exports.getAcceptedAlerts = async (req, res) => {
+    try {
+        const userId = req.user.id;
+
+        const acceptedNotifications = await LogNotification.findAll({
+            where: {
+                id_utilisateur: userId,
+                statut_reception: 'accepte'
+            },
+            include: [{
+                model: Alerte,
+                as: 'alerte',
+                include: [{
+                    model: Utilisateur,
+                    as: 'initiateur',
+                    attributes: ['nom', 'prenom', 'telephone']
+                }]
+            }],
+            order: [['date_envoi', 'DESC']]
+        });
+
+        res.json({
+            success: true,
+            alerts: acceptedNotifications.map(n => ({
+                id: n.alerte.id_alerte,
+                groupe: n.alerte.groupe_requis,
+                statut: n.alerte.statut,
+                date: n.alerte.createdAt,
+                lieu: n.alerte.lieu,
+                initiateur: `${n.alerte.initiateur.prenom} ${n.alerte.initiateur.nom}`,
+                telephone_initiateur: n.alerte.initiateur.telephone
+            }))
+        });
+    } catch (error) {
+        logger.error('Error fetching accepted alerts', { error: error.message });
         res.status(500).json({ success: false, error: error.message });
     }
 };

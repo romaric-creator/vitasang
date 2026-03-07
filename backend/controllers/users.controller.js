@@ -4,6 +4,7 @@ const ProfilDonneur = db.ProfilDonneur;
 const Centre = db.Centre;
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const logger = require("../config/logger");
 const { calculateDistance } = require('../utils/geoHelpers');
 
 exports.addUser = async (req, res) => {
@@ -15,13 +16,9 @@ exports.addUser = async (req, res) => {
       let {
         nom,
         prenom,
-        // email,
         mot_de_passe,
         telephone,
-        // region,
         groupe_sanguin,
-        // poids,
-        // taille,
       } = req.body;
 
       // Validation simple
@@ -39,18 +36,13 @@ exports.addUser = async (req, res) => {
           {
             nom,
             prenom,
-            // email,
             mot_de_passe: hashedPassword,
             telephone,
-            // region,
             role: "donneur",
             profilDonneur: {
-              // Sequelize va créer le profil associé grâce à l'association
               groupe_sanguin,
-              lat_actuelle: 0, // Valeur par défaut
-              long_actuelle: 0, // Valeur par défaut
-              // poids,
-              // taille,
+              lat_actuelle: 0,
+              long_actuelle: 0,
             },
           },
           {
@@ -58,12 +50,23 @@ exports.addUser = async (req, res) => {
           },
         );
 
+        // Génération du token pour permettre l'auto-connexion après inscription
+        const token = jwt.sign(
+          { id: user.id_utilisateur, role: user.role },
+          process.env.JWT_SECRET,
+          { expiresIn: "24h" },
+        );
+
         return res
           .status(201)
-          .json({ message: "Donneur créé avec succès", user });
+          .json({
+            message: "Donneur créé avec succès",
+            token, // Ajout du token ici
+            user
+          });
       } catch (error) {
-        console.error("Erreur lors de la création de l'utilisateur (donneur) :", error); // Log interne pour le débogage
-        return next(error); // Passe l'erreur au middleware suivant
+        logger.error("Erreur lors de la création de l'utilisateur (donneur) :", { error: error.message, stack: error.stack });
+        return res.status(500).json({ message: "Erreur lors de la création du compte." });
       }
     }
 
@@ -320,19 +323,19 @@ const bloodCompatibility = {
 exports.searchUsers = async (req, res) => {
   try {
     // 1. Récupération et validation des paramètres
-    const { lat, long, blood, rayon } = req.query;
+    const { latitude, longitude, groupe_sanguin, radius } = req.query;
 
-    if (!lat || !long || !blood || !rayon) {
+    if (!latitude || !longitude || !groupe_sanguin || !radius) {
       return res.status(400).json({
-        message: "Les paramètres lat, long, blood et rayon sont requis."
+        message: "Les paramètres latitude, longitude, groupe_sanguin et radius sont requis."
       });
     }
 
-    const userLat = parseFloat(lat);
-    const userLong = parseFloat(long);
-    const searchRayon = parseFloat(rayon);
+    const userLat = parseFloat(latitude);
+    const userLong = parseFloat(longitude);
+    const searchRayon = parseFloat(radius);
     // On décode l'URL et on remplace l'espace (qui vient du '+') par un vrai '+'
-    const targetBlood = decodeURIComponent(blood).replace(' ', '+');
+    const targetBlood = decodeURIComponent(groupe_sanguin).replace(' ', '+');
 
     // Trouver quels groupes peuvent donner au groupe cible
     const compatibleGroups = Object.keys(bloodCompatibility).filter(group =>
@@ -386,7 +389,7 @@ exports.searchUsers = async (req, res) => {
     });
 
   } catch (error) {
-    console.error("Erreur détaillée dans searchUsers:", error);
+    logger.error("Erreur détaillée dans searchUsers:", { error: error.message, stack: error.stack });
     next(error);
   }
 };
@@ -426,6 +429,7 @@ exports.getUserProfile = async (req, res) => {
         email: user.email,
         region: user.region,
         role: user.role,
+        photo_profil: user.photo_profil,
         groupe_sanguin: user.profilDonneur?.groupe_sanguin || null,
         disponible: user.profilDonneur?.disponible ?? true,
         lat: user.profilDonneur?.lat_actuelle,
@@ -436,7 +440,7 @@ exports.getUserProfile = async (req, res) => {
       }
     });
   } catch (error) {
-    console.error("Erreur getUserProfile:", error);
+    logger.error("Erreur getUserProfile:", { error: error.message, userId: req.params.id });
     res.status(500).json({ success: false, error: error.message });
   }
 };
@@ -445,6 +449,12 @@ exports.updatePushToken = async (req, res) => {
   try {
     const { id } = req.params;
     const { pushToken } = req.body; // Assuming the body contains { pushToken: "ExponentPushToken[...]" }
+
+    // Authorization check: Ensure the user is updating their own token
+    if (id.toString() !== req.user.id.toString()) {
+      logger.warn('Unauthorized push token update attempt', { userId: req.user.id, targetId: id });
+      return res.status(403).json({ message: "Non autorisé : vous ne pouvez mettre à jour que votre propre token push." });
+    }
 
     if (!pushToken) {
       return res.status(400).json({ message: "Push token is required." });
@@ -459,9 +469,159 @@ exports.updatePushToken = async (req, res) => {
     user.token_firebase = pushToken; // Update the existing token_firebase field
     await user.save();
 
-    res.status(200).json({ message: "Push token updated successfully." });
+    res.status(200).json({ message: "Token push mis à jour avec succès." });
   } catch (error) {
-    console.error("Error updating push token:", error);
-    res.status(500).json({ message: "Internal server error." });
+    logger.error("Erreur lors de la mise à jour du token push:", error);
+    res.status(500).json({ message: "Une erreur interne est survenue lors de la mise à jour du token push." });
+  }
+};
+
+exports.updateUser = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Authorization check: Ensure user is updating their own profile
+    if (Number(id) !== req.user.id) {
+      logger.warn('Unauthorized update attempt', { userId: req.user.id, targetId: id });
+      return res.status(403).json({ error: "Vous ne pouvez mettre à jour que votre profil." });
+    }
+
+    const user = await Utilisateur.findByPk(id);
+    if (!user) {
+      return res.status(404).json({ error: "Utilisateur non trouvé" });
+    }
+
+    // Update user fields
+    const updatableFields = ['nom', 'prenom', 'telephone', 'ville'];
+    updatableFields.forEach(field => {
+      if (req.body[field] !== undefined) {
+        user[field] = req.body[field];
+      }
+    });
+
+    // Update profil donneur if it exists or if blood/location fields are provided
+    if (user.profilDonneur || req.body.groupe_sanguin || req.body.latitude !== undefined || req.body.longitude !== undefined) {
+      const profil = await ProfilDonneur.findByPk(user.id_utilisateur);
+      if (profil) {
+        if (req.body.groupe_sanguin) profil.groupe_sanguin = req.body.groupe_sanguin;
+        if (req.body.latitude !== undefined) profil.lat_actuelle = req.body.latitude;
+        if (req.body.longitude !== undefined) profil.long_actuelle = req.body.longitude;
+        await profil.save();
+      }
+    }
+
+    await user.save();
+    logger.info('User profile updated', { userId: id });
+
+    res.status(200).json({
+      message: "Profil mis à jour avec succès",
+      user: {
+        id_utilisateur: user.id_utilisateur,
+        nom: user.nom,
+        prenom: user.prenom,
+        telephone: user.telephone,
+        ville: user.ville
+      }
+    });
+  } catch (error) {
+    logger.error('Error updating user', { error: error.message, userId: req.params.id });
+    res.status(500).json({ error: "Erreur lors de la mise à jour du profil" });
+  }
+};
+
+exports.deleteUser = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Authorization check
+    if (Number(id) !== req.user.id) {
+      logger.warn('Unauthorized delete attempt', { userId: req.user.id, targetId: id });
+      return res.status(403).json({ error: "Vous ne pouvez supprimer que votre compte." });
+    }
+
+    const user = await Utilisateur.findByPk(id);
+    if (!user) {
+      return res.status(404).json({ error: "Utilisateur non trouvé" });
+    }
+
+    // Soft delete - set actif to false instead of hard deleting
+    user.actif = false;
+    await user.save();
+
+    logger.info('User account deactivated', { userId: id });
+
+    res.status(200).json({
+      message: "Compte supprimé avec succès"
+    });
+  } catch (error) {
+    logger.error('Error deleting user', { error: error.message, userId: req.params.id });
+    res.status(500).json({ error: "Erreur lors de la suppression du compte" });
+  }
+};
+
+exports.getUserHistory = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Authorization check
+    if (Number(id) !== req.user.id) {
+      logger.warn('Unauthorized history access', { userId: req.user.id, targetId: id });
+      return res.status(403).json({ error: "Vous ne pouvez voir que votre historique." });
+    }
+
+    const historique = await db.HistoriqueDon.findAll({
+      where: { id_donneur: id },
+      include: [
+        { model: db.TypeDon, as: 'typeDon' },
+        { model: db.Centre, as: 'centre' }
+      ],
+      order: [['date_don', 'DESC']]
+    });
+
+    logger.info('User history retrieved', { userId: id, donateCount: historique.length });
+
+    res.status(200).json({
+      historique,
+      total: historique.length
+    });
+  } catch (error) {
+    logger.error('Error fetching user history', { error: error.message, userId: req.params.id });
+    res.status(500).json({ error: "Erreur lors de la récupération de l'historique" });
+  }
+};
+
+exports.uploadProfilePicture = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Authorization check
+    if (Number(id) !== req.user.id) {
+      return res.status(403).json({ error: "Vous ne pouvez mettre à jour que votre propre photo." });
+    }
+
+    if (!req.file) {
+      return res.status(400).json({ error: "Aucun fichier n'a été téléchargé." });
+    }
+
+    const user = await Utilisateur.findByPk(id);
+    if (!user) {
+      return res.status(404).json({ error: "Utilisateur non trouvé" });
+    }
+
+    // On stocke le chemin relatif (accessible via le dossier statique /uploads)
+    const filePath = `/uploads/profiles/${req.file.filename}`;
+    user.photo_profil = filePath;
+    await user.save();
+
+    logger.info('Profile picture updated', { userId: id, path: filePath });
+
+    res.status(200).json({
+      success: true,
+      message: "Photo de profil mise à jour avec succès",
+      photo_profil: filePath
+    });
+  } catch (error) {
+    logger.error('Error uploading profile picture', { error: error.message, userId: req.params.id });
+    res.status(500).json({ error: "Erreur lors de l'enregistrement de la photo de profil" });
   }
 };
