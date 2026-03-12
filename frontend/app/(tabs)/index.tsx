@@ -17,6 +17,7 @@ import { Image } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import { getUserProfile } from "@/services/user.service";
 import Constants from "expo-constants"; // Import Constants
+import { usePostHog } from 'posthog-react-native';
 
 // Données statiques de démonstration
 const URGENCIES = [
@@ -53,14 +54,17 @@ const URGENCIES = [
     urgent: true,
   },
 ];
-
 export default function Home() {
   const { t } = useTranslation();
   const router = useRouter();
   const [userData, setUserData] = useState<any>(null);
+  const posthog = usePostHog();
 
   useFocusEffect(
     React.useCallback(() => {
+      // Signal de test pour confirmer la connexion
+      posthog?.capture('test_connexion_cameroon', { status: 'success' });
+
       const loadUser = async () => {
         const userId = await getUserIdFromStorage();
         if (userId) {
@@ -117,7 +121,7 @@ export default function Home() {
         ? userData.photo_profil
         : (
           Constants.expoConfig?.extra?.env?.EXPO_PUBLIC_API_BASE_URL ||
-          "http://10.139.176.208:3000/api"
+          "https://vitasang.vercel.app/api"
         ).replace("/api", "") + userData.photo_profil,
     }
     : null;

@@ -3,6 +3,7 @@ import { useEffect } from "react";
 import { ActivityIndicator, View } from "react-native";
 import { AuthProvider, useAuth } from "@/context/AuthContext";
 import { color } from "@/constant/color";
+import { PostHogProvider, usePostHog } from 'posthog-react-native';
 
 // Initialisation i18n
 import '../i18n';
@@ -12,6 +13,15 @@ function RootLayoutNav() {
   const { isAuth, isLoading } = useAuth();
   const segments = useSegments();
   const router = useRouter();
+  const posthog = usePostHog();
+
+  // Suivi automatique des écrans (Screen Tracking)
+  useEffect(() => {
+    if (segments && segments.length > 0) {
+      const screenName = segments.join('/');
+      posthog?.screen(screenName);
+    }
+  }, [segments, posthog]);
 
   // Effet pour gérer les redirections basées sur l'authentification
   useEffect(() => {
@@ -66,8 +76,16 @@ function RootLayoutNav() {
 // Le RootLayout principal qui fournit le contexte d'authentification
 export default function RootLayout() {
   return (
-    <AuthProvider>
-      <RootLayoutNav />
-    </AuthProvider>
+    <PostHogProvider
+      apiKey="phc_RCtl1OvR1kNIFgIEy1jwOODKDO2qnhBCvNurxY1j4Il"
+      options={{
+        host: "https://us.i.posthog.com",
+        enableSessionReplay: true,
+      }}
+    >
+      <AuthProvider>
+        <RootLayoutNav />
+      </AuthProvider>
+    </PostHogProvider>
   );
 }

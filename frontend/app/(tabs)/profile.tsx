@@ -16,6 +16,7 @@ import { getUserProfile } from "@/services/user.service";
 import { useRouter } from "expo-router";
 import { Image } from "react-native";
 import { useAuth } from "@/context/AuthContext";
+import Constants from "expo-constants";
 
 import { useTranslation } from "react-i18next";
 
@@ -87,7 +88,7 @@ export default function Profile() {
   const profileImage = userData?.photo_profil
     ? { uri: userData.photo_profil.startsWith('http') 
         ? userData.photo_profil 
-        : process.env.EXPO_PUBLIC_API_BASE_URL?.replace('/api', '') + userData.photo_profil }
+        : (Constants.expoConfig?.extra?.env?.EXPO_PUBLIC_API_BASE_URL || "https://vitasang.vercel.app/api").replace('/api', '') + userData.photo_profil }
     : null;
 
   return (

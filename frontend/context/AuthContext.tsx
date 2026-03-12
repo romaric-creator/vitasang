@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { getData, storeData, removeData } from '@/utils/storage';
 import { loginUser as apiLoginUser } from '@/services/user.service'; // Renommer pour éviter le conflit
+import { usePostHog } from 'posthog-react-native';
 
 interface AuthContextType {
   isAuth: boolean | null;
@@ -14,11 +15,20 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [isAuth, setIsAuth] = useState<boolean | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const posthog = usePostHog();
 
   useEffect(() => {
     const checkAuthStatus = async () => {
       try {
         const token = await getData('token');
+        const user = await getData('user');
+        if (token && user) {
+          posthog?.identify(user.id_utilisateur?.toString(), {
+            nom: user.nom,
+            prenom: user.prenom,
+            role: user.role
+          });
+        }
         setIsAuth(!!token); // true if token exists, false otherwise
       } catch (error) {
         console.error("Failed to check auth status:", error);
@@ -40,6 +50,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         id_utilisateur: data.user.id || data.user.id_utilisateur,
       };
       await storeData('user', userToStore);
+
+      // PostHog Identify
+      posthog?.identify(userToStore.id_utilisateur.toString(), {
+        nom: userToStore.nom,
+        prenom: userToStore.prenom,
+        role: userToStore.role
+      });
+
       setIsAuth(true);
     } catch (error) {
       console.error("Sign in failed:", error);
@@ -55,6 +73,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     try {
       await removeData('token');
       await removeData('user');
+      posthog?.reset(); // Réinitialiser PostHog
       setIsAuth(false);
     } catch (error) {
       console.error("Sign out failed:", error);
