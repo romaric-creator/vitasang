@@ -123,7 +123,7 @@ export default function Profile() {
         <View style={styles.statsSection}>
           <View style={styles.statItem}>
             <Text style={styles.statValue}>{donsCount}</Text>
-            <Text style={styles.statLabel}>{t('profile.donations')}</Text>
+            <Text style={styles.statLabel}>{t('profile.livesSaved') || "Vies sauvées"}</Text>
           </View>
           <View style={styles.dividerVertical} />
           <View style={styles.statItem}>

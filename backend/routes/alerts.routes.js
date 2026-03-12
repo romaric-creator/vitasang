@@ -223,4 +223,17 @@ router.post("/:id/respond", verifyToken, alertsController.respondToAlert);
  */
 router.get("/accepted", verifyToken, alertsController.getAcceptedAlerts);
 
+/**
+ * @swagger
+ * /api/alerts/active:
+ *   get:
+ *     tags:
+ *       - Alerts
+ *     summary: Get all active blood donation alerts (Public)
+ *     responses:
+ *       200:
+ *         description: List of active alerts
+ */
+router.get("/active", alertsController.getAllActiveAlerts);
+
 module.exports = router;

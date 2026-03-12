@@ -54,6 +54,20 @@ export default function AlertesScreen() {
         Linking.openURL(`tel:${phone}`);
     };
 
+    const handleShareWhatsApp = (item: any) => {
+        const message = `🚨 *URGENCE SANGUINE* 🚨\n\nBesoin urgent de sang groupe *${item.groupe}*\n📍 Lieu : ${item.lieu || "Hôpital proche"}\n📱 Contact : ${item.telephone_initiateur || ""}\n\nPartagé via l'application *VitaSang* 🩸\nAidez-nous en partageant ce message !`;
+        const url = `whatsapp://send?text=${encodeURIComponent(message)}`;
+        
+        Linking.canOpenURL(url).then(supported => {
+            if (supported) {
+                Linking.openURL(url);
+            } else {
+                // Fallback si WhatsApp n'est pas installé
+                Linking.openURL(`https://wa.me/?text=${encodeURIComponent(message)}`);
+            }
+        });
+    };
+
     const getStatutColor = (statut: string) => {
         switch (statut) {
             case "en_cours": return "#F39C12";
@@ -82,8 +96,12 @@ export default function AlertesScreen() {
                     <View style={styles.statsRow}>
                         <TabBarIcon name="bell" size={12} color={color.textSecondary} />
                         <Text style={styles.alertStat}>{item.notifiedCount} {t('profile.alerts')}</Text>
-                        <TabBarIcon name="check" size={12} color="#2ECC71" />
-                        <Text style={styles.alertStat}>{item.acceptedCount} OK</Text>
+                        <TouchableOpacity 
+                            style={styles.shareIconBtn} 
+                            onPress={() => handleShareWhatsApp(item)}
+                        >
+                            <TabBarIcon name="whatsapp" size={16} color="#25D366" />
+                        </TouchableOpacity>
                     </View>
                 ) : (
                     <View>
@@ -92,6 +110,10 @@ export default function AlertesScreen() {
                             <TouchableOpacity style={styles.callBtn} onPress={() => handleCall(item.telephone_initiateur)}>
                                 <TabBarIcon name="phone" size={12} color="white" />
                                 <Text style={styles.callBtnText}>{t('alert.actions.call')}</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity style={styles.shareBtn} onPress={() => handleShareWhatsApp(item)}>
+                                <TabBarIcon name="whatsapp" size={12} color="white" />
+                                <Text style={styles.callBtnText}>Partager</Text>
                             </TouchableOpacity>
                         </View>
                     </View>
@@ -223,6 +245,19 @@ const styles = StyleSheet.create({
         paddingHorizontal: 10,
         paddingVertical: 6,
         borderRadius: 8,
+    },
+    shareBtn: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 6,
+        backgroundColor: "#25D366", // WhatsApp Green
+        paddingHorizontal: 10,
+        paddingVertical: 6,
+        borderRadius: 8,
+    },
+    shareIconBtn: {
+        marginLeft: 'auto',
+        padding: 4,
     },
     callBtnText: { color: "white", fontSize: 11, fontWeight: "700" },
     statutBadge: {

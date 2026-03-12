@@ -15,49 +15,15 @@ import { getData, getUserIdFromStorage } from "@/utils/storage";
 import { useTranslation } from "react-i18next";
 import { Image } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
-import { getUserProfile } from "@/services/user.service";
+import { getUserProfile, getActiveAlerts } from "@/services/user.service";
 import Constants from "expo-constants"; // Import Constants
 import { usePostHog } from 'posthog-react-native';
 
-// Données statiques de démonstration
-const URGENCIES = [
-  {
-    id: 1,
-    blood: "A-",
-    hospital: "Hôpital Central",
-    city: "Tunis",
-    progress: 85,
-    urgent: true,
-  },
-  {
-    id: 2,
-    blood: "B+",
-    hospital: "Hôpital Laquintinie",
-    city: "Douala",
-    progress: 90,
-    urgent: true,
-  },
-  {
-    id: 3,
-    blood: "AB-",
-    hospital: "CHU",
-    city: "Yaoundé",
-    progress: 60,
-    urgent: false,
-  },
-  {
-    id: 4,
-    blood: "O+",
-    hospital: "Hôpital Général",
-    city: "Dakar",
-    progress: 75,
-    urgent: true,
-  },
-];
 export default function Home() {
   const { t } = useTranslation();
   const router = useRouter();
   const [userData, setUserData] = useState<any>(null);
+  const [activeAlerts, setActiveAlerts] = useState<any[]>([]);
   const posthog = usePostHog();
 
   useFocusEffect(
@@ -65,14 +31,23 @@ export default function Home() {
       // Signal de test pour confirmer la connexion
       posthog?.capture('test_connexion_cameroon', { status: 'success' });
 
-      const loadUser = async () => {
-        const userId = await getUserIdFromStorage();
-        if (userId) {
-          const res = await getUserProfile(userId);
-          if (res.success) setUserData(res.user);
+      const loadData = async () => {
+        try {
+          const userId = await getUserIdFromStorage();
+          if (userId) {
+            const res = await getUserProfile(userId);
+            if (res.success) setUserData(res.user);
+          }
+
+          const alertsRes = await getActiveAlerts();
+          if (alertsRes.success) {
+            setActiveAlerts(alertsRes.alerts || []);
+          }
+        } catch (error) {
+          console.error("Home: Error loading data:", error);
         }
       };
-      loadUser();
+      loadData();
     }, []),
   );
 
@@ -107,12 +82,12 @@ export default function Home() {
     ? `${userData.prenom || ""} ${userData.nom || ""}`.trim()
     : t("profile.defaultUser");
 
-  const urgentNeeds = URGENCIES.map((item) => ({
+  const urgentNeeds = activeAlerts.map((item) => ({
     id: item.id,
-    group: item.blood,
-    hospital: `${item.hospital}, ${item.city}`,
-    collected: Math.floor((item.progress / 100) * 5),
-    target: 5,
+    group: item.groupe,
+    hospital: item.lieu || "Hôpital proche",
+    collected: 0,
+    target: item.quantite_requise || 1,
   }));
 
   const profileImage = userData?.photo_profil
@@ -210,7 +185,7 @@ export default function Home() {
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.urgentScroll}
           >
-            {urgentNeeds.map((need, idx) => (
+            {urgentNeeds.length > 0 ? urgentNeeds.map((need, idx) => (
               <View key={idx} style={styles.urgentCard}>
                 <Text style={styles.urgentBlood}>{need.group}</Text>
                 <View style={styles.urgentLocation}>
@@ -235,7 +210,7 @@ export default function Home() {
                   </View>
                   <View style={styles.progressTextRow}>
                     <Text style={styles.progressText}>
-                      {need.collected} / {need.target} L
+                      Besoin de {need.target} Poches
                     </Text>
                   </View>
                 </View>
@@ -247,7 +222,12 @@ export default function Home() {
                   <Text style={styles.btnDonText}>{t("home.donate")}</Text>
                 </TouchableOpacity>
               </View>
-            ))}
+            )) : (
+              <View style={styles.noAlertsBox}>
+                <TabBarIcon name="check-circle" size={24} color="#2ECC71" />
+                <Text style={styles.noAlertsText}>Aucune urgence signalée pour le moment. Merci de rester aux aguets !</Text>
+              </View>
+            )}
           </ScrollView>
         </View>
 
@@ -393,7 +373,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     padding: 18,
     marginHorizontal: 4,
-    width: 160,
+    width: 170, // Légèrement plus large pour l'impact
     shadowColor: color.shadow,
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.8,
@@ -403,10 +383,10 @@ const styles = StyleSheet.create({
     borderColor: color.border,
   },
   urgentBlood: {
-    fontSize: 32,
+    fontSize: 42, // Augmenté de 32 à 42
     fontWeight: "900",
     color: color.primary,
-    marginBottom: 4,
+    marginBottom: 8,
     letterSpacing: -1,
   },
   urgentLocation: {
@@ -581,5 +561,24 @@ const styles = StyleSheet.create({
     color: color.textSecondary,
     lineHeight: 18,
     fontWeight: "600",
+  },
+  noAlertsBox: {
+    width: 300,
+    backgroundColor: "#F0FDF4",
+    borderRadius: 20,
+    padding: 24,
+    marginHorizontal: 4,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: "#DCFCE7",
+  },
+  noAlertsText: {
+    color: "#166534",
+    fontSize: 14,
+    fontWeight: "700",
+    textAlign: "center",
+    marginTop: 12,
+    lineHeight: 20,
   },
 });

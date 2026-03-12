@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
+import { DeviceEventEmitter } from 'react-native';
 import { getData, storeData, removeData } from '@/utils/storage';
-import { loginUser as apiLoginUser } from '@/services/user.service'; // Renommer pour éviter le conflit
+import { loginUser as apiLoginUser, sendAlert } from '@/services/user.service'; // Renommer pour éviter le conflit
 import { usePostHog } from 'posthog-react-native';
 
 interface AuthContextType {
@@ -18,6 +19,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const posthog = usePostHog();
 
   useEffect(() => {
+    // Écouter l'événement de déconnexion forcée (depuis axiosConfig)
+    const logoutSubscription = DeviceEventEmitter.addListener('FORCE_LOGOUT', async () => {
+      await removeData('token');
+      await removeData('user');
+      posthog?.reset();
+      setIsAuth(false);
+    });
+
     const checkAuthStatus = async () => {
       try {
         const token = await getData('token');
@@ -38,7 +47,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       }
     };
     checkAuthStatus();
-  }, []);
+
+    return () => logoutSubscription.remove();
+  }, [posthog]);
 
   const signIn = async (telephone: string, mot_de_passe: string) => {
     setIsLoading(true);
@@ -51,12 +62,25 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       };
       await storeData('user', userToStore);
 
-      // PostHog Identify
+      // Identification PostHog
       posthog?.identify(userToStore.id_utilisateur.toString(), {
         nom: userToStore.nom,
         prenom: userToStore.prenom,
         role: userToStore.role
       });
+
+      // TRAITER L'ALERTE EN ATTENTE (Guest flow)
+      try {
+        const pendingAlert = await getData('pending_alert');
+        if (pendingAlert) {
+          console.log("Envoi de l'alerte en attente...");
+          await sendAlert(pendingAlert);
+          await removeData('pending_alert');
+          console.log("Alerte en attente envoyée avec succès.");
+        }
+      } catch (e) {
+        console.error("Erreur lors de l'envoi de l'alerte en attente:", e);
+      }
 
       setIsAuth(true);
     } catch (error) {

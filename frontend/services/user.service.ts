@@ -108,6 +108,15 @@ export const getMyAlerts = async () => {
   }
 };
 
+export const getActiveAlerts = async () => {
+  try {
+    const response = await apiClient.get(`/alerts/active`);
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || "Erreur lors de la récupération des urgences");
+  }
+};
+
 export const getUserProfile = async (userId: number) => {
   try {
     const response = await apiClient.get(`/users/${userId}/profile`);

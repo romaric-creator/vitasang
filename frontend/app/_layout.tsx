@@ -27,9 +27,9 @@ function RootLayoutNav() {
   useEffect(() => {
     if (isLoading) return; // Attendre que le statut d'auth soit chargé
 
-    // Détermine si l'utilisateur est actuellement dans un flux d'authentification (login, register, Splash)
+    // Détermine si l'utilisateur est actuellement dans un flux d'authentification ou d'urgence (Guest Alert)
     const inAuthGroup = segments[0] === '(auth)';
-    const inAuthFlow = inAuthGroup || segments[0] === 'login' || segments[0] === 'register' || segments[0] === 'Splash' || segments[0] === 'OnboardingCarousel';
+    const inAuthFlow = inAuthGroup || segments[0] === 'login' || segments[0] === 'register' || segments[0] === 'Splash' || segments[0] === 'OnboardingCarousel' || segments[0] === 'create-alert';
 
     if (isAuth && inAuthFlow) {
       // Si authentifié et dans le flux d'auth, rediriger vers l'application principale (les onglets)

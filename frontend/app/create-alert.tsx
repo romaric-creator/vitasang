@@ -15,6 +15,8 @@ import ThemedView from "@/components/ThemedView";
 import * as Location from 'expo-location';
 import { searchDonors, sendAlert } from "@/services/user.service";
 import { createAlertValidationSchema } from "@/validation/ValidationSchemas";
+import { useAuth } from "@/context/AuthContext";
+import { storeData } from "@/utils/storage";
 import FormField from "@/components/FormField";
 import { PageHeader } from "@/components/PageHeader";
 import { BloodGroupSelector } from "@/components/BloodGroupSelector";
@@ -25,6 +27,7 @@ import { useTranslation } from "react-i18next";
 export default function CreateAlertScreen() {
   const { t } = useTranslation();
   const router = useRouter();
+  const { isAuth } = useAuth();
   const [location, setLocation] = useState<Location.LocationObject | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -73,19 +76,35 @@ export default function CreateAlertScreen() {
       return;
     }
 
+    const alertData = {
+      latitude: location.coords.latitude,
+      longitude: location.coords.longitude,
+      groupe_sanguin: values.groupe_sanguin,
+      radius: 10,
+      urgence: values.urgence,
+      quantite_requise: parseInt(values.quantite_requise),
+      lieu: values.lieu,
+      description: values.description
+    };
+
+    // SI L'UTILISATEUR N'EST PAS CONNECTÉ
+    if (!isAuth) {
+      try {
+        await storeData('pending_alert', alertData);
+        // Rediriger vers login avec un paramètre pour revenir après
+        router.push({
+          pathname: '/login',
+          params: { redirectAfter: 'create-alert' }
+        });
+        return;
+      } catch (e) {
+        console.error("Failed to save pending alert:", e);
+      }
+    }
+
     setLoading(true);
     try {
-      const result = await sendAlert({
-        latitude: location.coords.latitude,
-        longitude: location.coords.longitude,
-        groupe_sanguin: values.groupe_sanguin,
-        radius: 10,
-        urgence: values.urgence,
-        quantite_requise: parseInt(values.quantite_requise),
-        lieu: values.lieu,
-        description: values.description
-      });
-
+      const result = await sendAlert(alertData);
       if (result.alertId) {
         router.replace({
           pathname: "/alert-tracking/[id]",

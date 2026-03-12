@@ -3,8 +3,9 @@ import { View, Text, StyleSheet, Image, Dimensions, TouchableOpacity, FlatList }
 import { router } from 'expo-router';
 import { color } from '@/constant/color';
 import ThemedView from '@/components/ThemedView';
+import { TabBarIcon } from '@/components/TabBarIcon';
 
-const { width: viewportWidth } = Dimensions.get('window');
+const { width: viewportWidth, height: viewportHeight } = Dimensions.get('window');
 
 interface OnboardingSlide {
   id: string;
@@ -100,11 +101,21 @@ export default function OnboardingCarousel() {
         ))}
       </View>
 
-      <TouchableOpacity style={styles.nextButton} onPress={handleNext}>
-        <Text style={styles.nextButtonText}>
-          {activeSlide === slides.length - 1 ? 'Commencer' : 'Suivant'}
-        </Text>
-      </TouchableOpacity>
+      <View style={styles.footer}>
+        <TouchableOpacity 
+          style={styles.alertButton} 
+          onPress={() => router.push('/create-alert')}
+        >
+          <TabBarIcon name="exclamation-triangle" size={18} color="white" />
+          <Text style={styles.alertButtonText}>Urgence : Lancer une alerte</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.nextButton} onPress={handleNext}>
+          <Text style={styles.nextButtonText}>
+            {activeSlide === slides.length - 1 ? 'Commencer' : 'Suivant'}
+          </Text>
+        </TouchableOpacity>
+      </View>
     </ThemedView>
   );
 }
@@ -172,16 +183,42 @@ const styles = StyleSheet.create({
     paddingVertical: 15,
     paddingHorizontal: 40,
     borderRadius: 30,
-    marginBottom: 40,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 5,
     elevation: 8,
+    minWidth: 150,
+    alignItems: 'center',
   },
   nextButtonText: {
     color: color.primary,
     fontSize: 18,
     fontWeight: 'bold',
+  },
+  footer: {
+    width: '100%',
+    alignItems: 'center',
+    gap: 15,
+    paddingBottom: 40,
+    paddingHorizontal: 20,
+  },
+  alertButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 25,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.5)',
+    width: '100%',
+    justifyContent: 'center',
+  },
+  alertButtonText: {
+    color: 'white',
+    fontSize: 14,
+    fontWeight: '700',
   },
 });

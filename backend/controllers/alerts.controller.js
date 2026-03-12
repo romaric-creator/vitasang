@@ -407,3 +407,36 @@ exports.getAcceptedAlerts = async (req, res) => {
         res.status(500).json({ success: false, error: error.message });
     }
 };
+
+exports.getAllActiveAlerts = async (req, res) => {
+    try {
+        const alerts = await Alerte.findAll({
+            where: { statut: 'en_cours' },
+            include: [{
+                model: Utilisateur,
+                as: 'initiateur',
+                attributes: ['nom', 'prenom', 'telephone']
+            }],
+            order: [['createdAt', 'DESC']],
+            limit: 10
+        });
+
+        res.json({
+            success: true,
+            alerts: alerts.map(a => ({
+                id: a.id_alerte,
+                groupe: a.groupe_requis,
+                statut: a.statut,
+                date: a.createdAt,
+                lieu: a.lieu,
+                urgence: a.degre_urgence,
+                initiateur: `${a.initiateur.prenom} ${a.initiateur.nom}`,
+                telephone_initiateur: a.initiateur.telephone,
+                quantite_requise: a.quantite_requise
+            }))
+        });
+    } catch (error) {
+        logger.error('Error fetching active alerts', { error: error.message });
+        res.status(500).json({ success: false, error: error.message });
+    }
+};

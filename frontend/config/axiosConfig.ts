@@ -1,6 +1,8 @@
 import axios, { AxiosInstance, AxiosError, AxiosResponse } from 'axios';
-import { getData } from '@/utils/storage';
+import { DeviceEventEmitter } from 'react-native';
+import { getData, removeData } from '@/utils/storage';
 import Constants from 'expo-constants'; // Import Constants
+import { router } from 'expo-router';
 
 const API_BASE_URL = Constants.expoConfig?.extra?.env?.EXPO_PUBLIC_API_BASE_URL;
 const REQUEST_TIMEOUT = 10000; // 10 seconds
@@ -77,6 +79,10 @@ export const createAxiosInstance = (): AxiosInstance => {
           break;
         case 401:
           message = 'Authentification requise. Veuillez vous reconnecter.';
+          // Émettre l'événement de déconnexion forcée pour mettre à jour AuthContext
+          DeviceEventEmitter.emit('FORCE_LOGOUT');
+          // Rediriger vers Splash après un court délai
+          setTimeout(() => router.replace('/Splash'), 1500);
           break;
         case 403:
           message = 'Accès refusé.';
