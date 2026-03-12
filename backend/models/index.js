@@ -12,6 +12,7 @@ const sequelize = new Sequelize(dbConfig.DB, dbConfig.USER, dbConfig.PASSWORD, {
   host: dbConfig.HOST,
   port: dbConfig.PORT,
   dialect: dbConfig.dialect,
+  dialectModule: require('mysql2'), // Ajout indispensable pour Vercel
   pool: {
     max: dbConfig.pool.max,
     min: dbConfig.pool.min,
@@ -20,7 +21,7 @@ const sequelize = new Sequelize(dbConfig.DB, dbConfig.USER, dbConfig.PASSWORD, {
   },
   dialectOptions: {
     ssl: {
-      rejectUnauthorized: false // Permet la connexion sécurisée sans certificat local
+      rejectUnauthorized: false
     }
   },
   logging: process.env.DB_LOGGING === 'true' ? console.log : false,
