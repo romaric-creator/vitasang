@@ -7,7 +7,7 @@ const jwt = require("jsonwebtoken");
 const logger = require("../config/logger");
 const { calculateDistance } = require('../utils/geoHelpers');
 
-exports.addUser = async (req, res) => {
+exports.addUser = async (req, res, next) => {
   try {
     const { role } = req.body;
 
@@ -177,7 +177,7 @@ exports.addUser = async (req, res) => {
   }
 };
 
-exports.login = async (req, res) => {
+exports.login = async (req, res, next) => {
   try {
     const { telephone, mot_de_passe } = req.body;
 
@@ -248,7 +248,7 @@ exports.login = async (req, res) => {
   }
 };
 
-exports.getAllUsers = async (req, res) => {
+exports.getAllUsers = async (req, res, next) => {
   try {
     const users = await Utilisateur.findAll({
       include: [
@@ -263,7 +263,7 @@ exports.getAllUsers = async (req, res) => {
   }
 };
 
-exports.getUserById = async (req, res) => {
+exports.getUserById = async (req, res, next) => {
   try {
     const user = await Utilisateur.findByPk(req.params.id, {
       include: [
@@ -282,7 +282,7 @@ exports.getUserById = async (req, res) => {
   }
 };
 
-exports.getUsersByBloodGroup = async (req, res) => {
+exports.getUsersByBloodGroup = async (req, res, next) => {
   try {
     // Décoder le paramètre d'URL pour gérer les caractères comme '+' (qui devient un espace)
     const groupeSanguin = decodeURIComponent(req.params.groupe);
@@ -320,7 +320,7 @@ const bloodCompatibility = {
  * Recherche les donneurs par groupe sanguin et par proximité géographique.
  * Gère la compatibilité des groupes sanguins.
  */
-exports.searchUsers = async (req, res) => {
+exports.searchUsers = async (req, res, next) => {
   try {
     // 1. Récupération et validation des paramètres
     const { latitude, longitude, groupe_sanguin, radius } = req.query;
@@ -394,7 +394,7 @@ exports.searchUsers = async (req, res) => {
   }
 };
 
-exports.getUserProfile = async (req, res) => {
+exports.getUserProfile = async (req, res, next) => {
   const { id } = req.params;
   try {
     const user = await Utilisateur.findByPk(id, {
@@ -441,11 +441,11 @@ exports.getUserProfile = async (req, res) => {
     });
   } catch (error) {
     logger.error("Erreur getUserProfile:", { error: error.message, userId: req.params.id });
-    res.status(500).json({ success: false, error: error.message });
+    next(error);
   }
 };
 
-exports.updatePushToken = async (req, res) => {
+exports.updatePushToken = async (req, res, next) => {
   try {
     const { id } = req.params;
     const { pushToken } = req.body; // Assuming the body contains { pushToken: "ExponentPushToken[...]" }
@@ -472,11 +472,11 @@ exports.updatePushToken = async (req, res) => {
     res.status(200).json({ message: "Token push mis à jour avec succès." });
   } catch (error) {
     logger.error("Erreur lors de la mise à jour du token push:", error);
-    res.status(500).json({ message: "Une erreur interne est survenue lors de la mise à jour du token push." });
+    next(error);
   }
 };
 
-exports.updateUser = async (req, res) => {
+exports.updateUser = async (req, res, next) => {
   try {
     const { id } = req.params;
 
@@ -524,11 +524,11 @@ exports.updateUser = async (req, res) => {
     });
   } catch (error) {
     logger.error('Error updating user', { error: error.message, userId: req.params.id });
-    res.status(500).json({ error: "Erreur lors de la mise à jour du profil" });
+    next(error);
   }
 };
 
-exports.deleteUser = async (req, res) => {
+exports.deleteUser = async (req, res, next) => {
   try {
     const { id } = req.params;
 
@@ -554,11 +554,11 @@ exports.deleteUser = async (req, res) => {
     });
   } catch (error) {
     logger.error('Error deleting user', { error: error.message, userId: req.params.id });
-    res.status(500).json({ error: "Erreur lors de la suppression du compte" });
+    next(error);
   }
 };
 
-exports.getUserHistory = async (req, res) => {
+exports.getUserHistory = async (req, res, next) => {
   try {
     const { id } = req.params;
 
@@ -585,11 +585,11 @@ exports.getUserHistory = async (req, res) => {
     });
   } catch (error) {
     logger.error('Error fetching user history', { error: error.message, userId: req.params.id });
-    res.status(500).json({ error: "Erreur lors de la récupération de l'historique" });
+    next(error);
   }
 };
 
-exports.uploadProfilePicture = async (req, res) => {
+exports.uploadProfilePicture = async (req, res, next) => {
   try {
     const { id } = req.params;
 
@@ -621,6 +621,6 @@ exports.uploadProfilePicture = async (req, res) => {
     });
   } catch (error) {
     logger.error('Error uploading profile picture', { error: error.message, userId: req.params.id });
-    res.status(500).json({ error: "Erreur lors de l'enregistrement de la photo de profil" });
+    next(error);
   }
 };

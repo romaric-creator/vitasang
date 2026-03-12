@@ -18,7 +18,7 @@ const bloodCompatibility = {
     'AB+': ['AB+']
 };
 
-exports.createAlertAndNotify = async (req, res) => {
+exports.createAlertAndNotify = async (req, res, next) => {
     const { latitude, longitude, groupe_sanguin, radius, urgence, quantite_requise, lieu, description } = req.body;
     const id_initiateur = req.user.id;
 
@@ -59,8 +59,6 @@ exports.createAlertAndNotify = async (req, res) => {
         let donorsWithToken = 0;
 
         for (const donor of donors) {
-            // Un utilisateur donneur fraichement enregistré peut avoir des coordonnées à null
-            // on ignore donc la distance s'il n'a pas encore partagé sa position
             if (donor.profilDonneur && donor.profilDonneur.lat_actuelle !== null && donor.profilDonneur.long_actuelle !== null) {
                 const distance = calculateDistance(
                     latitude,
@@ -109,7 +107,6 @@ exports.createAlertAndNotify = async (req, res) => {
 
         if (messages.length > 0) {
             try {
-                // Post directly to Expo REST API
                 const response = await axios.post("https://exp.host/--/api/v2/push/send", messages, {
                     headers: {
                         Accept: "application/json",
@@ -126,8 +123,6 @@ exports.createAlertAndNotify = async (req, res) => {
                     responseData: error.response ? error.response.data : null
                 });
             }
-        } else {
-            logger.warn('No notifications to send or no matched tokens', { alertId: alerte.id_alerte });
         }
 
         res.status(201).json({
@@ -146,18 +141,14 @@ exports.createAlertAndNotify = async (req, res) => {
 
     } catch (error) {
         logger.error('Error creating alert', { error: error.message, userId: id_initiateur });
-        res.status(500).json({
-            success: false,
-            message: "Erreur lors de la création de l'alerte",
-            error: error.message
-        });
+        next(error);
     }
 };
 
-exports.getAlertStatus = async (req, res) => {
-    const { id } = req.params; // Alert ID
-    const userId = req.user.id; // Authenticated user ID
-    const userRole = req.user.role; // Authenticated user role
+exports.getAlertStatus = async (req, res, next) => {
+    const { id } = req.params; 
+    const userId = req.user.id; 
+    const userRole = req.user.role; 
 
     try {
         const alerte = await Alerte.findByPk(id, {
@@ -181,7 +172,6 @@ exports.getAlertStatus = async (req, res) => {
             return res.status(404).json({ success: false, message: "Alerte non trouvée" });
         }
 
-        // Authorization check
         const isInitiator = alerte.id_initiateur === userId;
         const isAdmin = userRole === 'admin';
         const isNotified = alerte.notifications.some(n => n.id_utilisateur === userId);
@@ -214,23 +204,21 @@ exports.getAlertStatus = async (req, res) => {
                 }
             },
             stats,
-            // Only return donor details if the user is the initiator or admin
             details: (isInitiator || isAdmin) ? alerte.notifications.map(n => ({
                 donneur: `${n.destinataire.prenom} ${n.destinataire.nom}`,
                 statut: n.statut_reception,
                 telephone: n.destinataire.telephone
-            })) : [] // Return empty array if not authorized to see details
+            })) : [] 
         });
 
     } catch (error) {
         logger.error("Erreur récup statut alerte:", { error: error.message, alertId: req.params.id });
-        res.status(500).json({ success: false, error: error.message });
+        next(error);
     }
 };
 
-exports.getUserAlerts = async (req, res) => {
-    // id_utilisateur will now come from req.user.id, not req.query
-    const id_utilisateur = req.user.id; // Get user ID from authenticated user
+exports.getUserAlerts = async (req, res, next) => {
+    const id_utilisateur = req.user.id; 
 
     try {
         const alerts = await Alerte.findAll({
@@ -257,11 +245,11 @@ exports.getUserAlerts = async (req, res) => {
         });
     } catch (error) {
         logger.error("Erreur récup alertes utilisateur:", { error: error.message, userId: id_utilisateur });
-        res.status(500).json({ success: false, error: error.message });
+        next(error);
     }
 };
 
-exports.deleteAlert = async (req, res) => {
+exports.deleteAlert = async (req, res, next) => {
     try {
         const { id } = req.params;
         const userId = req.user.id;
@@ -271,12 +259,10 @@ exports.deleteAlert = async (req, res) => {
             return res.status(404).json({ success: false, message: "Alerte non trouvée" });
         }
 
-        // Authorization check: Only initiator can cancel their alert
         if (alerte.id_initiateur !== userId) {
             return res.status(403).json({ success: false, message: "Vous ne pouvez annuler que vos propres alertes" });
         }
 
-        // Soft delete - set statut to 'annulee'
         alerte.statut = 'annulee';
         await alerte.save();
 
@@ -286,11 +272,11 @@ exports.deleteAlert = async (req, res) => {
         });
     } catch (error) {
         logger.error("Erreur lors de l'annulation de l'alerte:", { error: error.message, alertId: id });
-        res.status(500).json({ success: false, error: error.message });
+        next(error);
     }
 };
 
-exports.updateAlert = async (req, res) => {
+exports.updateAlert = async (req, res, next) => {
     try {
         const { id } = req.params;
         const { statut } = req.body;
@@ -301,12 +287,10 @@ exports.updateAlert = async (req, res) => {
             return res.status(404).json({ success: false, message: "Alerte non trouvée" });
         }
 
-        // Authorization check: Only initiator can update their alert
         if (alerte.id_initiateur !== userId) {
             return res.status(403).json({ success: false, message: "Vous ne pouvez mettre à jour que vos propres alertes" });
         }
 
-        // Validate status value
         const validStatuses = ['en_cours', 'satisfaite', 'annulee'];
         if (statut && !validStatuses.includes(statut)) {
             return res.status(400).json({
@@ -331,14 +315,14 @@ exports.updateAlert = async (req, res) => {
         });
     } catch (error) {
         logger.error("Erreur lors de la mise à jour de l'alerte:", { error: error.message, alertId: id });
-        res.status(500).json({ success: false, error: error.message });
+        next(error);
     }
 };
 
-exports.respondToAlert = async (req, res) => {
+exports.respondToAlert = async (req, res, next) => {
     try {
-        const { id } = req.params; // Alert ID
-        const { response } = req.body; // 'accepte' or 'ignore'
+        const { id } = req.params; 
+        const { response } = req.body; 
         const userId = req.user.id;
 
         if (!['accepte', 'ignore'].includes(response)) {
@@ -365,11 +349,11 @@ exports.respondToAlert = async (req, res) => {
         });
     } catch (error) {
         logger.error('Error responding to alert', { error: error.message });
-        res.status(500).json({ success: false, error: error.message });
+        next(error);
     }
 };
 
-exports.getAcceptedAlerts = async (req, res) => {
+exports.getAcceptedAlerts = async (req, res, next) => {
     try {
         const userId = req.user.id;
 
@@ -404,11 +388,11 @@ exports.getAcceptedAlerts = async (req, res) => {
         });
     } catch (error) {
         logger.error('Error fetching accepted alerts', { error: error.message });
-        res.status(500).json({ success: false, error: error.message });
+        next(error);
     }
 };
 
-exports.getAllActiveAlerts = async (req, res) => {
+exports.getAllActiveAlerts = async (req, res, next) => {
     try {
         const alerts = await Alerte.findAll({
             where: { statut: 'en_cours' },
@@ -437,6 +421,6 @@ exports.getAllActiveAlerts = async (req, res) => {
         });
     } catch (error) {
         logger.error('Error fetching active alerts', { error: error.message });
-        res.status(500).json({ success: false, error: error.message });
+        next(error);
     }
 };

@@ -6,20 +6,19 @@ const TypeDon = db.TypeDon;
 const logger = require("../config/logger");
 
 // Créer un rendez-vous
-exports.createRendezVous = async (req, res) => {
+exports.createRendezVous = async (req, res, next) => {
   try {
     const { id_centre, date_rdv, heure_debut, id_type_don } = req.body;
     const id_donneur = req.user.id;
 
     logger.info('Creating rendez-vous', { userId: id_donneur, centreId: id_centre, date: date_rdv });
 
-    // Combiner date et heure
     const dateTime = new Date(`${date_rdv}T${heure_debut}:00`);
 
     const rdv = await RendezVous.create({
       id_donneur,
       id_centre,
-      id_type_don: id_type_don || 1, // Par défaut type 1
+      id_type_don: id_type_don || 1,
       date_heure_rdv: dateTime,
       statut_rdv: 'planifie',
       code_unique: Math.random().toString(36).substring(2, 12).toUpperCase()
@@ -38,12 +37,12 @@ exports.createRendezVous = async (req, res) => {
     });
   } catch (error) {
     logger.error('Error creating rendez-vous', { error: error.message, userId: req.user.id });
-    res.status(500).json({ error: "Erreur lors de la création du rendez-vous" });
+    next(error);
   }
 };
 
 // Récupérer les rendez-vous de l'utilisateur
-exports.getUserRendezVous = async (req, res) => {
+exports.getUserRendezVous = async (req, res, next) => {
   try {
     const id_donneur = req.user.id;
 
@@ -75,12 +74,12 @@ exports.getUserRendezVous = async (req, res) => {
     });
   } catch (error) {
     logger.error('Error fetching rendez-vous', { error: error.message, userId: req.user.id });
-    res.status(500).json({ error: "Erreur lors de la récupération des rendez-vous" });
+    next(error);
   }
 };
 
 // Annuler un rendez-vous
-exports.cancelRendezVous = async (req, res) => {
+exports.cancelRendezVous = async (req, res, next) => {
   try {
     const { id } = req.params;
     const userId = req.user.id;
@@ -90,7 +89,6 @@ exports.cancelRendezVous = async (req, res) => {
       return res.status(404).json({ error: "Rendez-vous non trouvé" });
     }
 
-    // Vérifier que l'utilisateur est le propriétaire
     if (rdv.id_donneur !== userId) {
       logger.warn('Unauthorized cancel attempt', { userId, rdvId: id, ownerId: rdv.id_donneur });
       return res.status(403).json({ error: "Vous ne pouvez annuler que vos propres rendez-vous" });
@@ -104,12 +102,12 @@ exports.cancelRendezVous = async (req, res) => {
     res.status(200).json({ message: "Rendez-vous annulé avec succès" });
   } catch (error) {
     logger.error('Error cancelling rendez-vous', { error: error.message, rdvId: req.params.id });
-    res.status(500).json({ error: "Erreur lors de l'annulation du rendez-vous" });
+    next(error);
   }
 };
 
 // Récupérer les détails d'un rendez-vous
-exports.getRendezVousDetail = async (req, res) => {
+exports.getRendezVousDetail = async (req, res, next) => {
   try {
     const { id } = req.params;
 
@@ -128,6 +126,6 @@ exports.getRendezVousDetail = async (req, res) => {
     res.status(200).json({ rdv });
   } catch (error) {
     logger.error('Error fetching rendez-vous', { error: error.message, rdvId: req.params.id });
-    res.status(500).json({ error: "Erreur lors de la récupération du rendez-vous" });
+    next(error);
   }
 };

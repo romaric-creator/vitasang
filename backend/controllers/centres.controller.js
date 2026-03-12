@@ -3,7 +3,7 @@ const Centre = db.Centre;
 const logger = require("../config/logger");
 
 // Récupérer tous les centres
-exports.getAllCentres = async (req, res) => {
+exports.getAllCentres = async (req, res, next) => {
   try {
     const centres = await Centre.findAll({
       attributes: [
@@ -26,12 +26,12 @@ exports.getAllCentres = async (req, res) => {
     });
   } catch (error) {
     logger.error('Error fetching centres', { error: error.message });
-    res.status(500).json({ error: "Erreur lors de la récupération des centres" });
+    next(error);
   }
 };
 
 // Rechercher des centres près d'une localisation
-exports.searchCentresNearby = async (req, res) => {
+exports.searchCentresNearby = async (req, res, next) => {
   try {
     const { latitude, longitude, radius } = req.query;
 
@@ -39,8 +39,6 @@ exports.searchCentresNearby = async (req, res) => {
       return res.status(400).json({ error: "Latitude et longitude requises" });
     }
 
-    // Pour une implémentation simple, retourner tous les centres
-    // Une vrai implémentation utiliserait la géolocalisation
     const centres = await Centre.findAll({
       attributes: [
         ['id_centre', 'id'],
@@ -58,18 +56,18 @@ exports.searchCentresNearby = async (req, res) => {
     res.status(200).json({ centres });
   } catch (error) {
     logger.error('Error searching centres', { error: error.message });
-    res.status(500).json({ error: "Erreur lors de la recherche des centres" });
+    next(error);
   }
 };
 
 // Récupérer détails d'un centre
-exports.getCentreDetail = async (req, res) => {
+exports.getCentreDetail = async (req, res, next) => {
   try {
     const { id } = req.params;
 
     const centre = await Centre.findByPk(id, {
       attributes: [
-        ['id_centre', 'id_centre'], // Keep original for consistency in booking
+        ['id_centre', 'id_centre'],
         ['nom_centre', 'nom_centre'],
         'adresse',
         'ville',
@@ -87,12 +85,12 @@ exports.getCentreDetail = async (req, res) => {
     res.status(200).json({ success: true, centre });
   } catch (error) {
     logger.error('Error fetching centre', { error: error.message, centreId: req.params.id });
-    res.status(500).json({ success: false, error: "Erreur lors de la récupération du centre" });
+    next(error);
   }
 };
 
 // Récupérer disponibilités d'un centre
-exports.getCentreAvailability = async (req, res) => {
+exports.getCentreAvailability = async (req, res, next) => {
   try {
     const { id } = req.params;
 
@@ -101,7 +99,6 @@ exports.getCentreAvailability = async (req, res) => {
       return res.status(404).json({ error: "Centre non trouvé" });
     }
 
-    // Générer les créneaux disponibles (simplified)
     const slots = [];
     const today = new Date();
     for (let i = 1; i <= 7; i++) {
@@ -117,6 +114,6 @@ exports.getCentreAvailability = async (req, res) => {
     res.status(200).json({ centreId: id, slots });
   } catch (error) {
     logger.error('Error fetching availability', { error: error.message, centreId: req.params.id });
-    res.status(500).json({ error: "Erreur lors de la récupération des disponibilités" });
+    next(error);
   }
 };
