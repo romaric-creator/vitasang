@@ -607,17 +607,17 @@ exports.uploadProfilePicture = async (req, res) => {
       return res.status(404).json({ error: "Utilisateur non trouvé" });
     }
 
-    // On stocke le chemin relatif (accessible via le dossier statique /uploads)
-    const filePath = `/uploads/profiles/${req.file.filename}`;
-    user.photo_profil = filePath;
+    // Avec CloudinaryStorage, req.file.path contient l'URL publique de l'image
+    const imageUrl = req.file.path;
+    user.photo_profil = imageUrl;
     await user.save();
 
-    logger.info('Profile picture updated', { userId: id, path: filePath });
+    logger.info('Profile picture updated on Cloudinary', { userId: id, url: imageUrl });
 
     res.status(200).json({
       success: true,
       message: "Photo de profil mise à jour avec succès",
-      photo_profil: filePath
+      photo_profil: imageUrl
     });
   } catch (error) {
     logger.error('Error uploading profile picture', { error: error.message, userId: req.params.id });
