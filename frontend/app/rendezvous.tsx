@@ -173,7 +173,7 @@ export default function RendezVousList() {
           <Text style={styles.emptyText}>{t('appointments.empty')}</Text>
           <TouchableOpacity
             style={styles.button}
-            onPress={() => router.push('/centres')}
+            onPress={() => router.push('/(tabs)/map')}
           >
             <Text style={styles.buttonText}>{t('appointments.book')}</Text>
           </TouchableOpacity>

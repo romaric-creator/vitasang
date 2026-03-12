@@ -67,16 +67,27 @@ exports.getCentreDetail = async (req, res) => {
   try {
     const { id } = req.params;
 
-    const centre = await Centre.findByPk(id);
+    const centre = await Centre.findByPk(id, {
+      attributes: [
+        ['id_centre', 'id_centre'], // Keep original for consistency in booking
+        ['nom_centre', 'nom_centre'],
+        'adresse',
+        'ville',
+        ['contact_urgence', 'telephone'],
+        'capacite_stockage_max',
+        'latitude',
+        'longitude'
+      ]
+    });
 
     if (!centre) {
-      return res.status(404).json({ error: "Centre non trouvé" });
+      return res.status(404).json({ success: false, error: "Centre non trouvé" });
     }
 
-    res.status(200).json({ centre });
+    res.status(200).json({ success: true, centre });
   } catch (error) {
     logger.error('Error fetching centre', { error: error.message, centreId: req.params.id });
-    res.status(500).json({ error: "Erreur lors de la récupération du centre" });
+    res.status(500).json({ success: false, error: "Erreur lors de la récupération du centre" });
   }
 };
 

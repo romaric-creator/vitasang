@@ -23,6 +23,7 @@ import * as ImagePicker from "expo-image-picker";
 import { uploadProfilePicture } from "@/services/user.service";
 import { TabBarIcon } from "@/components/TabBarIcon";
 import { Image, TouchableOpacity as RNTouchableOpacity } from "react-native";
+import Constants from "expo-constants"; // Import Constants
 
 import { useTranslation } from "react-i18next";
 
@@ -50,7 +51,7 @@ export default function EditProfileScreen() {
         if (res.success) {
           setUserData(res.user);
           if (res.user.photo_profil) {
-            setCurrentImage(process.env.EXPO_PUBLIC_API_BASE_URL?.replace('/api', '') + res.user.photo_profil);
+            setCurrentImage(Constants.expoConfig?.extra?.env?.EXPO_PUBLIC_API_BASE_URL?.replace('/api', '') + res.user.photo_profil);
           }
         } else {
           showAlert(res.message || t('editProfile.loadError'), "error");
@@ -103,7 +104,7 @@ export default function EditProfileScreen() {
         }
 
         showAlert(t('editProfile.success'), "success");
-        setTimeout(() => router.replace('/profile'), 1500);
+        setTimeout(() => router.replace('/(tabs)/profile'), 1500);
       } else {
         showAlert(response.message || t('editProfile.error'), "error");
       }

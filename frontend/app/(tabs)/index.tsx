@@ -16,6 +16,7 @@ import { useTranslation } from "react-i18next";
 import { Image } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import { getUserProfile } from "@/services/user.service";
+import Constants from "expo-constants"; // Import Constants
 
 // Données statiques de démonstration
 const URGENCIES = [
@@ -112,12 +113,12 @@ export default function Home() {
 
   const profileImage = userData?.photo_profil
     ? {
-        uri:
-          (
-            process.env.EXPO_PUBLIC_API_BASE_URL ||
-            "http://10.139.176.208:3000/api"
-          ).replace("/api", "") + userData.photo_profil,
-      }
+      uri:
+        (
+          Constants.expoConfig?.extra?.env?.EXPO_PUBLIC_API_BASE_URL ||
+          "http://10.139.176.208:3000/api"
+        ).replace("/api", "") + userData.photo_profil,
+    }
     : null;
 
   return (
@@ -131,7 +132,7 @@ export default function Home() {
           <View style={styles.header}>
             <TouchableOpacity
               style={styles.profileSection}
-              onPress={() => router.push("/profile")}
+              onPress={() => router.push("/(tabs)/profile")}
             >
               <View style={styles.avatar}>
                 {profileImage ? (
@@ -153,7 +154,7 @@ export default function Home() {
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.notificationBtn}
-              onPress={() => router.push("/alertes")}
+              onPress={() => router.push("/(tabs)/alertes")}
             >
               <TabBarIcon name="bell-o" size={20} color={color.textMain} />
               <View style={styles.notificationDot} />
@@ -193,7 +194,7 @@ export default function Home() {
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>{t("home.urgentSection")}</Text>
-            <TouchableOpacity onPress={() => router.push("/all-alerts")}>
+            <TouchableOpacity onPress={() => router.push("/(tabs)/alertes")}>
               <Text style={{ color: color.primary, fontWeight: "700" }}>
                 {t("common.seeAll")}
               </Text>
@@ -236,7 +237,7 @@ export default function Home() {
 
                 <TouchableOpacity
                   style={styles.btnDon}
-                  onPress={() => router.push("/centres")}
+                  onPress={() => router.push("/(tabs)/map")}
                 >
                   <Text style={styles.btnDonText}>{t("home.donate")}</Text>
                 </TouchableOpacity>

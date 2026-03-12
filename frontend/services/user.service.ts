@@ -232,10 +232,67 @@ export const respondToAlert = async (alertId: number, response: 'accepte' | 'ign
 };
 
 export const getAcceptedAlerts = async () => {
+
   try {
+
     const res = await apiClient.get(`/alerts/accepted`);
+
     return res.data;
+
   } catch (error: any) {
+
     throw new Error(error.response?.data?.message || "Erreur lors de la récupération des interventions");
+
   }
+
+};
+
+
+
+export const getCentreDetails = async (id: number) => {
+
+  try {
+
+    const response = await apiClient.get(`/centres/${id}`);
+
+    return response.data;
+
+  } catch (error: any) {
+
+    throw new Error(error.response?.data?.message || "Erreur lors de la récupération du centre");
+
+  }
+
+};
+
+
+
+export const createAppointment = async (data: { id_centre: number; date_rdv: string; heure_debut: string }) => {
+
+
+
+  try {
+
+
+
+    const response = await apiClient.post(`/rendez-vous`, data);
+
+
+
+    return response.data;
+
+
+
+  } catch (error: any) {
+
+
+
+    throw new Error(error.response?.data?.message || "Erreur lors de la création du rendez-vous");
+
+
+
+  }
+
+
+
 };

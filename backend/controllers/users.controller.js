@@ -41,8 +41,8 @@ exports.addUser = async (req, res) => {
             role: "donneur",
             profilDonneur: {
               groupe_sanguin,
-              lat_actuelle: 0,
-              long_actuelle: 0,
+              lat_actuelle: null,
+              long_actuelle: null,
             },
           },
           {
@@ -427,7 +427,7 @@ exports.getUserProfile = async (req, res) => {
         prenom: user.prenom,
         telephone: user.telephone,
         email: user.email,
-        region: user.region,
+        ville: user.region,
         role: user.role,
         photo_profil: user.photo_profil,
         groupe_sanguin: user.profilDonneur?.groupe_sanguin || null,
@@ -466,7 +466,7 @@ exports.updatePushToken = async (req, res) => {
       return res.status(404).json({ message: "User not found." });
     }
 
-    user.token_firebase = pushToken; // Update the existing token_firebase field
+    user.push_token = pushToken; // Update the push_token field
     await user.save();
 
     res.status(200).json({ message: "Token push mis à jour avec succès." });
@@ -492,12 +492,10 @@ exports.updateUser = async (req, res) => {
     }
 
     // Update user fields
-    const updatableFields = ['nom', 'prenom', 'telephone', 'ville'];
-    updatableFields.forEach(field => {
-      if (req.body[field] !== undefined) {
-        user[field] = req.body[field];
-      }
-    });
+    if (req.body.nom) user.nom = req.body.nom;
+    if (req.body.prenom) user.prenom = req.body.prenom;
+    if (req.body.telephone) user.telephone = req.body.telephone;
+    if (req.body.ville !== undefined) user.region = req.body.ville; // Map ville to region
 
     // Update profil donneur if it exists or if blood/location fields are provided
     if (user.profilDonneur || req.body.groupe_sanguin || req.body.latitude !== undefined || req.body.longitude !== undefined) {
@@ -514,13 +512,14 @@ exports.updateUser = async (req, res) => {
     logger.info('User profile updated', { userId: id });
 
     res.status(200).json({
+      success: true,
       message: "Profil mis à jour avec succès",
       user: {
         id_utilisateur: user.id_utilisateur,
         nom: user.nom,
         prenom: user.prenom,
         telephone: user.telephone,
-        ville: user.ville
+        ville: user.region // Assurez-vous que c'est le bon champ
       }
     });
   } catch (error) {

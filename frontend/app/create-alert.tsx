@@ -28,20 +28,24 @@ export default function CreateAlertScreen() {
   const [location, setLocation] = useState<Location.LocationObject | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [isLocating, setIsLocating] = useState(true);
   const [donorCount, setDonorCount] = useState<number | null>(null);
 
   useEffect(() => {
     (async () => {
+      setIsLocating(true);
       let { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== 'granted') {
         setErrorMsg(t('alert.locationError'));
         console.error('Location permission denied');
+        setIsLocating(false);
         return;
       }
 
       let location = await Location.getCurrentPositionAsync({});
       console.log('Location fetched:', location);
       setLocation(location);
+      setIsLocating(false);
     })();
   }, []);
 
@@ -100,130 +104,142 @@ export default function CreateAlertScreen() {
   return (
     <ThemedView style={styles.container}>
       <PageHeader title={t('alert.title')} />
-      <ScrollView contentContainerStyle={{ padding: 16 }} showsVerticalScrollIndicator={false}>
-        <Formik
-          initialValues={{
-            groupe_sanguin: "O+",
-            urgence: "URGENT",
-            lieu: "",
-            quantite_requise: "",
-            description: "",
-            latitude: location?.coords.latitude || 0,
-            longitude: location?.coords.longitude || 0,
-          }}
-          validationSchema={createAlertValidationSchema}
-          onSubmit={handleSubmit}
-          enableReinitialize={true}
-        >
-          {({ values, errors, touched, handleChange, handleBlur, handleSubmit }) => (
-            <View>
-              <BloodGroupSelector
-                value={values.groupe_sanguin}
-                onSelect={(group) => {
-                  handleChange("groupe_sanguin")(group);
-                  handleSearch(group, location?.coords.latitude || 0, location?.coords.longitude || 0);
-                }}
-                error={errors.groupe_sanguin}
-                touched={touched.groupe_sanguin}
-              />
+      {isLocating ? (
+        <View style={styles.center}>
+          <ActivityIndicator size="large" color={color.primary} />
+          <Text style={styles.locatingText}>{t('alert.gettingLocation')}</Text>
+        </View>
+      ) : (
+        <ScrollView contentContainerStyle={{ padding: 16 }} showsVerticalScrollIndicator={false}>
+          <Formik
+            initialValues={{
+              groupe_sanguin: "O+",
+              urgence: "URGENT",
+              lieu: "",
+              quantite_requise: "",
+              description: "",
+              latitude: location?.coords.latitude || 0,
+              longitude: location?.coords.longitude || 0,
+            }}
+            validationSchema={createAlertValidationSchema}
+            onSubmit={handleSubmit}
+            enableReinitialize={true}
+          >
+            {({ values, errors, touched, handleChange, handleBlur, handleSubmit }) => (
+              <View>
+                <BloodGroupSelector
+                  value={values.groupe_sanguin}
+                  onSelect={(group) => {
+                    handleChange("groupe_sanguin")(group);
+                    if (location) {
+                      handleSearch(group, location.coords.latitude, location.coords.longitude);
+                    }
+                  }}
+                  error={errors.groupe_sanguin}
+                  touched={touched.groupe_sanguin}
+                />
 
-              <FormField
-                label={t('alert.fields.location')}
-                value={values.lieu}
-                onChangeText={handleChange("lieu")}
-                onBlur={handleBlur("lieu")}
-                placeholder={t('alert.placeholders.location')}
-                error={errors.lieu}
-                touched={touched.lieu}
-                required
-              />
+                <FormField
+                  label={t('alert.fields.location')}
+                  value={values.lieu}
+                  onChangeText={handleChange("lieu")}
+                  onBlur={handleBlur("lieu")}
+                  placeholder={t('alert.placeholders.location')}
+                  error={errors.lieu}
+                  touched={touched.lieu}
+                  required
+                />
 
-              <FormField
-                label={t('alert.fields.quantity')}
-                value={values.quantite_requise}
-                onChangeText={handleChange("quantite_requise")}
-                onBlur={handleBlur("quantite_requise")}
-                placeholder={t('alert.placeholders.quantity')}
-                error={errors.quantite_requise}
-                touched={touched.quantite_requise}
-                keyboardType="numeric"
-                required
-              />
+                <FormField
+                  label={t('alert.fields.quantity')}
+                  value={values.quantite_requise}
+                  onChangeText={handleChange("quantite_requise")}
+                  onBlur={handleBlur("quantite_requise")}
+                  placeholder={t('alert.placeholders.quantity')}
+                  error={errors.quantite_requise}
+                  touched={touched.quantite_requise}
+                  keyboardType="numeric"
+                  required
+                />
 
-              <View style={formStyles.field}>
-                <Text style={formStyles.label}>
-                  {t('alert.fields.urgency')} <Text style={{ color: color.error }}>*</Text>
-                </Text>
-                <View style={styles.urgencyGrid}>
-                  {["NORMAL", "URGENT", "TRES_URGENT"].map((level) => (
-                    <TouchableOpacity
-                      key={level}
-                      style={[
-                        styles.urgencyOption,
-                        values.urgence === level && styles.urgencySelected,
-                      ]}
-                      onPress={() => handleChange("urgence")(level)}
-                      activeOpacity={0.7}
-                    >
-                      <Text
-                        style={[
-                          styles.urgencyLabel,
-                          values.urgence === level && styles.textWhite,
-                        ]}
-                      >
-                        {t(`alert.urgencyLevels.${level}`)}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-                {errors.urgence && touched.urgence && (
-                  <Text style={formStyles.errorText}>{errors.urgence}</Text>
-                )}
-              </View>
-
-              <FormField
-                label={t('alert.fields.description')}
-                value={values.description}
-                onChangeText={handleChange("description")}
-                onBlur={handleBlur("description")}
-                placeholder={t('alert.placeholders.description')}
-                error={errors.description}
-                touched={touched.description}
-              />
-
-              <View style={styles.warningBox}>
-                <TabBarIcon name="info-circle" size={16} color={color.primary} />
-                {loading ? (
-                  <ActivityIndicator size="small" color={color.primary} />
-                ) : (
-                  <Text style={styles.warningText}>
-                    {donorCount !== null
-                      ? t('alert.donorFound', { count: donorCount, group: values.groupe_sanguin })
-                      : t('alert.searchingDonors')}
+                <View style={formStyles.field}>
+                  <Text style={formStyles.label}>
+                    {t('alert.fields.urgency')} <Text style={{ color: color.error }}>*</Text>
                   </Text>
+                  <View style={styles.urgencyGrid}>
+                    {["NORMAL", "URGENT", "TRES_URGENT"].map((level) => (
+                      <TouchableOpacity
+                        key={level}
+                        style={[
+                          styles.urgencyOption,
+                          values.urgence === level && styles.urgencySelected,
+                        ]}
+                        onPress={() => handleChange("urgence")(level)}
+                        activeOpacity={0.7}
+                      >
+                        <Text
+                          style={[
+                            styles.urgencyLabel,
+                            values.urgence === level && styles.textWhite,
+                          ]}
+                        >
+                          {t(`alert.urgencyLevels.${level}`)}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                  {errors.urgence && touched.urgence && (
+                    <Text style={formStyles.errorText}>{errors.urgence}</Text>
+                  )}
+                </View>
+
+                <FormField
+                  label={t('alert.fields.description')}
+                  value={values.description}
+                  onChangeText={handleChange("description")}
+                  onBlur={handleBlur("description")}
+                  placeholder={t('alert.placeholders.description')}
+                  error={errors.description}
+                  touched={touched.description}
+                />
+
+                <View style={styles.warningBox}>
+                  <TabBarIcon name="info-circle" size={16} color={color.primary} />
+                  {loading ? (
+                    <ActivityIndicator size="small" color={color.primary} />
+                  ) : (
+                    <Text style={styles.warningText}>
+                      {donorCount !== null
+                        ? t('alert.donorFound', { count: donorCount, group: values.groupe_sanguin })
+                        : t('alert.searchingDonors')}
+                    </Text>
+                  )}
+                </View>
+
+                {errorMsg && (
+                  <Text style={styles.errorText}>{errorMsg}</Text>
                 )}
+
+                <PrimaryButton
+                  title={t('alert.submit')}
+                  onPress={() => handleSubmit()}
+                  loading={loading}
+                  disabled={!location || loading}
+                  style={{ marginTop: 20 }}
+                />
               </View>
-
-              {errorMsg && (
-                <Text style={styles.errorText}>{errorMsg}</Text>
-              )}
-
-              <PrimaryButton
-                title={t('alert.submit')}
-                onPress={() => handleSubmit()}
-                loading={loading}
-                style={{ marginTop: 20 }}
-              />
-            </View>
-          )}
-        </Formik>
-      </ScrollView>
+            )}
+          </Formik>
+        </ScrollView>
+      )}
     </ThemedView>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: color.screenBackground },
+  center: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 },
+  locatingText: { marginTop: 10, color: color.textSecondary, fontWeight: '600' },
   textWhite: { color: "white" },
   urgencyGrid: {
     flexDirection: "row",

@@ -1,10 +1,14 @@
-import { Image, Text, TouchableOpacity, View, StyleSheet } from "react-native";
-import React from "react";
+import React, { useEffect } from "react";
+import { View, Text, Image, StyleSheet } from "react-native";
 import ThemedView from "@/components/ThemedView";
 import { color } from "@/constant/color";
 import { router } from "expo-router";
 
 export default function Splash() {
+  useEffect(() => {
+    router.replace("/OnboardingCarousel");
+  }, []);
+
   return (
     <ThemedView style={styles.container}>
       <View style={styles.content}>
@@ -14,24 +18,6 @@ export default function Splash() {
         />
         <Text style={styles.appName}>VitaSang</Text>
         <Text style={styles.tagline}>Sauver des vies ensemble</Text>
-      </View>
-
-      <View style={styles.buttonContainer}>
-        <TouchableOpacity
-          style={styles.primaryButton}
-          onPress={() => router.replace("/register")}
-          activeOpacity={0.85}
-        >
-          <Text style={styles.primaryButtonText}>Créer un compte</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.secondaryButton}
-          onPress={() => router.replace("/login")}
-          activeOpacity={0.85}
-        >
-          <Text style={styles.secondaryButtonText}>Connexion</Text>
-        </TouchableOpacity>
       </View>
     </ThemedView>
   );

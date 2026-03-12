@@ -1,7 +1,8 @@
 import axios, { AxiosInstance, AxiosError, AxiosResponse } from 'axios';
 import { getData } from '@/utils/storage';
+import Constants from 'expo-constants'; // Import Constants
 
-const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL || 'http://10.139.176.208:3000/api';
+const API_BASE_URL = Constants.expoConfig?.extra?.env?.EXPO_PUBLIC_API_BASE_URL;
 const REQUEST_TIMEOUT = 10000; // 10 seconds
 
 export const createAxiosInstance = (): AxiosInstance => {

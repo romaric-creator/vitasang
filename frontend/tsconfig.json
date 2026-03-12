@@ -2,7 +2,8 @@
   "extends": "expo/tsconfig.base",
   "compilerOptions": {
     "strict": true,
-    "types": ["jest", "@testing-library/react-native"],
+    "moduleResolution": "node",
+    "types": ["jest", "@testing-library/react-native", "firebase"],
     "paths": {
       "@/*": [
         "./*"

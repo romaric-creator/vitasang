@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "948719960671",
+    "project_id": "vitasang",
+    "storage_bucket": "vitasang.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:948719960671:android:830116b479356b90b6d1ea",
+        "android_client_info": {
+          "package_name": "com.hidari_dev.VitaSang"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCNJgLLOSVvUK0D2vEFQMigNHC2YTElIhY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

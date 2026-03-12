@@ -95,7 +95,7 @@ export default function EligibilityTestScreen() {
                             />
                         </View>
                         <Text style={styles.resultTitle}>
-                            {isEligible ? "Vous semblez éligible !" : "Un report est peut-être nécessaire"}
+                            {isEligible ? "Vous semblez éligible !" : "Un report est peut-&#39;être nécessaire"}
                         </Text>
                         <Text style={styles.resultDescription}>
                             {isEligible
@@ -113,7 +113,7 @@ export default function EligibilityTestScreen() {
                         <View style={styles.actionButtons}>
                             <PrimaryButton
                                 title={isEligible ? "TROUVER UN CENTRE" : "RECOMMENCER"}
-                                onPress={() => isEligible ? router.push('/centres') : resetTest()}
+                                onPress={() => isEligible ? router.push('/(tabs)/map') : resetTest()}
                             />
                             <TouchableOpacity style={styles.secondaryBtn} onPress={() => router.back()}>
                                 <Text style={styles.secondaryBtnText}>RETOUR À L'ACCUEIL</Text>

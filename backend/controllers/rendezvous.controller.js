@@ -69,7 +69,8 @@ exports.getUserRendezVous = async (req, res) => {
     });
 
     res.status(200).json({
-      rdvs,
+      success: true,
+      appointments: rdvs,
       total: rdvs.length
     });
   } catch (error) {

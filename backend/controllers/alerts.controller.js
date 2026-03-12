@@ -5,9 +5,7 @@ const ProfilDonneur = db.ProfilDonneur;
 const LogNotification = db.LogNotification;
 const logger = require("../config/logger");
 const { calculateDistance } = require("../utils/geoHelpers");
-const { Expo } = require('expo-server-sdk'); // Import Expo SDK
-
-let expo = new Expo(); // Initialize Expo SDK
+const axios = require("axios");
 
 const bloodCompatibility = {
     'O-': ['O-', 'O+', 'A-', 'A+', 'B-', 'B+', 'AB-', 'AB+'],
@@ -21,14 +19,12 @@ const bloodCompatibility = {
 };
 
 exports.createAlertAndNotify = async (req, res) => {
-    // id_initiateur will now come from req.user.id, not req.body
     const { latitude, longitude, groupe_sanguin, radius, urgence, quantite_requise, lieu, description } = req.body;
-    const id_initiateur = req.user.id; // Get initiator ID from authenticated user
+    const id_initiateur = req.user.id;
 
     try {
         logger.info('Creating alert', { userId: id_initiateur, groupe_sanguin, latitude, longitude, radius });
 
-        // 1. Enregistrer l'alerte
         const alerte = await Alerte.create({
             groupe_requis: groupe_sanguin,
             degre_urgence: urgence || "NORMAL",
@@ -44,12 +40,9 @@ exports.createAlertAndNotify = async (req, res) => {
 
         logger.info('Alert created', { alertId: alerte.id_alerte });
 
-        // 2. Trouver les donneurs compatibles
         const compatibleGroups = Object.keys(bloodCompatibility).filter(group =>
             bloodCompatibility[group].includes(groupe_sanguin)
         );
-
-        logger.info('Compatible blood groups', { groupe_sanguin, compatible: compatibleGroups });
 
         const donors = await Utilisateur.findAll({
             where: { role: 'donneur' },
@@ -60,15 +53,15 @@ exports.createAlertAndNotify = async (req, res) => {
             }]
         });
 
-        logger.info('Donors found', { totalDonors: donors.length, bloodGroups: compatibleGroups });
-
         let messages = [];
         const notifiedDonors = [];
         let donorsInRadius = 0;
         let donorsWithToken = 0;
 
         for (const donor of donors) {
-            if (donor.profilDonneur && donor.profilDonneur.lat_actuelle && donor.profilDonneur.long_actuelle) {
+            // Un utilisateur donneur fraichement enregistré peut avoir des coordonnées à null
+            // on ignore donc la distance s'il n'a pas encore partagé sa position
+            if (donor.profilDonneur && donor.profilDonneur.lat_actuelle !== null && donor.profilDonneur.long_actuelle !== null) {
                 const distance = calculateDistance(
                     latitude,
                     longitude,
@@ -79,36 +72,31 @@ exports.createAlertAndNotify = async (req, res) => {
                 if (distance <= (radius || 10)) {
                     donorsInRadius++;
 
-                    // 3. Préparer la notification push si le token existe
-                    if (donor.token_firebase && Expo.isExpoPushToken(donor.token_firebase)) {
+                    if (donor.push_token) {
                         donorsWithToken++;
                         messages.push({
-                            to: donor.token_firebase,
+                            to: donor.push_token,
                             sound: 'default',
+                            title: 'Urgence Sang',
                             body: `Urgence sang ${groupe_sanguin} à ${distance.toFixed(2)} km de votre position !`,
                             data: { alertId: alerte.id_alerte, groupe_sanguin, distance: distance.toFixed(2) },
                         });
 
-                        logger.info('Preparing notification', {
-                            donorId: donor.id_utilisateur,
-                            distance: distance.toFixed(2),
-                            hasToken: true
+                        await LogNotification.create({
+                            id_utilisateur: donor.id_utilisateur,
+                            id_alerte: alerte.id_alerte,
+                            canal: 'push',
+                            statut_reception: 'envoye'
                         });
+
                     } else {
-                        logger.warn('Donor has no token', {
-                            donorId: donor.id_utilisateur,
-                            hasToken: !!donor.token_firebase,
-                            distance: distance.toFixed(2)
+                        await LogNotification.create({
+                            id_utilisateur: donor.id_utilisateur,
+                            id_alerte: alerte.id_alerte,
+                            canal: 'push',
+                            statut_reception: 'no_token'
                         });
                     }
-
-                    // 4. Créer un log de notification (statut initial 'pending' ou 'envoye')
-                    await LogNotification.create({
-                        id_utilisateur: donor.id_utilisateur,
-                        id_alerte: alerte.id_alerte,
-                        canal: 'push',
-                        statut_reception: 'envoye' // Sera mis à jour après l'envoi réel
-                    });
 
                     notifiedDonors.push({
                         id: donor.id_utilisateur,
@@ -119,32 +107,27 @@ exports.createAlertAndNotify = async (req, res) => {
             }
         }
 
-        logger.info('Alert notification summary', {
-            alertId: alerte.id_alerte,
-            totalDonors: donors.length,
-            inRadius: donorsInRadius,
-            withToken: donorsWithToken,
-            toNotify: messages.length
-        });
-
-        // 5. Envoyer toutes les notifications en une seule fois
         if (messages.length > 0) {
-            let chunks = expo.chunkPushNotifications(messages);
-            let tickets = [];
-            (async () => {
-                for (let chunk of chunks) {
-                    try {
-                        logger.info('Sending notification chunk', { chunkSize: chunk.length });
-                        let ticketChunk = await expo.sendPushNotificationsAsync(chunk);
-                        tickets.push(...ticketChunk);
-                        logger.info('Notification chunk sent', { ticketCount: ticketChunk.length });
-                    } catch (error) {
-                        logger.error('Error sending push notification chunk', { error: error.message });
+            try {
+                // Post directly to Expo REST API
+                const response = await axios.post("https://exp.host/--/api/v2/push/send", messages, {
+                    headers: {
+                        Accept: "application/json",
+                        "Content-Type": "application/json",
                     }
-                }
-            })();
+                });
+                logger.info('Notifications batch sent directly to Expo API', {
+                    count: messages.length,
+                    expoResponse: response.data
+                });
+            } catch (error) {
+                logger.error('Error sending Axios push notifications to Expo API', {
+                    error: error.message,
+                    responseData: error.response ? error.response.data : null
+                });
+            }
         } else {
-            logger.warn('No notifications to send', { alertId: alerte.id_alerte });
+            logger.warn('No notifications to send or no matched tokens', { alertId: alerte.id_alerte });
         }
 
         res.status(201).json({
@@ -158,7 +141,7 @@ exports.createAlertAndNotify = async (req, res) => {
                 donorsWithToken,
                 notified: notifiedDonors.length
             },
-            notifiedDonors: notifiedDonors
+            notifiedDonors
         });
 
     } catch (error) {
@@ -198,8 +181,12 @@ exports.getAlertStatus = async (req, res) => {
             return res.status(404).json({ success: false, message: "Alerte non trouvée" });
         }
 
-        // Authorization check: Only initiator or admin can view status
-        if (alerte.id_initiateur !== userId && userRole !== 'admin') {
+        // Authorization check
+        const isInitiator = alerte.id_initiateur === userId;
+        const isAdmin = userRole === 'admin';
+        const isNotified = alerte.notifications.some(n => n.id_utilisateur === userId);
+
+        if (!isInitiator && !isAdmin && !isNotified) {
             return res.status(403).json({ success: false, message: "Unauthorized: You do not have permission to view this alert status." });
         }
 
@@ -228,7 +215,7 @@ exports.getAlertStatus = async (req, res) => {
             },
             stats,
             // Only return donor details if the user is the initiator or admin
-            details: (alerte.id_initiateur === userId || userRole === 'admin') ? alerte.notifications.map(n => ({
+            details: (isInitiator || isAdmin) ? alerte.notifications.map(n => ({
                 donneur: `${n.destinataire.prenom} ${n.destinataire.nom}`,
                 statut: n.statut_reception,
                 telephone: n.destinataire.telephone

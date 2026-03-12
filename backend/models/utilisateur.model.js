@@ -22,7 +22,7 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.ENUM("donneur", "personnel", "admin"),
         defaultValue: "donneur",
       },
-      token_firebase: { type: DataTypes.TEXT },
+      push_token: { type: DataTypes.TEXT },
       est_actif: { type: DataTypes.BOOLEAN, defaultValue: true },
       id_centre: {
         type: DataTypes.INTEGER,

@@ -11,19 +11,17 @@ import {
 } from "react-native";
 import { Formik } from "formik";
 import { color } from "@/constant/color";
-import { router } from "expo-router";
-import { loginUser, updatePushToken } from "@/services/user.service";
-import { storeData } from "@/utils/storage";
-import { registerForPushNotificationsAsync } from "@/utils/pushNotifications";
 import { loginValidationSchema } from "@/validation/ValidationSchemas";
 import FormField from "@/components/FormField";
 import { PrimaryButton } from "@/components/PrimaryButton";
 import { formStyles } from "@/styles/formStyles";
+import { useAuth } from "@/context/AuthContext";
 
 import { useTranslation } from "react-i18next";
 
 export default function LoginScreen() {
   const { t } = useTranslation();
+  const { signIn } = useAuth();
   const [loading, setLoading] = useState(false);
   const [generalError, setGeneralError] = useState("");
 
@@ -32,28 +30,9 @@ export default function LoginScreen() {
     setLoading(true);
 
     try {
-      const data = await loginUser(values.telephone, values.mot_de_passe);
-      // Sauvegarder le token
-      await storeData("token", data.token);
-      // Sauvegarder l'objet user en normalisant l'id
-      const userToStore = {
-        ...data.user,
-        id_utilisateur: data.user.id || data.user.id_utilisateur,
-      };
-      await storeData("user", userToStore);
-
-      // Register for push notifications
-      try {
-        const pushToken = await registerForPushNotificationsAsync();
-        if (pushToken && userToStore.id_utilisateur) {
-          await updatePushToken(userToStore.id_utilisateur, pushToken);
-          console.log("Push token envoyé au backend après connexion.");
-        }
-      } catch (tokenError) {
-        console.error("Échec de l'envoi du push token au backend:", tokenError);
-      }
-
-      router.replace("/(tabs)");
+      // signIn gère tout : appel API, stockage token/user, et mise à jour de isAuth
+      // La redirection vers (tabs) est automatique via le _layout.tsx
+      await signIn(values.telephone, values.mot_de_passe);
     } catch (err: any) {
       console.error("Login error:", err.message);
       setGeneralError(err.message || t('login.error'));
@@ -137,7 +116,7 @@ export default function LoginScreen() {
           {/* Footer - Switch to Register */}
           <View style={styles.footer}>
             <Text style={styles.footerText}>{t('login.noAccount')} </Text>
-            <TouchableOpacity onPress={() => router.replace("/register")}>
+            <TouchableOpacity onPress={() => require('expo-router').router.replace("/register")}>
               <Text style={styles.registerLink}>{t('login.registerLink')}</Text>
             </TouchableOpacity>
           </View>

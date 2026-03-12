@@ -98,16 +98,30 @@ export default function MapScreen() {
       { label: t('centers.phone'), value: item.telephone, valueColor: color.primary }
     ];
 
+    const actionButton = {
+      text: t('appointments.book'),
+      onPress: () => router.push(`/book-appointment/${item.id_centre}`),
+      color: color.primary
+    };
+
     return (
       <View style={{ marginHorizontal: 20, marginBottom: 12 }}>
         <DataCard
           title={item.nom}
           subtitle={item.ville}
           data={data}
+          actionButton={actionButton}
         />
       </View>
     );
   };
+
+  // Filtrer les centres pour ne garder que ceux avec des coordonnées valides
+  const mappableCentres = centres.filter(c =>
+    c.latitude && c.longitude &&
+    !isNaN(parseFloat(c.latitude)) &&
+    !isNaN(parseFloat(c.longitude))
+  );
 
   return (
     <ThemedView style={styles.container}>
@@ -141,7 +155,6 @@ export default function MapScreen() {
         <View style={styles.mapContainer}>
           <MapView
             ref={mapRef}
-            provider={PROVIDER_GOOGLE}
             style={styles.map}
             initialRegion={userLocation ? {
               ...userLocation,
@@ -150,9 +163,9 @@ export default function MapScreen() {
             } : doualaRegion}
             showsUserLocation={true}
           >
-            {centres.map((centre) => (
+            {mappableCentres.map((centre) => (
               <Marker
-                key={centre.id}
+                key={centre.id_centre}
                 coordinate={{
                   latitude: parseFloat(centre.latitude),
                   longitude: parseFloat(centre.longitude),
@@ -164,7 +177,7 @@ export default function MapScreen() {
                   </View>
                   <View style={styles.markerArrow} />
                 </View>
-                <Callout tooltip>
+                <Callout tooltip onPress={() => router.push(`/book-appointment/${centre.id_centre}`)}>
                   <View style={styles.calloutContainer}>
                     <Text style={styles.calloutTitle}>{centre.nom}</Text>
                     <Text style={styles.calloutText}>{centre.adresse}</Text>
@@ -178,7 +191,7 @@ export default function MapScreen() {
       ) : (
         <FlatList
           data={centres}
-          keyExtractor={(item) => item.id.toString()}
+          keyExtractor={(item) => item.id_centre.toString()}
           renderItem={renderCentreItem}
           contentContainerStyle={styles.listContent}
           refreshControl={

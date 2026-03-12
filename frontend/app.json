@@ -1,25 +1,29 @@
 {
   "expo": {
-    "name": "frontend",
-    "slug": "frontend",
+    "name": "VitaSang",
+    "slug": "VitaSang",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
-    "scheme": "frontend",
+    "icon": "./assets/images/Capture d’écran du 2026-01-31 23-07-03.png",
+    "scheme": [
+      "vitasang"
+    ],
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.hidari-dev.VitaSang"
     },
     "android": {
-      "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/images/Capture d’écran du 2026-01-31 23-07-03.png",
-        "backgroundImage": "./assets/images/Capture d’écran du 2026-01-31 23-07-03.png",
-        "monochromeImage": "./assets/images/Capture d’écran du 2026-01-31 23-07-03.png"
-      },
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "package": "com.hidari_dev.VitaSang",
+      "googleServicesFile": "./google-services.json",
+      "config": {
+        "googleMaps": {
+          "apiKey": "AIzaSyCNJgLLOSVvUK0D2vEFQMigNHC2YTElIhY"
+        }
+      }
     },
     "web": {
       "output": "static",
@@ -39,11 +43,28 @@
           }
         }
       ],
-      "expo-localization"
+      "expo-localization",
+      "expo-notifications"
     ],
     "experiments": {
       "typedRoutes": false,
       "reactCompiler": false
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "78a20355-02ca-4b7a-8225-d0dd4b60b197"
+      },
+      "env": {
+        "FIREBASE_API_KEY": "AIzaSyCNJgLLOSVvUK0D2vEFQMigNHC2YTElIhY",
+        "FIREBASE_AUTH_DOMAIN": "vitasang.firebaseapp.com",
+        "FIREBASE_PROJECT_ID": "vitasang",
+        "FIREBASE_STORAGE_BUCKET": "vitasang.firebasestorage.app",
+        "FIREBASE_MESSAGING_SENDER_ID": "948719960671",
+        "FIREBASE_APP_ID": "1:948719960671:android:830116b479356b90b6d1ea",
+        "EXPO_PUBLIC_API_BASE_URL": "http://10.37.82.208:3000/api"
+      }
+    },
+    "owner": "hidari_dev"
   }
 }

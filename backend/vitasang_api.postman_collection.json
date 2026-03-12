@@ -1,247 +1,149 @@
 {
-  "info": {
-    "_postman_id": "a8a0b5a3-6b3c-4e3e-8f8f-3f3e3e3e3e3e",
-    "name": "VitaSang API",
-    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
-  },
-  "item": [
-    {
-      "name": "User Management",
-      "item": [
-        {
-          "name": "Register Donneur",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json",
-                "type": "text"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n    \"role\": \"donneur\",\n    \"nom\": \"Dupont\",\n    \"prenom\": \"Jean\",\n    \"email\": \"jean.dupont@example.com\",\n    \"mot_de_passe\": \"password123\",\n    \"telephone\": \"0123456789\",\n    \"region\": \"Île-de-France\",\n    \"groupe_sanguin\": \"O+\",\n    \"poids\": 75,\n    \"taille\": 180\n}"
-            },
-            "url": {
-              "raw": "http://localhost:3000/api/users/register",
-              "protocol": "http",
-              "host": [
-                "localhost"
-              ],
-              "port": "3000",
-              "path": [
-                "api",
-                "users",
-                "register"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Login",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json",
-                "type": "text"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n    \"telephone\": \"0600000001\",\n    \"mot_de_passe\": \"password123\"\n}"
-            },
-            "url": {
-              "raw": "http://localhost:3000/api/users/login",
-              "protocol": "http",
-              "host": [
-                "localhost"
-              ],
-              "port": "3000",
-              "path": [
-                "api",
-                "users",
-                "login"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Update Push Token",
-          "request": {
-            "method": "PUT",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json",
-                "type": "text"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n    \"pushToken\": \"ExponentPushToken[xxxxxxxxxxxxxxxxxxxxxx]\"\n}"
-            },
-            "url": {
-              "raw": "http://localhost:3000/api/users/:id/push-token",
-              "protocol": "http",
-              "host": [
-                "localhost"
-              ],
-              "port": "3000",
-              "path": [
-                "api",
-                "users",
-                ":id",
-                "push-token"
-              ],
-              "variable": [
-                {
-                  "key": "id",
-                  "value": "1"
-                }
-              ]
-            }
-          },
-          "response": []
-        }
-      ]
-    },
-    {
-      "name": "Alerts",
-      "item": [
-        {
-          "name": "Recherche Donneur par Proximité (A+)",
-          "protocolProfileBehavior": {
-            "disableBodyPruning": true
-          },
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "http://localhost:3000/api/users/search?lat=48.8566&long=2.3522&blood=A%2B&rayon=5",
-              "protocol": "http",
-              "host": [
-                "localhost"
-              ],
-              "port": "3000",
-              "path": [
-                "api",
-                "users",
-                "search"
-              ],
-              "query": [
-                {
-                  "key": "lat",
-                  "value": "48.8566"
-                },
-                {
-                  "key": "long",
-                  "value": "2.3522"
-                },
-                {
-                  "key": "blood",
-                  "value": "A+"
-                },
-                {
-                  "key": "rayon",
-                  "value": "5"
-                }
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Create Alert and Notify Donors",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json",
-                "type": "text"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n    \"latitude\": 48.8566,\n    \"longitude\": 2.3522,\n    \"bloodType\": \"O+\",\n    \"radius\": 10,\n    \"degree\": \"Urgent\",\n    \"poches\": 2,\n    \"id_initiateur\": 1\n}"
-            },
-            "url": {
-              "raw": "http://localhost:3000/api/alerts/search",
-              "protocol": "http",
-              "host": [
-                "localhost"
-              ],
-              "port": "3000",
-              "path": [
-                "api",
-                "alerts",
-                "search"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Get Alert Status",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "http://localhost:3000/api/alerts/:id/status",
-              "protocol": "http",
-              "host": [
-                "localhost"
-              ],
-              "port": "3000",
-              "path": [
-                "api",
-                "alerts",
-                ":id",
-                "status"
-              ],
-              "variable": [
-                {
-                  "key": "id",
-                  "value": "1"
-                }
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Get My Alerts",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "http://localhost:3000/api/alerts/my-alerts?id_utilisateur=:id",
-              "protocol": "http",
-              "host": [
-                "localhost"
-              ],
-              "port": "3000",
-              "path": [
-                "api",
-                "alerts",
-                "my-alerts"
-              ],
-              "query": [
-                {
-                  "key": "id_utilisateur",
-                  "value": "1"
-                }
-              ]
-            }
-          },
-          "response": []
-        }
-      ]
-    }
-  ]
+	"info": {
+		"_postman_id": "a8a0b5a3-6b3c-4e3e-8f8f-3f3e3e3e3e3e",
+		"name": "VitaSang API - Test Flow",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"description": "Un flux de test pour enregistrer un utilisateur, se connecter, et créer une alerte."
+	},
+	"item": [
+		{
+			"name": "Étape 1: Enregistrer un nouvel utilisateur",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"if (pm.response.code === 201 || pm.response.code === 200) {",
+							"    const requestBody = JSON.parse(pm.request.body.raw);",
+							"    pm.collectionVariables.set(\"newUserPhone\", requestBody.telephone);",
+							"    console.log('Téléphone sauvegardé :', requestBody.telephone);",
+							"}"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"role\": \"donneur\",\n    \"nom\": \"Test\",\n    \"prenom\": \"Donneur\",\n    \"mot_de_passe\": \"password123\",\n    \"telephone\": \"+237690000003\",\n    \"groupe_sanguin\": \"A+\"\n}"
+				},
+				"url": {
+					"raw": "{{baseUrl}}/users/register",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"users",
+						"register"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Étape 2: Se connecter",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"if (pm.response.code === 200) {",
+							"    const jsonData = pm.response.json();",
+							"    const token = jsonData.token || jsonData.accessToken;",
+							"    pm.collectionVariables.set(\"authToken\", token);",
+							"    console.log('Jeton d’authentification sauvegardé.');",
+							"}"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"telephone\": \"{{newUserPhone}}\",\n    \"mot_de_passe\": \"password123\"\n}"
+				},
+				"url": {
+					"raw": "{{baseUrl}}/users/login",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"users",
+						"login"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Étape 3: Lancer une alerte (A+)",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{authToken}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"latitude\": 4.0839862,\n    \"longitude\": 9.7809086,\n    \"groupe_sanguin\": \"A+\",\n    \"radius\": 10,\n    \"urgence\": \"URGENT\",\n    \"quantite_requise\": 2,\n    \"lieu\": \"Hôpital de district de Bonassama, Douala\",\n    \"description\": \"Besoin urgent suite à un accident.\"\n}"
+				},
+				"url": {
+					"raw": "{{baseUrl}}/alerts/search",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"alerts",
+						"search"
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:3000/api",
+			"type": "string"
+		},
+		{
+			"key": "newUserPhone",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "authToken",
+			"value": "",
+			"type": "string"
+		}
+	]
 }

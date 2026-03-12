@@ -74,9 +74,9 @@ export default function AlertTracking() {
                 </View>
 
                 <View style={styles.statsGrid}>
-                    <StatBox label="Notifiés" value={stats.total} color="#3498DB" />
+                    <StatBox label="Notifi&eacute;s" value={stats.total} color="#3498DB" />
                     <StatBox label="Lus" value={stats.lu} color="#F1C40F" />
-                    <StatBox label="Acceptés" value={stats.accepte} color="#2ECC71" />
+                    <StatBox label="Accept&eacute;s" value={stats.accepte} color="#2ECC71" />
                 </View>
 
                 {notifiedDonors.length > 0 && (

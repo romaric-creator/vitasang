@@ -9,7 +9,7 @@ module.exports = (sequelize, DataTypes) => {
       },
       date_envoi: { type: DataTypes.DATE, defaultValue: DataTypes.NOW },
       statut_reception: {
-        type: DataTypes.ENUM("envoye", "lu", "accepte", "ignore"),
+        type: DataTypes.ENUM("envoye", "lu", "accepte", "ignore", "delivered", "failed", "no_token"),
         defaultValue: "envoye",
       },
       canal: { type: DataTypes.ENUM("push", "email", "sms") },

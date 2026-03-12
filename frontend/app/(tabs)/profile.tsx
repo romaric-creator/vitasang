@@ -11,10 +11,11 @@ import React, { useEffect, useState } from "react";
 import ThemedView from "@/components/ThemedView";
 import { TabBarIcon } from "@/components/TabBarIcon";
 import { color } from "@/constant/color";
-import {removeData, getUserIdFromStorage } from "@/utils/storage";
+import { getUserIdFromStorage } from "@/utils/storage";
 import { getUserProfile } from "@/services/user.service";
 import { useRouter } from "expo-router";
 import { Image } from "react-native";
+import { useAuth } from "@/context/AuthContext";
 
 import { useTranslation } from "react-i18next";
 
@@ -33,6 +34,7 @@ const ProfileItem = ({ icon, label, onPress }: { icon: string; label: string; on
 export default function Profile() {
   const router = useRouter();
   const { t } = useTranslation();
+  const { signOut } = useAuth();
   const [userData, setUserData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
@@ -60,9 +62,9 @@ export default function Profile() {
         text: t('profile.logout'),
         style: "destructive",
         onPress: async () => {
-          await removeData("token");
-          await removeData("user");
-          router.replace("/login");
+          // signOut supprime token/user ET met isAuth=false
+          // La redirection vers Splash est automatique via _layout.tsx
+          await signOut();
         },
       },
     ]);
