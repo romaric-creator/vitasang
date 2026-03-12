@@ -58,14 +58,20 @@ app.use((err, req, res, next) => {
     });
 });
 
-db.sequelize.sync({ force: false })
-    .then(() => {
-        logger.info("MariaDB : Connexion réussie et tables synchronisées !");
-        const PORT = process.env.PORT || 3000;
-        app.listen(PORT, () => {
-            logger.info(`Serveur VITASANG démarré sur : http://localhost:${PORT}`);
+// Connexion à la base de données et démarrage du serveur (si non importé)
+if (require.main === module) {
+    db.sequelize.sync({ force: false })
+        .then(() => {
+            logger.info("MariaDB : Connexion réussie et tables synchronisées !");
+            const PORT = process.env.PORT || 3000;
+            app.listen(PORT, () => {
+                logger.info(`Serveur VITASANG démarré sur : http://localhost:${PORT}`);
+            });
+        })
+        .catch(err => {
+            logger.error("Erreur de synchronisation MariaDB :", err);
         });
-    })
-    .catch(err => {
-        logger.error("Erreur de synchronisation MariaDB :", err);
-    });
+}
+
+// Export pour Vercel
+module.exports = app;
