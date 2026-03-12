@@ -10,12 +10,18 @@ const db = {};
 
 const sequelize = new Sequelize(dbConfig.DB, dbConfig.USER, dbConfig.PASSWORD, {
   host: dbConfig.HOST,
+  port: dbConfig.PORT,
   dialect: dbConfig.dialect,
   pool: {
     max: dbConfig.pool.max,
     min: dbConfig.pool.min,
     acquire: dbConfig.pool.acquire,
     idle: dbConfig.pool.idle,
+  },
+  dialectOptions: {
+    ssl: {
+      rejectUnauthorized: false // Permet la connexion sécurisée sans certificat local
+    }
   },
   logging: process.env.DB_LOGGING === 'true' ? console.log : false,
 });
