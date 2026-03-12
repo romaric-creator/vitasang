@@ -5,6 +5,12 @@ module.exports = {
   PASSWORD: process.env.DB_PASS || "root1234",
   DB: process.env.DB || "vitasang",
   dialect: "mysql",
+  dialectOptions: {
+    ssl: {
+      minVersion: 'TLSv1.2',
+      rejectUnauthorized: true // Recommandé pour TiDB Cloud
+    }
+  },
   pool: {
     max: 5,
     min: 0,
