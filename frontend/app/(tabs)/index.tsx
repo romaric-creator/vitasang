@@ -113,8 +113,9 @@ export default function Home() {
 
   const profileImage = userData?.photo_profil
     ? {
-      uri:
-        (
+      uri: userData.photo_profil.startsWith('http')
+        ? userData.photo_profil
+        : (
           Constants.expoConfig?.extra?.env?.EXPO_PUBLIC_API_BASE_URL ||
           "http://10.139.176.208:3000/api"
         ).replace("/api", "") + userData.photo_profil,

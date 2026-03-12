@@ -51,7 +51,10 @@ export default function EditProfileScreen() {
         if (res.success) {
           setUserData(res.user);
           if (res.user.photo_profil) {
-            setCurrentImage(Constants.expoConfig?.extra?.env?.EXPO_PUBLIC_API_BASE_URL?.replace('/api', '') + res.user.photo_profil);
+            const photoUrl = res.user.photo_profil.startsWith('http') 
+              ? res.user.photo_profil 
+              : Constants.expoConfig?.extra?.env?.EXPO_PUBLIC_API_BASE_URL?.replace('/api', '') + res.user.photo_profil;
+            setCurrentImage(photoUrl);
           }
         } else {
           showAlert(res.message || t('editProfile.loadError'), "error");

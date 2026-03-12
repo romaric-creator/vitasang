@@ -85,7 +85,9 @@ export default function Profile() {
   const donsCount = userData?.donsCount ?? 0;
   const alertesCount = userData?.alertesCount ?? 0;
   const profileImage = userData?.photo_profil
-    ? { uri: process.env.EXPO_PUBLIC_API_BASE_URL?.replace('/api', '') + userData.photo_profil }
+    ? { uri: userData.photo_profil.startsWith('http') 
+        ? userData.photo_profil 
+        : process.env.EXPO_PUBLIC_API_BASE_URL?.replace('/api', '') + userData.photo_profil }
     : null;
 
   return (
