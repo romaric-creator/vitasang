@@ -12,9 +12,9 @@ const swaggerSpecs = require('./config/swagger');
 
 const app = express();
 
+app.set('trust proxy', 1); // Indispensable pour Vercel et express-rate-limit
 app.use(helmet());
 app.use(cors());
-app.options('*', cors()); // Autoriser explicitement les requêtes OPTIONS sur toutes les routes
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 app.use(morgan('dev'));
