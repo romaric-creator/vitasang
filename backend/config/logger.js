@@ -1,22 +1,25 @@
 const winston = require('winston');
 const path = require('path');
-
-// Créer le dossier logs s'il n'existe pas
 const fs = require('fs');
+
+const isVercel = process.env.VERCEL === '1';
 const logsDir = path.join(__dirname, '../logs');
-if (!fs.existsSync(logsDir)) {
-  fs.mkdirSync(logsDir);
+
+// Créer le dossier logs s'il n'existe pas, sauf sur Vercel (read-only file system)
+if (!isVercel) {
+  if (!fs.existsSync(logsDir)) {
+    try {
+      fs.mkdirSync(logsDir);
+    } catch (err) {
+      console.warn('Could not create logs directory:', err.message);
+    }
+  }
 }
 
-const logger = winston.createLogger({
-  level: process.env.LOG_LEVEL || 'info',
-  format: winston.format.combine(
-    winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
-    winston.format.errors({ stack: true }),
-    winston.format.json()
-  ),
-  defaultMeta: { service: 'vitasang-api' },
-  transports: [
+const transports = [];
+
+if (!isVercel) {
+  transports.push(
     // Log errors in error.log
     new winston.transports.File({
       filename: path.join(logsDir, 'error.log'),
@@ -29,24 +32,32 @@ const logger = winston.createLogger({
       filename: path.join(logsDir, 'combined.log'),
       maxsize: 5242880, // 5MB
       maxFiles: 10,
-    }),
-  ],
-});
-
-// En développement, log aussi dans la console
-if (process.env.NODE_ENV !== 'production') {
-  logger.add(
-    new winston.transports.Console({
-      format: winston.format.combine(
-        winston.format.colorize(),
-        winston.format.printf(({ level, message, timestamp, ...meta }) => {
-          return `${timestamp} [${level}]: ${message} ${
-            Object.keys(meta).length ? JSON.stringify(meta, null, 2) : ''
-          }`;
-        })
-      ),
     })
   );
 }
+
+// Toujours logger dans la console
+transports.push(
+  new winston.transports.Console({
+    format: winston.format.combine(
+      winston.format.colorize(),
+      winston.format.printf(({ level, message, timestamp, ...meta }) => {
+        return `${timestamp || new Date().toISOString()} [${level}]: ${message} ${Object.keys(meta).length ? JSON.stringify(meta, null, 2) : ''
+          }`;
+      })
+    ),
+  })
+);
+
+const logger = winston.createLogger({
+  level: process.env.LOG_LEVEL || 'info',
+  format: winston.format.combine(
+    winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
+    winston.format.errors({ stack: true }),
+    winston.format.json()
+  ),
+  defaultMeta: { service: 'vitasang-api' },
+  transports: transports,
+});
 
 module.exports = logger;
