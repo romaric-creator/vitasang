@@ -1,4 +1,5 @@
 require('dotenv').config();
+const mysql2 = require('mysql2'); // Importation forcée pour Vercel
 const express = require("express");
 const cors = require("cors");
 const morgan = require("morgan")
