@@ -45,6 +45,11 @@ app.use("/api/alerts", alertRoute);
 app.use("/api/rendez-vous", rendezvousRoute);
 app.use("/api/centres", centresRoute);
 
+// Route racine pour le "Home" du backend
+app.get("/", (req, res) => {
+    res.json({ message: "Welcome to VitaSang API", status: "online", version: "1.0.0" });
+});
+
 // Middleware de gestion d'erreurs global
 app.use((err, req, res, next) => {
     logger.error('Erreur non gérée', {
