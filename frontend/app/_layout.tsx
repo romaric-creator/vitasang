@@ -1,7 +1,7 @@
 import { Stack, useRouter, useSegments } from "expo-router";
 import { useEffect } from "react";
 import { View } from "react-native";
-import { LoadingOverlay } from \"@/components/LoadingOverlay\";
+import { LoadingOverlay } from "@/components/LoadingOverlay";
 import { AuthProvider, useAuth } from "@/context/AuthContext";
 import { NotificationProvider } from "@/context/NotificationContext";
 import { color } from "@/constant/color";
