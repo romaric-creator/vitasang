@@ -99,7 +99,7 @@ export const searchDonorsValidationSchema = yup.object().shape({
     .max(100, 'Maximum 100 km'),
   groupe_sanguin: yup
     .string()
-    .oneOf(['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-', 'TOUS'], 'Groupe sanguin invalide')
+    .oneOf(['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-', 'TOUS'], 'Groupe sanguins invalide')
 });
 
 export const updateLocationValidationSchema = yup.object().shape({
