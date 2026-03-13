@@ -62,7 +62,12 @@ const schemas = require("../validation/schemas");
  *       403:
  *         description: Unauthorized
  */
-router.post("/search", verifyToken, validateRequest(schemas.createAlert), alertsController.createAlertAndNotify);
+router.post(
+  "/search",
+  verifyToken,
+  validateRequest(schemas.createAlert),
+  alertsController.createAlertAndNotify,
+);
 
 /**
  * @swagger
@@ -148,9 +153,6 @@ router.get("/:id/status", verifyToken, alertsController.getAlertStatus);
  *       404:
  *         description: Alert not found
  */
-router.delete("/:id", verifyToken, alertsController.deleteAlert);
-router.put("/:id", verifyToken, validateRequest(schemas.updateAlert), alertsController.updateAlert);
-
 /**
  * @swagger
  * /api/alerts/my-alerts:
@@ -176,6 +178,66 @@ router.put("/:id", verifyToken, validateRequest(schemas.updateAlert), alertsCont
  *         description: Unauthorized
  */
 router.get("/my-alerts", verifyToken, alertsController.getUserAlerts);
+
+/**
+ * @swagger
+ * /api/alerts/accepted:
+ *   get:
+ *     tags:
+ *       - Alerts
+ *     summary: Get alerts accepted by the user
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: List of accepted alerts
+ */
+router.get("/accepted", verifyToken, alertsController.getAcceptedAlerts);
+
+/**
+ * @swagger
+ * /api/alerts/active:
+ *   get:
+ *     tags:
+ *       - Alerts
+ *     summary: Get all active blood donation alerts (Public)
+ *     responses:
+ *       200:
+ *         description: List of active alerts
+ */
+router.get("/active", alertsController.getAllActiveAlerts);
+
+/**
+ * @swagger
+ * /api/alerts/{id}/status:
+ *   get:
+ *     tags:
+ *       - Alerts
+ *     summary: Get alert status
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Alert status
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 alerte:
+ *                   $ref: '#/components/schemas/Alert'
+ *       403:
+ *         description: Unauthorized
+ *       404:
+ *         description: Alert not found
+ */
+router.get("/:id/status", verifyToken, alertsController.getAlertStatus);
 
 /**
  * @swagger
@@ -210,30 +272,62 @@ router.post("/:id/respond", verifyToken, alertsController.respondToAlert);
 
 /**
  * @swagger
- * /api/alerts/accepted:
- *   get:
+ * /api/alerts/{id}:
+ *   delete:
  *     tags:
  *       - Alerts
- *     summary: Get alerts accepted by the user
+ *     summary: Delete/Cancel an alert
  *     security:
  *       - bearerAuth: []
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: integer
  *     responses:
  *       200:
- *         description: List of accepted alerts
- */
-router.get("/accepted", verifyToken, alertsController.getAcceptedAlerts);
-
-/**
- * @swagger
- * /api/alerts/active:
- *   get:
+ *         description: Alert deleted successfully
+ *       403:
+ *         description: Unauthorized
+ *       404:
+ *         description: Alert not found
+ *   put:
  *     tags:
  *       - Alerts
- *     summary: Get all active blood donation alerts (Public)
+ *     summary: Update alert status
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               status:
+ *                 type: string
+ *                 enum: [ACTIVE, COMPLETE, CANCELLED]
  *     responses:
  *       200:
- *         description: List of active alerts
+ *         description: Alert status updated
+ *       403:
+ *         description: Unauthorized
+ *       404:
+ *         description: Alert not found
  */
-router.get("/active", alertsController.getAllActiveAlerts);
+router.delete("/:id", verifyToken, alertsController.deleteAlert);
+router.put(
+  "/:id",
+  verifyToken,
+  validateRequest(schemas.updateAlert),
+  alertsController.updateAlert,
+);
 
 module.exports = router;

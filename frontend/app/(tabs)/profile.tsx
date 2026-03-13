@@ -5,10 +5,10 @@ import {
   TouchableOpacity,
   ScrollView,
   Alert,
-  ActivityIndicator,
 } from "react-native";
 import React, { useEffect, useState } from "react";
 import ThemedView from "@/components/ThemedView";
+import { LoadingOverlay } from "@/components/LoadingOverlay";
 import { TabBarIcon } from "@/components/TabBarIcon";
 import { color } from "@/constant/color";
 import { getUserIdFromStorage } from "@/utils/storage";
@@ -20,7 +20,15 @@ import Constants from "expo-constants";
 
 import { useTranslation } from "react-i18next";
 
-const ProfileItem = ({ icon, label, onPress }: { icon: string; label: string; onPress?: () => void }) => (
+const ProfileItem = ({
+  icon,
+  label,
+  onPress,
+}: {
+  icon: string;
+  label: string;
+  onPress?: () => void;
+}) => (
   <TouchableOpacity style={styles.menuItem} onPress={onPress}>
     <View style={styles.menuLeft}>
       <View style={styles.iconContainer}>
@@ -57,10 +65,10 @@ export default function Profile() {
   }, []);
 
   const handleLogout = () => {
-    Alert.alert(t('profile.logout'), t('profile.logoutConfirm'), [
-      { text: t('common.cancel'), style: "cancel" },
+    Alert.alert(t("profile.logout"), t("profile.logoutConfirm"), [
+      { text: t("common.cancel"), style: "cancel" },
       {
-        text: t('profile.logout'),
+        text: t("profile.logout"),
         style: "destructive",
         onPress: async () => {
           // signOut supprime token/user ET met isAuth=false
@@ -72,29 +80,30 @@ export default function Profile() {
   };
 
   if (loading) {
-    return (
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-        <ActivityIndicator size="large" color={color.primary} />
-      </View>
-    );
+    return <LoadingOverlay visible={true} spinnerSize="large" fullScreen />;
   }
 
   const fullName = userData
     ? `${userData.prenom || ""} ${userData.nom || ""}`.trim()
-    : t('profile.defaultUser');
+    : t("profile.defaultUser");
   const bloodType = userData?.groupe_sanguin || "—";
   const donsCount = userData?.donsCount ?? 0;
   const alertesCount = userData?.alertesCount ?? 0;
   const profileImage = userData?.photo_profil
-    ? { uri: userData.photo_profil.startsWith('http') 
-        ? userData.photo_profil 
-        : (Constants.expoConfig?.extra?.env?.EXPO_PUBLIC_API_BASE_URL || "https://vitasang.vercel.app/api").replace('/api', '') + userData.photo_profil }
+    ? {
+        uri: userData.photo_profil.startsWith("http")
+          ? userData.photo_profil
+          : (
+              Constants.expoConfig?.extra?.env?.EXPO_PUBLIC_API_BASE_URL ||
+              "https://vitasang.vercel.app/api"
+            ).replace("/api", "") + userData.photo_profil,
+      }
     : null;
 
   return (
     <ThemedView style={styles.container}>
       <ScrollView showsVerticalScrollIndicator={false}>
-        <Text style={styles.title}>{t('profile.title')}</Text>
+        <Text style={styles.title}>{t("profile.title")}</Text>
 
         <View style={styles.profileHeader}>
           <View style={styles.avatarWrapper}>
@@ -107,7 +116,7 @@ export default function Profile() {
             </View>
             <TouchableOpacity
               style={styles.editBadge}
-              onPress={() => router.push('/edit-profile')}
+              onPress={() => router.push("/edit-profile")}
             >
               <TabBarIcon name="edit" size={12} color={color.textWhite} />
             </TouchableOpacity>
@@ -123,57 +132,59 @@ export default function Profile() {
         <View style={styles.statsSection}>
           <View style={styles.statItem}>
             <Text style={styles.statValue}>{donsCount}</Text>
-            <Text style={styles.statLabel}>{t('profile.livesSaved') || "Vies sauvées"}</Text>
+            <Text style={styles.statLabel}>
+              {t("profile.livesSaved") || "Vies sauvées"}
+            </Text>
           </View>
           <View style={styles.dividerVertical} />
           <View style={styles.statItem}>
             <Text style={styles.statValue}>{alertesCount}</Text>
-            <Text style={styles.statLabel}>{t('profile.alerts')}</Text>
+            <Text style={styles.statLabel}>{t("profile.alerts")}</Text>
           </View>
           <View style={styles.dividerVertical} />
           <View style={styles.statItem}>
             <Text style={styles.statValue}>4.8</Text>
-            <Text style={styles.statLabel}>{t('profile.rating')}</Text>
+            <Text style={styles.statLabel}>{t("profile.rating")}</Text>
           </View>
         </View>
 
-        <Text style={styles.sectionTitle}>{t('profile.menu')}</Text>
+        <Text style={styles.sectionTitle}>{t("profile.menu")}</Text>
         <View style={styles.menuContainer}>
           <ProfileItem
             icon="pencil"
-            label={t('profile.edit')}
-            onPress={() => router.push('/edit-profile')}
+            label={t("profile.edit")}
+            onPress={() => router.push("/edit-profile")}
           />
           <ProfileItem
             icon="history"
-            label={t('profile.history')}
-            onPress={() => router.push('/historique')}
+            label={t("profile.history")}
+            onPress={() => router.push("/historique")}
           />
           <ProfileItem
             icon="calendar"
-            label={t('profile.appointments')}
-            onPress={() => router.push('/rendezvous')}
+            label={t("profile.appointments")}
+            onPress={() => router.push("/rendezvous")}
           />
           <ProfileItem
             icon="hospital-o"
-            label={t('profile.centers')}
-            onPress={() => router.push('/(tabs)/map')}
+            label={t("profile.centers")}
+            onPress={() => router.push("/(tabs)/map")}
           />
           <ProfileItem
             icon="bell"
-            label={t('profile.notifications')}
-            onPress={() => router.push('/notifications-settings')}
+            label={t("profile.notifications")}
+            onPress={() => router.push("/notifications-settings")}
           />
           <ProfileItem
             icon="globe"
-            label={t('profile.language')}
-            onPress={() => router.push('/language-settings')}
+            label={t("profile.language")}
+            onPress={() => router.push("/language-settings")}
           />
         </View>
 
         <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
           <TabBarIcon name="sign-out" size={18} color={color.primary} />
-          <Text style={styles.logoutText}>{t('profile.logout')}</Text>
+          <Text style={styles.logoutText}>{t("profile.logout")}</Text>
         </TouchableOpacity>
       </ScrollView>
     </ThemedView>
@@ -214,11 +225,11 @@ const styles = StyleSheet.create({
     alignItems: "center",
     borderWidth: 2,
     borderColor: color.dangerLight,
-    overflow: 'hidden',
+    overflow: "hidden",
   },
   avatarImage: {
-    width: '100%',
-    height: '100%',
+    width: "100%",
+    height: "100%",
   },
   editBadge: {
     position: "absolute",

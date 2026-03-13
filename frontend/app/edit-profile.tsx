@@ -6,8 +6,8 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform,
-  ActivityIndicator,
 } from "react-native";
+import { ModernSpinner } from "@/components/ModernSpinner";
 import { useRouter } from "expo-router";
 import { Formik } from "formik";
 import { color } from "@/constant/color";
@@ -51,17 +51,20 @@ export default function EditProfileScreen() {
         if (res.success) {
           setUserData(res.user);
           if (res.user.photo_profil) {
-            const photoUrl = res.user.photo_profil.startsWith('http') 
-              ? res.user.photo_profil 
-              : Constants.expoConfig?.extra?.env?.EXPO_PUBLIC_API_BASE_URL?.replace('/api', '') + res.user.photo_profil;
+            const photoUrl = res.user.photo_profil.startsWith("http")
+              ? res.user.photo_profil
+              : Constants.expoConfig?.extra?.env?.EXPO_PUBLIC_API_BASE_URL?.replace(
+                  "/api",
+                  "",
+                ) + res.user.photo_profil;
             setCurrentImage(photoUrl);
           }
         } else {
-          showAlert(res.message || t('editProfile.loadError'), "error");
+          showAlert(res.message || t("editProfile.loadError"), "error");
         }
       }
     } catch (error) {
-      showAlert(t('editProfile.loadError'), "error");
+      showAlert(t("editProfile.loadError"), "error");
       console.error("Error loading profile:", error);
     } finally {
       setLoading(false);
@@ -70,7 +73,7 @@ export default function EditProfileScreen() {
 
   const pickImage = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ['images'],
+      mediaTypes: ["images"],
       allowsEditing: true,
       aspect: [1, 1],
       quality: 0.7,
@@ -92,7 +95,7 @@ export default function EditProfileScreen() {
           await uploadProfilePicture(userId, selectedImage);
         } catch (uploadErr) {
           console.error("Image upload failed:", uploadErr);
-          showAlert(t('editProfile.image.error'), "error");
+          showAlert(t("editProfile.image.error"), "error");
           // On continue quand même la mise à jour des autres champs
         }
       }
@@ -106,13 +109,13 @@ export default function EditProfileScreen() {
           await storeData("user", updatedRes.user);
         }
 
-        showAlert(t('editProfile.success'), "success");
-        setTimeout(() => router.replace('/(tabs)/profile'), 1500);
+        showAlert(t("editProfile.success"), "success");
+        setTimeout(() => router.replace("/(tabs)/profile"), 1500);
       } else {
-        showAlert(response.message || t('editProfile.error'), "error");
+        showAlert(response.message || t("editProfile.error"), "error");
       }
     } catch (error: any) {
-      showAlert(error?.message || t('editProfile.error'), "error");
+      showAlert(error?.message || t("editProfile.error"), "error");
       console.error("Error updating profile:", error);
     } finally {
       setSaving(false);
@@ -120,19 +123,15 @@ export default function EditProfileScreen() {
   };
 
   if (loading) {
-    return (
-      <View style={[styles.container, styles.centerContent]}>
-        <ActivityIndicator size="large" color={color.primary} />
-      </View>
-    );
+    return <LoadingOverlay visible={true} message={t('common.loading')} fullScreen />;
   }
 
   if (!userData) {
     return (
       <View style={[styles.container, styles.centerContent]}>
-        <Text style={styles.errorText}>{t('editProfile.notFound')}</Text>
+        <Text style={styles.errorText}>{t("editProfile.notFound")}</Text>
         <PrimaryButton
-          title={t('editProfile.back')}
+          title={t("editProfile.back")}
           onPress={() => router.back()}
           style={{ marginTop: 20 }}
         />
@@ -150,23 +149,30 @@ export default function EditProfileScreen() {
         style={{ backgroundColor: color.screenBackground }}
       >
         <View style={styles.container}>
-          <PageHeader title={t('editProfile.title')} />
+          <PageHeader title={t("editProfile.title")} />
 
           <View style={styles.headerSection}>
-            <Text style={styles.title}>{t('editProfile.header')}</Text>
-            <Text style={styles.subtitle}>{t('editProfile.subtitle')}</Text>
+            <Text style={styles.title}>{t("editProfile.header")}</Text>
+            <Text style={styles.subtitle}>{t("editProfile.subtitle")}</Text>
           </View>
 
           <View style={styles.avatarContainer}>
-            <RNTouchableOpacity onPress={pickImage} style={styles.avatarWrapper}>
+            <RNTouchableOpacity
+              onPress={pickImage}
+              style={styles.avatarWrapper}
+            >
               {selectedImage || currentImage ? (
                 <Image
-                  source={{ uri: selectedImage || currentImage || '' }}
+                  source={{ uri: selectedImage || currentImage || "" }}
                   style={styles.avatar}
                 />
               ) : (
                 <View style={[styles.avatar, styles.avatarPlaceholder]}>
-                  <TabBarIcon name="user" size={40} color={color.textSecondary} />
+                  <TabBarIcon
+                    name="user"
+                    size={40}
+                    color={color.textSecondary}
+                  />
                 </View>
               )}
               <View style={styles.cameraIcon}>
@@ -187,14 +193,21 @@ export default function EditProfileScreen() {
             onSubmit={handleUpdate}
             enableReinitialize={true}
           >
-            {({ values, errors, touched, handleChange, handleBlur, handleSubmit }) => (
+            {({
+              values,
+              errors,
+              touched,
+              handleChange,
+              handleBlur,
+              handleSubmit,
+            }) => (
               <View style={styles.formContainer}>
                 <FormField
-                  label={t('editProfile.fields.lastName')}
+                  label={t("editProfile.fields.lastName")}
                   value={values.nom}
                   onChangeText={handleChange("nom")}
                   onBlur={handleBlur("nom")}
-                  placeholder={t('editProfile.placeholders.lastName')}
+                  placeholder={t("editProfile.placeholders.lastName")}
                   error={errors.nom as any}
                   touched={touched.nom as any}
                   editable={!saving}
@@ -202,11 +215,11 @@ export default function EditProfileScreen() {
                 />
 
                 <FormField
-                  label={t('editProfile.fields.firstName')}
+                  label={t("editProfile.fields.firstName")}
                   value={values.prenom}
                   onChangeText={handleChange("prenom")}
                   onBlur={handleBlur("prenom")}
-                  placeholder={t('editProfile.placeholders.firstName')}
+                  placeholder={t("editProfile.placeholders.firstName")}
                   error={errors.prenom as any}
                   touched={touched.prenom as any}
                   editable={!saving}
@@ -214,11 +227,11 @@ export default function EditProfileScreen() {
                 />
 
                 <FormField
-                  label={t('editProfile.fields.phone')}
+                  label={t("editProfile.fields.phone")}
                   value={values.telephone}
                   onChangeText={handleChange("telephone")}
                   onBlur={handleBlur("telephone")}
-                  placeholder={t('editProfile.placeholders.phone')}
+                  placeholder={t("editProfile.placeholders.phone")}
                   error={errors.telephone as any}
                   touched={touched.telephone as any}
                   keyboardType="phone-pad"
@@ -227,11 +240,11 @@ export default function EditProfileScreen() {
                 />
 
                 <FormField
-                  label={t('editProfile.fields.city')}
+                  label={t("editProfile.fields.city")}
                   value={values.ville}
                   onChangeText={handleChange("ville")}
                   onBlur={handleBlur("ville")}
-                  placeholder={t('editProfile.placeholders.city')}
+                  placeholder={t("editProfile.placeholders.city")}
                   error={errors.ville as any}
                   touched={touched.ville as any}
                   editable={!saving}
@@ -246,7 +259,7 @@ export default function EditProfileScreen() {
                 />
 
                 <PrimaryButton
-                  title={t('editProfile.save')}
+                  title={t("editProfile.save")}
                   onPress={() => handleSubmit()}
                   loading={saving}
                   style={{ marginTop: 24 }}

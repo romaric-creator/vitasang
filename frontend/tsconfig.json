@@ -2,17 +2,12 @@
   "extends": "expo/tsconfig.base",
   "compilerOptions": {
     "strict": true,
-    "moduleResolution": "node",
-    "types": ["jest", "@testing-library/react-native", "firebase"],
+    "moduleResolution": "bundler",
+    "customConditions": ["react-native"],
+    "types": ["jest", "@testing-library/react-native"],
     "paths": {
-      "@/*": [
-        "./*"
-      ]
+      "@/*": ["./*"]
     }
   },
-  "include": [
-    "**/*.ts",
-    "**/*.tsx",
-    "@env"
-  ]
+  "include": ["**/*.ts", "**/*.tsx", "@env"]
 }

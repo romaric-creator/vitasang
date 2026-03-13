@@ -7,7 +7,7 @@ import {
   StyleSheet,
   KeyboardAvoidingView,
   Platform,
-  ActivityIndicator,
+
 } from "react-native";
 import { Formik } from "formik";
 import { color } from "@/constant/color";

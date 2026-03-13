@@ -18,10 +18,11 @@ import { getUserIdFromStorage } from "@/utils/storage";
 import { useTranslation } from "react-i18next";
 import { useFocusEffect } from "@react-navigation/native";
 import { getUserProfile, getActiveAlerts } from "@/services/user.service";
+import { AlertFatigueInsights } from "@/components/AlertFatigueInsights";
 import Constants from "expo-constants";
-import { usePostHog } from 'posthog-react-native';
+import { usePostHog } from "posthog-react-native";
 
-const { width } = Dimensions.get('window');
+const { width } = Dimensions.get("window");
 
 export default function Home() {
   const { t } = useTranslation();
@@ -49,7 +50,7 @@ export default function Home() {
 
   useFocusEffect(
     useCallback(() => {
-      posthog?.capture('home_visited');
+      posthog?.capture("home_visited");
       loadData();
     }, [posthog, loadData]),
   );
@@ -65,22 +66,30 @@ export default function Home() {
 
   const profileImage = userData?.photo_profil
     ? {
-      uri: userData.photo_profil.startsWith('http')
-        ? userData.photo_profil
-        : (Constants.expoConfig?.extra?.env?.EXPO_PUBLIC_API_BASE_URL || "https://vitasang.vercel.app/api").replace("/api", "") + userData.photo_profil,
-    }
+        uri: userData.photo_profil.startsWith("http")
+          ? userData.photo_profil
+          : (
+              Constants.expoConfig?.extra?.env?.EXPO_PUBLIC_API_BASE_URL ||
+              "https://vitasang.vercel.app/api"
+            ).replace("/api", "") + userData.photo_profil,
+      }
     : null;
 
   return (
     <ThemedView style={styles.container}>
       <StatusBar barStyle="dark-content" />
-      
+
       <View style={styles.header}>
-        <View>
-          <Text style={styles.greeting}>{t("home.profileLabel")}</Text>
-          <Text style={styles.userName}>{fullName}</Text>
+        <View style={styles.headerContent}>
+          {profileImage && (
+            <Image source={profileImage} style={styles.profileImage} />
+          )}
+          <View>
+            <Text style={styles.greeting}>{t("home.profileLabel")}</Text>
+            <Text style={styles.userName}>{fullName}</Text>
+          </View>
         </View>
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.headerAction}
           onPress={() => router.push("/(tabs)/alertes")}
         >
@@ -89,16 +98,20 @@ export default function Home() {
         </TouchableOpacity>
       </View>
 
-      <ScrollView 
-        showsVerticalScrollIndicator={false} 
+      <ScrollView
+        showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[color.primary]} tintColor={color.primary} />
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={[color.primary]}
+            tintColor={color.primary}
+          />
         }
       >
-        
         <View style={styles.bentoRow}>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={[styles.bentoItem, styles.heroBlock]}
             onPress={() => router.push("/historique")}
           >
@@ -107,27 +120,35 @@ export default function Home() {
             </View>
             <Text style={styles.heroValue}>{userData?.donsCount || 0}</Text>
             <Text style={styles.heroLabel}>{t("home.livesSaved")}</Text>
-            <Text style={styles.heroSub}>{t("history.empty")?.split('.')[0]}</Text>
+            <Text style={styles.heroSub}>
+              {t("history.empty")?.split(".")[0]}
+            </Text>
           </TouchableOpacity>
 
           <View style={styles.bentoColumn}>
             <View style={[styles.bentoItem, styles.bloodBlock]}>
               <Text style={styles.bloodLabel}>Groupe</Text>
-              <Text style={styles.bloodValue}>{userData?.groupe_sanguin || "--"}</Text>
+              <Text style={styles.bloodValue}>
+                {userData?.groupe_sanguin || "--"}
+              </Text>
             </View>
-            
-            <TouchableOpacity 
+
+            <TouchableOpacity
               style={[styles.bentoItem, styles.statusBlock]}
               onPress={() => router.push("/eligibility-test")}
             >
-              <TabBarIcon name="calendar-check-o" size={18} color={color.primary} />
+              <TabBarIcon
+                name="calendar-check-o"
+                size={18}
+                color={color.primary}
+              />
               <Text style={styles.statusLabel}>{t("home.nextDonation")}</Text>
               <Text style={styles.statusValue}>DISPONIBLE</Text>
             </TouchableOpacity>
           </View>
         </View>
 
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.mainActionBtn}
           onPress={() => router.push("/create-alert")}
         >
@@ -146,27 +167,47 @@ export default function Home() {
           </View>
 
           {activeAlerts.length > 0 ? (
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} snapToInterval={width * 0.75 + 16} decelerationRate="fast">
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              snapToInterval={width * 0.75 + 16}
+              decelerationRate="fast"
+            >
               {activeAlerts.map((alert, idx) => (
-                <TouchableOpacity 
-                  key={idx} 
+                <TouchableOpacity
+                  key={idx}
                   style={styles.urgentCard}
-                  onPress={() => router.push({ pathname: "/alert-response/[id]", params: { id: alert.id } })}
+                  onPress={() =>
+                    router.push({
+                      pathname: "/alert-response/[id]",
+                      params: { id: alert.id },
+                    })
+                  }
                 >
                   <View style={styles.urgentHeader}>
                     <View style={styles.urgentBloodCircle}>
                       <Text style={styles.urgentBloodText}>{alert.groupe}</Text>
                     </View>
                     <View style={styles.urgentUrgencyBadge}>
-                      <Text style={styles.urgentUrgencyText}>{alert.urgence}</Text>
+                      <Text style={styles.urgentUrgencyText}>
+                        {alert.urgence}
+                      </Text>
                     </View>
                   </View>
-                  <Text style={styles.urgentHospital} numberOfLines={1}>{alert.lieu}</Text>
+                  <Text style={styles.urgentHospital} numberOfLines={1}>
+                    {alert.lieu}
+                  </Text>
                   <View style={styles.urgentFooter}>
-                    <TabBarIcon name="map-marker" size={12} color={color.textSecondary} />
+                    <TabBarIcon
+                      name="map-marker"
+                      size={12}
+                      color={color.textSecondary}
+                    />
                     <Text style={styles.urgentDistance}>À proximité</Text>
                     <View style={styles.urgentAction}>
-                      <Text style={styles.urgentActionText}>{t("home.donate")}</Text>
+                      <Text style={styles.urgentActionText}>
+                        {t("home.donate")}
+                      </Text>
                     </View>
                   </View>
                 </TouchableOpacity>
@@ -183,27 +224,35 @@ export default function Home() {
           )}
         </View>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>{t("home.tips")}</Text>
-          <View style={styles.tipsGrid}>
-            {[1, 2, 3].map((id) => (
-              <TouchableOpacity key={id} style={styles.tipItem}>
-                <View style={[styles.tipIconBox, { backgroundColor: id === 1 ? '#FFF0F0' : id === 2 ? '#F0F7FF' : '#F0FFF4' }]}>
-                  <TabBarIcon 
-                    name={id === 1 ? "heartbeat" : id === 2 ? "coffee" : "shield"} 
-                    size={20} 
-                    color={id === 1 ? color.primary : id === 2 ? color.secondary : color.success} 
-                  />
-                </View>
-                <View style={styles.tipTextContent}>
-                  <Text style={styles.tipTitle}>{t(`home.tipsData.t${id}`)}</Text>
-                  <Text style={styles.tipDesc} numberOfLines={2}>{t(`home.tipsData.d${id}`)}</Text>
-                </View>
-              </TouchableOpacity>
-            ))}
-          </View>
-        </View>
+        {/* Engagement Status Message */}
+        <AlertFatigueInsights visible={true} />
 
+        {/* Aide & Sensibilisation Section */}
+        <TouchableOpacity
+          style={styles.aideSection}
+          onPress={() => router.push("/aide-et-conseil")}
+          activeOpacity={0.7}
+        >
+          <View style={styles.aideSectionLeft}>
+            <View style={styles.aideSectionIcon}>
+              <TabBarIcon name="heart" size={28} color={color.primary} />
+            </View>
+            <View style={styles.aideSectionText}>
+              <Text style={styles.aideSectionTitle}>
+                Aide & Sensibilisation
+              </Text>
+              <Text style={styles.aideSectionDesc}>
+                Découvrez tous nos conseils
+              </Text>
+            </View>
+          </View>
+          <TabBarIcon
+            name="chevron-right"
+            size={24}
+            color={color.primary}
+            family="fontawesome"
+          />
+        </TouchableOpacity>
       </ScrollView>
     </ThemedView>
   );
@@ -215,23 +264,37 @@ const styles = StyleSheet.create({
     backgroundColor: color.background,
   },
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     paddingHorizontal: 24,
     paddingTop: 60,
     paddingBottom: 20,
   },
+  headerContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    flex: 1,
+  },
+  profileImage: {
+    width: 56,
+    height: 56,
+    borderRadius: 18,
+    backgroundColor: color.surfaceDark,
+    borderWidth: 2,
+    borderColor: color.primary,
+  },
   greeting: {
     fontSize: 13,
     color: color.textSecondary,
-    fontWeight: '600',
-    textTransform: 'uppercase',
+    fontWeight: "600",
+    textTransform: "uppercase",
     letterSpacing: 1,
   },
   userName: {
     fontSize: 24,
-    fontWeight: '900',
+    fontWeight: "900",
     color: color.textMain,
     letterSpacing: -0.5,
   },
@@ -240,13 +303,13 @@ const styles = StyleSheet.create({
     height: 48,
     borderRadius: 16,
     backgroundColor: color.surface,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     borderWidth: 1,
     borderColor: color.border,
   },
   badge: {
-    position: 'absolute',
+    position: "absolute",
     top: 14,
     right: 14,
     width: 8,
@@ -261,7 +324,7 @@ const styles = StyleSheet.create({
     paddingBottom: 40,
   },
   bentoRow: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: 12,
     marginBottom: 20,
   },
@@ -280,49 +343,49 @@ const styles = StyleSheet.create({
     flex: 1.2,
     backgroundColor: color.primary,
     borderColor: color.primary,
-    justifyContent: 'center',
+    justifyContent: "center",
   },
   heroIconCircle: {
     width: 44,
     height: 44,
     borderRadius: 14,
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "rgba(255,255,255,0.2)",
+    justifyContent: "center",
+    alignItems: "center",
     marginBottom: 16,
   },
   heroValue: {
     fontSize: 42,
-    fontWeight: '900',
-    color: 'white',
+    fontWeight: "900",
+    color: "white",
     letterSpacing: -1,
   },
   heroLabel: {
     fontSize: 16,
-    fontWeight: '800',
-    color: 'white',
+    fontWeight: "800",
+    color: "white",
     marginTop: -4,
   },
   heroSub: {
     fontSize: 11,
-    color: 'rgba(255,255,255,0.7)',
+    color: "rgba(255,255,255,0.7)",
     marginTop: 8,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   bloodBlock: {
     flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
   bloodLabel: {
     fontSize: 11,
-    fontWeight: '700',
+    fontWeight: "700",
     color: color.textSecondary,
-    textTransform: 'uppercase',
+    textTransform: "uppercase",
   },
   bloodValue: {
     fontSize: 32,
-    fontWeight: '900',
+    fontWeight: "900",
     color: color.primary,
     letterSpacing: -1,
   },
@@ -332,56 +395,56 @@ const styles = StyleSheet.create({
   },
   statusLabel: {
     fontSize: 11,
-    fontWeight: '700',
+    fontWeight: "700",
     color: color.textSecondary,
   },
   statusValue: {
     fontSize: 12,
-    fontWeight: '900',
+    fontWeight: "900",
     color: color.success,
   },
   mainActionBtn: {
     marginBottom: 30,
-    borderRadius: 24,
-    overflow: 'hidden',
-    elevation: 8,
+    borderRadius: 20,
+    overflow: "hidden",
+    elevation: 12,
     shadowColor: color.primary,
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.3,
-    shadowRadius: 15,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.35,
+    shadowRadius: 12,
   },
   mainActionGradient: {
-    backgroundColor: color.textMain,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 20,
-    gap: 12,
+    backgroundColor: color.primary,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 18,
+    gap: 10,
   },
   mainActionText: {
-    color: 'white',
-    fontSize: 18,
-    fontWeight: '900',
-    letterSpacing: 0.5,
+    color: "white",
+    fontSize: 17,
+    fontWeight: "900",
+    letterSpacing: 0.3,
   },
   section: {
     marginBottom: 30,
   },
   sectionHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: 16,
   },
   sectionTitle: {
     fontSize: 20,
-    fontWeight: '900',
+    fontWeight: "900",
     color: color.textMain,
     letterSpacing: -0.5,
   },
   seeAllText: {
     color: color.primary,
-    fontWeight: '800',
+    fontWeight: "800",
     fontSize: 14,
   },
   urgentCard: {
@@ -394,22 +457,22 @@ const styles = StyleSheet.create({
     borderColor: color.border,
   },
   urgentHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
     marginBottom: 16,
   },
   urgentBloodCircle: {
     width: 50,
     height: 50,
     borderRadius: 18,
-    backgroundColor: '#FFF0F0',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "#FFF0F0",
+    justifyContent: "center",
+    alignItems: "center",
   },
   urgentBloodText: {
     fontSize: 20,
-    fontWeight: '900',
+    fontWeight: "900",
     color: color.primary,
   },
   urgentUrgencyBadge: {
@@ -420,24 +483,24 @@ const styles = StyleSheet.create({
   },
   urgentUrgencyText: {
     fontSize: 10,
-    fontWeight: '800',
+    fontWeight: "800",
     color: color.primary,
   },
   urgentHospital: {
     fontSize: 16,
-    fontWeight: '800',
+    fontWeight: "800",
     color: color.textMain,
     marginBottom: 12,
   },
   urgentFooter: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 6,
   },
   urgentDistance: {
     fontSize: 12,
     color: color.textSecondary,
-    fontWeight: '600',
+    fontWeight: "600",
     flex: 1,
   },
   urgentAction: {
@@ -447,45 +510,45 @@ const styles = StyleSheet.create({
     borderRadius: 12,
   },
   urgentActionText: {
-    color: 'white',
+    color: "white",
     fontSize: 11,
-    fontWeight: '800',
+    fontWeight: "800",
   },
   emptyState: {
     backgroundColor: color.surface,
     borderRadius: 24,
     padding: 30,
-    alignItems: 'center',
+    alignItems: "center",
     borderWidth: 1,
     borderColor: color.border,
-    borderStyle: 'dashed',
+    borderStyle: "dashed",
   },
   emptyIconCircle: {
     width: 64,
     height: 64,
     borderRadius: 32,
-    backgroundColor: '#F0FFF4',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "#F0FFF4",
+    justifyContent: "center",
+    alignItems: "center",
     marginBottom: 16,
   },
   emptyText: {
     fontSize: 18,
-    fontWeight: '800',
+    fontWeight: "800",
     color: color.textMain,
     marginBottom: 4,
   },
   emptySubText: {
     fontSize: 14,
     color: color.textSecondary,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   tipsGrid: {
     gap: 12,
   },
   tipItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     backgroundColor: color.surface,
     padding: 16,
     borderRadius: 20,
@@ -497,22 +560,70 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 14,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   tipTextContent: {
     flex: 1,
   },
   tipTitle: {
     fontSize: 15,
-    fontWeight: '800',
+    fontWeight: "800",
     color: color.textMain,
     marginBottom: 2,
   },
   tipDesc: {
     fontSize: 12,
     color: color.textSecondary,
-    fontWeight: '600',
+    fontWeight: "600",
     lineHeight: 16,
+  },
+  tipProfileImage: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    backgroundColor: color.surfaceDark,
+    borderWidth: 1.5,
+    borderColor: color.primary,
+  },
+  aideSection: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    backgroundColor: color.surface,
+    borderRadius: 20,
+    padding: 18,
+    marginBottom: 30,
+    borderWidth: 2,
+    borderColor: color.primary,
+  },
+  aideSectionLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    flex: 1,
+  },
+  aideSectionIcon: {
+    width: 52,
+    height: 52,
+    borderRadius: 16,
+    backgroundColor: "#FFF0F0",
+    justifyContent: "center",
+    alignItems: "center",
+    flexShrink: 0,
+  },
+  aideSectionText: {
+    flex: 1,
+  },
+  aideSectionTitle: {
+    fontSize: 15,
+    fontWeight: "800",
+    color: color.textMain,
+    marginBottom: 2,
+  },
+  aideSectionDesc: {
+    fontSize: 12,
+    color: color.textSecondary,
+    fontWeight: "600",
   },
 });

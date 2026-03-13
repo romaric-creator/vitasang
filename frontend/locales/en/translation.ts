@@ -155,7 +155,16 @@ export default {
     },
     register: {
         title: "VitaSang",
-        subtitle: "Create your profile",
+        subtitle: "Create your donor profile",
+        step1: {
+            title: "Account Info"
+        },
+        step2: {
+            title: "Donor Info",
+            subtitle: "Your blood group helps us find the right alerts for you."
+        },
+        next: "Next",
+        back: "Back",
         submit: "CREATE MY ACCOUNT",
         alreadyRegistered: "Already registered?",
         loginLink: "Login here",
