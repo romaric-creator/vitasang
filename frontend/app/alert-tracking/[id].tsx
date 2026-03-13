@@ -6,7 +6,7 @@ import {
   TouchableOpacity,
   ScrollView,
 } from "react-native";
-import { LoadingOverlay } from "@/components/LoadingOverlay\";
+import { LoadingOverlay } from "@/components/LoadingOverlay";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { TabBarIcon } from "@/components/TabBarIcon";
 import { color } from "@/constant/color";
