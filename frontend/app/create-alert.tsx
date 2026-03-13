@@ -243,7 +243,7 @@ export default function CreateAlertScreen() {
                 <View style={styles.warningBox}>
                   <TabBarIcon name="info-circle" size={16} color={color.primary} />
                   {loading ? (
-                    <LoadingOverlay visible={true} spinnerSize=\"small\" style={{flex: 1}}/>
+                    <LoadingOverlay visible={true} spinnerSize="small" style={{flex: 1}} />
                   ) : (
                     <Text style={styles.warningText}>
                       {donorCount !== null
