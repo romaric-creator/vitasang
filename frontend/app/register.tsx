@@ -5,7 +5,6 @@ import {
   ScrollView,
   TouchableOpacity,
   StyleSheet,
-  ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
 } from "react-native";
@@ -13,21 +12,19 @@ import { Formik } from "formik";
 import { color } from "@/constant/color";
 import { router } from "expo-router";
 import { registerUser, updatePushToken } from "@/services/user.service";
-import { TabBarIcon } from "@/components/TabBarIcon";
 import { registerForPushNotificationsAsync } from "@/utils/pushNotifications";
 import { storeData } from "@/utils/storage";
 import { registerValidationSchema } from "@/validation/ValidationSchemas";
 import FormField from "@/components/FormField";
 import { PrimaryButton } from "@/components/PrimaryButton";
 import { BloodGroupSelector } from "@/components/BloodGroupSelector";
-import { formStyles } from "@/styles/formStyles";
-
 import { useTranslation } from "react-i18next";
 
 export default function RegisterScreen() {
   const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
   const [generalError, setGeneralError] = useState("");
+  const [step, setStep] = useState(1);
 
   const handleRegister = async (values: any) => {
     setGeneralError("");
@@ -50,7 +47,6 @@ export default function RegisterScreen() {
       await storeData("user", userToStore);
       await storeData("token", data.token);
 
-      // Enregistrement des notifications push après inscription
       try {
         const pushToken = await registerForPushNotificationsAsync();
         if (pushToken && userToStore.id_utilisateur) {
@@ -70,6 +66,16 @@ export default function RegisterScreen() {
     }
   };
 
+  const handleNextStep = (validateForm: any, values: any) => {
+    validateForm(values).then((errors: any) => {
+      const step1Errors = ['nom', 'prenom', 'telephone', 'mot_de_passe', 'confirmPassword'];
+      const hasErrors = step1Errors.some(field => errors[field]);
+      if (!hasErrors) {
+        setStep(2);
+      }
+    });
+  };
+
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === "ios" ? "padding" : "height"}
@@ -82,8 +88,12 @@ export default function RegisterScreen() {
       >
         <View style={styles.container}>
           <View style={styles.headerSection}>
-            <Text style={styles.title}>{t('register.title')}</Text>
-            <Text style={styles.subtitle}>{t('register.subtitle')}</Text>
+            <Text style={styles.title}>
+              {step === 1 ? t('register.step1.title') : t('register.step2.title')}
+            </Text>
+            <Text style={styles.subtitle}>
+              {step === 1 ? t('register.subtitle') : t('register.step2.subtitle')}
+            </Text>
           </View>
 
           <Formik
@@ -92,83 +102,116 @@ export default function RegisterScreen() {
               prenom: "",
               telephone: "",
               mot_de_passe: "",
+              confirmPassword: "",
               groupe_sanguin: "",
             }}
             validationSchema={registerValidationSchema}
             onSubmit={handleRegister}
+            validateOnMount
           >
-            {({ values, errors, touched, handleChange, handleBlur, handleSubmit }) => (
+            {({ values, errors, touched, handleChange, handleBlur, handleSubmit, validateForm, isValid }) => (
               <View style={styles.formContainer}>
-                <View style={styles.row}>
-                  <View style={{ flex: 1 }}>
+                {step === 1 && (
+                  <>
+                    <View style={styles.row}>
+                      <View style={{ flex: 1 }}>
+                        <FormField
+                          label={t('register.fields.lastName')}
+                          value={values.nom}
+                          onChangeText={handleChange("nom")}
+                          onBlur={handleBlur("nom")}
+                          placeholder={t('register.placeholders.lastName')}
+                          error={errors.nom}
+                          touched={touched.nom}
+                          required
+                        />
+                      </View>
+                      <View style={{ width: 12 }} />
+                      <View style={{ flex: 1 }}>
+                        <FormField
+                          label={t('register.fields.firstName')}
+                          value={values.prenom}
+                          onChangeText={handleChange("prenom")}
+                          onBlur={handleBlur("prenom")}
+                          placeholder={t('register.placeholders.firstName')}
+                          error={errors.prenom}
+                          touched={touched.prenom}
+                          required
+                        />
+                      </View>
+                    </View>
+
                     <FormField
-                      label={t('register.fields.lastName')}
-                      value={values.nom}
-                      onChangeText={handleChange("nom")}
-                      onBlur={handleBlur("nom")}
-                      placeholder={t('register.placeholders.lastName')}
-                      error={errors.nom}
-                      touched={touched.nom}
+                      label={t('register.fields.phone')}
+                      value={values.telephone}
+                      onChangeText={handleChange("telephone")}
+                      onBlur={handleBlur("telephone")}
+                      placeholder={t('register.placeholders.phone')}
+                      error={errors.telephone}
+                      touched={touched.telephone}
+                      keyboardType="phone-pad"
                       required
                     />
-                  </View>
-                  <View style={{ width: 12 }} />
-                  <View style={{ flex: 1 }}>
+                    <Text style={styles.hintText}>{t('register.hintPhone')}</Text>
+
                     <FormField
-                      label={t('register.fields.firstName')}
-                      value={values.prenom}
-                      onChangeText={handleChange("prenom")}
-                      onBlur={handleBlur("prenom")}
-                      placeholder={t('register.placeholders.firstName')}
-                      error={errors.prenom}
-                      touched={touched.prenom}
+                      label={t('register.fields.password')}
+                      value={values.mot_de_passe}
+                      onChangeText={handleChange("mot_de_passe")}
+                      onBlur={handleBlur("mot_de_passe")}
+                      placeholder={t('register.placeholders.password')}
+                      error={errors.mot_de_passe}
+                      touched={touched.mot_de_passe}
+                      secureTextEntry
                       required
                     />
-                  </View>
-                </View>
 
-                <FormField
-                  label={t('register.fields.phone')}
-                  value={values.telephone}
-                  onChangeText={handleChange("telephone")}
-                  onBlur={handleBlur("telephone")}
-                  placeholder={t('register.placeholders.phone')}
-                  error={errors.telephone}
-                  touched={touched.telephone}
-                  keyboardType="phone-pad"
-                  required
-                />
-                <Text style={styles.hintText}>{t('register.hintPhone')}</Text>
+                    <FormField
+                      label={t('register.fields.confirmPassword')}
+                      value={values.confirmPassword}
+                      onChangeText={handleChange("confirmPassword")}
+                      onBlur={handleBlur("confirmPassword")}
+                      placeholder={t('register.placeholders.confirmPassword')}
+                      error={errors.confirmPassword}
+                      touched={touched.confirmPassword}
+                      secureTextEntry
+                      required
+                    />
+                    <PrimaryButton
+                      title={t('register.next')}
+                      onPress={() => handleNextStep(validateForm, values)}
+                      style={{ marginTop: 20 }}
+                    />
+                  </>
+                )}
 
-                <FormField
-                  label={t('register.fields.password')}
-                  value={values.mot_de_passe}
-                  onChangeText={handleChange("mot_de_passe")}
-                  onBlur={handleBlur("mot_de_passe")}
-                  placeholder={t('register.placeholders.password')}
-                  error={errors.mot_de_passe}
-                  touched={touched.mot_de_passe}
-                  secureTextEntry
-                  required
-                />
+                {step === 2 && (
+                  <>
+                    <BloodGroupSelector
+                      value={values.groupe_sanguin}
+                      onSelect={(group) => handleChange("groupe_sanguin")(group)}
+                      error={errors.groupe_sanguin}
+                      touched={touched.groupe_sanguin}
+                    />
 
-                <BloodGroupSelector
-                  value={values.groupe_sanguin}
-                  onSelect={(group) => handleChange("groupe_sanguin")(group)}
-                  error={errors.groupe_sanguin}
-                  touched={touched.groupe_sanguin}
-                />
+                    {generalError ? (
+                      <Text style={styles.errorText}>{generalError}</Text>
+                    ) : null}
 
-                {generalError ? (
-                  <Text style={styles.errorText}>{generalError}</Text>
-                ) : null}
-
-                <PrimaryButton
-                  title={t('register.submit')}
-                  onPress={() => handleSubmit()}
-                  loading={loading}
-                  style={{ marginTop: 20 }}
-                />
+                    <View style={styles.buttonRow}>
+                        <TouchableOpacity style={styles.backButton} onPress={() => setStep(1)}>
+                            <Text style={styles.backButtonText}>{t('register.back')}</Text>
+                        </TouchableOpacity>
+                        <PrimaryButton
+                            title={t('register.submit')}
+                            onPress={() => handleSubmit()}
+                            loading={loading}
+                            style={{ marginTop: 20, flex: 1 }}
+                            disabled={!isValid}
+                        />
+                    </View>
+                  </>
+                )}
 
                 <TouchableOpacity onPress={() => router.replace("/login")}>
                   <Text style={styles.loginLinkText}>
@@ -240,4 +283,18 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     fontStyle: "italic",
   },
+  buttonRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 20,
+  },
+  backButton: {
+    marginRight: 16,
+    padding: 10,
+  },
+  backButtonText: {
+    color: color.primary,
+    fontWeight: '700',
+    fontSize: 16,
+  }
 });

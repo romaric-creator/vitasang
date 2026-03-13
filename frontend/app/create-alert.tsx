@@ -5,14 +5,13 @@ import {
   View,
   TouchableOpacity,
   ScrollView,
-  ActivityIndicator,
+
 } from "react-native";
 import { Formik } from "formik";
 import { TabBarIcon } from "@/components/TabBarIcon";
 import { color } from "@/constant/color";
 import { useRouter } from "expo-router";
-import ThemedView from "@/components/ThemedView";
-import * as Location from 'expo-location';
+import ThemedView from "@/components/ThemedView";import { LoadingOverlay } from \"@/components/LoadingOverlay\";import * as Location from 'expo-location';
 import { searchDonors, sendAlert } from "@/services/user.service";
 import { createAlertValidationSchema } from "@/validation/ValidationSchemas";
 import { useAuth } from "@/context/AuthContext";
@@ -23,6 +22,7 @@ import { BloodGroupSelector } from "@/components/BloodGroupSelector";
 import { PrimaryButton } from "@/components/PrimaryButton";
 import { formStyles } from "@/styles/formStyles";
 import { useTranslation } from "react-i18next";
+import ConfirmationModal from "@/components/ConfirmationModal";
 
 export default function CreateAlertScreen() {
   const { t } = useTranslation();
@@ -33,6 +33,8 @@ export default function CreateAlertScreen() {
   const [loading, setLoading] = useState(false);
   const [isLocating, setIsLocating] = useState(true);
   const [donorCount, setDonorCount] = useState<number | null>(null);
+  const [isModalVisible, setModalVisible] = useState(false);
+  const [pendingAlertData, setPendingAlertData] = useState<any>(null);
 
   useEffect(() => {
     (async () => {
@@ -67,6 +69,22 @@ export default function CreateAlertScreen() {
     }
   };
 
+  const handleConfirmRedirect = async () => {
+    setModalVisible(false);
+    if (pendingAlertData) {
+      try {
+        await storeData('pending_alert', pendingAlertData);
+        router.push({
+          pathname: '/login',
+          params: { redirectAfter: 'create-alert' }
+        });
+      } catch (e) {
+        console.error("Failed to save pending alert:", e);
+        setErrorMsg("Impossible de sauvegarder l'alerte. Veuillez réessayer.");
+      }
+    }
+  };
+
   const handleSubmit = async (values: any) => {
     console.log('handleSubmit called with values:', values);
 
@@ -89,17 +107,9 @@ export default function CreateAlertScreen() {
 
     // SI L'UTILISATEUR N'EST PAS CONNECTÉ
     if (!isAuth) {
-      try {
-        await storeData('pending_alert', alertData);
-        // Rediriger vers login avec un paramètre pour revenir après
-        router.push({
-          pathname: '/login',
-          params: { redirectAfter: 'create-alert' }
-        });
-        return;
-      } catch (e) {
-        console.error("Failed to save pending alert:", e);
-      }
+      setPendingAlertData(alertData);
+      setModalVisible(true);
+      return;
     }
 
     setLoading(true);
@@ -123,11 +133,17 @@ export default function CreateAlertScreen() {
   return (
     <ThemedView style={styles.container}>
       <PageHeader title={t('alert.title')} />
+      <ConfirmationModal
+        visible={isModalVisible}
+        onClose={() => setModalVisible(false)}
+        onConfirm={handleConfirmRedirect}
+        title="Connexion requise"
+        message="Pour suivre votre alerte et recevoir des notifications, veuillez vous connecter ou créer un compte. Votre alerte sera publiée juste après."
+        confirmText="Se connecter / S'inscrire"
+        cancelText="Annuler"
+      />
       {isLocating ? (
-        <View style={styles.center}>
-          <ActivityIndicator size="large" color={color.primary} />
-          <Text style={styles.locatingText}>{t('alert.gettingLocation')}</Text>
-        </View>
+        <LoadingOverlay visible={true} message={t('alert.gettingLocation')} fullScreen />
       ) : (
         <ScrollView contentContainerStyle={{ padding: 16 }} showsVerticalScrollIndicator={false}>
           <Formik
@@ -225,7 +241,7 @@ export default function CreateAlertScreen() {
                 <View style={styles.warningBox}>
                   <TabBarIcon name="info-circle" size={16} color={color.primary} />
                   {loading ? (
-                    <ActivityIndicator size="small" color={color.primary} />
+                    <LoadingOverlay visible={true} spinnerSize=\"small\" style={{flex: 1}}/>
                   ) : (
                     <Text style={styles.warningText}>
                       {donorCount !== null

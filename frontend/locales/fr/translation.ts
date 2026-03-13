@@ -150,7 +150,16 @@ export default {
     },
     register: {
         title: "VitaSang",
-        subtitle: "Créez votre profil",
+        subtitle: "Créez votre profil de donneur",
+        step1: {
+            title: "Infos Compte"
+        },
+        step2: {
+            title: "Infos Donneur",
+            subtitle: "Votre groupe sanguin nous aide à vous trouver les bonnes alertes."
+        },
+        next: "Suivant",
+        back: "Précédent",
         submit: "CRÉER MON COMPTE",
         alreadyRegistered: "Déjà inscrit ?",
         loginLink: "Connectez-vous ici",

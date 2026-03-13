@@ -4,7 +4,6 @@ import {
   Text,
   View,
   TouchableOpacity,
-  ActivityIndicator,
   FlatList,
   RefreshControl,
 } from 'react-native';
@@ -13,6 +12,7 @@ import { PageHeader } from '@/components/PageHeader';
 import { DataCard, DataCardRow } from '@/components/DataCard';
 import ThemedView from '@/components/ThemedView';
 import { color } from '@/constant/color';
+import { LoadingOverlay } from '@/components/LoadingOverlay';
 import { getUserIdFromStorage } from '@/utils/storage';
 import { getMyAppointments, cancelAppointment } from '@/services/user.service';
 import { useAlert } from '@/hooks/useAlert';
@@ -157,9 +157,8 @@ export default function RendezVousList() {
   if (loading) {
     return (
       <ThemedView style={styles.container}>
-        <View style={styles.centerContent}>
-          <ActivityIndicator size="large" color={color.primary} />
-        </View>
+        <PageHeader title={t('appointments.title')} />
+        <LoadingOverlay visible={true} message={t('common.loading')} />
       </ThemedView>
     );
   }

@@ -4,7 +4,6 @@ import {
   Text,
   View,
   TouchableOpacity,
-  ActivityIndicator,
   ScrollView,
   Alert,
 } from 'react-native';
@@ -19,7 +18,7 @@ import FormField from '@/components/FormField';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { TabBarIcon } from '@/components/TabBarIcon';
 import { getCentreDetails, createAppointment } from '@/services/user.service';
-
+import { LoadingOverlay } from '@/components/LoadingOverlay';
 import { useTranslation } from 'react-i18next';
 
 const BookingSchema = Yup.object().shape({
@@ -85,7 +84,7 @@ export default function BookAppointmentScreen() {
   if (loading) {
     return (
       <View style={styles.centerContent}>
-        <ActivityIndicator size="large" color={color.primary} />
+        <LoadingOverlay visible={true} message={t('common.loading')} />
       </View>
     );
   }

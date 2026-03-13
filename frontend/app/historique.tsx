@@ -1,21 +1,21 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from "react";
 import {
   StyleSheet,
   Text,
   View,
   TouchableOpacity,
-  ActivityIndicator,
   FlatList,
   RefreshControl,
-} from 'react-native';
-import { useRouter } from 'expo-router';
-import { PageHeader } from '@/components/PageHeader';
-import { DataCard, DataCardRow } from '@/components/DataCard';
-import ThemedView from '@/components/ThemedView';
-import { color } from '@/constant/color';
-import { getUserIdFromStorage } from '@/utils/storage';
-import { getUserHistory } from '@/services/user.service';
-import { useAlert } from '@/hooks/useAlert';
+} from "react-native";
+import { ModernSpinner } from "@/components/ModernSpinner";
+import { useRouter } from "expo-router";
+import { PageHeader } from "@/components/PageHeader";
+import { DataCard, DataCardRow } from "@/components/DataCard";
+import ThemedView from "@/components/ThemedView";
+import { color } from "@/constant/color";
+import { getUserIdFromStorage } from "@/utils/storage";
+import { getUserHistory } from "@/services/user.service";
+import { useAlert } from "@/hooks/useAlert";
 
 interface DonationHistory {
   id: number;
@@ -28,7 +28,7 @@ interface DonationHistory {
   };
 }
 
-import { useTranslation } from 'react-i18next';
+import { useTranslation } from "react-i18next";
 
 export default function Historique() {
   const { t, i18n } = useTranslation();
@@ -53,7 +53,7 @@ export default function Historique() {
         }
       }
     } catch (error) {
-      console.error('Error loading history:', error);
+      console.error("Error loading history:", error);
       setDonations([]);
     } finally {
       setLoading(false);
@@ -69,11 +69,14 @@ export default function Historique() {
   const formatDate = (dateString: string) => {
     try {
       const date = new Date(dateString);
-      return date.toLocaleDateString(i18n.language === 'fr' ? 'fr-CM' : 'en-US', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-      });
+      return date.toLocaleDateString(
+        i18n.language === "fr" ? "fr-CM" : "en-US",
+        {
+          year: "numeric",
+          month: "long",
+          day: "numeric",
+        },
+      );
     } catch {
       return dateString;
     }
@@ -81,14 +84,14 @@ export default function Historique() {
 
   const DonationCard = ({ item }: { item: DonationHistory }) => {
     const data: DataCardRow[] = [
-      { label: t('history.date'), value: formatDate(item.date_don) },
-      { label: t('history.center'), value: item.centre?.nom || 'N/A' },
-      { label: t('history.city'), value: item.centre?.ville || 'N/A' }
+      { label: t("history.date"), value: formatDate(item.date_don) },
+      { label: t("history.center"), value: item.centre?.nom || "N/A" },
+      { label: t("history.city"), value: item.centre?.ville || "N/A" },
     ];
 
     return (
       <DataCard
-        title={item?.type_don || t('history.defaultType')}
+        title={item?.type_don || t("history.defaultType")}
         badgeText={`${item?.quantite || 0} mL`}
         data={data}
       />
@@ -98,25 +101,24 @@ export default function Historique() {
   if (loading) {
     return (
       <ThemedView style={styles.container}>
-        <View style={styles.centerContent}>
-          <ActivityIndicator size="large" color={color.primary} />
-        </View>
+        <PageHeader title={t("history.title")} />
+        <LoadingOverlay visible={true} message={t('common.loading')} />
       </ThemedView>
     );
   }
 
   return (
     <ThemedView style={styles.container}>
-      <PageHeader title={t('history.title')} />
+      <PageHeader title={t("history.title")} />
 
       {donations.length === 0 ? (
         <View style={styles.centerContent}>
-          <Text style={styles.emptyText}>{t('history.empty')}</Text>
+          <Text style={styles.emptyText}>{t("history.empty")}</Text>
           <TouchableOpacity
             style={styles.button}
-            onPress={() => router.push('/(tabs)')}
+            onPress={() => router.push("/(tabs)")}
           >
-            <Text style={styles.buttonText}>{t('history.createAlert')}</Text>
+            <Text style={styles.buttonText}>{t("history.createAlert")}</Text>
           </TouchableOpacity>
         </View>
       ) : (
@@ -145,8 +147,8 @@ const styles = StyleSheet.create({
   },
   centerContent: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   listContent: {
     paddingBottom: 20,
@@ -154,7 +156,7 @@ const styles = StyleSheet.create({
   emptyText: {
     fontSize: 15,
     color: color.textLight,
-    textAlign: 'center',
+    textAlign: "center",
     marginBottom: 20,
   },
   button: {
@@ -162,11 +164,11 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     paddingHorizontal: 20,
     borderRadius: 10,
-    alignItems: 'center',
+    alignItems: "center",
   },
   buttonText: {
-    color: '#fff',
+    color: "#fff",
     fontSize: 14,
-    fontWeight: '700',
+    fontWeight: "700",
   },
 });
