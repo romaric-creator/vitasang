@@ -6,258 +6,204 @@ import {
   View,
   ScrollView,
   StatusBar,
+  Image,
+  Dimensions,
+  RefreshControl,
 } from "react-native";
-import React, { useEffect, useState } from "react";
+import React, { useState, useCallback } from "react";
 import ThemedView from "@/components/ThemedView";
 import { TabBarIcon } from "@/components/TabBarIcon";
 import { color } from "@/constant/color";
-import { getData, getUserIdFromStorage } from "@/utils/storage";
+import { getUserIdFromStorage } from "@/utils/storage";
 import { useTranslation } from "react-i18next";
-import { Image } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import { getUserProfile, getActiveAlerts } from "@/services/user.service";
-import Constants from "expo-constants"; // Import Constants
+import Constants from "expo-constants";
 import { usePostHog } from 'posthog-react-native';
+
+const { width } = Dimensions.get('window');
 
 export default function Home() {
   const { t } = useTranslation();
   const router = useRouter();
   const [userData, setUserData] = useState<any>(null);
   const [activeAlerts, setActiveAlerts] = useState<any[]>([]);
+  const [refreshing, setRefreshing] = useState(false);
   const posthog = usePostHog();
 
+  const loadData = useCallback(async () => {
+    try {
+      const userId = await getUserIdFromStorage();
+      if (userId) {
+        const res = await getUserProfile(userId);
+        if (res.success) setUserData(res.user);
+      }
+      const alertsRes = await getActiveAlerts();
+      if (alertsRes.success) setActiveAlerts(alertsRes.alerts || []);
+    } catch (error) {
+      console.error("Home: Error loading data:", error);
+    } finally {
+      setRefreshing(false);
+    }
+  }, []);
+
   useFocusEffect(
-    React.useCallback(() => {
-      // Signal de test pour confirmer la connexion
-      posthog?.capture('test_connexion_cameroon', { status: 'success' });
-
-      const loadData = async () => {
-        try {
-          const userId = await getUserIdFromStorage();
-          if (userId) {
-            const res = await getUserProfile(userId);
-            if (res.success) setUserData(res.user);
-          }
-
-          const alertsRes = await getActiveAlerts();
-          if (alertsRes.success) {
-            setActiveAlerts(alertsRes.alerts || []);
-          }
-        } catch (error) {
-          console.error("Home: Error loading data:", error);
-        }
-      };
+    useCallback(() => {
+      posthog?.capture('home_visited');
       loadData();
-    }, []),
+    }, [posthog, loadData]),
   );
 
-  const tips = [
-    {
-      id: "1",
-      title: t("home.tipsData.t1"),
-      desc: t("home.tipsData.d1"),
-      icon: "heartbeat",
-      bg: "#FFE4E6",
-      color: "#BE123C",
-    },
-    {
-      id: "2",
-      title: t("home.tipsData.t2"),
-      desc: t("home.tipsData.d2"),
-      icon: "coffee",
-      bg: "#FEF3C7",
-      color: "#B45309",
-    },
-    {
-      id: "3",
-      title: t("home.tipsData.t3"),
-      desc: t("home.tipsData.d3"),
-      icon: "check-square-o",
-      bg: "#ECFDF5",
-      color: "#047857",
-    },
-  ];
+  const onRefresh = () => {
+    setRefreshing(true);
+    loadData();
+  };
 
   const fullName = userData
     ? `${userData.prenom || ""} ${userData.nom || ""}`.trim()
     : t("profile.defaultUser");
 
-  const urgentNeeds = activeAlerts.map((item) => ({
-    id: item.id,
-    group: item.groupe,
-    hospital: item.lieu || "Hôpital proche",
-    collected: 0,
-    target: item.quantite_requise || 1,
-  }));
-
   const profileImage = userData?.photo_profil
     ? {
       uri: userData.photo_profil.startsWith('http')
         ? userData.photo_profil
-        : (
-          Constants.expoConfig?.extra?.env?.EXPO_PUBLIC_API_BASE_URL ||
-          "https://vitasang.vercel.app/api"
-        ).replace("/api", "") + userData.photo_profil,
+        : (Constants.expoConfig?.extra?.env?.EXPO_PUBLIC_API_BASE_URL || "https://vitasang.vercel.app/api").replace("/api", "") + userData.photo_profil,
     }
     : null;
 
   return (
     <ThemedView style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor={color.surface} />
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: 60 }}
-      >
+      <StatusBar barStyle="dark-content" />
+      
+      <View style={styles.header}>
         <View>
-          <View style={styles.header}>
-            <TouchableOpacity
-              style={styles.profileSection}
-              onPress={() => router.push("/(tabs)/profile")}
+          <Text style={styles.greeting}>{t("home.profileLabel")}</Text>
+          <Text style={styles.userName}>{fullName}</Text>
+        </View>
+        <TouchableOpacity 
+          style={styles.headerAction}
+          onPress={() => router.push("/(tabs)/alertes")}
+        >
+          <TabBarIcon name="bell-o" size={22} color={color.textMain} />
+          {activeAlerts.length > 0 && <View style={styles.badge} />}
+        </TouchableOpacity>
+      </View>
+
+      <ScrollView 
+        showsVerticalScrollIndicator={false} 
+        contentContainerStyle={styles.scrollContent}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[color.primary]} tintColor={color.primary} />
+        }
+      >
+        
+        <View style={styles.bentoRow}>
+          <TouchableOpacity 
+            style={[styles.bentoItem, styles.heroBlock]}
+            onPress={() => router.push("/historique")}
+          >
+            <View style={styles.heroIconCircle}>
+              <TabBarIcon name="heart" size={24} color="white" />
+            </View>
+            <Text style={styles.heroValue}>{userData?.donsCount || 0}</Text>
+            <Text style={styles.heroLabel}>{t("home.livesSaved")}</Text>
+            <Text style={styles.heroSub}>{t("history.empty")?.split('.')[0]}</Text>
+          </TouchableOpacity>
+
+          <View style={styles.bentoColumn}>
+            <View style={[styles.bentoItem, styles.bloodBlock]}>
+              <Text style={styles.bloodLabel}>Groupe</Text>
+              <Text style={styles.bloodValue}>{userData?.groupe_sanguin || "--"}</Text>
+            </View>
+            
+            <TouchableOpacity 
+              style={[styles.bentoItem, styles.statusBlock]}
+              onPress={() => router.push("/eligibility-test")}
             >
-              <View style={styles.avatar}>
-                {profileImage ? (
-                  <Image source={profileImage} style={styles.avatarImage} />
-                ) : (
-                  <TabBarIcon
-                    name="user"
-                    size={20}
-                    color={color.textSecondary}
-                  />
-                )}
-              </View>
-              <View>
-                <Text style={styles.profileLabel}>
-                  {t("home.profileLabel")}
-                </Text>
-                <Text style={styles.profileName}>{fullName}</Text>
-              </View>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.notificationBtn}
-              onPress={() => router.push("/(tabs)/alertes")}
-            >
-              <TabBarIcon name="bell-o" size={20} color={color.textMain} />
-              <View style={styles.notificationDot} />
-            </TouchableOpacity>
-          </View>
-          <View style={styles.section}>
-            <TouchableOpacity
-              style={styles.statusCard}
-              onPress={() => router.push("/historique")}
-              activeOpacity={0.9}
-            >
-              <View style={styles.statusHeaderRow}>
-                <View style={styles.statusUserInfo}>
-                  <Text style={styles.statusDate}>
-                    {t("home.nextDonation")}: 15 Sept 2024
-                  </Text>
-                </View>
-                <Text style={styles.statusBlood}>
-                  {userData?.groupe_sanguin || "O+"}
-                </Text>
-              </View>
+              <TabBarIcon name="calendar-check-o" size={18} color={color.primary} />
+              <Text style={styles.statusLabel}>{t("home.nextDonation")}</Text>
+              <Text style={styles.statusValue}>DISPONIBLE</Text>
             </TouchableOpacity>
           </View>
         </View>
 
-        <View style={styles.alertContainer}>
-          <TouchableOpacity
-            style={styles.mainAlertBtn}
-            activeOpacity={0.8}
-            onPress={() => router.push("/create-alert")}
-          >
-            <TabBarIcon name="exclamation-triangle" size={20} color="white" />
-            <Text style={styles.mainAlertText}>{t("home.launchAlert")}</Text>
-          </TouchableOpacity>
-        </View>
+        <TouchableOpacity 
+          style={styles.mainActionBtn}
+          onPress={() => router.push("/create-alert")}
+        >
+          <View style={styles.mainActionGradient}>
+            <TabBarIcon name="bolt" size={24} color="white" />
+            <Text style={styles.mainActionText}>{t("home.launchAlert")}</Text>
+          </View>
+        </TouchableOpacity>
 
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>{t("home.urgentSection")}</Text>
             <TouchableOpacity onPress={() => router.push("/(tabs)/alertes")}>
-              <Text style={{ color: color.primary, fontWeight: "700" }}>
-                {t("common.seeAll")}
-              </Text>
+              <Text style={styles.seeAllText}>{t("common.seeAll")}</Text>
             </TouchableOpacity>
           </View>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.urgentScroll}
-          >
-            {urgentNeeds.length > 0 ? urgentNeeds.map((need, idx) => (
-              <View key={idx} style={styles.urgentCard}>
-                <Text style={styles.urgentBlood}>{need.group}</Text>
-                <View style={styles.urgentLocation}>
-                  <TabBarIcon
-                    name="map-marker"
-                    size={14}
-                    color={color.primary}
-                  />
-                  <Text style={styles.urgentHospital} numberOfLines={2}>
-                    {need.hospital}
-                  </Text>
-                </View>
 
-                <View style={styles.progressContainer}>
-                  <View style={styles.progressBarBg}>
-                    <View
-                      style={[
-                        styles.progressBarFill,
-                        { width: `${(need.collected / need.target) * 100}%` },
-                      ]}
-                    />
-                  </View>
-                  <View style={styles.progressTextRow}>
-                    <Text style={styles.progressText}>
-                      Besoin de {need.target} Poches
-                    </Text>
-                  </View>
-                </View>
-
-                <TouchableOpacity
-                  style={styles.btnDon}
-                  onPress={() => router.push("/(tabs)/map")}
+          {activeAlerts.length > 0 ? (
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} snapToInterval={width * 0.75 + 16} decelerationRate="fast">
+              {activeAlerts.map((alert, idx) => (
+                <TouchableOpacity 
+                  key={idx} 
+                  style={styles.urgentCard}
+                  onPress={() => router.push({ pathname: "/alert-response/[id]", params: { id: alert.id } })}
                 >
-                  <Text style={styles.btnDonText}>{t("home.donate")}</Text>
+                  <View style={styles.urgentHeader}>
+                    <View style={styles.urgentBloodCircle}>
+                      <Text style={styles.urgentBloodText}>{alert.groupe}</Text>
+                    </View>
+                    <View style={styles.urgentUrgencyBadge}>
+                      <Text style={styles.urgentUrgencyText}>{alert.urgence}</Text>
+                    </View>
+                  </View>
+                  <Text style={styles.urgentHospital} numberOfLines={1}>{alert.lieu}</Text>
+                  <View style={styles.urgentFooter}>
+                    <TabBarIcon name="map-marker" size={12} color={color.textSecondary} />
+                    <Text style={styles.urgentDistance}>À proximité</Text>
+                    <View style={styles.urgentAction}>
+                      <Text style={styles.urgentActionText}>{t("home.donate")}</Text>
+                    </View>
+                  </View>
                 </TouchableOpacity>
+              ))}
+            </ScrollView>
+          ) : (
+            <View style={styles.emptyState}>
+              <View style={styles.emptyIconCircle}>
+                <TabBarIcon name="smile-o" size={32} color={color.success} />
               </View>
-            )) : (
-              <View style={styles.noAlertsBox}>
-                <TabBarIcon name="check-circle" size={24} color="#2ECC71" />
-                <Text style={styles.noAlertsText}>Aucune urgence signalée pour le moment. Merci de rester aux aguets !</Text>
-              </View>
-            )}
-          </ScrollView>
+              <Text style={styles.emptyText}>{t("alert.empty.sent")}</Text>
+              <Text style={styles.emptySubText}>Aucune urgence en cours.</Text>
+            </View>
+          )}
         </View>
 
         <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>{t("home.tips")}</Text>
-          </View>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.tipsScroll}
-          >
-            {tips.map((tip) => (
-              <TouchableOpacity
-                key={tip.id}
-                style={[styles.tipCard, { backgroundColor: tip.bg }]}
-              >
-                <View style={[styles.tipIconBox, { backgroundColor: "white" }]}>
-                  <TabBarIcon
-                    name={tip.icon as any}
-                    size={20}
-                    color={tip.color}
+          <Text style={styles.sectionTitle}>{t("home.tips")}</Text>
+          <View style={styles.tipsGrid}>
+            {[1, 2, 3].map((id) => (
+              <TouchableOpacity key={id} style={styles.tipItem}>
+                <View style={[styles.tipIconBox, { backgroundColor: id === 1 ? '#FFF0F0' : id === 2 ? '#F0F7FF' : '#F0FFF4' }]}>
+                  <TabBarIcon 
+                    name={id === 1 ? "heartbeat" : id === 2 ? "coffee" : "shield"} 
+                    size={20} 
+                    color={id === 1 ? color.primary : id === 2 ? color.secondary : color.success} 
                   />
                 </View>
-                <Text style={styles.tipTitle}>{tip.title}</Text>
-                <Text style={styles.tipDesc}>{tip.desc}</Text>
+                <View style={styles.tipTextContent}>
+                  <Text style={styles.tipTitle}>{t(`home.tipsData.t${id}`)}</Text>
+                  <Text style={styles.tipDesc} numberOfLines={2}>{t(`home.tipsData.d${id}`)}</Text>
+                </View>
               </TouchableOpacity>
             ))}
-          </ScrollView>
+          </View>
         </View>
+
       </ScrollView>
     </ThemedView>
   );
@@ -269,58 +215,40 @@ const styles = StyleSheet.create({
     backgroundColor: color.background,
   },
   header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingHorizontal: 20,
-    paddingTop: 50,
-    backgroundColor: color.background,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 24,
+    paddingTop: 60,
+    paddingBottom: 20,
   },
-  profileSection: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-  },
-  avatar: {
-    width: 42,
-    height: 42,
-    borderRadius: 12,
-    backgroundColor: color.surfaceDark,
-    justifyContent: "center",
-    alignItems: "center",
-    borderWidth: 1,
-    borderColor: color.border,
-    overflow: "hidden",
-  },
-  avatarImage: {
-    width: "100%",
-    height: "100%",
-  },
-  profileLabel: {
-    fontSize: 11,
+  greeting: {
+    fontSize: 13,
     color: color.textSecondary,
-    fontWeight: "600",
-    textTransform: "uppercase",
-    letterSpacing: 0.5,
+    fontWeight: '600',
+    textTransform: 'uppercase',
+    letterSpacing: 1,
   },
-  profileName: {
-    fontSize: 16,
-    fontWeight: "800",
+  userName: {
+    fontSize: 24,
+    fontWeight: '900',
     color: color.textMain,
-    letterSpacing: -0.3,
+    letterSpacing: -0.5,
   },
-  notificationBtn: {
-    position: "relative",
-    padding: 8,
+  headerAction: {
+    width: 48,
+    height: 48,
+    borderRadius: 16,
     backgroundColor: color.surface,
-    borderRadius: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
     borderWidth: 1,
     borderColor: color.border,
   },
-  notificationDot: {
-    position: "absolute",
-    top: 8,
-    right: 8,
+  badge: {
+    position: 'absolute',
+    top: 14,
+    right: 14,
     width: 8,
     height: 8,
     borderRadius: 4,
@@ -328,257 +256,263 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: color.surface,
   },
-  alertContainer: {
+  scrollContent: {
     paddingHorizontal: 20,
-    marginBottom: 24,
+    paddingBottom: 40,
   },
-  mainAlertBtn: {
-    backgroundColor: color.primary,
-    borderRadius: 16,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    paddingVertical: 16,
-    gap: 10,
-    shadowColor: color.primary,
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.2,
-    shadowRadius: 10,
-    elevation: 4,
+  bentoRow: {
+    flexDirection: 'row',
+    gap: 12,
+    marginBottom: 20,
   },
-  mainAlertText: {
-    color: "white",
-    fontSize: 16,
-    fontWeight: "800",
-    letterSpacing: 0.2,
+  bentoColumn: {
+    flex: 1,
+    gap: 12,
   },
-  section: {
-    paddingBottom: 15,
-
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: "800",
-    color: color.textMain,
-    paddingHorizontal: 20,
-    marginBottom: 12,
-    letterSpacing: -0.5,
-  },
-  urgentScroll: {
-    paddingHorizontal: 16,
-    paddingBottom: 16,
-  },
-  urgentCard: {
+  bentoItem: {
     backgroundColor: color.surface,
-    borderRadius: 20,
-    padding: 18,
-    marginHorizontal: 4,
-    width: 170, // Légèrement plus large pour l'impact
-    shadowColor: color.shadow,
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.8,
-    shadowRadius: 12,
-    elevation: 3,
+    borderRadius: 24,
+    padding: 20,
     borderWidth: 1,
     borderColor: color.border,
   },
-  urgentBlood: {
-    fontSize: 42, // Augmenté de 32 à 42
-    fontWeight: "900",
-    color: color.primary,
-    marginBottom: 8,
+  heroBlock: {
+    flex: 1.2,
+    backgroundColor: color.primary,
+    borderColor: color.primary,
+    justifyContent: 'center',
+  },
+  heroIconCircle: {
+    width: 44,
+    height: 44,
+    borderRadius: 14,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  heroValue: {
+    fontSize: 42,
+    fontWeight: '900',
+    color: 'white',
     letterSpacing: -1,
   },
-  urgentLocation: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    gap: 6,
+  heroLabel: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: 'white',
+    marginTop: -4,
+  },
+  heroSub: {
+    fontSize: 11,
+    color: 'rgba(255,255,255,0.7)',
+    marginTop: 8,
+    fontWeight: '600',
+  },
+  bloodBlock: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  bloodLabel: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: color.textSecondary,
+    textTransform: 'uppercase',
+  },
+  bloodValue: {
+    fontSize: 32,
+    fontWeight: '900',
+    color: color.primary,
+    letterSpacing: -1,
+  },
+  statusBlock: {
+    flex: 1,
+    gap: 4,
+  },
+  statusLabel: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: color.textSecondary,
+  },
+  statusValue: {
+    fontSize: 12,
+    fontWeight: '900',
+    color: color.success,
+  },
+  mainActionBtn: {
+    marginBottom: 30,
+    borderRadius: 24,
+    overflow: 'hidden',
+    elevation: 8,
+    shadowColor: color.primary,
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.3,
+    shadowRadius: 15,
+  },
+  mainActionGradient: {
+    backgroundColor: color.textMain,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 20,
+    gap: 12,
+  },
+  mainActionText: {
+    color: 'white',
+    fontSize: 18,
+    fontWeight: '900',
+    letterSpacing: 0.5,
+  },
+  section: {
+    marginBottom: 30,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     marginBottom: 16,
-    minHeight: 38,
+  },
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: '900',
+    color: color.textMain,
+    letterSpacing: -0.5,
+  },
+  seeAllText: {
+    color: color.primary,
+    fontWeight: '800',
+    fontSize: 14,
+  },
+  urgentCard: {
+    width: width * 0.75,
+    backgroundColor: color.surface,
+    borderRadius: 24,
+    padding: 20,
+    marginRight: 16,
+    borderWidth: 1,
+    borderColor: color.border,
+  },
+  urgentHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 16,
+  },
+  urgentBloodCircle: {
+    width: 50,
+    height: 50,
+    borderRadius: 18,
+    backgroundColor: '#FFF0F0',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  urgentBloodText: {
+    fontSize: 20,
+    fontWeight: '900',
+    color: color.primary,
+  },
+  urgentUrgencyBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 10,
+    backgroundColor: color.background,
+  },
+  urgentUrgencyText: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: color.primary,
   },
   urgentHospital: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: color.textMain,
+    marginBottom: 12,
+  },
+  urgentFooter: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  urgentDistance: {
     fontSize: 12,
     color: color.textSecondary,
-    fontWeight: "600",
+    fontWeight: '600',
     flex: 1,
-    lineHeight: 16,
   },
-  progressContainer: {
-    marginBottom: 14,
-  },
-  progressBarBg: {
-    height: 5,
-    backgroundColor: color.surfaceDark,
-    borderRadius: 3,
-    marginBottom: 8,
-    overflow: "hidden",
-  },
-  progressBarFill: {
-    height: "100%",
+  urgentAction: {
     backgroundColor: color.primary,
-    borderRadius: 3,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 12,
   },
-  progressTextRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
+  urgentActionText: {
+    color: 'white',
+    fontSize: 11,
+    fontWeight: '800',
   },
-  progressText: {
-    fontSize: 10,
-    fontWeight: "800",
+  emptyState: {
+    backgroundColor: color.surface,
+    borderRadius: 24,
+    padding: 30,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: color.border,
+    borderStyle: 'dashed',
+  },
+  emptyIconCircle: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: '#F0FFF4',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  emptyText: {
+    fontSize: 18,
+    fontWeight: '800',
     color: color.textMain,
+    marginBottom: 4,
   },
-  btnDon: {
-    backgroundColor: color.surfaceDark,
-    borderRadius: 10,
-    paddingVertical: 10,
-    alignItems: "center",
+  emptySubText: {
+    fontSize: 14,
+    color: color.textSecondary,
+    fontWeight: '600',
   },
-  btnDonText: {
-    fontSize: 12,
-    fontWeight: "800",
-    color: color.textMain,
+  tipsGrid: {
+    gap: 12,
   },
-  statusCard: {
-    marginHorizontal: 20,
+  tipItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: color.surface,
+    padding: 16,
     borderRadius: 20,
-    padding: 5,
+    borderWidth: 1,
+    borderColor: color.border,
+    gap: 16,
   },
-  statusHeaderRow: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  statusAvatar: {
+  tipIconBox: {
     width: 48,
     height: 48,
     borderRadius: 14,
-    backgroundColor: color.border,
-    justifyContent: "center",
-    alignItems: "center",
-    marginRight: 12,
-    borderWidth: 1,
-    borderColor: color.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  statusUserInfo: {
+  tipTextContent: {
     flex: 1,
   },
-  statusName: {
-    fontSize: 18,
-    fontWeight: "800",
-    color: color.textMain,
-    letterSpacing: -0.5,
-  },
-  statusDate: {
-    fontSize: 12,
-    color: color.textSecondary,
-    fontWeight: "600",
-    marginTop: 2,
-  },
-  statusBlood: {
-    fontSize: 24,
-    fontWeight: "900",
-    color: color.primary,
-  },
-  statusDivider: {
-    height: 1,
-    backgroundColor: color.divider,
-  },
-  statusFooterRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 12,
-  },
-  statusScore: {
-    fontSize: 13,
-    color: color.textSecondary,
-    fontWeight: "600",
-  },
-  badgesWrapper: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  miniBadge: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    justifyContent: "center",
-    alignItems: "center",
-    borderWidth: 2,
-    borderColor: color.surface,
-  },
-  miniBadgeText: {
-    fontSize: 10,
-    fontWeight: "900",
-    color: "white",
-  },
-  statusProgressBarBg: {
-    height: 6,
-    backgroundColor: color.surfaceDark,
-    borderRadius: 3,
-    flexDirection: "row",
-    overflow: "hidden",
-  },
-  statusProgressBarFill: {
-    height: "100%",
-    backgroundColor: color.primary,
-    borderRadius: 3,
-  },
-  sectionHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingRight: 20,
-  },
-  tipsScroll: {
-    paddingHorizontal: 16,
-    paddingBottom: 16,
-  },
-  tipCard: {
-    width: 190,
-    padding: 18,
-    borderRadius: 20,
-    marginHorizontal: 4,
-    borderWidth: 1,
-    borderColor: color.border,
-  },
-  tipIconBox: {
-    width: 42,
-    height: 42,
-    borderRadius: 12,
-    justifyContent: "center",
-    alignItems: "center",
-    marginBottom: 16,
-  },
   tipTitle: {
-    fontSize: 16,
-    fontWeight: "800",
+    fontSize: 15,
+    fontWeight: '800',
     color: color.textMain,
-    marginBottom: 4,
-    letterSpacing: -0.5,
+    marginBottom: 2,
   },
   tipDesc: {
-    fontSize: 13,
+    fontSize: 12,
     color: color.textSecondary,
-    lineHeight: 18,
-    fontWeight: "600",
-  },
-  noAlertsBox: {
-    width: 300,
-    backgroundColor: "#F0FDF4",
-    borderRadius: 20,
-    padding: 24,
-    marginHorizontal: 4,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: "#DCFCE7",
-  },
-  noAlertsText: {
-    color: "#166534",
-    fontSize: 14,
-    fontWeight: "700",
-    textAlign: "center",
-    marginTop: 12,
-    lineHeight: 20,
+    fontWeight: '600',
+    lineHeight: 16,
   },
 });
