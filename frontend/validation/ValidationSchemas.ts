@@ -49,11 +49,7 @@ export const registerValidationSchema = yup.object().shape({
   groupe_sanguin: yup
     .string()
     .required('Le groupe sanguin est requis')
-    .oneOf(['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'], 'Groupe sanguin invalide'),
-  ville: yup
-    .string()
-    .required('La ville est requise')
-    .min(2, 'Au minimum 2 caractères')
+    .oneOf(['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'], 'Groupe sanguin invalide')
 });
 
 export const createAlertValidationSchema = yup.object().shape({
