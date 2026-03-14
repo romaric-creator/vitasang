@@ -18,179 +18,99 @@ interface ModernSpinnerProps {
 
 export const ModernSpinner: React.FC<ModernSpinnerProps> = ({
   size = "medium",
-  color: spinnerColor = color.primary,
-  message,
-  style,
-}) => {
-  const [rotation] = useState(new Animated.Value(0));
-  const [scale1] = useState(new Animated.Value(1));
-  const [scale2] = useState(new Animated.Value(1));
-  const [scale3] = useState(new Animated.Value(1));
+  import React, { useEffect, useRef } from "react";
+  import { View, StyleSheet, Animated, Text, ViewStyle } from "react-native";
+  import { color } from "@/constant/color";
 
-  const sizeMap = {
-    small: 40,
-    medium: 60,
-    large: 80,
-  };
+  interface ModernSpinnerProps {
+    size?: "small" | "medium" | "large";
+    color?: string;
+    message?: string;
+    style?: ViewStyle;
+    mascot?: string; // emoji or short text used as mascot
+  }
 
-  const dotRadius = sizeMap[size] / 4;
+  export const ModernSpinner: React.FC<ModernSpinnerProps> = ({
+    size = "medium",
+    color: spinnerColor = color.primary,
+    message,
+    style,
+    mascot = "🩸",
+  }) => {
+    const bounce = useRef(new Animated.Value(0)).current;
+    const rotate = useRef(new Animated.Value(0)).current;
+    const scale = useRef(new Animated.Value(1)).current;
 
-  useEffect(() => {
-    // Rotation animation
-    Animated.loop(
-      Animated.timing(rotation, {
-        toValue: 1,
-        duration: 2000,
-        easing: Easing.linear,
-        useNativeDriver: true,
-      }),
-    ).start();
-
-    // Pulsing animations for dots
-    const createPulseAnimation = (animValue: Animated.Value, delay: number) => {
-      return Animated.loop(
-        Animated.sequence([
-          Animated.timing(animValue, {
-            toValue: 1.3,
-            duration: 600,
-            delay,
-            easing: Easing.inOut(Easing.ease),
-            useNativeDriver: true,
-          }),
-          Animated.timing(animValue, {
-            toValue: 1,
-            duration: 600,
-            easing: Easing.inOut(Easing.ease),
-            useNativeDriver: true,
-          }),
+    useEffect(() => {
+      Animated.loop(
+        Animated.parallel([
+          Animated.sequence([
+            Animated.timing(bounce, { toValue: -8, duration: 450, useNativeDriver: true }),
+            Animated.timing(bounce, { toValue: 0, duration: 450, useNativeDriver: true }),
+          ]),
+          Animated.sequence([
+            Animated.timing(rotate, { toValue: 1, duration: 2000, useNativeDriver: true }),
+            Animated.timing(rotate, { toValue: 0, duration: 0, useNativeDriver: true }),
+          ]),
+          Animated.sequence([
+            Animated.timing(scale, { toValue: 1.07, duration: 600, useNativeDriver: true }),
+            Animated.timing(scale, { toValue: 1.0, duration: 600, useNativeDriver: true }),
+          ]),
         ]),
-      );
-    };
+      ).start();
+    }, [bounce, rotate, scale]);
 
-    createPulseAnimation(scale1, 0).start();
-    createPulseAnimation(scale2, 200).start();
-    createPulseAnimation(scale3, 400).start();
-  }, [rotation, scale1, scale2, scale3]);
+    const rotation = rotate.interpolate({ inputRange: [0, 1], outputRange: ["-6deg", "6deg"] });
 
-  const rotationInterpolate = rotation.interpolate({
-    inputRange: [0, 1],
-    outputRange: ["0deg", "360deg"],
-  });
+    const sizeMap = { small: 40, medium: 64, large: 96 };
+    const mascSize = sizeMap[size];
 
-  return (
-    <View style={[styles.container, style]}>
-      <View
-        style={[
-          styles.spinnerWrapper,
-          { width: sizeMap[size], height: sizeMap[size] },
-        ]}
-      >
-        {/* Rotating outer ring */}
+    return (
+      <View style={[styles.container, style]}>
         <Animated.View
           style={[
-            styles.outerRing,
+            styles.mascotWrapper,
             {
-              width: sizeMap[size],
-              height: sizeMap[size],
-              borderRadius: sizeMap[size] / 2,
-              borderWidth: 3,
-              borderColor: spinnerColor,
-              borderTopColor: "transparent",
-              borderRightColor: "transparent",
-              transform: [{ rotate: rotationInterpolate }],
-            },
-          ]}
-        />
-
-        {/* Pulsing center dots */}
-        <View
-          style={[
-            styles.dotsContainer,
-            {
-              width: sizeMap[size] * 0.5,
-              height: sizeMap[size] * 0.5,
+              width: mascSize,
+              height: mascSize,
+              transform: [{ translateY: bounce }, { rotate: rotation }, { scale }],
+              backgroundColor: spinnerColor + "20",
             },
           ]}
         >
-          {/* Dot 1 */}
-          <Animated.View
-            style={[
-              styles.dot,
-              {
-                width: dotRadius,
-                height: dotRadius,
-                borderRadius: dotRadius / 2,
-                backgroundColor: spinnerColor,
-                transform: [{ scale: scale1 }],
-                opacity: 0.8,
-              },
-            ]}
-          />
+          <Text style={[styles.mascot, { fontSize: Math.round(mascSize * 0.5) }]}>{mascot}</Text>
+        </Animated.View>
 
-          {/* Dot 2 */}
-          <Animated.View
-            style={[
-              styles.dot,
-              {
-                width: dotRadius,
-                height: dotRadius,
-                borderRadius: dotRadius / 2,
-                backgroundColor: spinnerColor,
-                transform: [{ scale: scale2 }],
-                opacity: 0.6,
-              },
-            ]}
-          />
-
-          {/* Dot 3 */}
-          <Animated.View
-            style={[
-              styles.dot,
-              {
-                width: dotRadius,
-                height: dotRadius,
-                borderRadius: dotRadius / 2,
-                backgroundColor: spinnerColor,
-                transform: [{ scale: scale3 }],
-                opacity: 0.4,
-              },
-            ]}
-          />
-        </View>
+        {message ? <Text style={styles.message}>{message}</Text> : null}
       </View>
+    );
+  };
 
-      {message && <Text style={styles.message}>{message}</Text>}
-    </View>
-  );
-};
-
-const styles = StyleSheet.create({
-  container: {
-    justifyContent: "center",
-    alignItems: "center",
-    gap: 16,
-  },
-  spinnerWrapper: {
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  outerRing: {
-    position: "absolute",
-  },
-  dotsContainer: {
-    justifyContent: "space-around",
-    alignItems: "center",
-    flexDirection: "row",
-    gap: 6,
-  },
-  dot: {
-    flexShrink: 0,
-  },
-  message: {
-    fontSize: 13,
-    fontWeight: "500",
-    color: color.textSecondary,
-    textAlign: "center",
-    marginTop: 8,
-  },
-});
+  const styles = StyleSheet.create({
+    container: {
+      justifyContent: "center",
+      alignItems: "center",
+      gap: 12,
+    },
+    mascotWrapper: {
+      justifyContent: "center",
+      alignItems: "center",
+      borderRadius: 999,
+      shadowColor: "#000",
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.12,
+      shadowRadius: 8,
+      elevation: 6,
+    },
+    mascot: {
+      textAlign: "center",
+    },
+    message: {
+      fontSize: 13,
+      fontWeight: "500",
+      color: color.textSecondary,
+      textAlign: "center",
+      marginTop: 4,
+    },
+  });
+          <Animated.View
