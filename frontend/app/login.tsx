@@ -7,7 +7,6 @@ import {
   StyleSheet,
   KeyboardAvoidingView,
   Platform,
-
 } from "react-native";
 import { Formik } from "formik";
 import { color } from "@/constant/color";
@@ -25,7 +24,10 @@ export default function LoginScreen() {
   const [loading, setLoading] = useState(false);
   const [generalError, setGeneralError] = useState("");
 
-  const handleLogin = async (values: { telephone: string; mot_de_passe: string }) => {
+  const handleLogin = async (values: {
+    telephone: string;
+    mot_de_passe: string;
+  }) => {
     setGeneralError("");
     setLoading(true);
 
@@ -35,7 +37,7 @@ export default function LoginScreen() {
       await signIn(values.telephone, values.mot_de_passe);
     } catch (err: any) {
       console.error("Login error:", err.message);
-      setGeneralError(err.message || t('login.error'));
+      setGeneralError(err.message || t("login.error"));
     } finally {
       setLoading(false);
     }
@@ -53,8 +55,8 @@ export default function LoginScreen() {
         <View style={styles.container}>
           {/* Header Section */}
           <View style={styles.headerSection}>
-            <Text style={styles.title}>{t('login.title')}</Text>
-            <Text style={styles.subtitle}>{t('login.subtitle')}</Text>
+            <Text style={styles.title}>{t("login.title")}</Text>
+            <Text style={styles.subtitle}>{t("login.subtitle")}</Text>
           </View>
 
           {/* Form Section with Formik */}
@@ -66,14 +68,21 @@ export default function LoginScreen() {
             validationSchema={loginValidationSchema}
             onSubmit={handleLogin}
           >
-            {({ values, errors, touched, handleChange, handleBlur, handleSubmit }) => (
+            {({
+              values,
+              errors,
+              touched,
+              handleChange,
+              handleBlur,
+              handleSubmit,
+            }) => (
               <View style={styles.formContainer}>
                 <FormField
-                  label={t('login.fields.phone')}
+                  label={t("login.fields.phone")}
                   value={values.telephone}
                   onChangeText={handleChange("telephone")}
                   onBlur={handleBlur("telephone")}
-                  placeholder={t('login.placeholders.phone')}
+                  placeholder={t("login.placeholders.phone")}
                   error={errors.telephone}
                   touched={touched.telephone}
                   keyboardType="phone-pad"
@@ -81,11 +90,11 @@ export default function LoginScreen() {
                 />
 
                 <FormField
-                  label={t('login.fields.password')}
+                  label={t("login.fields.password")}
                   value={values.mot_de_passe}
                   onChangeText={handleChange("mot_de_passe")}
                   onBlur={handleBlur("mot_de_passe")}
-                  placeholder={t('login.placeholders.password')}
+                  placeholder={t("login.placeholders.password")}
                   error={errors.mot_de_passe}
                   touched={touched.mot_de_passe}
                   secureTextEntry
@@ -99,12 +108,14 @@ export default function LoginScreen() {
 
                 {/* Forgot Password Link */}
                 <TouchableOpacity style={styles.forgotBtn}>
-                  <Text style={styles.forgotText}>{t('login.forgotPassword')}</Text>
+                  <Text style={styles.forgotText}>
+                    {t("login.forgotPassword")}
+                  </Text>
                 </TouchableOpacity>
 
                 {/* Login Button */}
                 <PrimaryButton
-                  title={t('login.submit')}
+                  title={t("login.submit")}
                   onPress={() => handleSubmit()}
                   loading={loading}
                   style={{ marginTop: 24 }}
@@ -115,9 +126,11 @@ export default function LoginScreen() {
 
           {/* Footer - Switch to Register */}
           <View style={styles.footer}>
-            <Text style={styles.footerText}>{t('login.noAccount')} </Text>
-            <TouchableOpacity onPress={() => require('expo-router').router.replace("/register")}>
-              <Text style={styles.registerLink}>{t('login.registerLink')}</Text>
+            <Text style={styles.footerText}>{t("login.noAccount")} </Text>
+            <TouchableOpacity
+              onPress={() => require("expo-router").router.replace("/register")}
+            >
+              <Text style={styles.registerLink}>{t("login.registerLink")}</Text>
             </TouchableOpacity>
           </View>
         </View>

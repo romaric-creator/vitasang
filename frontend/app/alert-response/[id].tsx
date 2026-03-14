@@ -8,6 +8,7 @@ import {
   Linking,
 } from "react-native";
 import { LoadingOverlay } from "@/components/LoadingOverlay";
+import { ModernSpinner } from "@/components/ModernSpinner";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { TabBarIcon } from "@/components/TabBarIcon";
 import { color } from "@/constant/color";
@@ -151,7 +152,7 @@ export default function AlertResponse() {
                 disabled={isResponding}
               >
                 {isResponding ? (
-                  <ActivityIndicator color="white" />
+                  <ModernSpinner size="small" color="white" />
                 ) : (
                   <Text style={styles.acceptBtnText}>
                     {t("alert.response.yes")}
