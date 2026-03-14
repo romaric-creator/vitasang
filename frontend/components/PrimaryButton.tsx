@@ -2,11 +2,11 @@ import React from "react";
 import {
     TouchableOpacity,
     Text,
-    ActivityIndicator,
     StyleSheet,
     ViewStyle,
     TextStyle,
 } from "react-native";
+import { ModernSpinner } from "@/components/ModernSpinner";
 import { color } from "@/constant/color";
 
 interface PrimaryButtonProps {
@@ -81,7 +81,7 @@ export const PrimaryButton: React.FC<PrimaryButtonProps> = ({
             disabled={disabled || loading}
         >
             {loading ? (
-                <ActivityIndicator color={getTextColor()} />
+                <ModernSpinner size="small" color={getTextColor()} />
             ) : (
                 <Text style={[styles.buttonText, { color: getTextColor() }, textStyle]}>
                     {title}

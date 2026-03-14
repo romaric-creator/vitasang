@@ -1,6 +1,7 @@
 import React from 'react';
-import { View, ActivityIndicator, StyleSheet, Dimensions } from 'react-native';
+import { View, StyleSheet, Dimensions } from 'react-native';
 import { color } from '@/constant/color';
+import { ModernSpinner } from '@/components/ModernSpinner';
 
 interface LoadingSpinnerProps {
   visible?: boolean;
@@ -20,7 +21,7 @@ export const LoadingSpinner = ({
   return (
     <View style={styles.container}>
       <View style={styles.spinnerContainer}>
-        <ActivityIndicator size={size} color={spinnerColor} />
+        <ModernSpinner size={size === 'small' ? 'small' : 'medium'} color={spinnerColor} />
       </View>
     </View>
   );
