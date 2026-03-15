@@ -1,5 +1,5 @@
 import { Stack, useRouter, useSegments } from "expo-router";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { View } from "react-native";
 import { LoadingOverlay } from "@/components/LoadingOverlay";
 import { AuthProvider, useAuth } from "@/context/AuthContext";
@@ -7,6 +7,15 @@ import { NotificationProvider } from "@/context/NotificationContext";
 import { color } from "@/constant/color";
 import { PostHogProvider, usePostHog } from "posthog-react-native";
 import { useAlertRetryCheck } from "@/hooks/useAlertRetryCheck";
+import { getUserIdFromStorage } from "@/utils/storage";
+import { registerForPushNotificationsAsync } from "@/utils/pushNotifications";
+import * as Location from "expo-location";
+import {
+  updatePushToken,
+  updateUserLocation,
+  getActiveAlerts,
+  getAllCentres,
+} from "@/services/user.service";
 
 // Initialisation i18n
 import "../i18n";
@@ -17,9 +26,96 @@ function RootLayoutNav() {
   const segments = useSegments();
   const router = useRouter();
   const posthog = usePostHog();
+  const [appReady, setAppReady] = useState(false);
 
   // Initialize alert retry check background task
   useAlertRetryCheck();
+
+  // Application-level initialization that must run before landing on the home (tabs)
+  useEffect(() => {
+    if (isLoading) return; // wait for auth status
+
+    let mounted = true;
+
+    const initApp = async () => {
+      try {
+        const userId = await getUserIdFromStorage();
+
+        const tasks: Promise<any>[] = [];
+
+        if (userId) {
+          // Push token registration
+          tasks.push(
+            (async () => {
+              try {
+                const token = await registerForPushNotificationsAsync();
+                if (token) {
+                  await updatePushToken(Number(userId), token);
+                }
+              } catch (e) {
+                console.error("push init error", e);
+              }
+            })(),
+          );
+
+          // Location update
+          tasks.push(
+            (async () => {
+              try {
+                const { status } =
+                  await Location.requestForegroundPermissionsAsync();
+                if (status === "granted") {
+                  const location = await Location.getCurrentPositionAsync({
+                    accuracy: Location.Accuracy.Balanced,
+                  });
+                  await updateUserLocation(
+                    Number(userId),
+                    location.coords.latitude,
+                    location.coords.longitude,
+                  );
+                }
+              } catch (e) {
+                console.error("location init error", e);
+              }
+            })(),
+          );
+        }
+
+        // Fetch initial data that shouldn't block too long
+        tasks.push(
+          (async () => {
+            try {
+              await getActiveAlerts();
+            } catch (e) {
+              console.error("getActiveAlerts init", e);
+            }
+          })(),
+        );
+
+        tasks.push(
+          (async () => {
+            try {
+              await getAllCentres();
+            } catch (e) {
+              console.error("getAllCentres init", e);
+            }
+          })(),
+        );
+
+        await Promise.allSettled(tasks);
+      } catch (e) {
+        console.error("app init error", e);
+      } finally {
+        if (mounted) setAppReady(true);
+      }
+    };
+
+    initApp();
+
+    return () => {
+      mounted = false;
+    };
+  }, [isLoading]);
 
   // Suivi automatique des écrans (Screen Tracking)
   useEffect(() => {
@@ -54,6 +150,11 @@ function RootLayoutNav() {
 
   // Afficher un spinner pendant le chargement initial de l'authentification
   if (isLoading) {
+    return <LoadingOverlay visible={true} fullScreen />;
+  }
+
+  // Attendre que l'initialisation globale soit terminée
+  if (!appReady) {
     return <LoadingOverlay visible={true} fullScreen />;
   }
 

@@ -10,6 +10,7 @@ interface LoadingOverlayProps {
   spinnerColor?: string;
   style?: ViewStyle;
   fullScreen?: boolean;
+  pose?: "waving" | "jumping" | "superhero";
 }
 
 /**
@@ -24,6 +25,7 @@ export const LoadingOverlay: React.FC<LoadingOverlayProps> = ({
   spinnerColor = color.primary,
   style,
   fullScreen = false,
+  pose = 'waving',
 }) => {
   if (!visible) return null;
 
@@ -34,6 +36,7 @@ export const LoadingOverlay: React.FC<LoadingOverlayProps> = ({
           size={spinnerSize}
           color={spinnerColor}
           message={message}
+          pose={pose}
         />
       </View>
     </View>

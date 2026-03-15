@@ -8,6 +8,7 @@ import {
   RefreshControl,
 } from "react-native";
 import { ModernSpinner } from "@/components/ModernSpinner";
+import { LoadingOverlay } from "@/components/LoadingOverlay";
 import { useRouter } from "expo-router";
 import { PageHeader } from "@/components/PageHeader";
 import { DataCard, DataCardRow } from "@/components/DataCard";
@@ -102,7 +103,7 @@ export default function Historique() {
     return (
       <ThemedView style={styles.container}>
         <PageHeader title={t("history.title")} />
-        <LoadingOverlay visible={true} message={t('common.loading')} />
+        <LoadingOverlay visible={true} message={t("common.loading")} />
       </ThemedView>
     );
   }

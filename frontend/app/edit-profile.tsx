@@ -26,6 +26,7 @@ import { Image, TouchableOpacity as RNTouchableOpacity } from "react-native";
 import Constants from "expo-constants"; // Import Constants
 
 import { useTranslation } from "react-i18next";
+import { LoadingOverlay } from "@/components/LoadingOverlay";
 
 export default function EditProfileScreen() {
   const { t } = useTranslation();
@@ -123,7 +124,9 @@ export default function EditProfileScreen() {
   };
 
   if (loading) {
-    return <LoadingOverlay visible={true} message={t('common.loading')} fullScreen />;
+    return (
+      <LoadingOverlay visible={true} message={t("common.loading")} fullScreen />
+    );
   }
 
   if (!userData) {

@@ -1,116 +1,145 @@
-import React, { useEffect, useState } from "react";
-import {
-  View,
-  StyleSheet,
-  Animated,
-  Easing,
-  Text,
-  ViewStyle,
-} from "react-native";
-import { color } from "@/constant/color";
+import React, { useEffect, useRef } from 'react';
+import { View, StyleSheet, Animated, Text, ViewStyle } from 'react-native';
+import { color } from '@/constant/color';
+
+import SanguNeutral from './SanguNeutral';
+import SanguHappy   from './SanguHappy';
+import SanguHero    from './SanguHero';
 
 interface ModernSpinnerProps {
-  size?: "small" | "medium" | "large";
-  color?: string;
+  size?:    'small' | 'medium' | 'large';
+  color?:   string;
   message?: string;
-  style?: ViewStyle;
+  style?:   ViewStyle;
+  mascot?:  string;
+  pose?:    'waving' | 'jumping' | 'superhero';
 }
 
 export const ModernSpinner: React.FC<ModernSpinnerProps> = ({
-  size = "medium",
-  import React, { useEffect, useRef } from "react";
-  import { View, StyleSheet, Animated, Text, ViewStyle } from "react-native";
-  import { color } from "@/constant/color";
+  size         = 'medium',
+  color: spinnerColor = color.primary,
+  message,
+  style,
+  mascot = '🩸',
+  pose   = 'waving',
+}) => {
+  const bounce  = useRef(new Animated.Value(0)).current;
+  const tilt    = useRef(new Animated.Value(0)).current;
 
-  interface ModernSpinnerProps {
-    size?: "small" | "medium" | "large";
-    color?: string;
-    message?: string;
-    style?: ViewStyle;
-    mascot?: string; // emoji or short text used as mascot
-  }
+  useEffect(() => {
+    // --- Mascot : bounce vertical ---
+    const bounceAnim = Animated.loop(
+      Animated.sequence([
+        Animated.timing(bounce, {
+          toValue: -10,
+          duration: 480,
+          useNativeDriver: true,
+        }),
+        Animated.timing(bounce, {
+          toValue: 0,
+          duration: 480,
+          useNativeDriver: true,
+        }),
+      ]),
+    );
 
-  export const ModernSpinner: React.FC<ModernSpinnerProps> = ({
-    size = "medium",
-    color: spinnerColor = color.primary,
-    message,
-    style,
-    mascot = "🩸",
-  }) => {
-    const bounce = useRef(new Animated.Value(0)).current;
-    const rotate = useRef(new Animated.Value(0)).current;
-    const scale = useRef(new Animated.Value(1)).current;
+    // --- Mascot : oscillation latérale propre ---
+    const tiltAnim = Animated.loop(
+      Animated.sequence([
+        Animated.timing(tilt, {
+          toValue: 1,
+          duration: 960,
+          useNativeDriver: true,
+        }),
+        Animated.timing(tilt, {
+          toValue: -1,
+          duration: 960,
+          useNativeDriver: true,
+        }),
+      ]),
+    );
 
-    useEffect(() => {
-      Animated.loop(
-        Animated.parallel([
-          Animated.sequence([
-            Animated.timing(bounce, { toValue: -8, duration: 450, useNativeDriver: true }),
-            Animated.timing(bounce, { toValue: 0, duration: 450, useNativeDriver: true }),
-          ]),
-          Animated.sequence([
-            Animated.timing(rotate, { toValue: 1, duration: 2000, useNativeDriver: true }),
-            Animated.timing(rotate, { toValue: 0, duration: 0, useNativeDriver: true }),
-          ]),
-          Animated.sequence([
-            Animated.timing(scale, { toValue: 1.07, duration: 600, useNativeDriver: true }),
-            Animated.timing(scale, { toValue: 1.0, duration: 600, useNativeDriver: true }),
-          ]),
-        ]),
-      ).start();
-    }, [bounce, rotate, scale]);
+    bounceAnim.start();
+    tiltAnim.start();
 
-    const rotation = rotate.interpolate({ inputRange: [0, 1], outputRange: ["-6deg", "6deg"] });
+    return () => {
+      bounceAnim.stop();
+      tiltAnim.stop();
+    };
+  }, [bounce, tilt]);
 
-    const sizeMap = { small: 40, medium: 64, large: 96 };
-    const mascSize = sizeMap[size];
+  const rotation = tilt.interpolate({
+    inputRange: [-1, 0, 1],
+    outputRange: ['-7deg', '0deg', '7deg'],
+  });
 
+  const sizeMap: Record<string, number> = { small: 72, medium: 110, large: 150 };
+  const mascSize = sizeMap[size];
+
+  const renderMascot = () => {
+    if (pose === 'waving')    return <SanguNeutral width={mascSize} height={mascSize} animated />;
+    if (pose === 'jumping')   return <SanguHappy   width={mascSize} height={mascSize} animated />;
+    if (pose === 'superhero') return <SanguHero    width={mascSize} height={mascSize} animated />;
     return (
-      <View style={[styles.container, style]}>
-        <Animated.View
-          style={[
-            styles.mascotWrapper,
-            {
-              width: mascSize,
-              height: mascSize,
-              transform: [{ translateY: bounce }, { rotate: rotation }, { scale }],
-              backgroundColor: spinnerColor + "20",
-            },
-          ]}
-        >
-          <Text style={[styles.mascot, { fontSize: Math.round(mascSize * 0.5) }]}>{mascot}</Text>
-        </Animated.View>
-
-        {message ? <Text style={styles.message}>{message}</Text> : null}
-      </View>
+      <Text style={{ fontSize: mascSize * 0.6, textAlign: 'center' }}>
+        {mascot}
+      </Text>
     );
   };
 
-  const styles = StyleSheet.create({
-    container: {
-      justifyContent: "center",
-      alignItems: "center",
-      gap: 12,
-    },
-    mascotWrapper: {
-      justifyContent: "center",
-      alignItems: "center",
-      borderRadius: 999,
-      shadowColor: "#000",
-      shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.12,
-      shadowRadius: 8,
-      elevation: 6,
-    },
-    mascot: {
-      textAlign: "center",
-    },
-    message: {
-      fontSize: 13,
-      fontWeight: "500",
-      color: color.textSecondary,
-      textAlign: "center",
-      marginTop: 4,
-    },
-  });
-          <Animated.View
+  return (
+    <View style={[styles.container, style]}>
+
+      {/* Mascot — sans fond circulaire, juste l'ombre douce */}
+      <Animated.View
+        style={[
+          styles.mascotWrapper,
+          {
+            width:  mascSize,
+            height: mascSize,
+            transform: [
+              { translateY: bounce },
+              { rotate: rotation },
+            ],
+          },
+        ]}
+      >
+        {renderMascot()}
+      </Animated.View>
+
+      {/* Message optionnel */}
+      {message ? (
+        <Text style={styles.message}>{message}</Text>
+      ) : null}
+    </View>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 16,
+  },
+
+  mascotWrapper: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    // Ombre légère sous le mascot — pas de fond coloré
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.10,
+    shadowRadius: 10,
+    elevation: 4,
+  },
+
+  message: {
+    fontSize: 13,
+    fontWeight: '500',
+    color: color.textSecondary,
+    textAlign: 'center',
+    letterSpacing: 0.2,
+  },
+});
+
+
