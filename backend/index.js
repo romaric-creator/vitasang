@@ -35,6 +35,7 @@ const allowedOrigins = [
   "https://vitasang.vercel.app",
   "http://localhost:3000",
   "http://localhost:8081",
+  "http://localhost:5173", // Ajoutez cette ligne
   process.env.FRONTEND_URL,
 ].filter(Boolean);
 
@@ -67,17 +68,18 @@ app.use(
   }),
 );
 
-// Apply global rate limiter to all routes
-app.use(globalLimiter);
-
 const userRoute = require("./routes/users.routes");
 const alertRoute = require("./routes/alerts.routes");
 const rendezvousRoute = require("./routes/rendezvous.routes");
 const centresRoute = require("./routes/centres.routes");
 
-// Apply specific rate limiters to auth endpoints
+// Apply specific rate limiters to auth endpoints BEFORE global limiter
+// This prevents double counting by allowing specific limiters to intercept these routes first
 app.use("/api/users/register", registerLimiter);
 app.use("/api/users/login", authLimiter);
+
+// Apply global rate limiter to all other routes
+app.use(globalLimiter);
 
 app.use("/api/users", userRoute);
 app.use("/api/alerts", alertRoute);
