@@ -1,336 +1,174 @@
 const express = require("express");
 const router = express.Router();
 const alertsController = require("../controllers/alerts.controller");
-const { verifyToken } = require("../utils/auth.middleware");
+const { verifyToken, isAdmin } = require("../utils/auth.middleware");
 const { validateRequest } = require("../middleware/validation");
 const schemas = require("../validation/schemas");
 
+// The verifyToken middleware will be used for all routes defined after this line.
+router.use(verifyToken);
+
 /**
  * @swagger
- * /api/alerts/search:
+ * /api/alerts:
  *   post:
- *     tags:
- *       - Alerts
- *     summary: Create a new blood donation alert
- *     security:
- *       - bearerAuth: []
+ *     tags: [Alerts]
+ *     summary: Create a new blood donation alert (pending validation)
+ *     security: [{"bearerAuth": []}]
  *     requestBody:
  *       required: true
  *       content:
  *         application/json:
  *           schema:
- *             type: object
- *             required: [groupe_sanguin, urgence, lieu, latitude, longitude, quantite_requise]
- *             properties:
- *               groupe_sanguin:
- *                 type: string
- *                 enum: [A+, A-, B+, B-, AB+, AB-, O+, O-]
- *                 example: O+
- *               urgence:
- *                 type: string
- *                 enum: [NORMAL, URGENT, TRES_URGENT]
- *                 example: URGENT
- *               lieu:
- *                 type: string
- *                 example: "Hôpital Ibn Sina, Casablanca"
- *               latitude:
- *                 type: number
- *                 example: 33.5731
- *               longitude:
- *                 type: number
- *                 example: -7.5898
- *               quantite_requise:
- *                 type: integer
- *                 example: 5
- *               description:
- *                 type: string
- *                 example: "Transfusion d'urgence"
+ *             $ref: '#/components/schemas/CreateAlert'
  *     responses:
- *       201:
- *         description: Alert created successfully
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                 alerte:
- *                   $ref: '#/components/schemas/Alert'
- *       400:
- *         description: Validation error
- *       403:
- *         description: Unauthorized
+ *       201: { description: "Alert created and awaiting validation" }
+ *       400: { description: "Validation error" }
  */
 router.post(
-  "/search",
-  verifyToken,
+  "/",
   validateRequest(schemas.createAlert),
-  alertsController.createAlertAndNotify,
+  alertsController.createAlert,
 );
 
 /**
  * @swagger
- * /api/alerts/{id}/status:
- *   get:
- *     tags:
- *       - Alerts
- *     summary: Get alert status
- *     security:
- *       - bearerAuth: []
+ * /api/alerts/{id}/validate:
+ *   post:
+ *     tags: [Alerts]
+ *     summary: Validate a pending alert and notify donors
+ *     security: [{"bearerAuth": []}]
  *     parameters:
- *       - name: id
- *         in: path
- *         required: true
- *         schema:
- *           type: integer
+ *       - { name: "id", in: "path", required: true, schema: { type: "integer" } }
  *     responses:
- *       200:
- *         description: Alert status
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 alerte:
- *                   $ref: '#/components/schemas/Alert'
- *       403:
- *         description: Unauthorized
- *       404:
- *         description: Alert not found
+ *       200: { description: "Alert validated and notifications sent" }
+ *       403: { description: "Forbidden - Admins only" }
+ *       404: { description: "Alert not found" }
  */
-router.get("/:id/status", verifyToken, alertsController.getAlertStatus);
+router.post(
+  "/:id/validate",
+  isAdmin, // Assuming only admins can validate
+  alertsController.validateAndNotifyAlert,
+);
 
 /**
  * @swagger
- * /api/alerts/{id}:
- *   delete:
- *     tags:
- *       - Alerts
- *     summary: Delete/Cancel an alert
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - name: id
- *         in: path
- *         required: true
- *         schema:
- *           type: integer
+ * /api/alerts/pending:
+ *   get:
+ *     tags: [Alerts]
+ *     summary: Get all alerts pending validation
+ *     security: [{"bearerAuth": []}]
  *     responses:
- *       200:
- *         description: Alert deleted successfully
- *       403:
- *         description: Unauthorized
- *       404:
- *         description: Alert not found
- *   put:
- *     tags:
- *       - Alerts
- *     summary: Update alert status
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - name: id
- *         in: path
- *         required: true
- *         schema:
- *           type: integer
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               status:
- *                 type: string
- *                 enum: [ACTIVE, COMPLETE, CANCELLED]
- *     responses:
- *       200:
- *         description: Alert status updated
- *       403:
- *         description: Unauthorized
- *       404:
- *         description: Alert not found
+ *       200: { description: "List of pending alerts" }
  */
+router.get("/pending", isAdmin, alertsController.getPendingAlerts);
+
+/**
+ * @swagger
+ * /api/alerts/live:
+ *   get:
+ *     tags: [Alerts]
+ *     summary: Get all live (en_cours) blood donation alerts
+ *     security: [{"bearerAuth": []}]
+ *     responses:
+ *       200: { description: "List of live alerts" }
+ */
+router.get("/live", alertsController.getLiveAlerts);
+
+
 /**
  * @swagger
  * /api/alerts/my-alerts:
  *   get:
- *     tags:
- *       - Alerts
- *     summary: Get current user's alerts
- *     security:
- *       - bearerAuth: []
+ *     tags: [Alerts]
+ *     summary: Get current user's created alerts
+ *     security: [{"bearerAuth": []}]
  *     responses:
- *       200:
- *         description: User's alerts
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 alertes:
- *                   type: array
- *                   items:
- *                     $ref: '#/components/schemas/Alert'
- *       403:
- *         description: Unauthorized
+ *       200: { description: "User's alerts" }
  */
-router.get("/my-alerts", verifyToken, alertsController.getUserAlerts);
+router.get("/my-alerts", alertsController.getUserAlerts);
 
 /**
  * @swagger
  * /api/alerts/accepted:
  *   get:
- *     tags:
- *       - Alerts
- *     summary: Get alerts accepted by the user
- *     security:
- *       - bearerAuth: []
+ *     tags: [Alerts]
+ *     summary: Get alerts accepted by the current user
+ *     security: [{"bearerAuth": []}]
  *     responses:
- *       200:
- *         description: List of accepted alerts
+ *       200: { description: "List of accepted alerts" }
  */
-router.get("/accepted", verifyToken, alertsController.getAcceptedAlerts);
-
-/**
- * @swagger
- * /api/alerts/active:
- *   get:
- *     tags:
- *       - Alerts
- *     summary: Get all active blood donation alerts (Authenticated users only)
- *     security:
- *       - bearerAuth: []
- *     responses:
- *       200:
- *         description: List of active alerts
- *       401:
- *         description: Unauthorized
- */
-router.get("/active", verifyToken, alertsController.getAllActiveAlerts);
+router.get("/accepted", alertsController.getAcceptedAlerts);
 
 /**
  * @swagger
  * /api/alerts/{id}/status:
  *   get:
- *     tags:
- *       - Alerts
- *     summary: Get alert status
- *     security:
- *       - bearerAuth: []
+ *     tags: [Alerts]
+ *     summary: Get a specific alert's status and details
+ *     security: [{"bearerAuth": []}]
  *     parameters:
- *       - name: id
- *         in: path
- *         required: true
- *         schema:
- *           type: integer
+ *       - { name: "id", in: "path", required: true, schema: { type: "integer" } }
  *     responses:
- *       200:
- *         description: Alert status
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 alerte:
- *                   $ref: '#/components/schemas/Alert'
- *       403:
- *         description: Unauthorized
- *       404:
- *         description: Alert not found
+ *       200: { description: "Alert details" }
+ *       404: { description: "Alert not found" }
  */
+router.get("/:id/status", alertsController.getAlertStatus);
 
 /**
  * @swagger
  * /api/alerts/{id}/respond:
  *   post:
- *     tags:
- *       - Alerts
- *     summary: Respond to an alert (accept/ignore)
- *     security:
- *       - bearerAuth: []
+ *     tags: [Alerts]
+ *     summary: Respond to an alert (as a donor)
+ *     security: [{"bearerAuth": []}]
  *     parameters:
- *       - name: id
- *         in: path
- *         required: true
- *         schema:
- *           type: integer
+ *       - { name: "id", in: "path", required: true, schema: { type: "integer" } }
  *     requestBody:
  *       required: true
  *       content:
  *         application/json:
  *           schema:
  *             type: object
- *             properties:
- *               response:
- *                 type: string
- *                 enum: [accepte, ignore]
+ *             properties: { response: { type: "string", enum: [accepte, ignore] } }
  *     responses:
- *       200:
- *         description: Response registered
+ *       200: { description: "Response registered" }
  */
-router.post("/:id/respond", verifyToken, alertsController.respondToAlert);
+router.post("/:id/respond", alertsController.respondToAlert);
 
 /**
  * @swagger
  * /api/alerts/{id}:
- *   delete:
- *     tags:
- *       - Alerts
- *     summary: Delete/Cancel an alert
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - name: id
- *         in: path
- *         required: true
- *         schema:
- *           type: integer
- *     responses:
- *       200:
- *         description: Alert deleted successfully
- *       403:
- *         description: Unauthorized
- *       404:
- *         description: Alert not found
  *   put:
- *     tags:
- *       - Alerts
- *     summary: Update alert status
- *     security:
- *       - bearerAuth: []
+ *     tags: [Alerts]
+ *     summary: Update an alert (e.g., description, quantity)
+ *     security: [{"bearerAuth": []}]
  *     parameters:
- *       - name: id
- *         in: path
- *         required: true
- *         schema:
- *           type: integer
+ *       - { name: "id", in: "path", required: true, schema: { type: "integer" } }
  *     requestBody:
  *       required: true
  *       content:
  *         application/json:
  *           schema:
- *             type: object
- *             properties:
- *               status:
- *                 type: string
- *                 enum: [ACTIVE, COMPLETE, CANCELLED]
+ *             $ref: '#/components/schemas/UpdateAlert'
  *     responses:
- *       200:
- *         description: Alert status updated
- *       403:
- *         description: Unauthorized
- *       404:
- *         description: Alert not found
+ *       200: { description: "Alert updated successfully" }
+ *       404: { description: "Alert not found" }
+ *   delete:
+ *     tags: [Alerts]
+ *     summary: Cancel or delete an alert
+ *     security: [{"bearerAuth": []}]
+ *     parameters:
+ *       - { name: "id", in: "path", required: true, schema: { type: "integer" } }
+ *     responses:
+ *       200: { description: "Alert cancelled successfully" }
+ *       404: { description: "Alert not found" }
  */
-router.delete("/:id", verifyToken, alertsController.deleteAlert);
 router.put(
   "/:id",
-  verifyToken,
   validateRequest(schemas.updateAlert),
   alertsController.updateAlert,
 );
+router.delete("/:id", alertsController.deleteAlert);
 
 module.exports = router;

@@ -15,16 +15,27 @@ const swaggerUi = require("swagger-ui-express");
 const swaggerSpecs = require("./config/swagger");
 const { errorHandler, notFoundHandler } = require("./middleware/errorHandler");
 
+// Sentry Integration - MUST be initialized as early as possible
+const Sentry = require("@sentry/node");
+Sentry.init({
+  dsn: process.env.SENTRY_DSN,
+  environment: process.env.NODE_ENV,
+});
+
 const app = express();
 
 app.set("trust proxy", 1); // Indispensable pour Vercel et express-rate-limit
 app.use(helmet());
+
+// Sentry Request Handler - MUST be the first middleware on the app
+app.use(Sentry.Handlers.requestHandler());
 
 // CORS Configuration - Whitelist security
 const allowedOrigins = [
   "https://vitasang.vercel.app",
   "http://localhost:3000",
   "http://localhost:8081",
+  "http://localhost:5173", // Ajoutez cette ligne
   process.env.FRONTEND_URL,
 ].filter(Boolean);
 
@@ -57,17 +68,18 @@ app.use(
   }),
 );
 
-// Apply global rate limiter to all routes
-app.use(globalLimiter);
-
 const userRoute = require("./routes/users.routes");
 const alertRoute = require("./routes/alerts.routes");
 const rendezvousRoute = require("./routes/rendezvous.routes");
 const centresRoute = require("./routes/centres.routes");
 
-// Apply specific rate limiters to auth endpoints
+// Apply specific rate limiters to auth endpoints BEFORE global limiter
+// This prevents double counting by allowing specific limiters to intercept these routes first
 app.use("/api/users/register", registerLimiter);
 app.use("/api/users/login", authLimiter);
+
+// Apply global rate limiter to all other routes
+app.use(globalLimiter);
 
 app.use("/api/users", userRoute);
 app.use("/api/alerts", alertRoute);
@@ -81,6 +93,9 @@ app.get("/", (req, res) => {
 
 // 404 Not Found Handler - MUST be after all routes
 app.use(notFoundHandler);
+
+// Sentry Error Handler - MUST be before any other error handling middleware
+app.use(Sentry.Handlers.errorHandler());
 
 // Global Error Handler - MUST be after all routes and middleware
 app.use(errorHandler);

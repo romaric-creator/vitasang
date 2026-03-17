@@ -21,8 +21,13 @@ module.exports = (sequelize, DataTypes) => {
       longitude: { type: DataTypes.DOUBLE },
       quantite_requise: { type: DataTypes.INTEGER, defaultValue: 1 },
       statut: {
-        type: DataTypes.ENUM("en_cours", "resolu", "annule"),
-        defaultValue: "en_cours",
+        type: DataTypes.ENUM(
+          "en_attente_validation",
+          "en_cours",
+          "resolu",
+          "annule",
+        ),
+        defaultValue: "en_attente_validation",
       },
     },
     { tableName: "Alertes_Urgence", timestamps: true },

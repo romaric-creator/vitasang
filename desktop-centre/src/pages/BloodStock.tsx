@@ -1,104 +1,191 @@
-import React, { useState } from 'react';
-import { Droplet, Search, Filter, Plus, Edit2, AlertCircle } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import api from '../services/api';
+import { useAuth } from '../context/AuthContext';
 
-const BloodStock: React.FC = () => {
-    const [stock, setStock] = useState([
-        { id: 1, group: 'O+', quantity: 42, minThreshold: 20, status: 'Optimal', lastUpdated: '2023-11-20 08:30' },
-        { id: 2, group: 'O-', quantity: 12, minThreshold: 15, status: 'Moyen', lastUpdated: '2023-11-20 09:15' },
-        { id: 3, group: 'A+', quantity: 38, minThreshold: 25, status: 'Optimal', lastUpdated: '2023-11-19 14:00' },
-        { id: 4, group: 'A-', quantity: 3, minThreshold: 10, status: 'Critique', lastUpdated: '2023-11-20 10:45' },
-        { id: 5, group: 'B+', quantity: 18, minThreshold: 15, status: 'Optimal', lastUpdated: '2023-11-18 16:20' },
-        { id: 6, group: 'B-', quantity: 5, minThreshold: 8, status: 'Moyen', lastUpdated: '2023-11-19 11:10' },
-        { id: 7, group: 'AB+', quantity: 10, minThreshold: 10, status: 'Moyen', lastUpdated: '2023-11-17 09:30' },
-        { id: 8, group: 'AB-', quantity: 2, minThreshold: 5, status: 'Critique', lastUpdated: '2023-11-20 11:00' },
-    ]);
+interface BloodStockItem {
+    groupe_sanguin: string;
+    quantite_poches: number;
+    seuil_alerte_min: number;
+    // Assuming a max capacity for progress bar calculation
+    max_stock?: number; 
+}
 
-    const getStatusColor = (status: string) => {
-        switch (status) {
-            case 'Optimal': return 'var(--success)';
-            case 'Moyen': return 'var(--warning)';
-            case 'Critique': return 'var(--danger)';
-            default: return 'var(--text-main)';
+const BloodStockCard: React.FC<{ stock: BloodStockItem }> = ({ stock }) => {
+    const maxStock = stock.max_stock || 50; // Default max stock
+    const percentage = (stock.quantite_poches / maxStock) * 100;
+
+    let status: 'Critique' | 'Faible' | 'Suffisant' = 'Suffisant';
+    let statusColor = 'green';
+    if (stock.quantite_poches <= stock.seuil_alerte_min) {
+        status = 'Critique';
+        statusColor = 'red';
+    } else if (percentage < 40) {
+        status = 'Faible';
+        statusColor = 'yellow';
+    }
+
+    const statusClasses = {
+        Critique: {
+            badge: 'bg-red-100 text-primary dark:bg-primary/20 dark:text-primary',
+            ring: 'border-2 border-primary/50 ring-2 ring-primary/10',
+            progress: 'bg-primary',
+            button: 'bg-primary text-white shadow-md shadow-primary/20',
+            icon: 'warning'
+        },
+        Faible: {
+            badge: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400',
+            ring: '',
+            progress: 'bg-yellow-500',
+            button: 'bg-[#f4f0f0] dark:bg-[#3d2a2a] text-[#181111] dark:text-white hover:bg-primary hover:text-white',
+            icon: ''
+        },
+        Suffisant: {
+            badge: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
+            ring: '',
+            progress: 'bg-green-500',
+            button: 'bg-[#f4f0f0] dark:bg-[#3d2a2a] text-[#181111] dark:text-white hover:bg-primary hover:text-white',
+            icon: ''
         }
     };
+    const currentStatusStyle = statusClasses[status];
 
     return (
-        <div className="container animate-fade-in" style={{ padding: '40px 0' }}>
-
-            {/* Header */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
-                <div>
-                    <h1 style={{ margin: 0, fontSize: '2rem', fontWeight: 700, color: 'var(--text-main)' }}>Stock de Sang</h1>
-                    <p style={{ margin: '5px 0 0 0', color: 'var(--text-muted)' }}>Gestion de l'inventaire des poches</p>
+        <div className={`bg-white dark:bg-[#2a1a1a] rounded-2xl p-6 shadow-sm flex flex-col gap-4 transition-colors ${currentStatusStyle.ring}`}>
+            <div className="flex justify-between items-start">
+                <div className="flex flex-col">
+                    <span className="text-3xl font-black text-primary">{stock.groupe_sanguin}</span>
                 </div>
-                <button className="btn btn-primary">
-                    <Plus size={18} /> Nouvelle Entrée
-                </button>
+                <span className={`px-2 py-1 rounded text-xs font-bold uppercase tracking-wider flex items-center gap-1 ${currentStatusStyle.badge}`}>
+                    {currentStatusStyle.icon && <span className="material-symbols-outlined text-[12px]">{currentStatusStyle.icon}</span>}
+                    {status}
+                </span>
             </div>
-
-            {/* Controls */}
-            <div style={{ display: 'flex', gap: '15px', marginBottom: '20px' }}>
-                <div style={{ position: 'relative', flex: 1 }}>
-                    <Search size={18} style={{ position: 'absolute', left: '15px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
-                    <input type="text" className="form-control" placeholder="Rechercher par groupe sanguin..." style={{ paddingLeft: '45px' }} />
+            <div className="flex flex-col gap-1">
+                <div className="flex items-baseline gap-1">
+                    <span className={`text-4xl font-bold ${status === 'Critique' ? 'text-primary' : ''}`}>{stock.quantite_poches}</span>
+                    <span className="text-[#886364] dark:text-white/40 font-medium">Poches</span>
                 </div>
-                <button className="btn btn-secondary">
-                    <Filter size={18} /> Filtrer
-                </button>
+                <div className="w-full h-2 bg-[#f4f0f0] dark:bg-[#3d2a2a] rounded-full mt-2">
+                    <div className={`h-full rounded-full ${currentStatusStyle.progress}`} style={{ width: `${percentage}%` }}></div>
+                </div>
             </div>
+            <div className="flex flex-col gap-3 mt-2">
+                <p className="text-xs text-[#886364] dark:text-white/40 italic flex items-center gap-1">
+                    <span className="material-symbols-outlined text-xs">schedule</span> Mis à jour il y a 5 min
+                </p>
+                <button className={`w-full py-2 rounded-lg font-bold text-sm transition-all ${currentStatusStyle.button}`}>Mettre à jour</button>
+            </div>
+        </div>
+    );
+};
 
-            {/* Stock Table */}
-            <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
-                    <thead style={{ background: 'var(--background)' }}>
-                        <tr>
-                            <th style={{ padding: '15px', borderBottom: '1px solid var(--border)', fontWeight: 600, color: 'var(--text-muted)' }}>Groupe</th>
-                            <th style={{ padding: '15px', borderBottom: '1px solid var(--border)', fontWeight: 600, color: 'var(--text-muted)' }}>Poches Disponibles</th>
-                            <th style={{ padding: '15px', borderBottom: '1px solid var(--border)', fontWeight: 600, color: 'var(--text-muted)' }}>Seuil Min.</th>
-                            <th style={{ padding: '15px', borderBottom: '1px solid var(--border)', fontWeight: 600, color: 'var(--text-muted)' }}>Statut</th>
-                            <th style={{ padding: '15px', borderBottom: '1px solid var(--border)', fontWeight: 600, color: 'var(--text-muted)' }}>Dernière Maj</th>
-                            <th style={{ padding: '15px', borderBottom: '1px solid var(--border)', fontWeight: 600, color: 'var(--text-muted)', textAlign: 'center' }}>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {stock.map((item) => (
-                            <tr key={item.id} style={{ borderBottom: '1px solid var(--border)', transition: 'var(--transition)' }}>
-                                <td style={{ padding: '15px' }}>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontWeight: 600 }}>
-                                        <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: 'rgba(230, 57, 70, 0.1)', color: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px' }}>
-                                            <Droplet size={16} />
-                                        </div>
-                                        {item.group}
-                                    </div>
-                                </td>
-                                <td style={{ padding: '15px', fontSize: '1.1rem', fontWeight: 600 }}>{item.quantity}</td>
-                                <td style={{ padding: '15px', color: 'var(--text-muted)' }}>{item.minThreshold}</td>
-                                <td style={{ padding: '15px' }}>
-                                    <span style={{
-                                        display: 'inline-flex',
-                                        alignItems: 'center',
-                                        gap: '5px',
-                                        padding: '4px 8px',
-                                        borderRadius: '20px',
-                                        fontSize: '0.875rem',
-                                        fontWeight: 600,
-                                        background: `${getStatusColor(item.status)}20`, /* 20 is hex opacity for ~12% */
-                                        color: getStatusColor(item.status)
-                                    }}>
-                                        {item.status === 'Critique' && <AlertCircle size={14} />}
-                                        {item.status}
-                                    </span>
-                                </td>
-                                <td style={{ padding: '15px', color: 'var(--text-muted)', fontSize: '0.875rem' }}>{item.lastUpdated}</td>
-                                <td style={{ padding: '15px', textAlign: 'center' }}>
-                                    <button className="btn btn-secondary" style={{ padding: '6px', borderRadius: '6px' }}>
-                                        <Edit2 size={16} />
-                                    </button>
-                                </td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
+
+const BloodStock: React.FC = () => {
+    const { user } = useAuth();
+    const [stock, setStock] = useState<BloodStockItem[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchStock = async () => {
+            if (!user?.centre?.id_centre) return;
+            try {
+                setLoading(true);
+                const response = await api.get(`/centres/${user.centre.id_centre}/stats`);
+                if (response.data.success) {
+                    setStock(response.data.stats.bloodDetail);
+                }
+            } catch (error) {
+                console.error("Error fetching blood stock:", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchStock();
+    }, [user]);
+
+    return (
+        <div className="-m-8">
+            <div className="max-w-[1400px] mx-auto">
+                <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 mb-8">
+                    <div className="flex flex-col gap-2">
+                        <h1 className="text-[#181111] dark:text-white text-4xl font-black leading-tight tracking-tight">Inventaire Central</h1>
+                        <p className="text-[#886364] dark:text-white/60 text-lg">{user?.centre?.nom_centre}</p>
+                    </div>
+                    <div className="flex items-center gap-4 bg-white dark:bg-[#2a1a1a] p-4 rounded-xl border border-[#e5dcdc] dark:border-[#3d2a2a] shadow-sm">
+                        <div className="flex flex-col">
+                            <span className="text-sm font-bold text-[#181111] dark:text-white">Mode Urgence</span>
+                            <span className="text-xs text-[#886364] dark:text-white/60">Notifier les donneurs immédiatement</span>
+                        </div>
+                        <label className="relative flex h-[32px] w-[56px] cursor-pointer items-center rounded-full bg-[#f4f0f0] dark:bg-[#3d2a2a] p-1 has-[:checked]:bg-primary transition-colors">
+                            <input className="sr-only peer" type="checkbox" />
+                            <div className="h-6 w-6 rounded-full bg-white shadow-md transform transition-transform peer-checked:translate-x-6"></div>
+                        </label>
+                    </div>
+                </div>
+                <div className="flex flex-col md:flex-row gap-4 mb-8">
+                    <div className="flex-1 relative">
+                        <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-[#886364] dark:text-white/40">search</span>
+                        <input className="w-full h-12 pl-12 pr-4 rounded-xl border-none bg-white dark:bg-[#2a1a1a] shadow-sm focus:ring-2 focus:ring-primary/50 text-[#181111] dark:text-white placeholder:text-[#886364] dark:placeholder:text-white/40" placeholder="Rechercher des lots, IDs de donneurs..." />
+                    </div>
+                    <div className="flex gap-2">
+                        <button className="h-12 px-6 flex items-center justify-center gap-2 bg-white dark:bg-[#2a1a1a] border border-[#e5dcdc] dark:border-[#3d2a2a] rounded-xl font-semibold text-[#181111] dark:text-white hover:bg-[#f4f0f0] dark:hover:bg-[#3d2a2a] transition-all">
+                            <span className="material-symbols-outlined">filter_list</span> Filtrer
+                        </button>
+                        <button className="h-12 px-6 flex items-center justify-center gap-2 bg-white dark:bg-[#2a1a1a] border border-[#e5dcdc] dark:border-[#3d2a2a] rounded-xl font-semibold text-[#181111] dark:text-white hover:bg-[#f4f0f0] dark:hover:bg-[#3d2a2a] transition-all">
+                            <span className="material-symbols-outlined">download</span> Exporter
+                        </button>
+                    </div>
+                </div>
+
+                {loading ? <p>Chargement de l'inventaire...</p> :
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+                        {stock.map(item => <BloodStockCard key={item.groupe_sanguin} stock={item} />)}
+                    </div>
+                }
+
+                {/* Near Expiry Table (Static Placeholder) */}
+                <div className="bg-white dark:bg-[#2a1a1a] rounded-2xl border border-[#e5dcdc] dark:border-[#3d2a2a] overflow-hidden mb-12">
+                    <div className="px-6 py-4 border-b border-[#e5dcdc] dark:border-[#3d2a2a] flex justify-between items-center">
+                        <h3 className="font-bold text-lg">Lots proches de l'expiration (48h)</h3>
+                        <a className="text-primary text-sm font-bold hover:underline" href="#">Voir tous les lots</a>
+                    </div>
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-left">
+                            <thead className="bg-[#f8f6f6] dark:bg-[#3d2a2a] text-xs uppercase text-[#886364] dark:text-white/40 font-bold">
+                                <tr>
+                                    <th className="px-6 py-3">ID Batch</th>
+                                    <th className="px-6 py-3">Groupe</th>
+                                    <th className="px-6 py-3">ID Donneur</th>
+                                    <th className="px-6 py-3">Date Collecte</th>
+                                    <th className="px-6 py-3">Date Expiration</th>
+                                    <th className="px-6 py-3 text-right">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-[#e5dcdc] dark:divide-[#3d2a2a]">
+                                <tr className="hover:bg-[#f4f0f0] dark:hover:bg-[#3d2a2a]/50 transition-colors">
+                                    <td className="px-6 py-4 text-sm font-mono">B-992-04</td>
+                                    <td className="px-6 py-4"><span className="font-bold text-primary">A-</span></td>
+                                    <td className="px-6 py-4 text-sm text-[#886364] dark:text-white/60">#DON-1022</td>
+                                    <td className="px-6 py-4 text-sm">12 Oct 2023</td>
+                                    <td className="px-6 py-4 text-sm text-primary font-bold">18 Oct 2023 (Aujourd'hui)</td>
+                                    <td className="px-6 py-4 text-right">
+                                        <button className="text-primary hover:bg-primary/10 p-2 rounded-full transition-colors"><span className="material-symbols-outlined">visibility</span></button>
+                                    </td>
+                                </tr>
+                                <tr className="hover:bg-[#f4f0f0] dark:hover:bg-[#3d2a2a]/50 transition-colors">
+                                    <td className="px-6 py-4 text-sm font-mono">B-991-88</td>
+                                    <td className="px-6 py-4"><span className="font-bold text-primary">O-</span></td>
+                                    <td className="px-6 py-4 text-sm text-[#886364] dark:text-white/60">#DON-5541</td>
+                                    <td className="px-6 py-4 text-sm">11 Oct 2023</td>
+                                    <td className="px-6 py-4 text-sm text-yellow-600 font-bold">19 Oct 2023</td>
+                                    <td className="px-6 py-4 text-right">
+                                        <button className="text-primary hover:bg-primary/10 p-2 rounded-full transition-colors"><span className="material-symbols-outlined">visibility</span></button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
         </div>
     );
