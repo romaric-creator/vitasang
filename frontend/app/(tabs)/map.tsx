@@ -8,6 +8,7 @@ import {
   RefreshControl,
   TextInput,
   Dimensions,
+  Platform,
 } from "react-native";
 import MapView, { Marker, PROVIDER_GOOGLE, Callout } from "react-native-maps";
 import { useRouter } from "expo-router";
@@ -15,8 +16,8 @@ import ThemedView from "@/components/ThemedView";
 import { TabBarIcon } from "@/components/TabBarIcon";
 import { color } from "@/constant/color";
 import { ModernSpinner } from "@/components/ModernSpinner";
+import { LoadingOverlay } from "@/components/LoadingOverlay";
 import { getAllCentres, searchCentresNearby } from "@/services/user.service";
-import { useAlert } from "@/hooks/useAlert";
 import { getCurrentPositionAsync } from "@/utils/location";
 import { useTranslation } from "react-i18next";
 import { DataCard, DataCardRow } from "@/components/DataCard";
@@ -24,7 +25,6 @@ import { DataCard, DataCardRow } from "@/components/DataCard";
 export default function MapScreen() {
   const { t } = useTranslation();
   const router = useRouter();
-  const { showAlert } = useAlert();
   const mapRef = useRef<MapView>(null);
 
   const [centres, setCentres] = useState<any[]>([]);
@@ -172,7 +172,7 @@ export default function MapScreen() {
       {viewMode === "map" ? (
         <View style={styles.mapContainer}>
           <MapView
-            provider={PROVIDER_GOOGLE}
+            provider={Platform.OS === "android" ? PROVIDER_GOOGLE : undefined}
             ref={mapRef}
             style={styles.map}
             initialRegion={

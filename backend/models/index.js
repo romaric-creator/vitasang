@@ -12,7 +12,7 @@ const sequelize = new Sequelize(dbConfig.DB, dbConfig.USER, dbConfig.PASSWORD, {
   host: dbConfig.HOST,
   port: dbConfig.PORT,
   dialect: dbConfig.dialect,
-  dialectModule: require('mysql2'), // Ajout indispensable pour Vercel
+  dialectModule: require("mysql2"), // Ajout indispensable pour Vercel
   pool: {
     max: dbConfig.pool.max,
     min: dbConfig.pool.min,
@@ -21,10 +21,10 @@ const sequelize = new Sequelize(dbConfig.DB, dbConfig.USER, dbConfig.PASSWORD, {
   },
   dialectOptions: {
     ssl: {
-      rejectUnauthorized: false
-    }
+      rejectUnauthorized: process.env.NODE_ENV === "production" ? true : false,
+    },
   },
-  logging: process.env.DB_LOGGING === 'true' ? console.log : false,
+  logging: process.env.DB_LOGGING === "true" ? console.log : false,
 });
 
 fs.readdirSync(__dirname)

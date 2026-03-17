@@ -14,8 +14,6 @@ import {
 const API_BASE_URL = Constants.expoConfig?.extra?.env?.EXPO_PUBLIC_API_BASE_URL;
 const REQUEST_TIMEOUT = 10000;
 const MAX_RETRIES = 3;
-let retryCount = 0;
-
 /**
  * Transform and enrich error response
  */
@@ -96,7 +94,10 @@ export const createAxiosInstance = (): AxiosInstance => {
    */
   instance.interceptors.response.use(
     (response: AxiosResponse) => {
-      retryCount = 0; // Reset retry count on success
+      // Reset retry count on success (per-request tracking)
+      if (response.config) {
+        (response.config as any)._retryCount = 0;
+      }
 
       if (__DEV__) {
         console.log("[API Response]", {
@@ -133,24 +134,27 @@ export const createAxiosInstance = (): AxiosInstance => {
         });
       }
 
-      // Implement retry logic for specific errors
+      // Implement retry logic for specific errors (per-request tracking)
+      const config = error.config as any;
+      const currentRetryCount = config?._retryCount || 0;
+
       if (
         isRetryableError(apiError) &&
-        retryCount < MAX_RETRIES &&
-        error.config
+        currentRetryCount < MAX_RETRIES &&
+        config
       ) {
-        retryCount++;
-        const backoffMs = Math.pow(2, retryCount) * 1000; // Exponential backoff
+        config._retryCount = currentRetryCount + 1;
+        const backoffMs = Math.pow(2, config._retryCount) * 1000; // Exponential backoff
 
         if (__DEV__) {
           console.log(
-            `[Retry] Attempt ${retryCount}/${MAX_RETRIES} in ${backoffMs}ms`,
+            `[Retry] Attempt ${config._retryCount}/${MAX_RETRIES} in ${backoffMs}ms`,
           );
         }
 
         return new Promise((resolve) => {
           setTimeout(() => {
-            resolve(instance(error.config!));
+            resolve(instance(config));
           }, backoffMs);
         });
       }

@@ -19,7 +19,7 @@
       "googleServicesFile": "./google-services.json",
       "config": {
         "googleMaps": {
-          "apiKey": "AIzaSyCNJgLLOSVvUK0D2vEFQMigNHC2YTElIhY"
+          "apiKey": "$EXPO_PUBLIC_GOOGLE_MAPS_API_KEY"
         }
       }
     },
@@ -54,7 +54,7 @@
         "projectId": "78a20355-02ca-4b7a-8225-d0dd4b60b197"
       },
       "env": {
-        "FIREBASE_API_KEY": "AIzaSyCNJgLLOSVvUK0D2vEFQMigNHC2YTElIhY",
+        "FIREBASE_API_KEY": "process.env.EXPO_PUBLIC_FIREBASE_API_KEY",
         "FIREBASE_AUTH_DOMAIN": "vitasang.firebaseapp.com",
         "FIREBASE_PROJECT_ID": "vitasang",
         "FIREBASE_STORAGE_BUCKET": "vitasang.firebasestorage.app",

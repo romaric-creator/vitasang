@@ -5,7 +5,7 @@ const Centre = db.Centre;
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const logger = require("../config/logger");
-const { calculateDistance } = require('../utils/geoHelpers');
+const { calculateDistance } = require("../utils/geoHelpers");
 
 exports.addUser = async (req, res, next) => {
   try {
@@ -13,13 +13,7 @@ exports.addUser = async (req, res, next) => {
 
     // CAS 1 : C'EST UN DONNEUR
     if (role === "donneur") {
-      let {
-        nom,
-        prenom,
-        mot_de_passe,
-        telephone,
-        groupe_sanguin,
-      } = req.body;
+      let { nom, prenom, mot_de_passe, telephone, groupe_sanguin } = req.body;
 
       // Validation simple
       if (!nom || !mot_de_passe) {
@@ -57,16 +51,19 @@ exports.addUser = async (req, res, next) => {
           { expiresIn: "24h" },
         );
 
-        return res
-          .status(201)
-          .json({
-            message: "Donneur créé avec succès",
-            token, // Ajout du token ici
-            user
-          });
+        return res.status(201).json({
+          message: "Donneur créé avec succès",
+          token, // Ajout du token ici
+          user,
+        });
       } catch (error) {
-        logger.error("Erreur lors de la création de l'utilisateur (donneur) :", { error: error.message, stack: error.stack });
-        return res.status(500).json({ message: "Erreur lors de la création du compte." });
+        logger.error(
+          "Erreur lors de la création de l'utilisateur (donneur) :",
+          { error: error.message, stack: error.stack },
+        );
+        return res
+          .status(500)
+          .json({ message: "Erreur lors de la création du compte." });
       }
     }
 
@@ -170,7 +167,8 @@ exports.addUser = async (req, res, next) => {
     // Gestion des erreurs de validation Sequelize (ex: email unique)
     if (error.name === "SequelizeUniqueConstraintError") {
       return res.status(409).json({
-        message: "Un utilisateur avec cet email ou numéro de téléphone existe déjà.",
+        message:
+          "Un utilisateur avec cet email ou numéro de téléphone existe déjà.",
       });
     }
     next(error); // Passe toutes les autres erreurs au middleware de gestion d'erreurs global
@@ -182,7 +180,9 @@ exports.login = async (req, res, next) => {
     const { telephone, mot_de_passe } = req.body;
 
     if (!telephone || !mot_de_passe) {
-      return res.status(400).json({ message: "Le numéro de téléphone et le mot de passe sont requis." });
+      return res.status(400).json({
+        message: "Le numéro de téléphone et le mot de passe sont requis.",
+      });
     }
 
     // On cherche l'utilisateur et on inclut ses données associées
@@ -200,12 +200,12 @@ exports.login = async (req, res, next) => {
     });
 
     if (!user) {
-      return res.status(404).json({ message: "Utilisateur non trouvé" });
+      return res.status(401).json({ message: "Identifiants incorrects" });
     }
 
     const isMatch = await bcrypt.compare(mot_de_passe, user.mot_de_passe);
     if (!isMatch) {
-      return res.status(401).json({ message: "Mot de passe incorrect" });
+      return res.status(401).json({ message: "Identifiants incorrects" });
     }
 
     // Préparation du token JWT
@@ -242,7 +242,6 @@ exports.login = async (req, res, next) => {
       token,
       user: userResponse,
     });
-
   } catch (error) {
     next(error);
   }
@@ -255,7 +254,7 @@ exports.getAllUsers = async (req, res, next) => {
         { model: ProfilDonneur, as: "profilDonneur" },
         { model: Centre },
       ],
-      attributes: { exclude: ['mot_de_passe', 'id_centre'] } // Exclure le mot de passe
+      attributes: { exclude: ["mot_de_passe", "id_centre"] }, // Exclure le mot de passe
     });
     res.status(200).json(users);
   } catch (error) {
@@ -270,7 +269,7 @@ exports.getUserById = async (req, res, next) => {
         { model: ProfilDonneur, as: "profilDonneur" },
         { model: Centre },
       ],
-      attributes: { exclude: ['mot_de_passe', 'id_centre'] } // Exclure le mot de passe
+      attributes: { exclude: ["mot_de_passe", "id_centre"] }, // Exclure le mot de passe
     });
     if (user) {
       res.status(200).json(user);
@@ -296,7 +295,7 @@ exports.getUsersByBloodGroup = async (req, res, next) => {
           required: true, // INNER JOIN pour ne retourner que les donneurs
         },
       ],
-      attributes: { exclude: ['mot_de_passe', 'id_centre'] } // Exclure le mot de passe
+      attributes: { exclude: ["mot_de_passe", "id_centre"] }, // Exclure le mot de passe
     });
     res.status(200).json(users);
   } catch (error) {
@@ -306,14 +305,14 @@ exports.getUsersByBloodGroup = async (req, res, next) => {
 
 // Table de compatibilité sanguine (Qui peut donner à qui)
 const bloodCompatibility = {
-  'O-': ['O-', 'O+', 'A-', 'A+', 'B-', 'B+', 'AB-', 'AB+'],
-  'O+': ['O+', 'A+', 'B+', 'AB+'],
-  'A-': ['A-', 'A+', 'AB-', 'AB+'],
-  'A+': ['A+', 'AB+'],
-  'B-': ['B-', 'B+', 'AB-', 'AB+'],
-  'B+': ['B+', 'AB+'],
-  'AB-': ['AB-', 'AB+'],
-  'AB+': ['AB+']
+  "O-": ["O-", "O+", "A-", "A+", "B-", "B+", "AB-", "AB+"],
+  "O+": ["O+", "A+", "B+", "AB+"],
+  "A-": ["A-", "A+", "AB-", "AB+"],
+  "A+": ["A+", "AB+"],
+  "B-": ["B-", "B+", "AB-", "AB+"],
+  "B+": ["B+", "AB+"],
+  "AB-": ["AB-", "AB+"],
+  "AB+": ["AB+"],
 };
 
 /**
@@ -327,7 +326,8 @@ exports.searchUsers = async (req, res, next) => {
 
     if (!latitude || !longitude || !groupe_sanguin || !radius) {
       return res.status(400).json({
-        message: "Les paramètres latitude, longitude, groupe_sanguin et radius sont requis."
+        message:
+          "Les paramètres latitude, longitude, groupe_sanguin et radius sont requis.",
       });
     }
 
@@ -335,39 +335,43 @@ exports.searchUsers = async (req, res, next) => {
     const userLong = parseFloat(longitude);
     const searchRayon = parseFloat(radius);
     // On décode l'URL et on remplace l'espace (qui vient du '+') par un vrai '+'
-    const targetBlood = decodeURIComponent(groupe_sanguin).replace(' ', '+');
+    const targetBlood = decodeURIComponent(groupe_sanguin).replace(" ", "+");
 
     // Trouver quels groupes peuvent donner au groupe cible
-    const compatibleGroups = Object.keys(bloodCompatibility).filter(group =>
-      bloodCompatibility[group].includes(targetBlood)
+    const compatibleGroups = Object.keys(bloodCompatibility).filter((group) =>
+      bloodCompatibility[group].includes(targetBlood),
     );
 
     // 2. Recherche SQL : Filtrage par groupes sanguins compatibles
     const potentialDonors = await Utilisateur.findAll({
-      where: { role: 'donneur' },
+      where: { role: "donneur" },
       include: [
         {
           model: ProfilDonneur,
           as: "profilDonneur",
           where: {
-            groupe_sanguin: compatibleGroups
+            groupe_sanguin: compatibleGroups,
           },
-          required: true
-        }
+          required: true,
+        },
       ],
-      attributes: { exclude: ['mot_de_passe', 'id_centre'] }
+      attributes: { exclude: ["mot_de_passe", "id_centre"] },
     });
 
     // 3. Filtrage par Proximité et calcul de distance
     const matchedDonors = [];
 
-    potentialDonors.forEach(donor => {
-      if (donor.profilDonneur && donor.profilDonneur.lat_actuelle && donor.profilDonneur.long_actuelle) {
+    potentialDonors.forEach((donor) => {
+      if (
+        donor.profilDonneur &&
+        donor.profilDonneur.lat_actuelle &&
+        donor.profilDonneur.long_actuelle
+      ) {
         const distance = calculateDistance(
           userLat,
           userLong,
           donor.profilDonneur.lat_actuelle,
-          donor.profilDonneur.long_actuelle
+          donor.profilDonneur.long_actuelle,
         );
 
         if (distance <= searchRayon) {
@@ -385,11 +389,13 @@ exports.searchUsers = async (req, res, next) => {
     res.status(200).json({
       success: true,
       count: matchedDonors.length,
-      donors: matchedDonors
+      donors: matchedDonors,
     });
-
   } catch (error) {
-    logger.error("Erreur détaillée dans searchUsers:", { error: error.message, stack: error.stack });
+    logger.error("Erreur détaillée dans searchUsers:", {
+      error: error.message,
+      stack: error.stack,
+    });
     next(error);
   }
 };
@@ -398,26 +404,29 @@ exports.getUserProfile = async (req, res, next) => {
   const { id } = req.params;
   try {
     const user = await Utilisateur.findByPk(id, {
-      attributes: { exclude: ['mot_de_passe'] },
+      attributes: { exclude: ["mot_de_passe"] },
       include: [
         {
           model: ProfilDonneur,
-          as: 'profilDonneur',
+          as: "profilDonneur",
         },
-        {
-          model: db.HistoriqueDon,
-          as: 'historiqueDons',
-          include: [{ model: db.TypeDon, as: 'typeDon' }]
-        }
-      ]
+      ],
     });
 
     if (!user) {
-      return res.status(404).json({ success: false, message: "Utilisateur non trouvé" });
+      return res
+        .status(404)
+        .json({ success: false, message: "Utilisateur non trouvé" });
     }
 
-    // Nombre d'alertes lancées par cet utilisateur
-    const alertesCount = await db.Alerte.count({ where: { id_initiateur: id } });
+    // Nombre de dons et d'alertes
+    const donsCount = await db.HistoriqueDon.count({
+      where: { id_donneur: id },
+    });
+
+    const alertesCount = await db.Alerte.count({
+      where: { id_initiateur: id },
+    });
 
     res.json({
       success: true,
@@ -434,13 +443,15 @@ exports.getUserProfile = async (req, res, next) => {
         disponible: user.profilDonneur?.disponible ?? true,
         lat: user.profilDonneur?.lat_actuelle,
         long: user.profilDonneur?.long_actuelle,
-        donsCount: user.historiqueDons?.length || 0,
+        donsCount,
         alertesCount,
-        historiqueDons: user.historiqueDons || []
-      }
+      },
     });
   } catch (error) {
-    logger.error("Erreur getUserProfile:", { error: error.message, userId: req.params.id });
+    logger.error("Erreur getUserProfile:", {
+      error: error.message,
+      userId: req.params.id,
+    });
     next(error);
   }
 };
@@ -452,8 +463,14 @@ exports.updatePushToken = async (req, res, next) => {
 
     // Authorization check: Ensure the user is updating their own token
     if (id.toString() !== req.user.id.toString()) {
-      logger.warn('Unauthorized push token update attempt', { userId: req.user.id, targetId: id });
-      return res.status(403).json({ message: "Non autorisé : vous ne pouvez mettre à jour que votre propre token push." });
+      logger.warn("Unauthorized push token update attempt", {
+        userId: req.user.id,
+        targetId: id,
+      });
+      return res.status(403).json({
+        message:
+          "Non autorisé : vous ne pouvez mettre à jour que votre propre token push.",
+      });
     }
 
     if (!pushToken) {
@@ -482,8 +499,13 @@ exports.updateUser = async (req, res, next) => {
 
     // Authorization check: Ensure user is updating their own profile
     if (Number(id) !== req.user.id) {
-      logger.warn('Unauthorized update attempt', { userId: req.user.id, targetId: id });
-      return res.status(403).json({ error: "Vous ne pouvez mettre à jour que votre profil." });
+      logger.warn("Unauthorized update attempt", {
+        userId: req.user.id,
+        targetId: id,
+      });
+      return res
+        .status(403)
+        .json({ error: "Vous ne pouvez mettre à jour que votre profil." });
     }
 
     const user = await Utilisateur.findByPk(id);
@@ -498,18 +520,26 @@ exports.updateUser = async (req, res, next) => {
     if (req.body.ville !== undefined) user.region = req.body.ville; // Map ville to region
 
     // Update profil donneur if it exists or if blood/location fields are provided
-    if (user.profilDonneur || req.body.groupe_sanguin || req.body.latitude !== undefined || req.body.longitude !== undefined) {
+    if (
+      user.profilDonneur ||
+      req.body.groupe_sanguin ||
+      req.body.latitude !== undefined ||
+      req.body.longitude !== undefined
+    ) {
       const profil = await ProfilDonneur.findByPk(user.id_utilisateur);
       if (profil) {
-        if (req.body.groupe_sanguin) profil.groupe_sanguin = req.body.groupe_sanguin;
-        if (req.body.latitude !== undefined) profil.lat_actuelle = req.body.latitude;
-        if (req.body.longitude !== undefined) profil.long_actuelle = req.body.longitude;
+        if (req.body.groupe_sanguin)
+          profil.groupe_sanguin = req.body.groupe_sanguin;
+        if (req.body.latitude !== undefined)
+          profil.lat_actuelle = req.body.latitude;
+        if (req.body.longitude !== undefined)
+          profil.long_actuelle = req.body.longitude;
         await profil.save();
       }
     }
 
     await user.save();
-    logger.info('User profile updated', { userId: id });
+    logger.info("User profile updated", { userId: id });
 
     res.status(200).json({
       success: true,
@@ -519,11 +549,14 @@ exports.updateUser = async (req, res, next) => {
         nom: user.nom,
         prenom: user.prenom,
         telephone: user.telephone,
-        ville: user.region // Assurez-vous que c'est le bon champ
-      }
+        ville: user.region, // Assurez-vous que c'est le bon champ
+      },
     });
   } catch (error) {
-    logger.error('Error updating user', { error: error.message, userId: req.params.id });
+    logger.error("Error updating user", {
+      error: error.message,
+      userId: req.params.id,
+    });
     next(error);
   }
 };
@@ -534,8 +567,13 @@ exports.deleteUser = async (req, res, next) => {
 
     // Authorization check
     if (Number(id) !== req.user.id) {
-      logger.warn('Unauthorized delete attempt', { userId: req.user.id, targetId: id });
-      return res.status(403).json({ error: "Vous ne pouvez supprimer que votre compte." });
+      logger.warn("Unauthorized delete attempt", {
+        userId: req.user.id,
+        targetId: id,
+      });
+      return res
+        .status(403)
+        .json({ error: "Vous ne pouvez supprimer que votre compte." });
     }
 
     const user = await Utilisateur.findByPk(id);
@@ -543,17 +581,20 @@ exports.deleteUser = async (req, res, next) => {
       return res.status(404).json({ error: "Utilisateur non trouvé" });
     }
 
-    // Soft delete - set actif to false instead of hard deleting
-    user.actif = false;
+    // Soft delete - set est_actif to false instead of hard deleting
+    user.est_actif = false;
     await user.save();
 
-    logger.info('User account deactivated', { userId: id });
+    logger.info("User account deactivated", { userId: id });
 
     res.status(200).json({
-      message: "Compte supprimé avec succès"
+      message: "Compte supprimé avec succès",
     });
   } catch (error) {
-    logger.error('Error deleting user', { error: error.message, userId: req.params.id });
+    logger.error("Error deleting user", {
+      error: error.message,
+      userId: req.params.id,
+    });
     next(error);
   }
 };
@@ -561,30 +602,55 @@ exports.deleteUser = async (req, res, next) => {
 exports.getUserHistory = async (req, res, next) => {
   try {
     const { id } = req.params;
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const offset = (page - 1) * limit;
 
     // Authorization check
     if (Number(id) !== req.user.id) {
-      logger.warn('Unauthorized history access', { userId: req.user.id, targetId: id });
-      return res.status(403).json({ error: "Vous ne pouvez voir que votre historique." });
+      logger.warn("Unauthorized history access", {
+        userId: req.user.id,
+        targetId: id,
+      });
+      return res
+        .status(403)
+        .json({ error: "Vous ne pouvez voir que votre historique." });
     }
 
-    const historique = await db.HistoriqueDon.findAll({
+    const { count, rows: history } = await db.HistoriqueDon.findAndCountAll({
       where: { id_donneur: id },
       include: [
-        { model: db.TypeDon, as: 'typeDon' },
-        { model: db.Centre, as: 'centre' }
+        { model: db.TypeDon, as: "typeDon" },
+        { model: db.Centre, as: "centre" },
       ],
-      order: [['date_don', 'DESC']]
+      order: [["date_don", "DESC"]],
+      limit,
+      offset,
     });
 
-    logger.info('User history retrieved', { userId: id, donateCount: historique.length });
+    logger.info("User history retrieved", {
+      userId: id,
+      page,
+      limit,
+      total: count,
+      returned: history.length,
+    });
 
     res.status(200).json({
-      historique,
-      total: historique.length
+      success: true,
+      history,
+      pagination: {
+        page,
+        limit,
+        total: count,
+        pages: Math.ceil(count / limit),
+      },
     });
   } catch (error) {
-    logger.error('Error fetching user history', { error: error.message, userId: req.params.id });
+    logger.error("Error fetching user history", {
+      error: error.message,
+      userId: req.params.id,
+    });
     next(error);
   }
 };
@@ -595,11 +661,15 @@ exports.uploadProfilePicture = async (req, res, next) => {
 
     // Authorization check
     if (Number(id) !== req.user.id) {
-      return res.status(403).json({ error: "Vous ne pouvez mettre à jour que votre propre photo." });
+      return res.status(403).json({
+        error: "Vous ne pouvez mettre à jour que votre propre photo.",
+      });
     }
 
     if (!req.file) {
-      return res.status(400).json({ error: "Aucun fichier n'a été téléchargé." });
+      return res
+        .status(400)
+        .json({ error: "Aucun fichier n'a été téléchargé." });
     }
 
     const user = await Utilisateur.findByPk(id);
@@ -612,15 +682,21 @@ exports.uploadProfilePicture = async (req, res, next) => {
     user.photo_profil = imageUrl;
     await user.save();
 
-    logger.info('Profile picture updated on Cloudinary', { userId: id, url: imageUrl });
+    logger.info("Profile picture updated on Cloudinary", {
+      userId: id,
+      url: imageUrl,
+    });
 
     res.status(200).json({
       success: true,
       message: "Photo de profil mise à jour avec succès",
-      photo_profil: imageUrl
+      photo_profil: imageUrl,
     });
   } catch (error) {
-    logger.error('Error uploading profile picture', { error: error.message, userId: req.params.id });
+    logger.error("Error uploading profile picture", {
+      error: error.message,
+      userId: req.params.id,
+    });
     next(error);
   }
 };

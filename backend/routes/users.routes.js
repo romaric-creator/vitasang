@@ -1,6 +1,6 @@
 const express = require("express");
 const controller = require("../controllers/users.controller");
-const { verifyToken } = require("../utils/auth.middleware");
+const { verifyToken, requireRole } = require("../utils/auth.middleware");
 const { validateRequest } = require("../middleware/validation");
 const upload = require("../middleware/upload");
 const schemas = require("../validation/schemas");
@@ -133,7 +133,7 @@ router.post("/login", validateRequest(schemas.login), controller.login);
  *                   items:
  *                     $ref: '#/components/schemas/User'
  */
-router.get("/", verifyToken, controller.getAllUsers);
+router.get("/", verifyToken, requireRole("admin"), controller.getAllUsers);
 
 /**
  * @swagger
@@ -176,7 +176,11 @@ router.get("/", verifyToken, controller.getAllUsers);
  *                   items:
  *                     $ref: '#/components/schemas/User'
  */
-router.get("/search", validateRequest(schemas.searchUsers), controller.searchUsers);
+router.get(
+  "/search",
+  validateRequest(schemas.searchUsers),
+  controller.searchUsers,
+);
 
 /**
  * @swagger
@@ -304,7 +308,12 @@ router.get("/:id", verifyToken, controller.getUserById);
  *       403:
  *         description: Unauthorized
  */
-router.put("/:id", verifyToken, validateRequest(schemas.updateUser), controller.updateUser);
+router.put(
+  "/:id",
+  verifyToken,
+  validateRequest(schemas.updateUser),
+  controller.updateUser,
+);
 router.delete("/:id", verifyToken, controller.deleteUser);
 
 /**
@@ -361,7 +370,12 @@ router.get("/:id/history", verifyToken, controller.getUserHistory);
  *       403:
  *         description: Unauthorized
  */
-router.put("/:id/push-token", verifyToken, validateRequest(schemas.pushToken), controller.updatePushToken);
+router.put(
+  "/:id/push-token",
+  verifyToken,
+  validateRequest(schemas.pushToken),
+  controller.updatePushToken,
+);
 
 /**
  * @swagger
@@ -392,6 +406,11 @@ router.put("/:id/push-token", verifyToken, validateRequest(schemas.pushToken), c
  *       200:
  *         description: Photo uploaded successfully
  */
-router.post("/:id/upload-photo", verifyToken, upload.single('photo'), controller.uploadProfilePicture);
+router.post(
+  "/:id/upload-photo",
+  verifyToken,
+  upload.single("photo"),
+  controller.uploadProfilePicture,
+);
 
 module.exports = router;

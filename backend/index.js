@@ -19,9 +19,29 @@ const app = express();
 
 app.set("trust proxy", 1); // Indispensable pour Vercel et express-rate-limit
 app.use(helmet());
-app.use(cors());
-app.use(express.json({ limit: "50mb" }));
-app.use(express.urlencoded({ limit: "50mb", extended: true }));
+
+// CORS Configuration - Whitelist security
+const allowedOrigins = [
+  "https://vitasang.vercel.app",
+  "http://localhost:3000",
+  "http://localhost:8081",
+  process.env.FRONTEND_URL,
+].filter(Boolean);
+
+app.use(
+  cors({
+    origin:
+      process.env.NODE_ENV === "production"
+        ? allowedOrigins.filter((url) => url.startsWith("https"))
+        : allowedOrigins,
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  }),
+);
+
+app.use(express.json({ limit: "1mb" }));
+app.use(express.urlencoded({ limit: "1mb", extended: true }));
 app.use(morgan("dev"));
 app.use("/uploads", express.static("uploads"));
 

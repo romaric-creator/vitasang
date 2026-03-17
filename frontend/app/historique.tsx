@@ -8,6 +8,7 @@ import {
   RefreshControl,
 } from "react-native";
 import { ModernSpinner } from "@/components/ModernSpinner";
+import { LoadingOverlay } from "@/components/LoadingOverlay";
 import { useRouter } from "expo-router";
 import { PageHeader } from "@/components/PageHeader";
 import { DataCard, DataCardRow } from "@/components/DataCard";
@@ -15,7 +16,7 @@ import ThemedView from "@/components/ThemedView";
 import { color } from "@/constant/color";
 import { getUserIdFromStorage } from "@/utils/storage";
 import { getUserHistory } from "@/services/user.service";
-import { useAlert } from "@/hooks/useAlert";
+import { useNotification } from "@/context/NotificationContext";
 
 interface DonationHistory {
   id: number;
@@ -33,6 +34,7 @@ import { useTranslation } from "react-i18next";
 export default function Historique() {
   const { t, i18n } = useTranslation();
   const router = useRouter();
+  const { show } = useNotification();
   const [donations, setDonations] = useState<DonationHistory[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -102,7 +104,7 @@ export default function Historique() {
     return (
       <ThemedView style={styles.container}>
         <PageHeader title={t("history.title")} />
-        <LoadingOverlay visible={true} message={t('common.loading')} />
+        <LoadingOverlay visible={true} message={t("common.loading")} />
       </ThemedView>
     );
   }

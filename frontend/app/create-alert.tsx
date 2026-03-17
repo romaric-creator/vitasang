@@ -5,13 +5,14 @@ import {
   View,
   TouchableOpacity,
   ScrollView,
-
 } from "react-native";
 import { Formik } from "formik";
 import { TabBarIcon } from "@/components/TabBarIcon";
 import { color } from "@/constant/color";
 import { useRouter } from "expo-router";
-import ThemedView from "@/components/ThemedView";import { LoadingOverlay } from \"@/components/LoadingOverlay\";import * as Location from 'expo-location';
+import ThemedView from "@/components/ThemedView";
+import { LoadingOverlay } from "@/components/LoadingOverlay";
+import * as Location from "expo-location";
 import { searchDonors, sendAlert } from "@/services/user.service";
 import { createAlertValidationSchema } from "@/validation/ValidationSchemas";
 import { useAuth } from "@/context/AuthContext";
@@ -28,7 +29,9 @@ export default function CreateAlertScreen() {
   const { t } = useTranslation();
   const router = useRouter();
   const { isAuth } = useAuth();
-  const [location, setLocation] = useState<Location.LocationObject | null>(null);
+  const [location, setLocation] = useState<Location.LocationObject | null>(
+    null,
+  );
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [isLocating, setIsLocating] = useState(true);
@@ -40,21 +43,25 @@ export default function CreateAlertScreen() {
     (async () => {
       setIsLocating(true);
       let { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== 'granted') {
-        setErrorMsg(t('alert.locationError'));
-        console.error('Location permission denied');
+      if (status !== "granted") {
+        setErrorMsg(t("alert.locationError"));
+        console.error("Location permission denied");
         setIsLocating(false);
         return;
       }
 
       let location = await Location.getCurrentPositionAsync({});
-      console.log('Location fetched:', location);
+      console.log("Location fetched:", location);
       setLocation(location);
       setIsLocating(false);
     })();
   }, []);
 
-  const handleSearch = async (groupeSanguin: string, latitude: number, longitude: number) => {
+  const handleSearch = async (
+    groupeSanguin: string,
+    latitude: number,
+    longitude: number,
+  ) => {
     if (!latitude || !longitude) return;
 
     setLoading(true);
@@ -73,10 +80,10 @@ export default function CreateAlertScreen() {
     setModalVisible(false);
     if (pendingAlertData) {
       try {
-        await storeData('pending_alert', pendingAlertData);
+        await storeData("pending_alert", pendingAlertData);
         router.push({
-          pathname: '/login',
-          params: { redirectAfter: 'create-alert' }
+          pathname: "/login",
+          params: { redirectAfter: "create-alert" },
         });
       } catch (e) {
         console.error("Failed to save pending alert:", e);
@@ -86,11 +93,11 @@ export default function CreateAlertScreen() {
   };
 
   const handleSubmit = async (values: any) => {
-    console.log('handleSubmit called with values:', values);
+    console.log("handleSubmit called with values:", values);
 
     if (!location) {
-      setErrorMsg(t('alert.locationError'));
-      console.error('No location');
+      setErrorMsg(t("alert.locationError"));
+      console.error("No location");
       return;
     }
 
@@ -102,7 +109,7 @@ export default function CreateAlertScreen() {
       urgence: values.urgence,
       quantite_requise: parseInt(values.quantite_requise),
       lieu: values.lieu,
-      description: values.description
+      description: values.description,
     };
 
     // SI L'UTILISATEUR N'EST PAS CONNECTÉ
@@ -118,13 +125,13 @@ export default function CreateAlertScreen() {
       if (result.alertId) {
         router.replace({
           pathname: "/alert-tracking/[id]",
-          params: { id: result.alertId }
+          params: { id: result.alertId },
         });
       } else {
-        setErrorMsg(t('alert.idError'));
+        setErrorMsg(t("alert.idError"));
       }
     } catch (error: any) {
-      setErrorMsg(error.message || t('alert.genericError'));
+      setErrorMsg(error.message || t("alert.genericError"));
     } finally {
       setLoading(false);
     }
@@ -132,7 +139,7 @@ export default function CreateAlertScreen() {
 
   return (
     <ThemedView style={styles.container}>
-      <PageHeader title={t('alert.title')} />
+      <PageHeader title={t("alert.title")} />
       <ConfirmationModal
         visible={isModalVisible}
         onClose={() => setModalVisible(false)}
@@ -143,9 +150,16 @@ export default function CreateAlertScreen() {
         cancelText="Annuler"
       />
       {isLocating ? (
-        <LoadingOverlay visible={true} message={t('alert.gettingLocation')} fullScreen />
+        <LoadingOverlay
+          visible={true}
+          message={t("alert.gettingLocation")}
+          fullScreen
+        />
       ) : (
-        <ScrollView contentContainerStyle={{ padding: 16 }} showsVerticalScrollIndicator={false}>
+        <ScrollView
+          contentContainerStyle={{ padding: 16 }}
+          showsVerticalScrollIndicator={false}
+        >
           <Formik
             initialValues={{
               groupe_sanguin: "O+",
@@ -160,14 +174,25 @@ export default function CreateAlertScreen() {
             onSubmit={handleSubmit}
             enableReinitialize={true}
           >
-            {({ values, errors, touched, handleChange, handleBlur, handleSubmit }) => (
+            {({
+              values,
+              errors,
+              touched,
+              handleChange,
+              handleBlur,
+              handleSubmit,
+            }) => (
               <View>
                 <BloodGroupSelector
                   value={values.groupe_sanguin}
                   onSelect={(group) => {
                     handleChange("groupe_sanguin")(group);
                     if (location) {
-                      handleSearch(group, location.coords.latitude, location.coords.longitude);
+                      handleSearch(
+                        group,
+                        location.coords.latitude,
+                        location.coords.longitude,
+                      );
                     }
                   }}
                   error={errors.groupe_sanguin}
@@ -175,22 +200,22 @@ export default function CreateAlertScreen() {
                 />
 
                 <FormField
-                  label={t('alert.fields.location')}
+                  label={t("alert.fields.location")}
                   value={values.lieu}
                   onChangeText={handleChange("lieu")}
                   onBlur={handleBlur("lieu")}
-                  placeholder={t('alert.placeholders.location')}
+                  placeholder={t("alert.placeholders.location")}
                   error={errors.lieu}
                   touched={touched.lieu}
                   required
                 />
 
                 <FormField
-                  label={t('alert.fields.quantity')}
+                  label={t("alert.fields.quantity")}
                   value={values.quantite_requise}
                   onChangeText={handleChange("quantite_requise")}
                   onBlur={handleBlur("quantite_requise")}
-                  placeholder={t('alert.placeholders.quantity')}
+                  placeholder={t("alert.placeholders.quantity")}
                   error={errors.quantite_requise}
                   touched={touched.quantite_requise}
                   keyboardType="numeric"
@@ -199,7 +224,8 @@ export default function CreateAlertScreen() {
 
                 <View style={formStyles.field}>
                   <Text style={formStyles.label}>
-                    {t('alert.fields.urgency')} <Text style={{ color: color.error }}>*</Text>
+                    {t("alert.fields.urgency")}{" "}
+                    <Text style={{ color: color.error }}>*</Text>
                   </Text>
                   <View style={styles.urgencyGrid}>
                     {["NORMAL", "URGENT", "TRES_URGENT"].map((level) => (
@@ -229,34 +255,43 @@ export default function CreateAlertScreen() {
                 </View>
 
                 <FormField
-                  label={t('alert.fields.description')}
+                  label={t("alert.fields.description")}
                   value={values.description}
                   onChangeText={handleChange("description")}
                   onBlur={handleBlur("description")}
-                  placeholder={t('alert.placeholders.description')}
+                  placeholder={t("alert.placeholders.description")}
                   error={errors.description}
                   touched={touched.description}
                 />
 
                 <View style={styles.warningBox}>
-                  <TabBarIcon name="info-circle" size={16} color={color.primary} />
+                  <TabBarIcon
+                    name="info-circle"
+                    size={16}
+                    color={color.primary}
+                  />
                   {loading ? (
-                    <LoadingOverlay visible={true} spinnerSize=\"small\" style={{flex: 1}}/>
+                    <LoadingOverlay
+                      visible={true}
+                      spinnerSize="small"
+                      style={{ flex: 1 }}
+                    />
                   ) : (
                     <Text style={styles.warningText}>
                       {donorCount !== null
-                        ? t('alert.donorFound', { count: donorCount, group: values.groupe_sanguin })
-                        : t('alert.searchingDonors')}
+                        ? t("alert.donorFound", {
+                            count: donorCount,
+                            group: values.groupe_sanguin,
+                          })
+                        : t("alert.searchingDonors")}
                     </Text>
                   )}
                 </View>
 
-                {errorMsg && (
-                  <Text style={styles.errorText}>{errorMsg}</Text>
-                )}
+                {errorMsg && <Text style={styles.errorText}>{errorMsg}</Text>}
 
                 <PrimaryButton
-                  title={t('alert.submit')}
+                  title={t("alert.submit")}
                   onPress={() => handleSubmit()}
                   loading={loading}
                   disabled={!location || loading}
@@ -273,8 +308,17 @@ export default function CreateAlertScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: color.screenBackground },
-  center: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 },
-  locatingText: { marginTop: 10, color: color.textSecondary, fontWeight: '600' },
+  center: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 20,
+  },
+  locatingText: {
+    marginTop: 10,
+    color: color.textSecondary,
+    fontWeight: "600",
+  },
   textWhite: { color: "white" },
   urgencyGrid: {
     flexDirection: "row",
@@ -298,7 +342,7 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontWeight: "700",
     color: color.textMain,
-    textAlign: 'center',
+    textAlign: "center",
   },
   warningBox: {
     flexDirection: "row",
@@ -308,23 +352,22 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     marginTop: 12,
     marginBottom: 12,
-    alignItems: 'center',
+    alignItems: "center",
     borderWidth: 1,
-    borderColor: '#FFE4E6',
+    borderColor: "#FFE4E6",
   },
   warningText: {
     flex: 1,
     fontSize: 11,
     color: color.primary,
     lineHeight: 16,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   errorText: {
     color: color.error,
     fontSize: 12,
     marginBottom: 16,
-    textAlign: 'center',
-    fontWeight: '600',
+    textAlign: "center",
+    fontWeight: "600",
   },
 });
-
