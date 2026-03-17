@@ -4,6 +4,11 @@ if (!process.env.DB_PASS) {
     "CRITIQUE: Variable d'environnement DB_PASS est obligatoire et non définie",
   );
 }
+if (!process.env.DB_USER) {
+  throw new Error(
+    "CRITIQUE: Variable d'environnement DB_USER est obligatoire et non définie. Si vous utilisez une base de données comme TiDB Cloud, assurez-vous que le nom d'utilisateur inclut le préfixe requis (ex: 'your_prefix.your_username').",
+  );
+}
 
 module.exports = {
   HOST: process.env.HOST || "localhost",
