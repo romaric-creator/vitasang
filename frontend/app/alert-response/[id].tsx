@@ -15,14 +15,14 @@ import { color } from "@/constant/color";
 import { getAlertStatus, respondToAlert } from "@/services/user.service";
 import { useTranslation } from "react-i18next";
 import ThemedView from "@/components/ThemedView";
-import { useAlert } from "@/hooks/useAlert";
+import { useNotification } from "@/context/NotificationContext";
 
 export default function AlertResponse() {
   const { t } = useTranslation();
   const params = useLocalSearchParams();
   const { id, distance } = params;
   const router = useRouter();
-  const { showAlert } = useAlert();
+  const { show } = useNotification();
   const [loading, setLoading] = useState(true);
   const [alertData, setAlertData] = useState<any>(null);
   const [isResponding, setIsResponding] = useState(false);
@@ -50,12 +50,12 @@ export default function AlertResponse() {
       await respondToAlert(Number(id), response);
       if (response === "accepte") {
         setHasAccepted(true);
-        showAlert(t("alert.response.success"), "success");
+        show("success", t("alert.response.success"));
       } else {
         router.replace("/(tabs)");
       }
     } catch (error: any) {
-      showAlert(error.message || t("common.error"), "error");
+      show("error", error.message || t("common.error"));
     } finally {
       setIsResponding(false);
     }

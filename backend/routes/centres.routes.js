@@ -63,7 +63,11 @@ router.get("/", controller.getAllCentres);
  *       200:
  *         description: Nearby centres
  */
-router.get("/search", validateRequest(schemas.searchCentres), controller.searchCentresNearby);
+router.get(
+  "/search",
+  validateRequest(schemas.searchCentres),
+  controller.searchCentresNearby,
+);
 
 /**
  * @swagger
@@ -104,5 +108,34 @@ router.get("/:id", controller.getCentreDetail);
  *         description: Available time slots
  */
 router.get("/:id/availability", controller.getCentreAvailability);
+
+/**
+ * @swagger
+ * /api/centres/{id}/stats:
+ *   get:
+ *     tags:
+ *       - Centres
+ *     summary: Get dashboard statistics for a centre
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Dashboard statistics
+ */
+router.get("/:id/stats", verifyToken, controller.getCentreStats);
+
+// Blood Stock Routes
+router.get("/:id/stock", verifyToken, controller.getCentreBloodStock);
+router.put("/:id/stock", verifyToken, controller.updateBloodStock);
+
+// Centre Appointments Routes
+router.get("/:id/appointments", verifyToken, controller.getCentreRendezVous);
+router.patch("/:id/appointments/:rdvId/status", verifyToken, controller.updateRendezVousStatut);
 
 module.exports = router;

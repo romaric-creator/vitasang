@@ -16,7 +16,7 @@ import ThemedView from "@/components/ThemedView";
 import { color } from "@/constant/color";
 import { getUserIdFromStorage } from "@/utils/storage";
 import { getUserHistory } from "@/services/user.service";
-import { useAlert } from "@/hooks/useAlert";
+import { useNotification } from "@/context/NotificationContext";
 
 interface DonationHistory {
   id: number;
@@ -34,6 +34,7 @@ import { useTranslation } from "react-i18next";
 export default function Historique() {
   const { t, i18n } = useTranslation();
   const router = useRouter();
+  const { show } = useNotification();
   const [donations, setDonations] = useState<DonationHistory[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);

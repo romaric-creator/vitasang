@@ -169,7 +169,6 @@ function RootLayoutNav() {
       <Stack.Screen name="OnboardingCarousel" />
       <Stack.Screen name="create-alert" options={{ presentation: "modal" }} />
       <Stack.Screen name="alert-tracking/[id]" />
-      <Stack.Screen name="tracking" />
       <Stack.Screen name="edit-profile" />
       <Stack.Screen name="alert-response/[id]" />
       <Stack.Screen name="book-appointment/[centreId]" />

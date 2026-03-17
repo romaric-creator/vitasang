@@ -9,6 +9,7 @@ import {
   Platform,
 } from "react-native";
 import { Formik } from "formik";
+import { router } from "expo-router";
 import { color } from "@/constant/color";
 import { loginValidationSchema } from "@/validation/ValidationSchemas";
 import FormField from "@/components/FormField";
@@ -127,9 +128,7 @@ export default function LoginScreen() {
           {/* Footer - Switch to Register */}
           <View style={styles.footer}>
             <Text style={styles.footerText}>{t("login.noAccount")} </Text>
-            <TouchableOpacity
-              onPress={() => require("expo-router").router.replace("/register")}
-            >
+            <TouchableOpacity onPress={() => router.replace("/register")}>
               <Text style={styles.registerLink}>{t("login.registerLink")}</Text>
             </TouchableOpacity>
           </View>

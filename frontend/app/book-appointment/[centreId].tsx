@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from "react";
 import {
   StyleSheet,
   Text,
@@ -6,30 +6,30 @@ import {
   TouchableOpacity,
   ScrollView,
   Alert,
-} from 'react-native';
-import { useLocalSearchParams, useRouter } from 'expo-router';
-import { PageHeader } from '@/components/PageHeader';
-import ThemedView from '@/components/ThemedView';
-import { color } from '@/constant/color';
-import { useAlert } from '@/hooks/useAlert';
-import { Formik } from 'formik';
-import * as Yup from 'yup';
-import FormField from '@/components/FormField';
-import { PrimaryButton } from '@/components/PrimaryButton';
-import { TabBarIcon } from '@/components/TabBarIcon';
-import { getCentreDetails, createAppointment } from '@/services/user.service';
-import { LoadingOverlay } from '@/components/LoadingOverlay';
-import { useTranslation } from 'react-i18next';
+} from "react-native";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import { PageHeader } from "@/components/PageHeader";
+import ThemedView from "@/components/ThemedView";
+import { color } from "@/constant/color";
+import { useNotification } from "@/context/NotificationContext";
+import { Formik } from "formik";
+import * as Yup from "yup";
+import FormField from "@/components/FormField";
+import { PrimaryButton } from "@/components/PrimaryButton";
+import { TabBarIcon } from "@/components/TabBarIcon";
+import { getCentreDetails, createAppointment } from "@/services/user.service";
+import { LoadingOverlay } from "@/components/LoadingOverlay";
+import { useTranslation } from "react-i18next";
 
 const BookingSchema = Yup.object().shape({
-  date: Yup.string().required('La date est requise'),
+  date: Yup.string().required("La date est requise"),
   time: Yup.string().required("L'heure est requise"),
 });
 
 export default function BookAppointmentScreen() {
   const { t } = useTranslation();
   const router = useRouter();
-  const { showAlert } = useAlert();
+  const { show } = useNotification();
   const params = useLocalSearchParams();
   const centreId = Number(params.centreId);
 
@@ -47,10 +47,10 @@ export default function BookAppointmentScreen() {
         if (res.success) {
           setCentre(res.centre);
         } else {
-          showAlert(t('booking.loadError'), 'error');
+          show("error", t("booking.loadError"));
         }
       } catch (error) {
-        showAlert(t('booking.loadError'), 'error');
+        show("error", t("booking.loadError"));
       } finally {
         setLoading(false);
       }
@@ -69,13 +69,13 @@ export default function BookAppointmentScreen() {
       };
       const res = await createAppointment(appointmentData);
       if (res.success) {
-        showAlert(t('booking.success'), 'success');
-        router.replace('/rendezvous');
+        show("success", t("booking.success"));
+        router.replace("/rendezvous");
       } else {
-        showAlert(t('booking.submitError'), 'error');
+        show("error", t("booking.submitError"));
       }
     } catch (error) {
-      showAlert(t('booking.submitError'), 'error');
+      show("error", t("booking.submitError"));
     } finally {
       setIsSubmitting(false);
     }
@@ -84,7 +84,7 @@ export default function BookAppointmentScreen() {
   if (loading) {
     return (
       <View style={styles.centerContent}>
-        <LoadingOverlay visible={true} message={t('common.loading')} />
+        <LoadingOverlay visible={true} message={t("common.loading")} />
       </View>
     );
   }
@@ -92,52 +92,59 @@ export default function BookAppointmentScreen() {
   if (!centre) {
     return (
       <View style={styles.centerContent}>
-        <Text>{t('booking.notFound')}</Text>
+        <Text>{t("booking.notFound")}</Text>
       </View>
     );
   }
 
   return (
     <ThemedView style={styles.container}>
-      <PageHeader title={t('booking.title')} />
+      <PageHeader title={t("booking.title")} />
       <ScrollView>
         <View style={styles.centreInfo}>
-            <TabBarIcon name="hospital-o" size={24} color={color.primary} />
-            <View>
-                <Text style={styles.centreName}>{centre.nom_centre}</Text>
-                <Text style={styles.centreAddress}>{centre.adresse}</Text>
-            </View>
+          <TabBarIcon name="hospital-o" size={24} color={color.primary} />
+          <View>
+            <Text style={styles.centreName}>{centre.nom_centre}</Text>
+            <Text style={styles.centreAddress}>{centre.adresse}</Text>
+          </View>
         </View>
 
         <Formik
-          initialValues={{ date: '', time: '' }}
+          initialValues={{ date: "", time: "" }}
           validationSchema={BookingSchema}
           onSubmit={handleBooking}
         >
-          {({ values, errors, touched, handleChange, handleBlur, handleSubmit }) => (
+          {({
+            values,
+            errors,
+            touched,
+            handleChange,
+            handleBlur,
+            handleSubmit,
+          }) => (
             <View style={styles.form}>
               <FormField
-                label={t('booking.dateLabel')}
+                label={t("booking.dateLabel")}
                 value={values.date}
-                onChangeText={handleChange('date')}
-                onBlur={handleBlur('date')}
-                placeholder={t('booking.datePlaceholder')}
+                onChangeText={handleChange("date")}
+                onBlur={handleBlur("date")}
+                placeholder={t("booking.datePlaceholder")}
                 error={errors.date}
                 touched={touched.date}
                 // In a real app, you would replace this with a proper DatePicker component
               />
               <FormField
-                label={t('booking.timeLabel')}
+                label={t("booking.timeLabel")}
                 value={values.time}
-                onChangeText={handleChange('time')}
-                onBlur={handleBlur('time')}
-                placeholder={t('booking.timePlaceholder')}
+                onChangeText={handleChange("time")}
+                onBlur={handleBlur("time")}
+                placeholder={t("booking.timePlaceholder")}
                 error={errors.time}
                 touched={touched.time}
-                 // In a real app, you would replace this with a proper TimePicker component
+                // In a real app, you would replace this with a proper TimePicker component
               />
               <PrimaryButton
-                title={t('booking.submit')}
+                title={t("booking.submit")}
                 onPress={() => handleSubmit()}
                 loading={isSubmitting}
                 style={{ marginTop: 20 }}
@@ -157,11 +164,11 @@ const styles = StyleSheet.create({
   },
   centerContent: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   centreInfo: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: 16,
     padding: 16,
     margin: 16,
@@ -172,7 +179,7 @@ const styles = StyleSheet.create({
   },
   centreName: {
     fontSize: 16,
-    fontWeight: '700',
+    fontWeight: "700",
     color: color.textMain,
   },
   centreAddress: {
@@ -181,5 +188,5 @@ const styles = StyleSheet.create({
   },
   form: {
     paddingHorizontal: 16,
-  }
+  },
 });

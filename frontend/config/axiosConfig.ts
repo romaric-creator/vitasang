@@ -136,8 +136,8 @@ export const createAxiosInstance = (): AxiosInstance => {
 
       // Implement retry logic for specific errors (per-request tracking)
       const config = error.config as any;
-      const currentRetryCount = (config?._retryCount || 0);
-      
+      const currentRetryCount = config?._retryCount || 0;
+
       if (
         isRetryableError(apiError) &&
         currentRetryCount < MAX_RETRIES &&

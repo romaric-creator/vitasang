@@ -37,7 +37,7 @@ export default function RegisterScreen() {
         values.telephone,
         values.mot_de_passe,
         values.groupe_sanguin,
-        "donneur"
+        "donneur",
       );
 
       const userToStore = {
@@ -60,16 +60,31 @@ export default function RegisterScreen() {
       router.replace("/(tabs)");
     } catch (err: any) {
       console.error("Registration error:", err.message);
-      setGeneralError(err.message || t('register.error'));
+      setGeneralError(err.message || t("register.error"));
     } finally {
       setLoading(false);
     }
   };
 
-  const handleNextStep = (validateForm: any, values: any) => {
+  const handleNextStep = (validateForm: any, values: any, setTouched: any) => {
+    const step1Fields = {
+      nom: true,
+      prenom: true,
+      telephone: true,
+      mot_de_passe: true,
+      confirmPassword: true,
+    };
+    setTouched(step1Fields);
+
     validateForm(values).then((errors: any) => {
-      const step1Errors = ['nom', 'prenom', 'telephone', 'mot_de_passe', 'confirmPassword'];
-      const hasErrors = step1Errors.some(field => errors[field]);
+      const step1Errors = [
+        "nom",
+        "prenom",
+        "telephone",
+        "mot_de_passe",
+        "confirmPassword",
+      ];
+      const hasErrors = step1Errors.some((field) => errors[field]);
       if (!hasErrors) {
         setStep(2);
       }
@@ -89,10 +104,14 @@ export default function RegisterScreen() {
         <View style={styles.container}>
           <View style={styles.headerSection}>
             <Text style={styles.title}>
-              {step === 1 ? t('register.step1.title') : t('register.step2.title')}
+              {step === 1
+                ? t("register.step1.title")
+                : t("register.step2.title")}
             </Text>
             <Text style={styles.subtitle}>
-              {step === 1 ? t('register.subtitle') : t('register.step2.subtitle')}
+              {step === 1
+                ? t("register.subtitle")
+                : t("register.step2.subtitle")}
             </Text>
           </View>
 
@@ -109,18 +128,28 @@ export default function RegisterScreen() {
             onSubmit={handleRegister}
             validateOnMount
           >
-            {({ values, errors, touched, handleChange, handleBlur, handleSubmit, validateForm, isValid }) => (
+            {({
+              values,
+              errors,
+              touched,
+              handleChange,
+              handleBlur,
+              handleSubmit,
+              validateForm,
+              setTouched,
+              isValid,
+            }) => (
               <View style={styles.formContainer}>
                 {step === 1 && (
                   <>
                     <View style={styles.row}>
                       <View style={{ flex: 1 }}>
                         <FormField
-                          label={t('register.fields.lastName')}
+                          label={t("register.fields.lastName")}
                           value={values.nom}
                           onChangeText={handleChange("nom")}
                           onBlur={handleBlur("nom")}
-                          placeholder={t('register.placeholders.lastName')}
+                          placeholder={t("register.placeholders.lastName")}
                           error={errors.nom}
                           touched={touched.nom}
                           required
@@ -129,11 +158,11 @@ export default function RegisterScreen() {
                       <View style={{ width: 12 }} />
                       <View style={{ flex: 1 }}>
                         <FormField
-                          label={t('register.fields.firstName')}
+                          label={t("register.fields.firstName")}
                           value={values.prenom}
                           onChangeText={handleChange("prenom")}
                           onBlur={handleBlur("prenom")}
-                          placeholder={t('register.placeholders.firstName')}
+                          placeholder={t("register.placeholders.firstName")}
                           error={errors.prenom}
                           touched={touched.prenom}
                           required
@@ -142,24 +171,26 @@ export default function RegisterScreen() {
                     </View>
 
                     <FormField
-                      label={t('register.fields.phone')}
+                      label={t("register.fields.phone")}
                       value={values.telephone}
                       onChangeText={handleChange("telephone")}
                       onBlur={handleBlur("telephone")}
-                      placeholder={t('register.placeholders.phone')}
+                      placeholder={t("register.placeholders.phone")}
                       error={errors.telephone}
                       touched={touched.telephone}
                       keyboardType="phone-pad"
                       required
                     />
-                    <Text style={styles.hintText}>{t('register.hintPhone')}</Text>
+                    <Text style={styles.hintText}>
+                      {t("register.hintPhone")}
+                    </Text>
 
                     <FormField
-                      label={t('register.fields.password')}
+                      label={t("register.fields.password")}
                       value={values.mot_de_passe}
                       onChangeText={handleChange("mot_de_passe")}
                       onBlur={handleBlur("mot_de_passe")}
-                      placeholder={t('register.placeholders.password')}
+                      placeholder={t("register.placeholders.password")}
                       error={errors.mot_de_passe}
                       touched={touched.mot_de_passe}
                       secureTextEntry
@@ -167,19 +198,21 @@ export default function RegisterScreen() {
                     />
 
                     <FormField
-                      label={t('register.fields.confirmPassword')}
+                      label={t("register.fields.confirmPassword")}
                       value={values.confirmPassword}
                       onChangeText={handleChange("confirmPassword")}
                       onBlur={handleBlur("confirmPassword")}
-                      placeholder={t('register.placeholders.confirmPassword')}
+                      placeholder={t("register.placeholders.confirmPassword")}
                       error={errors.confirmPassword}
                       touched={touched.confirmPassword}
                       secureTextEntry
                       required
                     />
                     <PrimaryButton
-                      title={t('register.next')}
-                      onPress={() => handleNextStep(validateForm, values)}
+                      title={t("register.next")}
+                      onPress={() =>
+                        handleNextStep(validateForm, values, setTouched)
+                      }
                       style={{ marginTop: 20 }}
                     />
                   </>
@@ -189,7 +222,9 @@ export default function RegisterScreen() {
                   <>
                     <BloodGroupSelector
                       value={values.groupe_sanguin}
-                      onSelect={(group) => handleChange("groupe_sanguin")(group)}
+                      onSelect={(group) =>
+                        handleChange("groupe_sanguin")(group)
+                      }
                       error={errors.groupe_sanguin}
                       touched={touched.groupe_sanguin}
                     />
@@ -199,25 +234,30 @@ export default function RegisterScreen() {
                     ) : null}
 
                     <View style={styles.buttonRow}>
-                        <TouchableOpacity style={styles.backButton} onPress={() => setStep(1)}>
-                            <Text style={styles.backButtonText}>{t('register.back')}</Text>
-                        </TouchableOpacity>
-                        <PrimaryButton
-                            title={t('register.submit')}
-                            onPress={() => handleSubmit()}
-                            loading={loading}
-                            style={{ marginTop: 20, flex: 1 }}
-                            disabled={!isValid}
-                        />
+                      <TouchableOpacity
+                        style={styles.backButton}
+                        onPress={() => setStep(1)}
+                      >
+                        <Text style={styles.backButtonText}>
+                          {t("register.back")}
+                        </Text>
+                      </TouchableOpacity>
+                      <PrimaryButton
+                        title={t("register.submit")}
+                        onPress={() => handleSubmit()}
+                        loading={loading}
+                        style={{ marginTop: 20, flex: 1 }}
+                        disabled={!isValid}
+                      />
                     </View>
                   </>
                 )}
 
                 <TouchableOpacity onPress={() => router.replace("/login")}>
                   <Text style={styles.loginLinkText}>
-                    {t('register.alreadyRegistered')}{" "}
+                    {t("register.alreadyRegistered")}{" "}
                     <Text style={styles.loginLinkHighlight}>
-                      {t('register.loginLink')}
+                      {t("register.loginLink")}
                     </Text>
                   </Text>
                 </TouchableOpacity>
@@ -256,7 +296,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   row: {
-    flexDirection: 'row',
+    flexDirection: "row",
   },
   loginLinkText: {
     color: color.textSecondary,
@@ -284,8 +324,8 @@ const styles = StyleSheet.create({
     fontStyle: "italic",
   },
   buttonRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginTop: 20,
   },
   backButton: {
@@ -294,7 +334,7 @@ const styles = StyleSheet.create({
   },
   backButtonText: {
     color: color.primary,
-    fontWeight: '700',
+    fontWeight: "700",
     fontSize: 16,
-  }
+  },
 });

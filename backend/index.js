@@ -22,20 +22,23 @@ app.use(helmet());
 
 // CORS Configuration - Whitelist security
 const allowedOrigins = [
-  'https://vitasang.vercel.app',
-  'http://localhost:3000',
-  'http://localhost:8081',
-  process.env.FRONTEND_URL
+  "https://vitasang.vercel.app",
+  "http://localhost:3000",
+  "http://localhost:8081",
+  process.env.FRONTEND_URL,
 ].filter(Boolean);
 
-app.use(cors({
-  origin: process.env.NODE_ENV === 'production' 
-    ? allowedOrigins.filter(url => url.startsWith('https'))
-    : allowedOrigins,
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
-}));
+app.use(
+  cors({
+    origin:
+      process.env.NODE_ENV === "production"
+        ? allowedOrigins.filter((url) => url.startsWith("https"))
+        : allowedOrigins,
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  }),
+);
 
 app.use(express.json({ limit: "1mb" }));
 app.use(express.urlencoded({ limit: "1mb", extended: true }));

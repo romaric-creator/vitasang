@@ -1,6 +1,8 @@
 // Vérifier les variables d'environnement critiques
 if (!process.env.DB_PASS) {
-  throw new Error('CRITIQUE: Variable d\'environnement DB_PASS est obligatoire et non définie');
+  throw new Error(
+    "CRITIQUE: Variable d'environnement DB_PASS est obligatoire et non définie",
+  );
 }
 
 module.exports = {
@@ -12,9 +14,9 @@ module.exports = {
   dialect: "mysql",
   dialectOptions: {
     ssl: {
-      minVersion: 'TLSv1.2',
-      rejectUnauthorized: process.env.NODE_ENV === 'production' ? true : false
-    }
+      minVersion: "TLSv1.2",
+      rejectUnauthorized: process.env.NODE_ENV === "production" ? true : false,
+    },
   },
   pool: {
     max: 5,

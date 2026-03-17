@@ -13,7 +13,7 @@ import { Formik } from "formik";
 import { color } from "@/constant/color";
 import { getUserIdFromStorage, storeData } from "@/utils/storage";
 import { getUserProfile, updateUserProfile } from "@/services/user.service";
-import { useAlert } from "@/hooks/useAlert";
+import { useNotification } from "@/context/NotificationContext";
 import { editProfileValidationSchema } from "@/validation/ValidationSchemas";
 import FormField from "@/components/FormField";
 import { PrimaryButton } from "@/components/PrimaryButton";
@@ -31,7 +31,7 @@ import { LoadingOverlay } from "@/components/LoadingOverlay";
 export default function EditProfileScreen() {
   const { t } = useTranslation();
   const router = useRouter();
-  const { showAlert } = useAlert();
+  const { show } = useNotification();
   const [userData, setUserData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -61,11 +61,11 @@ export default function EditProfileScreen() {
             setCurrentImage(photoUrl);
           }
         } else {
-          showAlert(res.message || t("editProfile.loadError"), "error");
+          show("error", res.message || t("editProfile.loadError"));
         }
       }
     } catch (error) {
-      showAlert(t("editProfile.loadError"), "error");
+      show("error", t("editProfile.loadError"));
       console.error("Error loading profile:", error);
     } finally {
       setLoading(false);
@@ -96,7 +96,7 @@ export default function EditProfileScreen() {
           await uploadProfilePicture(userId, selectedImage);
         } catch (uploadErr) {
           console.error("Image upload failed:", uploadErr);
-          showAlert(t("editProfile.image.error"), "error");
+          show("error", t("editProfile.image.error"));
           // On continue quand même la mise à jour des autres champs
         }
       }
@@ -110,13 +110,13 @@ export default function EditProfileScreen() {
           await storeData("user", updatedRes.user);
         }
 
-        showAlert(t("editProfile.success"), "success");
+        show("success", t("editProfile.success"));
         setTimeout(() => router.replace("/(tabs)/profile"), 1500);
       } else {
-        showAlert(response.message || t("editProfile.error"), "error");
+        show("error", response.message || t("editProfile.error"));
       }
     } catch (error: any) {
-      showAlert(error?.message || t("editProfile.error"), "error");
+      show("error", error?.message || t("editProfile.error"));
       console.error("Error updating profile:", error);
     } finally {
       setSaving(false);

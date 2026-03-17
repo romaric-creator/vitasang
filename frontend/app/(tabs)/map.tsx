@@ -18,7 +18,6 @@ import { color } from "@/constant/color";
 import { ModernSpinner } from "@/components/ModernSpinner";
 import { LoadingOverlay } from "@/components/LoadingOverlay";
 import { getAllCentres, searchCentresNearby } from "@/services/user.service";
-import { useAlert } from "@/hooks/useAlert";
 import { getCurrentPositionAsync } from "@/utils/location";
 import { useTranslation } from "react-i18next";
 import { DataCard, DataCardRow } from "@/components/DataCard";
@@ -26,7 +25,6 @@ import { DataCard, DataCardRow } from "@/components/DataCard";
 export default function MapScreen() {
   const { t } = useTranslation();
   const router = useRouter();
-  const { showAlert } = useAlert();
   const mapRef = useRef<MapView>(null);
 
   const [centres, setCentres] = useState<any[]>([]);

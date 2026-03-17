@@ -5,7 +5,7 @@ const ProfilDonneur = db.ProfilDonneur;
 const LogNotification = db.LogNotification;
 const logger = require("../config/logger");
 const { calculateDistance } = require("../utils/geoHelpers");
-const axios = require("axios");
+const expoNotifications = require("../utils/expoNotifications"); // Import the new utility
 const { ErrorTypes } = require("../utils/errorHandler");
 
 const bloodCompatibility = {
@@ -94,23 +94,25 @@ exports.createAlertAndNotify = async (req, res, next) => {
 
           if (donor.push_token) {
             donorsWithToken++;
-            messages.push({
-              to: donor.push_token,
-              sound: "default",
-              title: "Urgence Sang",
-              body: `Urgence sang ${groupe_sanguin} à ${distance.toFixed(2)} km de votre position !`,
-              data: {
-                alertId: alerte.id_alerte,
-                groupe_sanguin,
-                distance: distance.toFixed(2),
-              },
-            });
+            messages.push(
+              expoNotifications.buildPushMessage({
+                to: donor.push_token,
+                title: "Urgence Sang",
+                body: `Urgence sang ${groupe_sanguin} à ${distance.toFixed(2)} km de votre position !`,
+                data: {
+                  alertId: alerte.id_alerte,
+                  groupe_sanguin,
+                  distance: distance.toFixed(2),
+                },
+              }),
+            );
 
             await LogNotification.create({
               id_utilisateur: donor.id_utilisateur,
               id_alerte: alerte.id_alerte,
               canal: "push",
-              statut_reception: "envoye",
+              statut_reception: "en_attente", // Initial status
+              push_token: donor.push_token, // Store token for later reference
             });
           } else {
             await LogNotification.create({
@@ -131,27 +133,29 @@ exports.createAlertAndNotify = async (req, res, next) => {
     }
 
     if (messages.length > 0) {
-      try {
-        const response = await axios.post(
-          "https://exp.host/--/api/v2/push/send",
-          messages,
-          {
-            headers: {
-              Accept: "application/json",
-              "Content-Type": "application/json",
-            },
-          },
+      const { successful, failed } = await expoNotifications.sendPushNotifications(
+        messages,
+      );
+
+      for (const token of successful) {
+        await LogNotification.update(
+          { statut_reception: "envoye" },
+          { where: { push_token: token, id_alerte: alerte.id_alerte } },
         );
-        logger.info("Notifications batch sent directly to Expo API", {
-          count: messages.length,
-          expoResponse: response.data,
-        });
-      } catch (error) {
-        logger.error("Error sending Axios push notifications to Expo API", {
-          error: error.message,
-          responseData: error.response ? error.response.data : null,
-        });
       }
+
+      for (const { token, error } of failed) {
+        await LogNotification.update(
+          { statut_reception: "echec", details_echec: error },
+          { where: { push_token: token, id_alerte: alerte.id_alerte } },
+        );
+        logger.error("Failed to send notification to token", { token, error });
+      }
+
+      logger.info("Notifications sent via Expo SDK", {
+        successful: successful.length,
+        failed: failed.length,
+      });
     }
 
     res.status(201).json({

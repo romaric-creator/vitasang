@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import {
   StyleSheet,
   View,
@@ -25,30 +25,46 @@ export default function AlertTracking() {
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState<any>(null);
   const [notifiedDonors, setNotifiedDonors] = useState<NotifiedDonor[]>([]);
+  const isMountedRef = useRef(true);
 
   const fetchStatus = async () => {
     try {
       const res = await getAlertStatus(Number(id));
-      setData(res);
+      if (isMountedRef.current) {
+        setData(res);
+      }
     } catch (error) {
-      console.error(error);
+      if (isMountedRef.current) {
+        console.error(error);
+      }
     } finally {
-      setLoading(false);
+      if (isMountedRef.current) {
+        setLoading(false);
+      }
     }
   };
 
   useEffect(() => {
+    isMountedRef.current = true;
+
     if (notifiedDonorsParam && typeof notifiedDonorsParam === "string") {
       try {
         const parsedDonors = JSON.parse(notifiedDonorsParam);
-        setNotifiedDonors(parsedDonors);
+        if (isMountedRef.current) {
+          setNotifiedDonors(parsedDonors);
+        }
       } catch (e) {
         console.error("AlertTracking: Failed to parse notifiedDonorsParam", e);
       }
     }
+
     fetchStatus();
     const interval = setInterval(fetchStatus, 5000); // Polling toutes les 5s
-    return () => clearInterval(interval);
+
+    return () => {
+      isMountedRef.current = false;
+      clearInterval(interval);
+    };
   }, [id, notifiedDonorsParam]);
 
   if (loading || !data) {
@@ -82,13 +98,13 @@ export default function AlertTracking() {
           <StatBox
             label="Notifi&eacute;s"
             value={stats.total}
-            color="#3498DB"
+            color={color.info}
           />
-          <StatBox label="Lus" value={stats.lu} color="#F1C40F" />
+          <StatBox label="Lus" value={stats.lu} color={color.warning} />
           <StatBox
             label="Accept&eacute;s"
             value={stats.accepte}
-            color="#2ECC71"
+            color={color.success}
           />
         </View>
 
@@ -147,18 +163,18 @@ const StatBox = ({ label, value, color }: any) => (
 const getStatutColor = (statut: string) => {
   switch (statut) {
     case "accepte":
-      return "#2ECC71";
+      return color.success;
     case "lu":
-      return "#F1C40F";
+      return color.warning;
     case "envoye":
-      return "#BDC3C7";
+      return color.textLight;
     default:
-      return "#E74C3C";
+      return color.error;
   }
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#F8F9FA" },
+  container: { flex: 1, backgroundColor: color.screenBackground },
   center: { flex: 1, justifyContent: "center", alignItems: "center" },
   header: {
     flexDirection: "row",
@@ -170,7 +186,11 @@ const styles = StyleSheet.create({
     backgroundColor: "white",
   },
   headerTitle: { fontSize: 18, fontWeight: "bold" },
-  content: { padding: 20, flexGrow: 1, backgroundColor: "#F8F9FA" },
+  content: {
+    padding: 20,
+    flexGrow: 1,
+    backgroundColor: color.screenBackground,
+  },
   mainCard: {
     backgroundColor: "white",
     borderRadius: 20,
@@ -181,7 +201,7 @@ const styles = StyleSheet.create({
   },
   bloodType: { fontSize: 48, fontWeight: "900", color: color.primary },
   statusBadge: {
-    backgroundColor: "#E6F4FE",
+    backgroundColor: color.infoLight,
     color: color.primary,
     paddingHorizontal: 12,
     paddingVertical: 4,
@@ -190,7 +210,7 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     marginTop: 10,
   },
-  date: { fontSize: 12, color: "#95A5A6", marginTop: 10 },
+  date: { fontSize: 12, color: color.textLight, marginTop: 10 },
   statsGrid: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -205,12 +225,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   statValue: { fontSize: 20, fontWeight: "800" },
-  statLabel: { fontSize: 11, color: "#7F8C8D", marginTop: 5 },
+  statLabel: { fontSize: 11, color: color.textSecondary, marginTop: 5 },
   sectionTitle: {
     fontSize: 16,
     fontWeight: "bold",
     marginBottom: 15,
-    color: "#2C3E50",
+    color: color.textMain,
   },
   donorRow: {
     flexDirection: "row",
@@ -222,17 +242,17 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   donorName: { fontSize: 15, fontWeight: "600" },
-  donorPhone: { fontSize: 12, color: "#95A5A6" },
+  donorPhone: { fontSize: 12, color: color.textLight },
   statutPill: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6 },
   statutText: { color: "white", fontSize: 9, fontWeight: "bold" },
   footerBtn: {
-    backgroundColor: "white",
+    backgroundColor: color.surface,
     margin: 20,
     padding: 18,
     borderRadius: 15,
     borderWidth: 1,
-    borderColor: "#DDD",
+    borderColor: color.border,
     alignItems: "center",
   },
-  footerBtnText: { fontWeight: "bold", color: "#333" },
+  footerBtnText: { fontWeight: "bold", color: color.textMain },
 });
