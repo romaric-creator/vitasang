@@ -63,7 +63,7 @@ router.get("/", controller.getAllCentres);
  *       200:
  *         description: Nearby centres
  */
-router.get("/search", validateRequest(schemas.searchUsers), controller.searchCentresNearby);
+router.get("/search", validateRequest(schemas.searchCentres), controller.searchCentresNearby);
 
 /**
  * @swagger

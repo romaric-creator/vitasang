@@ -3,6 +3,7 @@
  * Gère le retry automatique, limite d'alertes, et notification utilisateur
  */
 
+import React from "react";
 import { getData, storeData } from "@/utils/storage";
 
 export interface AlertWithRetry {
@@ -237,5 +238,3 @@ export const useAlertRetry = () => {
     dismissAlert,
   };
 };
-
-import React from "react";

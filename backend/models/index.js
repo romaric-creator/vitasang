@@ -21,7 +21,7 @@ const sequelize = new Sequelize(dbConfig.DB, dbConfig.USER, dbConfig.PASSWORD, {
   },
   dialectOptions: {
     ssl: {
-      rejectUnauthorized: false
+      rejectUnauthorized: process.env.NODE_ENV === 'production' ? true : false
     }
   },
   logging: process.env.DB_LOGGING === 'true' ? console.log : false,

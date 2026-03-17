@@ -200,12 +200,12 @@ exports.login = async (req, res, next) => {
     });
 
     if (!user) {
-      return res.status(404).json({ message: "Utilisateur non trouvé" });
+      return res.status(401).json({ message: "Identifiants incorrects" });
     }
 
     const isMatch = await bcrypt.compare(mot_de_passe, user.mot_de_passe);
     if (!isMatch) {
-      return res.status(401).json({ message: "Mot de passe incorrect" });
+      return res.status(401).json({ message: "Identifiants incorrects" });
     }
 
     // Préparation du token JWT
@@ -543,8 +543,8 @@ exports.deleteUser = async (req, res, next) => {
       return res.status(404).json({ error: "Utilisateur non trouvé" });
     }
 
-    // Soft delete - set actif to false instead of hard deleting
-    user.actif = false;
+    // Soft delete - set est_actif to false instead of hard deleting
+    user.est_actif = false;
     await user.save();
 
     logger.info('User account deactivated', { userId: id });
@@ -568,7 +568,7 @@ exports.getUserHistory = async (req, res, next) => {
       return res.status(403).json({ error: "Vous ne pouvez voir que votre historique." });
     }
 
-    const historique = await db.HistoriqueDon.findAll({
+    const history = await db.HistoriqueDon.findAll({
       where: { id_donneur: id },
       include: [
         { model: db.TypeDon, as: 'typeDon' },
@@ -577,11 +577,12 @@ exports.getUserHistory = async (req, res, next) => {
       order: [['date_don', 'DESC']]
     });
 
-    logger.info('User history retrieved', { userId: id, donateCount: historique.length });
+    logger.info('User history retrieved', { userId: id, donateCount: history.length });
 
     res.status(200).json({
-      historique,
-      total: historique.length
+      success: true,
+      history,
+      total: history.length
     });
   } catch (error) {
     logger.error('Error fetching user history', { error: error.message, userId: req.params.id });

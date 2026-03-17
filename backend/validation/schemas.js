@@ -122,6 +122,17 @@ const schemas = {
     radius: Joi.number().integer().min(1).max(100).default(10),
   }),
 
+  // Search nearby centres (without blood group filter)
+  searchCentres: Joi.object({
+    latitude: Joi.number().required().messages({
+      'number.base': 'La latitude doit être un nombre',
+    }),
+    longitude: Joi.number().required().messages({
+      'number.base': 'La longitude doit être un nombre',
+    }),
+    radius: Joi.number().integer().min(1).max(100).default(10),
+  }),
+
   // Update user profile
   updateUser: Joi.object({
     nom: Joi.string().min(2).max(100).allow('').messages({
@@ -153,7 +164,7 @@ const schemas = {
       'number.base': 'id_centre doit être un nombre',
       'any.required': 'id_centre est requis',
     }),
-    date_rendezvous: Joi.date().required().iso().messages({
+    date_rdv: Joi.date().required().iso().messages({
       'date.base': 'La date doit être au format ISO',
       'any.required': 'La date est requise',
     }),
@@ -164,11 +175,11 @@ const schemas = {
 
   // Update alert status
   updateAlert: Joi.object({
-    status: Joi.string()
-      .valid('ACTIVE', 'COMPLETE', 'CANCELLED')
+    statut: Joi.string()
+      .valid('en_cours', 'satisfaite', 'annulee')
       .required()
       .messages({
-        'any.only': 'Le statut doit être: ACTIVE, COMPLETE ou CANCELLED',
+        'any.only': 'Le statut doit être: en_cours, satisfaite ou annulee',
         'string.empty': 'Le statut est requis',
       }),
   }),

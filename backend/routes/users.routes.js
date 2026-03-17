@@ -1,6 +1,6 @@
 const express = require("express");
 const controller = require("../controllers/users.controller");
-const { verifyToken } = require("../utils/auth.middleware");
+const { verifyToken, requireRole } = require("../utils/auth.middleware");
 const { validateRequest } = require("../middleware/validation");
 const upload = require("../middleware/upload");
 const schemas = require("../validation/schemas");
@@ -133,7 +133,7 @@ router.post("/login", validateRequest(schemas.login), controller.login);
  *                   items:
  *                     $ref: '#/components/schemas/User'
  */
-router.get("/", verifyToken, controller.getAllUsers);
+router.get("/", verifyToken, requireRole('admin'), controller.getAllUsers);
 
 /**
  * @swagger

@@ -22,4 +22,35 @@ const verifyToken = (req, res, next) => {
     return next();
 };
 
-module.exports = { verifyToken };
+/**
+ * Middleware de vérification de rôle
+ * Utilisation : requireRole('admin'), requireRole('centre')
+ */
+const requireRole = (roles) => {
+    // Convertir un rôle unique en tableau si nécessaire
+    const allowedRoles = Array.isArray(roles) ? roles : [roles];
+    
+    return (req, res, next) => {
+        if (!req.user) {
+            return res.status(401).json({
+                message: "Authentification requise",
+            });
+        }
+
+        if (!allowedRoles.includes(req.user.role)) {
+            logger.warn("Access denied: Insufficient role", {
+                userId: req.user.id,
+                userRole: req.user.role,
+                requiredRoles: allowedRoles,
+                endpoint: req.path,
+            });
+            return res.status(403).json({
+                message: "Accès refusé: rôle insuffisant",
+            });
+        }
+
+        return next();
+    };
+};
+
+module.exports = { verifyToken, requireRole };

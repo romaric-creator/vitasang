@@ -200,12 +200,16 @@ router.get("/accepted", verifyToken, alertsController.getAcceptedAlerts);
  *   get:
  *     tags:
  *       - Alerts
- *     summary: Get all active blood donation alerts (Public)
+ *     summary: Get all active blood donation alerts (Authenticated users only)
+ *     security:
+ *       - bearerAuth: []
  *     responses:
  *       200:
  *         description: List of active alerts
+ *       401:
+ *         description: Unauthorized
  */
-router.get("/active", alertsController.getAllActiveAlerts);
+router.get("/active", verifyToken, alertsController.getAllActiveAlerts);
 
 /**
  * @swagger
@@ -237,7 +241,6 @@ router.get("/active", alertsController.getAllActiveAlerts);
  *       404:
  *         description: Alert not found
  */
-router.get("/:id/status", verifyToken, alertsController.getAlertStatus);
 
 /**
  * @swagger

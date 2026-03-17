@@ -95,7 +95,7 @@ export default function EligibilityTestScreen() {
                             />
                         </View>
                         <Text style={styles.resultTitle}>
-                            {isEligible ? "Vous semblez éligible !" : "Un report est peut-&#39;être nécessaire"}
+                            {isEligible ? "Vous semblez éligible !" : "Un report est peut-être nécessaire"}
                         </Text>
                         <Text style={styles.resultDescription}>
                             {isEligible
