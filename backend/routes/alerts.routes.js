@@ -1,9 +1,11 @@
 const express = require("express");
 const router = express.Router();
 const alertsController = require("../controllers/alerts.controller");
-const { verifyToken, isAdmin } = require("../utils/auth.middleware");
+const { verifyToken, requireRole } = require("../utils/auth.middleware");
 const { validateRequest } = require("../middleware/validation");
 const schemas = require("../validation/schemas");
+
+const isAdmin = requireRole("admin");
 
 // The verifyToken middleware will be used for all routes defined after this line.
 router.use(verifyToken);
@@ -47,7 +49,7 @@ router.post(
  */
 router.post(
   "/:id/validate",
-  isAdmin, // Assuming only admins can validate
+  requireRole("admin"), // Assuming only admins can validate
   alertsController.validateAndNotifyAlert,
 );
 
@@ -61,7 +63,7 @@ router.post(
  *     responses:
  *       200: { description: "List of pending alerts" }
  */
-router.get("/pending", isAdmin, alertsController.getPendingAlerts);
+router.get("/pending", requireRole("admin"), alertsController.getPendingAlerts);
 
 /**
  * @swagger
@@ -74,7 +76,6 @@ router.get("/pending", isAdmin, alertsController.getPendingAlerts);
  *       200: { description: "List of live alerts" }
  */
 router.get("/live", alertsController.getLiveAlerts);
-
 
 /**
  * @swagger
