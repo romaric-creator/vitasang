@@ -1,139 +1,178 @@
-import React from 'react';
-import { AlertCircle, MapPin, Phone, Users, CheckCircle, XCircle } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import api from '../services/api';
+import { formatDistanceToNow } from 'date-fns';
+import { fr } from 'date-fns/locale';
+
+// Define the type for an alert object
+interface Alert {
+    id_alerte: number;
+    groupe_requis: string;
+    degre_urgence: 'NORMAL' | 'URGENT' | 'TRES_URGENT';
+    quantite_requise: number;
+    lieu: string;
+    description: string;
+    createdAt: string;
+    initiateur: {
+        nom: string;
+        prenom: string;
+    };
+}
+
+const UrgencyMap = {
+    TRES_URGENT: { text: 'Urgence Critique', color: 'text-primary', bgColor: 'bg-primary/10' },
+    URGENT: { text: 'Urgence Haute', color: 'text-orange-500', bgColor: 'bg-orange-500/10' },
+    NORMAL: { text: 'Standard', color: 'text-yellow-600', bgColor: 'bg-yellow-600/10' },
+};
 
 const Alerts: React.FC = () => {
-    const alerts = [
-        { id: 1, type: 'Urgence Vitale', group: 'O-', location: 'Bloc Opératoire B', patient: 'Anonyme', requiredBags: 3, status: 'Active', createdBy: 'Dr. Kamga', time: '10:05' },
-        { id: 2, type: 'Recherche Ciblée', group: 'A+', location: 'Service Maternité', patient: 'A. Ndongo', requiredBags: 1, status: 'À Valider', createdBy: 'User Alerte', time: '09:20' },
-        { id: 3, type: 'Alerte Bas Stock', group: 'B-', location: 'Banque Principale', patient: 'N/A', requiredBags: 5, status: 'Résolue', createdBy: 'Système', time: 'Hier' }
-    ];
+    const [alerts, setAlerts] = useState<Alert[]>([]);
+    const [selectedAlert, setSelectedAlert] = useState<Alert | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+
+    const fetchPendingAlerts = async () => {
+        try {
+            setLoading(true);
+            const response = await api.get('/alerts/pending');
+            if (response.data.success) {
+                setAlerts(response.data.alerts);
+                if (response.data.alerts.length > 0) {
+                    setSelectedAlert(response.data.alerts[0]);
+                }
+            }
+            setError(null);
+        } catch (err) {
+            setError("Erreur lors de la récupération des alertes.");
+            console.error(err);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchPendingAlerts();
+    }, []);
+
+    const handleValidate = async () => {
+        if (!selectedAlert) return;
+        try {
+            await api.post(`/alerts/${selectedAlert.id_alerte}/validate`);
+            // Refresh list after validation
+            fetchPendingAlerts();
+            setSelectedAlert(null);
+        } catch (err) {
+            console.error("Failed to validate alert:", err);
+            setError("La validation de l'alerte a échoué.");
+        }
+    };
+
+    const handleReject = async () => {
+        if (!selectedAlert) return;
+        try {
+            await api.put(`/alerts/${selectedAlert.id_alerte}`, { statut: 'annule' });
+            // Refresh list after rejection
+            fetchPendingAlerts();
+            setSelectedAlert(null);
+        } catch (err) {
+            console.error("Failed to reject alert:", err);
+            setError("Le rejet de l'alerte a échoué.");
+        }
+    };
 
     return (
-        <div className="container animate-fade-in" style={{ padding: '40px 0' }}>
-
-            {/* Header */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
-                <div>
-                    <h1 style={{ margin: 0, fontSize: '2rem', fontWeight: 700, color: 'var(--text-main)' }}>Alertes SOS</h1>
-                    <p style={{ margin: '5px 0 0 0', color: 'var(--text-muted)' }}>Centre de contrôle des urgences transfusionnelles</p>
+        <div className="flex-1 flex overflow-hidden -m-8">
+            {/* Left Pane: Request List */}
+            <div className="w-96 flex flex-col border-r border-slate-200 dark:border-slate-800 bg-white/50 dark:bg-black/10">
+                <div className="p-4 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center bg-white dark:bg-[#1a0d0d]">
+                    <h3 className="font-bold text-sm">Requêtes en attente ({alerts.length})</h3>
+                    <span className="material-symbols-outlined text-slate-400 cursor-pointer">filter_list</span>
                 </div>
-                <button className="btn btn-primary" style={{ background: 'var(--danger)' }}>
-                    <AlertCircle size={18} /> Diffuser une Urgence
-                </button>
+                <div className="flex-1 overflow-y-auto">
+                    {loading && <p className="p-4 text-sm text-slate-500">Chargement...</p>}
+                    {error && <p className="p-4 text-sm text-red-500">{error}</p>}
+                    {!loading && alerts.map((alert) => (
+                        <div
+                            key={alert.id_alerte}
+                            className={`p-4 border-b border-slate-200 dark:border-slate-800 cursor-pointer transition-colors ${selectedAlert?.id_alerte === alert.id_alerte ? 'bg-white dark:bg-white/5 border-l-4 border-l-primary' : 'hover:bg-white dark:hover:bg-white/5'}`}
+                            onClick={() => setSelectedAlert(alert)}
+                        >
+                            <div className="flex justify-between items-start mb-2">
+                                <span className={`text-[10px] font-bold uppercase ${UrgencyMap[alert.degre_urgence]?.color || 'text-slate-500'}`}>
+                                    {UrgencyMap[alert.degre_urgence]?.text || alert.degre_urgence}
+                                </span>
+                                <span className="text-[10px] text-slate-500">{formatDistanceToNow(new Date(alert.createdAt), { addSuffix: true, locale: fr })}</span>
+                            </div>
+                            <div className="flex gap-3">
+                                <div className={`size-10 rounded-lg ${UrgencyMap[alert.degre_urgence]?.bgColor || 'bg-slate-100'} flex items-center justify-center ${UrgencyMap[alert.degre_urgence]?.color || 'text-slate-700'} font-black text-lg`}>
+                                    {alert.groupe_requis}
+                                </div>
+                                <div className="flex-1">
+                                    <h4 className="text-sm font-bold">{alert.initiateur?.prenom} {alert.initiateur?.nom}</h4>
+                                    <p className="text-xs text-slate-500">{alert.lieu} • {alert.quantite_requise} Unités</p>
+                                </div>
+                                <span className="material-symbols-outlined text-slate-300 self-center">chevron_right</span>
+                            </div>
+                        </div>
+                    ))}
+                </div>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 2fr) minmax(0, 1fr)', gap: '20px' }}>
-
-                {/* Main Alerts List */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-
-                    <h2 style={{ fontSize: '1.25rem', margin: 0 }}>Alertes en cours</h2>
-
-                    {/* Alert Card 1 - High Priority */}
-                    <div className="card" style={{ padding: 0, overflow: 'hidden', border: '1px solid rgba(230, 57, 70, 0.2)' }}>
-                        <div style={{ background: 'var(--danger)', color: 'white', padding: '10px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontWeight: 600 }}>
-                                <AlertCircle size={18} />
-                                URGENCE VITALE - BESOIN O-
+            {/* Right Pane: Detail View */}
+            <div className="flex-1 overflow-y-auto bg-white dark:bg-[#1a0d0d] p-8">
+                {selectedAlert ? (
+                    <div className="max-w-4xl mx-auto space-y-8 animate-fade-in">
+                        <div className="flex justify-between items-end">
+                            <div>
+                                <div className="flex items-center gap-2 mb-2">
+                                    <span className="px-2 py-1 bg-primary/10 text-primary text-xs font-bold rounded">REQUÊTE SOS #{selectedAlert.id_alerte}</span>
+                                    <span className="text-xs text-slate-500 italic">Demandé par {selectedAlert.initiateur?.prenom} {selectedAlert.initiateur?.nom}</span>
+                                </div>
+                                <h2 className="text-4xl font-black tracking-tight">{selectedAlert.lieu}</h2>
+                                <p className="text-slate-500 mt-1">{selectedAlert.description}</p>
                             </div>
-                            <span style={{ fontSize: '0.875rem', background: 'rgba(255,255,255,0.2)', padding: '4px 8px', borderRadius: '4px' }}>Depuis 10:05</span>
-                        </div>
-                        <div style={{ padding: '20px' }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px' }}>
-                                <div>
-                                    <h3 style={{ margin: '0 0 10px 0' }}>Patient: Anonyme</h3>
-                                    <div style={{ display: 'flex', gap: '20px', color: 'var(--text-muted)', fontSize: '0.875rem' }}>
-                                        <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}><MapPin size={16} /> Bloc Opératoire B</span>
-                                        <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}><Users size={16} /> Requis par: Dr. Kamga</span>
-                                    </div>
-                                </div>
-                                <div style={{ textAlign: 'center' }}>
-                                    <span style={{ display: 'block', fontSize: '2rem', fontWeight: 800, color: 'var(--danger)' }}>3</span>
-                                    <span style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>Poches requises</span>
-                                </div>
-                            </div>
-
-                            <div style={{ display: 'flex', gap: '15px', borderTop: '1px solid var(--border)', paddingTop: '20px' }}>
-                                <div style={{ flex: 1 }}>
-                                    <p style={{ margin: '0 0 5px 0', fontSize: '0.875rem', fontWeight: 600 }}>Statut Diffusion</p>
-                                    <div style={{ width: '100%', height: '6px', background: 'var(--border)', borderRadius: '3px', overflow: 'hidden' }}>
-                                        <div style={{ width: '100%', height: '100%', background: 'var(--primary)' }}></div>
-                                    </div>
-                                    <p style={{ margin: '5px 0 0 0', fontSize: '0.75rem', color: 'var(--text-muted)' }}>Envoyé à 145 donneurs O- à proximité</p>
-                                </div>
-                                <button className="btn btn-secondary" style={{ color: 'var(--success)', borderColor: 'var(--success)' }}>
-                                    <CheckCircle size={18} /> Marquer Résolue
-                                </button>
+                            <div className="text-right">
+                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Temps Écoulé</p>
+                                <p className="text-2xl font-mono font-bold text-primary tracking-tighter">{formatDistanceToNow(new Date(selectedAlert.createdAt), { locale: fr })}</p>
                             </div>
                         </div>
-                    </div>
-
-                    {/* Alert Card 2 - Validation needed */}
-                    <div className="card" style={{ padding: 0, overflow: 'hidden', border: '1px solid rgba(233, 196, 106, 0.4)' }}>
-                        <div style={{ background: '#fcf6e3', color: '#b58500', padding: '10px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(233, 196, 106, 0.4)' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontWeight: 600 }}>
-                                <AlertCircle size={18} />
-                                EN ATTENTE DE VALIDATION - A+
+                        <div className="grid grid-cols-3 gap-6">
+                            <div className="p-6 bg-slate-50 dark:bg-white/5 rounded-2xl border border-slate-100 dark:border-white/10">
+                                <p className="text-xs font-medium text-slate-500 mb-2 uppercase tracking-wide">Groupe Sanguin Requis</p>
+                                <div className="flex items-center gap-3"><span className="text-4xl font-black text-primary">{selectedAlert.groupe_requis}</span><span className="material-symbols-outlined text-primary">bloodtype</span></div>
                             </div>
-                            <span style={{ fontSize: '0.875rem', background: 'white', padding: '4px 8px', borderRadius: '4px' }}>Depuis 09:20</span>
+                            <div className="p-6 bg-slate-50 dark:bg-white/5 rounded-2xl border border-slate-100 dark:border-white/10">
+                                <p className="text-xs font-medium text-slate-500 mb-2 uppercase tracking-wide">Quantité Requise</p>
+                                <div className="flex items-center gap-3"><span className="text-4xl font-black">{selectedAlert.quantite_requise}</span><span className="text-sm font-bold text-slate-500">Poches</span></div>
+                            </div>
+                            <div className="p-6 bg-slate-50 dark:bg-white/5 rounded-2xl border border-slate-100 dark:border-white/10">
+                                <p className="text-xs font-medium text-slate-500 mb-2 uppercase tracking-wide">Donneurs Disponibles (Est.)</p>
+                                <div className="flex items-center gap-3"><span className="text-4xl font-black text-green-500">?</span><span className="material-symbols-outlined text-green-500">group</span></div>
+                                <p className="text-[10px] mt-4 text-slate-400 leading-tight">L'estimation sera disponible après validation.</p>
+                            </div>
                         </div>
-                        <div style={{ padding: '20px' }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px' }}>
-                                <div>
-                                    <h3 style={{ margin: '0 0 10px 0' }}>Patient: A. Ndongo</h3>
-                                    <div style={{ display: 'flex', gap: '20px', color: 'var(--text-muted)', fontSize: '0.875rem' }}>
-                                        <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}><MapPin size={16} /> Service Maternité</span>
-                                        <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}><Phone size={16} /> Initiateur: +237 6XX...</span>
-                                    </div>
-                                </div>
-                                <div style={{ textAlign: 'center' }}>
-                                    <span style={{ display: 'block', fontSize: '2rem', fontWeight: 800, color: 'var(--text-main)' }}>1</span>
-                                    <span style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>Poche requise</span>
-                                </div>
-                            </div>
-
-                            <div style={{ display: 'flex', gap: '15px' }}>
-                                <button className="btn btn-secondary" style={{ flex: 1, color: 'var(--danger)' }}>
-                                    <XCircle size={18} /> Rejeter
-                                </button>
-                                <button className="btn btn-primary" style={{ flex: 1 }}>
-                                    Approuver & Diffuser
-                                </button>
-                            </div>
+                        
+                        <div className="flex items-center gap-4 pt-6 border-t border-slate-100 dark:border-white/10">
+                            <button onClick={handleValidate} className="flex-1 bg-primary hover:bg-red-700 text-white font-bold py-4 px-6 rounded-xl flex items-center justify-center gap-3 transition-all transform active:scale-[0.98] shadow-lg shadow-primary/20">
+                                <span className="material-symbols-outlined">send</span>
+                                Valider & Diffuser le SOS
+                            </button>
+                            <button disabled className="flex-none bg-slate-100 dark:bg-white/10 text-slate-400 font-bold py-4 px-6 rounded-xl flex items-center justify-center gap-2 cursor-not-allowed">
+                                <span className="material-symbols-outlined">edit</span>
+                                Modifier
+                            </button>
+                            <button onClick={handleReject} className="flex-none border border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/5 text-slate-500 font-bold py-4 px-6 rounded-xl flex items-center justify-center gap-2 transition-colors">
+                                <span className="material-symbols-outlined">close</span>
+                                Rejeter la demande
+                            </button>
                         </div>
                     </div>
-
-                </div>
-
-                {/* Sidebar info */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                    <div className="card">
-                        <h3 style={{ margin: '0 0 15px 0' }}>Statistiques d'Alertes</h3>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px', background: 'var(--background)', borderRadius: '8px' }}>
-                                <span style={{ color: 'var(--text-muted)' }}>Générées ce mois</span>
-                                <span style={{ fontWeight: 600 }}>14</span>
-                            </div>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px', background: 'var(--background)', borderRadius: '8px' }}>
-                                <span style={{ color: 'var(--text-muted)' }}>Taux de réponse</span>
-                                <span style={{ fontWeight: 600, color: 'var(--success)' }}>85%</span>
-                            </div>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px', background: 'var(--background)', borderRadius: '8px' }}>
-                                <span style={{ color: 'var(--text-muted)' }}>Temps moyen (résolution)</span>
-                                <span style={{ fontWeight: 600 }}>4h 20m</span>
-                            </div>
-                        </div>
+                ) : (
+                    <div className="flex flex-col items-center justify-center h-full text-center text-slate-500">
+                        <span className="material-symbols-outlined text-6xl mb-4">inbox</span>
+                        <h3 className="font-bold">Aucune requête en attente</h3>
+                        <p className="text-sm">Les nouvelles demandes d'alerte SOS apparaîtront ici pour validation.</p>
                     </div>
-
-                    <div className="card">
-                        <h3 style={{ margin: '0 0 15px 0' }}>Protocoles d'Urgence</h3>
-                        <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', margin: '0 0 10px 0' }}>
-                            En cas de besoin critique, l'alerte est poussée aux donneurs universels (O-) en priorité avec une notification sonore forcée si autorisé par l'OS mobile.
-                        </p>
-                        <a href="#" style={{ color: 'var(--primary)', fontSize: '0.875rem', fontWeight: 600, textDecoration: 'none' }}>Lire le protocole</a>
-                    </div>
-                </div>
-
+                )}
             </div>
         </div>
     );
