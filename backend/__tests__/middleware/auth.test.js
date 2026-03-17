@@ -1,10 +1,10 @@
-const { verifyToken } = require('../../utils/auth.middleware');
-const jwt = require('jsonwebtoken');
+const { verifyToken } = require("../../utils/auth.middleware");
+const jwt = require("jsonwebtoken");
 
 // Setup
-process.env.JWT_SECRET = 'test-secret-key-for-testing';
+process.env.JWT_SECRET = "test-secret-key-for-testing";
 
-describe('Auth Middleware - verifyToken', () => {
+describe("Auth Middleware - verifyToken", () => {
   const mockReq = (token = null) => ({
     headers: {
       authorization: token ? `Bearer ${token}` : null,
@@ -24,11 +24,11 @@ describe('Auth Middleware - verifyToken', () => {
     jest.clearAllMocks();
   });
 
-  test('should call next() with valid token', () => {
+  test("should call next() with valid token", () => {
     const validToken = jwt.sign(
-      { id: 1, telephone: '655123456' },
-      'test-secret-key-for-testing',
-      { expiresIn: '7d' }
+      { id: 1, telephone: "655123456" },
+      "test-secret-key-for-testing",
+      { expiresIn: "7d" },
     );
 
     const req = mockReq(validToken);
@@ -41,28 +41,28 @@ describe('Auth Middleware - verifyToken', () => {
     expect(req.user.id).toBe(1);
   });
 
-  test('should return 403 if no token provided', () => {
+  test("should return 401 if no token provided", () => {
     const req = mockReq(null);
-    const res = mockRes();
-
-    verifyToken(req, res, mockNext);
-
-    expect(res.status).toHaveBeenCalledWith(403);
-    expect(res.json).toHaveBeenCalledWith({
-      message: 'Un token est requis pour l\'authentification',
-    });
-    expect(mockNext).not.toHaveBeenCalled();
-  });
-
-  test('should return 401 if token is invalid', () => {
-    const req = mockReq('invalid-token');
     const res = mockRes();
 
     verifyToken(req, res, mockNext);
 
     expect(res.status).toHaveBeenCalledWith(401);
     expect(res.json).toHaveBeenCalledWith({
-      message: 'Token invalide ou expiré',
+      message: "Un token est requis pour l'authentification",
+    });
+    expect(mockNext).not.toHaveBeenCalled();
+  });
+
+  test("should return 401 if token is invalid", () => {
+    const req = mockReq("invalid-token");
+    const res = mockRes();
+
+    verifyToken(req, res, mockNext);
+
+    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.json).toHaveBeenCalledWith({
+      message: "Token invalide ou expiré",
     });
     expect(mockNext).not.toHaveBeenCalled();
   });
