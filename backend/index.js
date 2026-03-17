@@ -1,12 +1,5 @@
 require("dotenv").config();
 
-// Sentry Integration - MUST be initialized as early as possible
-const Sentry = require("@sentry/node");
-Sentry.init({
-  dsn: process.env.SENTRY_DSN,
-  environment: process.env.NODE_ENV,
-});
-
 const mysql2 = require("mysql2"); // Importation forcée pour Vercel
 const express = require("express");
 const cors = require("cors");
@@ -24,9 +17,6 @@ const swaggerSpecs = require("./config/swagger");
 const { errorHandler, notFoundHandler } = require("./middleware/errorHandler");
 
 const app = express();
-
-// Sentry Request Handler - MUST be the first middleware on the app
-app.use(Sentry.Handlers.requestHandler());
 
 app.set("trust proxy", 1); // Indispensable pour Vercel et express-rate-limit
 app.use(helmet());
@@ -94,9 +84,6 @@ app.get("/", (req, res) => {
 
 // 404 Not Found Handler - MUST be after all routes
 app.use(notFoundHandler);
-
-// Sentry Error Handler - MUST be before any other error handling middleware
-app.use(Sentry.Handlers.errorHandler());
 
 // Global Error Handler - MUST be after all routes and middleware
 app.use(errorHandler);
