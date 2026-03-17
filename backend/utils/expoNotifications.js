@@ -3,10 +3,7 @@
  * Manages push notifications with proper error handling
  */
 
-const { Expo } = require("expo-server-sdk");
 const logger = require("../config/logger");
-
-const expo = new Expo();
 
 /**
  * Sends push notifications with individual error handling
@@ -14,6 +11,19 @@ const expo = new Expo();
  * @returns {Object} { successful: Array, failed: Array, tickets: Array }
  */
 exports.sendPushNotifications = async (messages) => {
+  // Dynamically import Expo
+  let Expo;
+  try {
+    Expo = (await import("expo-server-sdk")).Expo;
+  } catch (error) {
+    logger.error("Failed to load expo-server-sdk", { error });
+    // Mark all as failed if the module can't be loaded
+    const failed = messages.map(msg => ({ token: msg.to, error: "Expo SDK could not be loaded." }));
+    return { successful: [], failed, tickets: [] };
+  }
+
+  const expo = new Expo();
+
   if (!messages || messages.length === 0) {
     return { successful: [], failed: [], tickets: [] };
   }
@@ -78,15 +88,6 @@ exports.sendPushNotifications = async (messages) => {
     failed,
     tickets,
   };
-};
-
-/**
- * Verifies valid Expo push token format
- * @param {string} token - Expo push token
- * @returns {boolean}
- */
-exports.isValidExpoPushToken = (token) => {
-  return Expo.isExpoPushToken(token);
 };
 
 /**

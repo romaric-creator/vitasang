@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Blood Stock Management | VitaSang</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#ea2a33",
+                        "background-light": "#f8f6f6",
+                        "background-dark": "#211111",
+                    },
+                    fontFamily: {
+                        "display": ["Inter"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display text-[#181111] dark:text-white antialiased">
+<div class="relative flex h-auto min-h-screen w-full flex-col group/design-root overflow-x-hidden">
+<div class="layout-container flex h-full grow flex-col">
+<!-- Top Navigation Bar -->
+<header class="flex items-center justify-between whitespace-nowrap border-b border-solid border-[#e5dcdc] dark:border-[#3d2a2a] bg-white dark:bg-[#2a1a1a] px-10 py-3 sticky top-0 z-50">
+<div class="flex items-center gap-8">
+<div class="flex items-center gap-3 text-primary">
+<div class="size-8 flex items-center justify-center bg-primary/10 rounded-lg">
+<span class="material-symbols-outlined text-primary font-bold">bloodtype</span>
+</div>
+<h2 class="text-[#181111] dark:text-white text-xl font-bold leading-tight tracking-tight">VitaSang</h2>
+</div>
+<nav class="hidden md:flex items-center gap-6 ml-4">
+<a class="text-[#181111] dark:text-white/80 text-sm font-medium hover:text-primary transition-colors" href="#">Dashboard</a>
+<a class="text-primary text-sm font-bold border-b-2 border-primary pb-1" href="#">Blood Stock</a>
+<a class="text-[#181111] dark:text-white/80 text-sm font-medium hover:text-primary transition-colors" href="#">Donors</a>
+<a class="text-[#181111] dark:text-white/80 text-sm font-medium hover:text-primary transition-colors" href="#">Reports</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<button class="flex min-w-[120px] cursor-pointer items-center justify-center gap-2 rounded-lg h-10 px-4 bg-primary text-white text-sm font-bold shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all">
+<span class="material-symbols-outlined text-sm">add_circle</span>
+<span class="truncate">Add New Batch</span>
+</button>
+<div class="h-10 w-px bg-[#e5dcdc] dark:bg-[#3d2a2a] mx-2"></div>
+<div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-10 border-2 border-white dark:border-[#3d2a2a]" data-alt="Doctor profile avatar photo" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuDW6zcTV1zc9wSZMZr_D-w7eTipIEO0Iemb7l_LB73WMMkl_Itsp4eskuV7_DacZ5qH5YzcHD6szrPT1DDErnxZvpI9-nlliS9CnCIZgU3_xkuAyaFSaNuwG-uXkj0Nl8hxw9wJ1LdUZ25bCabKWqZHj39ZWdQnb0FhvnHD0NNuTiw7fmhGI7kZq8JHXR4kUrhZdxHRID4ouBy-mBD6e8lxoOw_v978qzm8L_KveU1rTO67-pmUE1NdQWaFvi2q12_HK2T8T2XnGQ");'></div>
+</div>
+</header>
+<main class="flex flex-1 justify-center py-8">
+<div class="layout-content-container flex flex-col max-w-[1200px] flex-1 px-4 md:px-10">
+<!-- Page Title & Emergency Toggle -->
+<div class="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8">
+<div class="flex flex-col gap-2">
+<h1 class="text-[#181111] dark:text-white text-4xl font-black leading-tight tracking-tight">Blood Stock Management</h1>
+<p class="text-[#886364] dark:text-white/60 text-lg">Central inventory for Cameroon National Blood Transfusion Center</p>
+</div>
+<div class="flex items-center gap-4 bg-white dark:bg-[#2a1a1a] p-4 rounded-xl border border-[#e5dcdc] dark:border-[#3d2a2a] shadow-sm">
+<div class="flex flex-col">
+<span class="text-sm font-bold text-[#181111] dark:text-white">Emergency Mode</span>
+<span class="text-xs text-[#886364] dark:text-white/60">Notify donors immediately</span>
+</div>
+<label class="relative flex h-[32px] w-[56px] cursor-pointer items-center rounded-full bg-[#f4f0f0] dark:bg-[#3d2a2a] p-1 has-[:checked]:bg-primary transition-colors">
+<input class="sr-only peer" type="checkbox"/>
+<div class="h-6 w-6 rounded-full bg-white shadow-md transform transition-transform peer-checked:translate-x-6"></div>
+</label>
+</div>
+</div>
+<!-- Search & Filters -->
+<div class="flex flex-col md:flex-row gap-4 mb-8">
+<div class="flex-1 relative">
+<span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-[#886364] dark:text-white/40">search</span>
+<input class="w-full h-12 pl-12 pr-4 rounded-xl border-none bg-white dark:bg-[#2a1a1a] shadow-sm focus:ring-2 focus:ring-primary/50 text-[#181111] dark:text-white placeholder:text-[#886364] dark:placeholder:text-white/40" placeholder="Search specific batches, donor IDs, or expiration dates..."/>
+</div>
+<button class="h-12 px-6 flex items-center justify-center gap-2 bg-white dark:bg-[#2a1a1a] border border-[#e5dcdc] dark:border-[#3d2a2a] rounded-xl font-semibold text-[#181111] dark:text-white hover:bg-[#f4f0f0] dark:hover:bg-[#3d2a2a] transition-all">
+<span class="material-symbols-outlined">filter_list</span>
+                        Filter
+                    </button>
+<button class="h-12 px-6 flex items-center justify-center gap-2 bg-white dark:bg-[#2a1a1a] border border-[#e5dcdc] dark:border-[#3d2a2a] rounded-xl font-semibold text-[#181111] dark:text-white hover:bg-[#f4f0f0] dark:hover:bg-[#3d2a2a] transition-all">
+<span class="material-symbols-outlined">download</span>
+                        Export
+                    </button>
+</div>
+<!-- Blood Stock Grid -->
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+<!-- Card A+ -->
+<div class="bg-white dark:bg-[#2a1a1a] rounded-2xl border border-[#e5dcdc] dark:border-[#3d2a2a] p-6 shadow-sm flex flex-col gap-4">
+<div class="flex justify-between items-start">
+<div class="flex flex-col">
+<span class="text-3xl font-black text-primary">A+</span>
+<span class="text-sm font-medium text-[#886364] dark:text-white/60">Positive</span>
+</div>
+<span class="px-2 py-1 bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 rounded text-xs font-bold uppercase tracking-wider">Sufficient</span>
+</div>
+<div class="flex flex-col gap-1">
+<div class="flex items-baseline gap-1">
+<span class="text-4xl font-bold">42</span>
+<span class="text-[#886364] dark:text-white/40 font-medium">Bags</span>
+</div>
+<!-- Progress Bar -->
+<div class="w-full h-2 bg-[#f4f0f0] dark:bg-[#3d2a2a] rounded-full mt-2">
+<div class="h-full bg-green-500 rounded-full w-[75%]"></div>
+</div>
+</div>
+<div class="flex flex-col gap-3 mt-2">
+<p class="text-xs text-[#886364] dark:text-white/40 italic flex items-center gap-1">
+<span class="material-symbols-outlined text-xs">schedule</span> Updated 5 mins ago
+                            </p>
+<button class="w-full py-2 bg-[#f4f0f0] dark:bg-[#3d2a2a] text-[#181111] dark:text-white rounded-lg font-bold text-sm hover:bg-primary hover:text-white transition-all">Update Stock</button>
+</div>
+</div>
+<!-- Card A- -->
+<div class="bg-white dark:bg-[#2a1a1a] rounded-2xl border border-primary/50 dark:border-primary/50 p-6 shadow-md shadow-primary/5 flex flex-col gap-4 ring-2 ring-primary/10">
+<div class="flex justify-between items-start">
+<div class="flex flex-col">
+<span class="text-3xl font-black text-primary">A-</span>
+<span class="text-sm font-medium text-[#886364] dark:text-white/60">Negative</span>
+</div>
+<span class="px-2 py-1 bg-red-100 text-primary dark:bg-primary/20 dark:text-primary rounded text-xs font-bold uppercase tracking-wider flex items-center gap-1">
+<span class="material-symbols-outlined text-[12px] animate-pulse">warning</span> Critical
+                            </span>
+</div>
+<div class="flex flex-col gap-1">
+<div class="flex items-baseline gap-1">
+<span class="text-4xl font-bold text-primary">04</span>
+<span class="text-[#886364] dark:text-white/40 font-medium">Bags</span>
+</div>
+<!-- Progress Bar -->
+<div class="w-full h-2 bg-[#f4f0f0] dark:bg-[#3d2a2a] rounded-full mt-2">
+<div class="h-full bg-primary rounded-full w-[15%]"></div>
+</div>
+</div>
+<div class="flex flex-col gap-3 mt-2">
+<p class="text-xs text-[#886364] dark:text-white/40 italic flex items-center gap-1">
+<span class="material-symbols-outlined text-xs">schedule</span> Updated 2 mins ago
+                            </p>
+<button class="w-full py-2 bg-primary text-white rounded-lg font-bold text-sm hover:bg-primary/90 transition-all shadow-md shadow-primary/20">Update Stock</button>
+</div>
+</div>
+<!-- Card B+ -->
+<div class="bg-white dark:bg-[#2a1a1a] rounded-2xl border border-[#e5dcdc] dark:border-[#3d2a2a] p-6 shadow-sm flex flex-col gap-4">
+<div class="flex justify-between items-start">
+<div class="flex flex-col">
+<span class="text-3xl font-black text-primary">B+</span>
+<span class="text-sm font-medium text-[#886364] dark:text-white/60">Positive</span>
+</div>
+<span class="px-2 py-1 bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400 rounded text-xs font-bold uppercase tracking-wider">Low</span>
+</div>
+<div class="flex flex-col gap-1">
+<div class="flex items-baseline gap-1">
+<span class="text-4xl font-bold">18</span>
+<span class="text-[#886364] dark:text-white/40 font-medium">Bags</span>
+</div>
+<!-- Progress Bar -->
+<div class="w-full h-2 bg-[#f4f0f0] dark:bg-[#3d2a2a] rounded-full mt-2">
+<div class="h-full bg-yellow-500 rounded-full w-[35%]"></div>
+</div>
+</div>
+<div class="flex flex-col gap-3 mt-2">
+<p class="text-xs text-[#886364] dark:text-white/40 italic flex items-center gap-1">
+<span class="material-symbols-outlined text-xs">schedule</span> Updated 12 mins ago
+                            </p>
+<button class="w-full py-2 bg-[#f4f0f0] dark:bg-[#3d2a2a] text-[#181111] dark:text-white rounded-lg font-bold text-sm hover:bg-primary hover:text-white transition-all">Update Stock</button>
+</div>
+</div>
+<!-- Card B- -->
+<div class="bg-white dark:bg-[#2a1a1a] rounded-2xl border border-[#e5dcdc] dark:border-[#3d2a2a] p-6 shadow-sm flex flex-col gap-4">
+<div class="flex justify-between items-start">
+<div class="flex flex-col">
+<span class="text-3xl font-black text-primary">B-</span>
+<span class="text-sm font-medium text-[#886364] dark:text-white/60">Negative</span>
+</div>
+<span class="px-2 py-1 bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 rounded text-xs font-bold uppercase tracking-wider">Sufficient</span>
+</div>
+<div class="flex flex-col gap-1">
+<div class="flex items-baseline gap-1">
+<span class="text-4xl font-bold">29</span>
+<span class="text-[#886364] dark:text-white/40 font-medium">Bags</span>
+</div>
+<!-- Progress Bar -->
+<div class="w-full h-2 bg-[#f4f0f0] dark:bg-[#3d2a2a] rounded-full mt-2">
+<div class="h-full bg-green-500 rounded-full w-[60%]"></div>
+</div>
+</div>
+<div class="flex flex-col gap-3 mt-2">
+<p class="text-xs text-[#886364] dark:text-white/40 italic flex items-center gap-1">
+<span class="material-symbols-outlined text-xs">schedule</span> Updated 1 hour ago
+                            </p>
+<button class="w-full py-2 bg-[#f4f0f0] dark:bg-[#3d2a2a] text-[#181111] dark:text-white rounded-lg font-bold text-sm hover:bg-primary hover:text-white transition-all">Update Stock</button>
+</div>
+</div>
+<!-- Card AB+ -->
+<div class="bg-white dark:bg-[#2a1a1a] rounded-2xl border border-[#e5dcdc] dark:border-[#3d2a2a] p-6 shadow-sm flex flex-col gap-4">
+<div class="flex justify-between items-start">
+<div class="flex flex-col">
+<span class="text-3xl font-black text-primary">AB+</span>
+<span class="text-sm font-medium text-[#886364] dark:text-white/60">Positive</span>
+</div>
+<span class="px-2 py-1 bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400 rounded text-xs font-bold uppercase tracking-wider">Low</span>
+</div>
+<div class="flex flex-col gap-1">
+<div class="flex items-baseline gap-1">
+<span class="text-4xl font-bold">12</span>
+<span class="text-[#886364] dark:text-white/40 font-medium">Bags</span>
+</div>
+<!-- Progress Bar -->
+<div class="w-full h-2 bg-[#f4f0f0] dark:bg-[#3d2a2a] rounded-full mt-2">
+<div class="h-full bg-yellow-500 rounded-full w-[25%]"></div>
+</div>
+</div>
+<div class="flex flex-col gap-3 mt-2">
+<p class="text-xs text-[#886364] dark:text-white/40 italic flex items-center gap-1">
+<span class="material-symbols-outlined text-xs">schedule</span> Updated 2 hours ago
+                            </p>
+<button class="w-full py-2 bg-[#f4f0f0] dark:bg-[#3d2a2a] text-[#181111] dark:text-white rounded-lg font-bold text-sm hover:bg-primary hover:text-white transition-all">Update Stock</button>
+</div>
+</div>
+<!-- Card AB- -->
+<div class="bg-white dark:bg-[#2a1a1a] rounded-2xl border border-primary/50 dark:border-primary/50 p-6 shadow-md shadow-primary/5 flex flex-col gap-4 ring-2 ring-primary/10">
+<div class="flex justify-between items-start">
+<div class="flex flex-col">
+<span class="text-3xl font-black text-primary">AB-</span>
+<span class="text-sm font-medium text-[#886364] dark:text-white/60">Negative</span>
+</div>
+<span class="px-2 py-1 bg-red-100 text-primary dark:bg-primary/20 dark:text-primary rounded text-xs font-bold uppercase tracking-wider flex items-center gap-1">
+<span class="material-symbols-outlined text-[12px] animate-pulse">warning</span> Critical
+                            </span>
+</div>
+<div class="flex flex-col gap-1">
+<div class="flex items-baseline gap-1">
+<span class="text-4xl font-bold text-primary">02</span>
+<span class="text-[#886364] dark:text-white/40 font-medium">Bags</span>
+</div>
+<!-- Progress Bar -->
+<div class="w-full h-2 bg-[#f4f0f0] dark:bg-[#3d2a2a] rounded-full mt-2">
+<div class="h-full bg-primary rounded-full w-[8%]"></div>
+</div>
+</div>
+<div class="flex flex-col gap-3 mt-2">
+<p class="text-xs text-[#886364] dark:text-white/40 italic flex items-center gap-1">
+<span class="material-symbols-outlined text-xs">schedule</span> Updated 10 mins ago
+                            </p>
+<button class="w-full py-2 bg-primary text-white rounded-lg font-bold text-sm hover:bg-primary/90 transition-all shadow-md shadow-primary/20">Update Stock</button>
+</div>
+</div>
+<!-- Card O+ -->
+<div class="bg-white dark:bg-[#2a1a1a] rounded-2xl border border-[#e5dcdc] dark:border-[#3d2a2a] p-6 shadow-sm flex flex-col gap-4">
+<div class="flex justify-between items-start">
+<div class="flex flex-col">
+<span class="text-3xl font-black text-primary">O+</span>
+<span class="text-sm font-medium text-[#886364] dark:text-white/60">Positive</span>
+</div>
+<span class="px-2 py-1 bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 rounded text-xs font-bold uppercase tracking-wider">Sufficient</span>
+</div>
+<div class="flex flex-col gap-1">
+<div class="flex items-baseline gap-1">
+<span class="text-4xl font-bold">84</span>
+<span class="text-[#886364] dark:text-white/40 font-medium">Bags</span>
+</div>
+<!-- Progress Bar -->
+<div class="w-full h-2 bg-[#f4f0f0] dark:bg-[#3d2a2a] rounded-full mt-2">
+<div class="h-full bg-green-500 rounded-full w-[95%]"></div>
+</div>
+</div>
+<div class="flex flex-col gap-3 mt-2">
+<p class="text-xs text-[#886364] dark:text-white/40 italic flex items-center gap-1">
+<span class="material-symbols-outlined text-xs">schedule</span> Updated 4 mins ago
+                            </p>
+<button class="w-full py-2 bg-[#f4f0f0] dark:bg-[#3d2a2a] text-[#181111] dark:text-white rounded-lg font-bold text-sm hover:bg-primary hover:text-white transition-all">Update Stock</button>
+</div>
+</div>
+<!-- Card O- -->
+<div class="bg-white dark:bg-[#2a1a1a] rounded-2xl border border-[#e5dcdc] dark:border-[#3d2a2a] p-6 shadow-sm flex flex-col gap-4">
+<div class="flex justify-between items-start">
+<div class="flex flex-col">
+<span class="text-3xl font-black text-primary">O-</span>
+<span class="text-sm font-medium text-[#886364] dark:text-white/60">Negative</span>
+</div>
+<span class="px-2 py-1 bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400 rounded text-xs font-bold uppercase tracking-wider">Low</span>
+</div>
+<div class="flex flex-col gap-1">
+<div class="flex items-baseline gap-1">
+<span class="text-4xl font-bold">14</span>
+<span class="text-[#886364] dark:text-white/40 font-medium">Bags</span>
+</div>
+<!-- Progress Bar -->
+<div class="w-full h-2 bg-[#f4f0f0] dark:bg-[#3d2a2a] rounded-full mt-2">
+<div class="h-full bg-yellow-500 rounded-full w-[28%]"></div>
+</div>
+</div>
+<div class="flex flex-col gap-3 mt-2">
+<p class="text-xs text-[#886364] dark:text-white/40 italic flex items-center gap-1">
+<span class="material-symbols-outlined text-xs">schedule</span> Updated 35 mins ago
+                            </p>
+<button class="w-full py-2 bg-[#f4f0f0] dark:bg-[#3d2a2a] text-[#181111] dark:text-white rounded-lg font-bold text-sm hover:bg-primary hover:text-white transition-all">Update Stock</button>
+</div>
+</div>
+</div>
+<!-- Secondary Section: Recent Activity / Near Expiry -->
+<div class="bg-white dark:bg-[#2a1a1a] rounded-2xl border border-[#e5dcdc] dark:border-[#3d2a2a] overflow-hidden">
+<div class="px-6 py-4 border-b border-[#e5dcdc] dark:border-[#3d2a2a] flex justify-between items-center">
+<h3 class="font-bold text-lg">Near Expiration (Next 48h)</h3>
+<a class="text-primary text-sm font-bold hover:underline" href="#">View All Batches</a>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left">
+<thead class="bg-[#f8f6f6] dark:bg-[#3d2a2a] text-xs uppercase text-[#886364] dark:text-white/40 font-bold">
+<tr>
+<th class="px-6 py-3">Batch ID</th>
+<th class="px-6 py-3">Group</th>
+<th class="px-6 py-3">Donor ID</th>
+<th class="px-6 py-3">Collected Date</th>
+<th class="px-6 py-3">Expiry Date</th>
+<th class="px-6 py-3 text-right">Action</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-[#e5dcdc] dark:divide-[#3d2a2a]">
+<tr class="hover:bg-[#f4f0f0] dark:hover:bg-[#3d2a2a]/50 transition-colors">
+<td class="px-6 py-4 text-sm font-mono">B-992-04</td>
+<td class="px-6 py-4"><span class="font-bold text-primary">A-</span></td>
+<td class="px-6 py-4 text-sm text-[#886364] dark:text-white/60">#DON-1022</td>
+<td class="px-6 py-4 text-sm">Oct 12, 2023</td>
+<td class="px-6 py-4 text-sm text-primary font-bold">Oct 18, 2023 (Today)</td>
+<td class="px-6 py-4 text-right">
+<button class="text-primary hover:bg-primary/10 p-2 rounded-full transition-colors">
+<span class="material-symbols-outlined">visibility</span>
+</button>
+</td>
+</tr>
+<tr class="hover:bg-[#f4f0f0] dark:hover:bg-[#3d2a2a]/50 transition-colors">
+<td class="px-6 py-4 text-sm font-mono">B-991-88</td>
+<td class="px-6 py-4"><span class="font-bold text-primary">O-</span></td>
+<td class="px-6 py-4 text-sm text-[#886364] dark:text-white/60">#DON-5541</td>
+<td class="px-6 py-4 text-sm">Oct 11, 2023</td>
+<td class="px-6 py-4 text-sm text-yellow-600 font-bold">Oct 19, 2023</td>
+<td class="px-6 py-4 text-right">
+<button class="text-primary hover:bg-primary/10 p-2 rounded-full transition-colors">
+<span class="material-symbols-outlined">visibility</span>
+</button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+</main>
+<!-- Footer Stats -->
+<footer class="bg-white dark:bg-[#2a1a1a] border-t border-[#e5dcdc] dark:border-[#3d2a2a] px-10 py-6">
+<div class="max-w-[1200px] mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
+<div class="flex gap-8">
+<div class="flex flex-col">
+<span class="text-xs font-bold text-[#886364] dark:text-white/40 uppercase tracking-widest">Total Stock</span>
+<span class="text-xl font-bold">229 Bags</span>
+</div>
+<div class="flex flex-col">
+<span class="text-xs font-bold text-[#886364] dark:text-white/40 uppercase tracking-widest">Global Status</span>
+<span class="text-xl font-bold text-green-600">Stable</span>
+</div>
+<div class="flex flex-col">
+<span class="text-xs font-bold text-[#886364] dark:text-white/40 uppercase tracking-widest">Active Requests</span>
+<span class="text-xl font-bold text-primary">03 Urgent</span>
+</div>
+</div>
+<p class="text-[#886364] dark:text-white/40 text-sm font-medium">© 2023 VitaSang Blood Management Systems. Douala, Cameroon.</p>
+</div>
+</footer>
+</div>
+</div>
+</body></html>
