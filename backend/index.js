@@ -15,20 +15,27 @@ const swaggerUi = require("swagger-ui-express");
 const swaggerSpecs = require("./config/swagger");
 const { errorHandler, notFoundHandler } = require("./middleware/errorHandler");
 
-// Sentry Integration - MUST be initialized as early as possible
+const app = express();
+
+// Sentry Integration - MUST be initialized after Express app creation
 const Sentry = require("@sentry/node");
+const { expressIntegration } = require("@sentry/integrations");
+
 Sentry.init({
   dsn: process.env.SENTRY_DSN,
   environment: process.env.NODE_ENV,
+  integrations: [
+    expressIntegration({ app }),
+  ],
+  tracesSampleRate: 1.0,
 });
-
-const app = express();
 
 app.set("trust proxy", 1); // Indispensable pour Vercel et express-rate-limit
 app.use(helmet());
 
 // Sentry Request Handler - MUST be the first middleware on the app
 app.use(Sentry.Handlers.requestHandler());
+app.use(Sentry.Handlers.tracingHandler());
 
 // CORS Configuration - Whitelist security
 const allowedOrigins = [
