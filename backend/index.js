@@ -17,25 +17,8 @@ const { errorHandler, notFoundHandler } = require("./middleware/errorHandler");
 
 const app = express();
 
-// Sentry Integration - MUST be initialized after Express app creation
-const Sentry = require("@sentry/node");
-const { expressIntegration } = require("@sentry/integrations");
-
-Sentry.init({
-  dsn: process.env.SENTRY_DSN,
-  environment: process.env.NODE_ENV,
-  integrations: [
-    expressIntegration({ app }),
-  ],
-  tracesSampleRate: 1.0,
-});
-
 app.set("trust proxy", 1); // Indispensable pour Vercel et express-rate-limit
 app.use(helmet());
-
-// Sentry Request Handler - MUST be the first middleware on the app
-app.use(Sentry.Handlers.requestHandler());
-app.use(Sentry.Handlers.tracingHandler());
 
 // CORS Configuration - Whitelist security
 const allowedOrigins = [
@@ -100,9 +83,6 @@ app.get("/", (req, res) => {
 
 // 404 Not Found Handler - MUST be after all routes
 app.use(notFoundHandler);
-
-// Sentry Error Handler - MUST be before any other error handling middleware
-app.use(Sentry.Handlers.errorHandler());
 
 // Global Error Handler - MUST be after all routes and middleware
 app.use(errorHandler);
