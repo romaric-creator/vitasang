@@ -1,32 +1,88 @@
-import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import Layout from './components/Layout';
-import Login from './pages/Login';
-import Dashboard from './pages/Dashboard';
-import BloodStock from './pages/BloodStock';
-import Appointments from './pages/Appointments';
-import Alerts from './pages/Alerts';
-import Map from './pages/Map'; // Import the new Map component
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Navigate,
+} from "react-router-dom";
+import Layout from "./components/Layout";
+import ProtectedRoute from "./components/ProtectedRoute";
+import Login from "./pages/Login";
+import Dashboard from "./pages/Dashboard";
+import BloodStock from "./pages/BloodStock";
+import Appointments from "./pages/Appointments";
+import Alerts from "./pages/Alerts";
+import Map from "./pages/Map";
 
 function App() {
-  const isAuthenticated = true; // Hardcoded auth for preview
-
   return (
     <Router>
       <Routes>
-        {/* Public Route */}
+        {/* Public Routes */}
         <Route path="/login" element={<Login />} />
 
         {/* Protected Routes inside Layout */}
-        <Route path="/dashboard" element={<Layout><Dashboard /></Layout>} />
-        <Route path="/stock" element={<Layout><BloodStock /></Layout>} />
-        <Route path="/appointments" element={<Layout><Appointments /></Layout>} />
-        <Route path="/alerts" element={<Layout><Alerts /></Layout>} />
-        <Route path="/map" element={<Layout><Map /></Layout>} /> {/* New Map Route */}
+        <Route
+          path="/dashboard"
+          element={
+            <ProtectedRoute
+              requiredRole={["personnel", "admin", "centre_manager"]}
+            >
+              <Layout>
+                <Dashboard />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/stock"
+          element={
+            <ProtectedRoute
+              requiredRole={["personnel", "admin", "centre_manager"]}
+            >
+              <Layout>
+                <BloodStock />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/appointments"
+          element={
+            <ProtectedRoute
+              requiredRole={["personnel", "admin", "centre_manager"]}
+            >
+              <Layout>
+                <Appointments />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/alerts"
+          element={
+            <ProtectedRoute requiredRole={["admin", "centre_manager"]}>
+              <Layout>
+                <Alerts />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/map"
+          element={
+            <ProtectedRoute
+              requiredRole={["personnel", "admin", "centre_manager"]}
+            >
+              <Layout>
+                <Map />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
 
-        {/* Redirect Root */}
-        <Route path="/" element={<Navigate to={isAuthenticated ? "/dashboard" : "/login"} replace />} />
-        <Route path="*" element={<Navigate to="/" replace />} />
+        {/* Redirect Root and 404 */}
+        <Route path="/" element={<Navigate to="/dashboard" replace />} />
+        <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Routes>
     </Router>
   );

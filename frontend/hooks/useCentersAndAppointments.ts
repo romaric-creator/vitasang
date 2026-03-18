@@ -59,6 +59,18 @@ export const useCenterStocks = (centerId: number, enabled: boolean = true) => {
   });
 };
 
+/**
+ * Get all blood centers (Centres de Santé)
+ * ✅ 10 minute cache
+ */
+export const useAllCentres = () => {
+  return useQuery({
+    queryKey: queryKeys.centers.all,
+    queryFn: () => fetch("/api/centres").then((r) => r.json()),
+    staleTime: 1000 * 60 * 10,
+  });
+};
+
 // ╔════════════════════════════════════════════════════════════════╗
 // ║                     APPOINTMENTS                               ║
 // ╚════════════════════════════════════════════════════════════════╝
