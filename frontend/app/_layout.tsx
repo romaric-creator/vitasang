@@ -6,6 +6,8 @@ import { AuthProvider, useAuth } from "@/context/AuthContext";
 import { NotificationProvider } from "@/context/NotificationContext";
 import { color } from "@/constant/color";
 import { PostHogProvider, usePostHog } from "posthog-react-native";
+import { QueryClientProvider } from "@tanstack/react-query";
+import { queryClient } from "@/config/queryClient";
 import { useAlertRetryCheck } from "@/hooks/useAlertRetryCheck";
 import { getUserIdFromStorage } from "@/utils/storage";
 import { registerForPushNotificationsAsync } from "@/utils/pushNotifications";
@@ -182,21 +184,23 @@ function RootLayoutNav() {
   );
 }
 
-// Le RootLayout principal qui fournit le contexte d'authentification et de notifications
+// Le RootLayout principal qui fournit les contextes d'authentification, notifications et React Query
 export default function RootLayout() {
   return (
-    <PostHogProvider
-      apiKey="phc_RCtl1OvR1kNIFgIEy1jwOODKDO2qnhBCvNurxY1j4Il"
-      options={{
-        host: "https://us.i.posthog.com",
-        enableSessionReplay: true,
-      }}
-    >
-      <AuthProvider>
-        <NotificationProvider>
-          <RootLayoutNav />
-        </NotificationProvider>
-      </AuthProvider>
-    </PostHogProvider>
+    <QueryClientProvider client={queryClient}>
+      <PostHogProvider
+        apiKey="phc_RCtl1OvR1kNIFgIEy1jwOODKDO2qnhBCvNurxY1j4Il"
+        options={{
+          host: "https://us.i.posthog.com",
+          enableSessionReplay: true,
+        }}
+      >
+        <AuthProvider>
+          <NotificationProvider>
+            <RootLayoutNav />
+          </NotificationProvider>
+        </AuthProvider>
+      </PostHogProvider>
+    </QueryClientProvider>
   );
 }

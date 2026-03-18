@@ -1,4 +1,4 @@
-import { apiClient } from '@/config/axiosConfig';
+import { apiClient } from "@/config/axiosConfig";
 
 export const loginUser = async (telephone: string, mot_de_passe: string) => {
   try {
@@ -9,13 +9,13 @@ export const loginUser = async (telephone: string, mot_de_passe: string) => {
 
     return response.data;
   } catch (error: any) {
-    console.error('Erreur lors de la connexion:', error);
+    console.error("Erreur lors de la connexion:", error);
     if (error.response && error.response.data && error.response.data.message) {
       throw new Error(error.response.data.message);
     } else if (error.message) {
       throw new Error(error.message);
     } else {
-      throw new Error('Erreur de connexion inconnue');
+      throw new Error("Erreur de connexion inconnue");
     }
   }
 };
@@ -27,7 +27,7 @@ export const registerUser = async (
   mot_de_passe: string,
   groupe_sanguin: string,
   role: string,
-  code_parrainage?: string
+  code_parrainage?: string,
 ) => {
   try {
     const response = await apiClient.post(`/users/register`, {
@@ -37,23 +37,28 @@ export const registerUser = async (
       mot_de_passe,
       groupe_sanguin,
       role,
-      code_parrainage
+      code_parrainage,
     });
 
     return response.data;
   } catch (error: any) {
-    console.error('Erreur lors de l\'inscription:', error);
+    console.error("Erreur lors de l'inscription:", error);
     if (error.response && error.response.data && error.response.data.message) {
       throw new Error(error.response.data.message);
     } else if (error.message) {
       throw new Error(error.message);
     } else {
-      throw new Error('Erreur d\'inscription inconnue');
+      throw new Error("Erreur d'inscription inconnue");
     }
   }
 };
 
-export const searchDonors = async (latitude: number, longitude: number, groupe_sanguin: string, radius: number) => {
+export const searchDonors = async (
+  latitude: number,
+  longitude: number,
+  groupe_sanguin: string,
+  radius: number,
+) => {
   try {
     const response = await apiClient.get(`/users/search`, {
       params: { latitude, longitude, groupe_sanguin, radius },
@@ -61,32 +66,34 @@ export const searchDonors = async (latitude: number, longitude: number, groupe_s
 
     return response.data;
   } catch (error: any) {
-    console.error('Erreur lors de la recherche de donneurs:', error);
+    console.error("Erreur lors de la recherche de donneurs:", error);
     if (error.response?.data?.message) {
       throw new Error(error.response.data.message);
     } else if (error.message) {
       throw new Error(error.message);
     } else {
-      throw new Error('Erreur de recherche inconnue');
+      throw new Error("Erreur de recherche inconnue");
     }
   }
 };
 
 export const sendAlert = async (alertData: {
-  latitude: number,
-  longitude: number,
-  groupe_sanguin: string,
-  radius: number,
-  urgence: string,
-  quantite_requise: number,
-  lieu: string,
-  description?: string
+  latitude: number;
+  longitude: number;
+  groupe_sanguin: string;
+  radius: number;
+  urgence: string;
+  quantite_requise: number;
+  lieu: string;
+  description?: string;
 }) => {
   try {
     const response = await apiClient.post(`/alerts/search`, alertData);
     return response.data;
   } catch (error: any) {
-    throw new Error(error.response?.data?.message || "Erreur lors de l'envoi de l'alerte");
+    throw new Error(
+      error.response?.data?.message || "Erreur lors de l'envoi de l'alerte",
+    );
   }
 };
 
@@ -95,7 +102,10 @@ export const getAlertStatus = async (alertId: number) => {
     const response = await apiClient.get(`/alerts/${alertId}/status`);
     return response.data;
   } catch (error: any) {
-    throw new Error(error.response?.data?.message || "Erreur lors de la récupération du statut");
+    throw new Error(
+      error.response?.data?.message ||
+        "Erreur lors de la récupération du statut",
+    );
   }
 };
 
@@ -104,7 +114,10 @@ export const getMyAlerts = async () => {
     const response = await apiClient.get(`/alerts/my-alerts`);
     return response.data;
   } catch (error: any) {
-    throw new Error(error.response?.data?.message || "Erreur lors de la récupération de vos alertes");
+    throw new Error(
+      error.response?.data?.message ||
+        "Erreur lors de la récupération de vos alertes",
+    );
   }
 };
 
@@ -113,7 +126,17 @@ export const getActiveAlerts = async () => {
     const response = await apiClient.get(`/alerts/active`);
     return response.data;
   } catch (error: any) {
-    throw new Error(error.response?.data?.message || "Erreur lors de la récupération des urgences");
+    // Gracefully handle 401/403 errors (user not authenticated)
+    // Return empty alerts response instead of throwing
+    if (error.response?.status === 401 || error.response?.status === 403) {
+      console.warn("User not authenticated - returning empty alerts");
+      return { success: true, alerts: [] };
+    }
+    console.error("Erreur lors de la récupération des alertes actives:", error);
+    throw new Error(
+      error.response?.data?.message ||
+        "Erreur lors de la récupération des urgences",
+    );
   }
 };
 
@@ -122,7 +145,10 @@ export const getUserProfile = async (userId: number) => {
     const response = await apiClient.get(`/users/${userId}/profile`);
     return response.data;
   } catch (error: any) {
-    throw new Error(error.response?.data?.message || "Erreur lors de la récupération du profil");
+    throw new Error(
+      error.response?.data?.message ||
+        "Erreur lors de la récupération du profil",
+    );
   }
 };
 
@@ -133,8 +159,11 @@ export const updatePushToken = async (userId: number, pushToken: string) => {
     });
     return response.data;
   } catch (error: any) {
-    console.error('Erreur lors de la mise à jour du token push:', error);
-    throw new Error(error.response?.data?.message || "Erreur lors de la mise à jour du token push");
+    console.error("Erreur lors de la mise à jour du token push:", error);
+    throw new Error(
+      error.response?.data?.message ||
+        "Erreur lors de la mise à jour du token push",
+    );
   }
 };
 export const updateUserProfile = async (userId: number, profileData: any) => {
@@ -142,19 +171,26 @@ export const updateUserProfile = async (userId: number, profileData: any) => {
     const response = await apiClient.put(`/users/${userId}`, profileData);
     return response.data;
   } catch (error: any) {
-    throw new Error(error.response?.data?.message || "Erreur lors de la mise à jour du profil");
+    throw new Error(
+      error.response?.data?.message ||
+        "Erreur lors de la mise à jour du profil",
+    );
   }
 };
 
-export const updateUserLocation = async (userId: number, latitude: number, longitude: number) => {
+export const updateUserLocation = async (
+  userId: number,
+  latitude: number,
+  longitude: number,
+) => {
   try {
     const response = await apiClient.put(`/users/${userId}`, {
       latitude,
-      longitude
+      longitude,
     });
     return true;
   } catch (error: any) {
-    console.error('Erreur lors de la mise à jour de la localisation:', error);
+    console.error("Erreur lors de la mise à jour de la localisation:", error);
     return false;
   }
 };
@@ -164,7 +200,10 @@ export const getUserHistory = async (userId: number) => {
     const response = await apiClient.get(`/users/${userId}/history`);
     return response.data;
   } catch (error: any) {
-    throw new Error(error.response?.data?.message || "Erreur lors de la récupération de l'historique");
+    throw new Error(
+      error.response?.data?.message ||
+        "Erreur lors de la récupération de l'historique",
+    );
   }
 };
 
@@ -173,7 +212,10 @@ export const getMyAppointments = async (userId: number) => {
     const response = await apiClient.get(`/rendez-vous/my-appointments`);
     return response.data;
   } catch (error: any) {
-    throw new Error(error.response?.data?.message || "Erreur lors de la récupération des rendez-vous");
+    throw new Error(
+      error.response?.data?.message ||
+        "Erreur lors de la récupération des rendez-vous",
+    );
   }
 };
 
@@ -182,7 +224,9 @@ export const cancelAppointment = async (appointmentId: number) => {
     const response = await apiClient.delete(`/rendez-vous/${appointmentId}`);
     return response.data;
   } catch (error: any) {
-    throw new Error(error.response?.data?.message || "Erreur lors de l'annulation");
+    throw new Error(
+      error.response?.data?.message || "Erreur lors de l'annulation",
+    );
   }
 };
 
@@ -191,117 +235,119 @@ export const getAllCentres = async () => {
     const response = await apiClient.get(`/centres`);
     return response.data;
   } catch (error: any) {
-    throw new Error(error.response?.data?.message || "Erreur lors de la récupération des centres");
+    throw new Error(
+      error.response?.data?.message ||
+        "Erreur lors de la récupération des centres",
+    );
   }
 };
 
-export const searchCentresNearby = async (params: { latitude: number; longitude: number; radius: number }) => {
+export const searchCentresNearby = async (params: {
+  latitude: number;
+  longitude: number;
+  radius: number;
+}) => {
   try {
     const response = await apiClient.get(`/centres/search`, { params });
     return response.data;
   } catch (error: any) {
-    throw new Error(error.response?.data?.message || "Erreur lors de la recherche de centres");
+    throw new Error(
+      error.response?.data?.message || "Erreur lors de la recherche de centres",
+    );
   }
 };
 
-export const uploadProfilePicture = async (userId: number, imageUri: string) => {
+export const uploadProfilePicture = async (
+  userId: number,
+  imageUri: string,
+) => {
   try {
     const formData = new FormData();
 
     // On extract l'extension pour le type MIME
-    const uriParts = imageUri.split('.');
+    const uriParts = imageUri.split(".");
     const fileType = uriParts[uriParts.length - 1];
 
-    formData.append('photo', {
+    formData.append("photo", {
       uri: imageUri,
       name: `profile.${fileType}`,
       type: `image/${fileType}`,
     } as any);
 
-    const response = await apiClient.post(`/users/${userId}/upload-photo`, formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
+    const response = await apiClient.post(
+      `/users/${userId}/upload-photo`,
+      formData,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
       },
-    });
+    );
 
     return response.data;
   } catch (error: any) {
-    console.error('Erreur lors de l\'upload de la photo:', error);
-    throw new Error(error.response?.data?.message || "Erreur lors de l'upload de la photo");
+    console.error("Erreur lors de l'upload de la photo:", error);
+    throw new Error(
+      error.response?.data?.message || "Erreur lors de l'upload de la photo",
+    );
   }
 };
 
-export const respondToAlert = async (alertId: number, response: 'accepte' | 'ignore') => {
+export const respondToAlert = async (
+  alertId: number,
+  response: "accepte" | "ignore",
+) => {
   try {
-    const res = await apiClient.post(`/alerts/${alertId}/respond`, { response });
+    const res = await apiClient.post(`/alerts/${alertId}/respond`, {
+      response,
+    });
     return res.data;
   } catch (error: any) {
-    throw new Error(error.response?.data?.message || "Erreur lors de la réponse à l'alerte");
+    throw new Error(
+      error.response?.data?.message || "Erreur lors de la réponse à l'alerte",
+    );
   }
 };
 
 export const getAcceptedAlerts = async () => {
-
   try {
-
     const res = await apiClient.get(`/alerts/accepted`);
 
     return res.data;
-
   } catch (error: any) {
-
-    throw new Error(error.response?.data?.message || "Erreur lors de la récupération des interventions");
-
+    throw new Error(
+      error.response?.data?.message ||
+        "Erreur lors de la récupération des interventions",
+    );
   }
-
 };
 
-
-
 export const getCentreDetails = async (id: number) => {
-
   try {
-
     const response = await apiClient.get(`/centres/${id}`);
 
     return response.data;
-
   } catch (error: any) {
-
-    throw new Error(error.response?.data?.message || "Erreur lors de la récupération du centre");
-
+    throw new Error(
+      error.response?.data?.message ||
+        "Erreur lors de la récupération du centre",
+    );
   }
-
 };
 
-
-
-export const createAppointment = async (data: { id_centre: number; date_rdv: string; heure_debut: string }) => {
-
-
-
+export const createAppointment = async (data: {
+  id_centre: number;
+  date_rdv: string;
+  heure_debut: string;
+}) => {
   try {
-
-
-
     const response = await apiClient.post(`/rendez-vous`, data);
 
-
-
     return response.data;
-
-
-
   } catch (error: any) {
-
-
-
-    throw new Error(error.response?.data?.message || "Erreur lors de la création du rendez-vous");
-
-
-
+    throw new Error(
+      error.response?.data?.message ||
+        "Erreur lors de la création du rendez-vous",
+    );
   }
-
-
-
 };

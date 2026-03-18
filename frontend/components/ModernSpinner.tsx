@@ -1,145 +1,123 @@
-import React, { useEffect, useRef } from 'react';
-import { View, StyleSheet, Animated, Text, ViewStyle } from 'react-native';
-import { color } from '@/constant/color';
-
-import SanguNeutral from './SanguNeutral';
-import SanguHappy   from './SanguHappy';
-import SanguHero    from './SanguHero';
+import React, { useEffect, useRef } from "react";
+import { View, StyleSheet, Animated, Text, ViewStyle } from "react-native";
+import { color } from "@/constant/color";
 
 interface ModernSpinnerProps {
-  size?:    'small' | 'medium' | 'large';
-  color?:   string;
+  size?: "small" | "medium" | "large";
+  color?: string;
   message?: string;
-  style?:   ViewStyle;
-  mascot?:  string;
-  pose?:    'waving' | 'jumping' | 'superhero';
+  style?: ViewStyle;
 }
 
 export const ModernSpinner: React.FC<ModernSpinnerProps> = ({
-  size         = 'medium',
+  size = "medium",
   color: spinnerColor = color.primary,
   message,
   style,
-  mascot = '🩸',
-  pose   = 'waving',
 }) => {
-  const bounce  = useRef(new Animated.Value(0)).current;
-  const tilt    = useRef(new Animated.Value(0)).current;
+  const spinValue = useRef(new Animated.Value(0)).current;
+  const pulseValue = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
-    // --- Mascot : bounce vertical ---
-    const bounceAnim = Animated.loop(
-      Animated.sequence([
-        Animated.timing(bounce, {
-          toValue: -10,
-          duration: 480,
-          useNativeDriver: true,
-        }),
-        Animated.timing(bounce, {
-          toValue: 0,
-          duration: 480,
-          useNativeDriver: true,
-        }),
-      ]),
+    // Rotation animation - smooth spinning
+    const spinAnim = Animated.loop(
+      Animated.timing(spinValue, {
+        toValue: 1,
+        duration: 2000,
+        useNativeDriver: true,
+      }),
     );
 
-    // --- Mascot : oscillation latérale propre ---
-    const tiltAnim = Animated.loop(
+    // Pulse animation - fade in/out
+    const pulseAnim = Animated.loop(
       Animated.sequence([
-        Animated.timing(tilt, {
+        Animated.timing(pulseValue, {
+          toValue: 0.7,
+          duration: 1000,
+          useNativeDriver: true,
+        }),
+        Animated.timing(pulseValue, {
           toValue: 1,
-          duration: 960,
-          useNativeDriver: true,
-        }),
-        Animated.timing(tilt, {
-          toValue: -1,
-          duration: 960,
+          duration: 1000,
           useNativeDriver: true,
         }),
       ]),
     );
 
-    bounceAnim.start();
-    tiltAnim.start();
+    spinAnim.start();
+    pulseAnim.start();
 
     return () => {
-      bounceAnim.stop();
-      tiltAnim.stop();
+      spinAnim.stop();
+      pulseAnim.stop();
     };
-  }, [bounce, tilt]);
+  }, [spinValue, pulseValue]);
 
-  const rotation = tilt.interpolate({
-    inputRange: [-1, 0, 1],
-    outputRange: ['-7deg', '0deg', '7deg'],
+  const spin = spinValue.interpolate({
+    inputRange: [0, 1],
+    outputRange: ["0deg", "360deg"],
   });
 
-  const sizeMap: Record<string, number> = { small: 72, medium: 110, large: 150 };
-  const mascSize = sizeMap[size];
-
-  const renderMascot = () => {
-    if (pose === 'waving')    return <SanguNeutral width={mascSize} height={mascSize} animated />;
-    if (pose === 'jumping')   return <SanguHappy   width={mascSize} height={mascSize} animated />;
-    if (pose === 'superhero') return <SanguHero    width={mascSize} height={mascSize} animated />;
-    return (
-      <Text style={{ fontSize: mascSize * 0.6, textAlign: 'center' }}>
-        {mascot}
-      </Text>
-    );
-  };
+  const sizeMap: Record<string, number> = { small: 48, medium: 64, large: 80 };
+  const spinnerSize = sizeMap[size];
 
   return (
     <View style={[styles.container, style]}>
-
-      {/* Mascot — sans fond circulaire, juste l'ombre douce */}
+      {/* Simple rotating spinner - no SVG complexity */}
       <Animated.View
         style={[
-          styles.mascotWrapper,
+          styles.spinner,
           {
-            width:  mascSize,
-            height: mascSize,
-            transform: [
-              { translateY: bounce },
-              { rotate: rotation },
-            ],
+            width: spinnerSize,
+            height: spinnerSize,
+            transform: [{ rotate: spin }],
+            opacity: pulseValue,
           },
         ]}
       >
-        {renderMascot()}
+        <View
+          style={[
+            styles.spinnerRing,
+            {
+              borderColor: spinnerColor,
+              width: spinnerSize,
+              height: spinnerSize,
+            },
+          ]}
+        />
       </Animated.View>
 
       {/* Message optionnel */}
-      {message ? (
-        <Text style={styles.message}>{message}</Text>
-      ) : null}
+      {message ? <Text style={styles.message}>{message}</Text> : null}
     </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     gap: 16,
   },
 
-  mascotWrapper: {
-    justifyContent: 'center',
-    alignItems: 'center',
-    // Ombre légère sous le mascot — pas de fond coloré
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.10,
-    shadowRadius: 10,
-    elevation: 4,
+  spinner: {
+    justifyContent: "center",
+    alignItems: "center",
+  },
+
+  spinnerRing: {
+    borderWidth: 4,
+    borderRadius: 999,
+    borderTopColor: "transparent",
+    borderRightColor: "transparent",
+    borderBottomColor: "transparent",
   },
 
   message: {
     fontSize: 13,
-    fontWeight: '500',
+    fontWeight: "500",
     color: color.textSecondary,
-    textAlign: 'center',
+    textAlign: "center",
     letterSpacing: 0.2,
   },
 });
-
-

@@ -23,7 +23,6 @@ import { BloodGroupSelector } from "@/components/BloodGroupSelector";
 import { PrimaryButton } from "@/components/PrimaryButton";
 import { formStyles } from "@/styles/formStyles";
 import { useTranslation } from "react-i18next";
-import ConfirmationModal from "@/components/ConfirmationModal";
 
 export default function CreateAlertScreen() {
   const { t } = useTranslation();
@@ -76,15 +75,23 @@ export default function CreateAlertScreen() {
     }
   };
 
-  const handleConfirmRedirect = async () => {
-    setModalVisible(false);
+  const handleRedirectToRegister = async () => {
     if (pendingAlertData) {
       try {
         await storeData("pending_alert", pendingAlertData);
-        router.push({
-          pathname: "/login",
-          params: { redirectAfter: "create-alert" },
-        });
+        router.push("/register");
+      } catch (e) {
+        console.error("Failed to save pending alert:", e);
+        setErrorMsg("Impossible de sauvegarder l'alerte. Veuillez réessayer.");
+      }
+    }
+  };
+
+  const handleRedirectToLogin = async () => {
+    if (pendingAlertData) {
+      try {
+        await storeData("pending_alert", pendingAlertData);
+        router.push("/login");
       } catch (e) {
         console.error("Failed to save pending alert:", e);
         setErrorMsg("Impossible de sauvegarder l'alerte. Veuillez réessayer.");
@@ -140,15 +147,6 @@ export default function CreateAlertScreen() {
   return (
     <ThemedView style={styles.container}>
       <PageHeader title={t("alert.title")} />
-      <ConfirmationModal
-        visible={isModalVisible}
-        onClose={() => setModalVisible(false)}
-        onConfirm={handleConfirmRedirect}
-        title="Connexion requise"
-        message="Pour suivre votre alerte et recevoir des notifications, veuillez vous connecter ou créer un compte. Votre alerte sera publiée juste après."
-        confirmText="Se connecter / S'inscrire"
-        cancelText="Annuler"
-      />
       {isLocating ? (
         <LoadingOverlay
           visible={true}
@@ -290,13 +288,48 @@ export default function CreateAlertScreen() {
 
                 {errorMsg && <Text style={styles.errorText}>{errorMsg}</Text>}
 
-                <PrimaryButton
-                  title={t("alert.submit")}
-                  onPress={() => handleSubmit()}
-                  loading={loading}
-                  disabled={!location || loading}
-                  style={{ marginTop: 20 }}
-                />
+                {/* SI L'UTILISATEUR N'EST PAS CONNECTÉ */}
+                {!isAuth ? (
+                  <View style={styles.authSection}>
+                    <Text style={styles.authTitle}>
+                      {t("alert.authRequired") || "Connexion requise"}
+                    </Text>
+                    <Text style={styles.authSubtitle}>
+                      {t("alert.authMessage") ||
+                        "Créez un compte pour suivre votre alerte et recevoir des notifications."}
+                    </Text>
+
+                    <View style={styles.buttonContainer}>
+                      <PrimaryButton
+                        title={t("alert.register") || "S'inscrire"}
+                        onPress={() => {
+                          setPendingAlertData(values);
+                          handleRedirectToRegister();
+                        }}
+                        style={{ marginBottom: 12 }}
+                      />
+                      <TouchableOpacity
+                        style={styles.secondaryButton}
+                        onPress={() => {
+                          setPendingAlertData(values);
+                          handleRedirectToLogin();
+                        }}
+                      >
+                        <Text style={styles.secondaryButtonText}>
+                          {t("alert.login") || "Se connecter"}
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                ) : (
+                  <PrimaryButton
+                    title={t("alert.submit")}
+                    onPress={() => handleSubmit()}
+                    loading={loading}
+                    disabled={!location || loading}
+                    style={{ marginTop: 20 }}
+                  />
+                )}
               </View>
             )}
           </Formik>
@@ -369,5 +402,43 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     textAlign: "center",
     fontWeight: "600",
+  },
+  authSection: {
+    marginTop: 24,
+    paddingTop: 20,
+    borderTopWidth: 1,
+    borderTopColor: color.border,
+  },
+  authTitle: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: color.primary,
+    marginBottom: 8,
+    textAlign: "center",
+  },
+  authSubtitle: {
+    fontSize: 12,
+    color: color.textSecondary,
+    textAlign: "center",
+    lineHeight: 16,
+    marginBottom: 16,
+    fontWeight: "500",
+  },
+  buttonContainer: {
+    gap: 0,
+  },
+  secondaryButton: {
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderRadius: 10,
+    borderWidth: 2,
+    borderColor: color.primary,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  secondaryButtonText: {
+    color: color.primary,
+    fontSize: 16,
+    fontWeight: "700",
   },
 });
