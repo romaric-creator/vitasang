@@ -184,17 +184,19 @@ exports.getLiveAlerts = async (req, res, next) => {
 
     res.json({
       success: true,
-      alerts: alerts.map((a) => ({
-        id: a.id_alerte,
-        groupe: a.groupe_requis,
-        statut: a.statut,
-        date: a.createdAt,
-        lieu: a.lieu,
-        urgence: a.degre_urgence,
-        initiateur: `${a.initiateur.prenom} ${a.initiateur.nom}`,
-        telephone_initiateur: a.initiateur.telephone,
-        quantite_requise: a.quantite_requise,
-      })),
+      alerts: alerts
+        .filter((a) => a.initiateur !== null) // Filtre les alertes sans utilisateur
+        .map((a) => ({
+          id: a.id_alerte,
+          groupe: a.groupe_requis,
+          statut: a.statut,
+          date: a.createdAt,
+          lieu: a.lieu,
+          urgence: a.degre_urgence,
+          initiateur: `${a.initiateur.prenom} ${a.initiateur.nom}`,
+          telephone_initiateur: a.initiateur.telephone,
+          quantite_requise: a.quantite_requise,
+        })),
     });
   } catch (error) {
     logger.error("Error fetching live alerts", { error: error.message });
