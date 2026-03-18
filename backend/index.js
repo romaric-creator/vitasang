@@ -32,10 +32,31 @@ const allowedOrigins = [
 
 app.use(
   cors({
-    origin:
-      process.env.NODE_ENV === "production"
-        ? allowedOrigins.filter((url) => url.startsWith("https"))
-        : allowedOrigins,
+    origin: (origin, callback) => {
+      // Allow requests with no origin (like mobile apps or curl requests)
+      if (!origin) return callback(null, true);
+
+      // Always allow localhost origins for development
+      if (origin.startsWith("http://localhost")) {
+        return callback(null, true);
+      }
+
+      // For production, only allow HTTPS origins from the allowed list
+      if (process.env.NODE_ENV === "production") {
+        if (allowedOrigins.filter((url) => url.startsWith("https")).indexOf(origin) === -1) {
+          const msg = `The CORS policy for this site does not allow access from the specified Origin: ${origin}`;
+          return callback(new Error(msg), false);
+        }
+        return callback(null, true);
+      } else {
+        // For non-production, allow all configured origins
+        if (allowedOrigins.indexOf(origin) === -1) {
+          const msg = `The CORS policy for this site does not allow access from the specified Origin: ${origin}`;
+          return callback(new Error(msg), false);
+        }
+        return callback(null, true);
+      }
+    },
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
