@@ -61,7 +61,16 @@ export const useRegister = () => {
       groupe_sanguin: string;
       role: string;
       code_parrainage?: string;
-    }) => userService.registerUser(userData as any),
+    }) =>
+      userService.registerUser(
+        userData.nom,
+        userData.prenom,
+        userData.telephone,
+        userData.mot_de_passe,
+        userData.groupe_sanguin,
+        userData.role,
+        userData.code_parrainage,
+      ),
 
     onSuccess: async (data) => {
       // Store token and user

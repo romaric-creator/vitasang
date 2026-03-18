@@ -198,32 +198,16 @@ export function HomeScreenWithReactQuery() {
  */
 function AlertCard({ alert, onPress }) {
   const { t } = useTranslation();
-
+  // Correction mapping : backend retourne 'id', 'groupe', 'urgence', etc.
   return (
-    <TouchableOpacity style={styles.alertCard} onPress={onPress}>
-      <View style={styles.alertHeader}>
-        <View style={styles.bloodGroupBadge}>
-          <Text style={styles.bloodGroupText}>{alert.groupe_requis}</Text>
-        </View>
-        <Text
-          style={[
-            styles.urgenceText,
-            alert.degre_urgence === "TRES_URGENT" && {
-              color: "#ff4444",
-            },
-          ]}
-        >
-          {alert.degre_urgence}
-        </Text>
-      </View>
-
-      <Text style={styles.alertTitle}>{alert.lieu}</Text>
-      <Text style={styles.alertDescription}>{alert.description}</Text>
-
-      <View style={styles.alertFooter}>
-        <Text style={styles.quantityText}>{alert.quantite_requise} poches</Text>
-        <Text style={styles.radiusText}>Rayon: {alert.rayon_action_km} km</Text>
-      </View>
+    <TouchableOpacity onPress={onPress} style={{ padding: 16, borderRadius: 8, backgroundColor: color.surface, marginBottom: 8 }}>
+      <Text style={{ fontWeight: "bold", fontSize: 16 }}>{alert.groupe}</Text>
+      <Text style={{ color: color.danger }}>{t("alerts.urgency")}: {alert.urgence}</Text>
+      <Text>{t("alerts.location")}: {alert.lieu}</Text>
+      <Text>{t("alerts.quantity")}: {alert.quantite_requise}</Text>
+      <Text>{t("alerts.initiator")}: {alert.initiateur} ({alert.telephone_initiateur})</Text>
+      <Text>{t("alerts.status")}: {alert.statut}</Text>
+      <Text>{t("alerts.date")}: {alert.date}</Text>
     </TouchableOpacity>
   );
 }

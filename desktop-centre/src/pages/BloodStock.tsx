@@ -1,194 +1,312 @@
-import React, { useState, useEffect } from 'react';
-import api from '../services/api';
-import { useAuth } from '../context/AuthContext';
+import { useState, useEffect } from "react";
+import api from "../services/api";
+import { useAuth } from "../context/AuthContext";
+import type { BloodStockDetail } from "../types";
 
 interface BloodStockItem {
-    groupe_sanguin: string;
-    quantite_poches: number;
-    seuil_alerte_min: number;
-    // Assuming a max capacity for progress bar calculation
-    max_stock?: number; 
+  groupe_sanguin: string;
+  quantite_poches: number;
+  seuil_alerte_min: number;
+  max_stock?: number;
 }
 
-const BloodStockCard: React.FC<{ stock: BloodStockItem }> = ({ stock }) => {
-    const maxStock = stock.max_stock || 50; // Default max stock
-    const percentage = (stock.quantite_poches / maxStock) * 100;
+const BloodStockCard: React.FC<{
+  stock: BloodStockItem;
+  onUpdate: (group: string, quantity: number) => void;
+}> = ({ stock, onUpdate }) => {
+  const maxStock = stock.max_stock || 50;
+  const percentage = (stock.quantite_poches / maxStock) * 100;
 
-    let status: 'Critique' | 'Faible' | 'Suffisant' = 'Suffisant';
-    let statusColor = 'green';
-    if (stock.quantite_poches <= stock.seuil_alerte_min) {
-        status = 'Critique';
-        statusColor = 'red';
-    } else if (percentage < 40) {
-        status = 'Faible';
-        statusColor = 'yellow';
-    }
+  let status: "Critique" | "Faible" | "Suffisant" = "Suffisant";
+  let statusColor = "green";
+  if (stock.quantite_poches <= stock.seuil_alerte_min) {
+    status = "Critique";
+    statusColor = "red";
+  } else if (percentage < 40) {
+    status = "Faible";
+    statusColor = "yellow";
+  }
 
-    const statusClasses = {
-        Critique: {
-            badge: 'bg-red-100 text-primary dark:bg-primary/20 dark:text-primary',
-            ring: 'border-2 border-primary/50 ring-2 ring-primary/10',
-            progress: 'bg-primary',
-            button: 'bg-primary text-white shadow-md shadow-primary/20',
-            icon: 'warning'
-        },
-        Faible: {
-            badge: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400',
-            ring: '',
-            progress: 'bg-yellow-500',
-            button: 'bg-[#f4f0f0] dark:bg-[#3d2a2a] text-[#181111] dark:text-white hover:bg-primary hover:text-white',
-            icon: ''
-        },
-        Suffisant: {
-            badge: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
-            ring: '',
-            progress: 'bg-green-500',
-            button: 'bg-[#f4f0f0] dark:bg-[#3d2a2a] text-[#181111] dark:text-white hover:bg-primary hover:text-white',
-            icon: ''
-        }
-    };
-    const currentStatusStyle = statusClasses[status];
+  const statusClasses = {
+    Critique: {
+      badge: "bg-red-100 text-primary dark:bg-primary/20 dark:text-primary",
+      ring: "border-2 border-primary/50 ring-2 ring-primary/10",
+      progress: "bg-primary",
+      button: "bg-primary text-white shadow-md shadow-primary/20",
+      icon: "warning",
+    },
+    Faible: {
+      badge:
+        "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400",
+      ring: "",
+      progress: "bg-yellow-500",
+      button:
+        "bg-[#f4f0f0] dark:bg-[#3d2a2a] text-[#181111] dark:text-white hover:bg-primary hover:text-white",
+      icon: "",
+    },
+    Suffisant: {
+      badge:
+        "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
+      ring: "",
+      progress: "bg-green-500",
+      button:
+        "bg-[#f4f0f0] dark:bg-[#3d2a2a] text-[#181111] dark:text-white hover:bg-primary hover:text-white",
+      icon: "",
+    },
+  };
+  const currentStatusStyle = statusClasses[status];
 
-    return (
-        <div className={`bg-white dark:bg-[#2a1a1a] rounded-2xl p-6 shadow-sm flex flex-col gap-4 transition-colors ${currentStatusStyle.ring}`}>
-            <div className="flex justify-between items-start">
-                <div className="flex flex-col">
-                    <span className="text-3xl font-black text-primary">{stock.groupe_sanguin}</span>
-                </div>
-                <span className={`px-2 py-1 rounded text-xs font-bold uppercase tracking-wider flex items-center gap-1 ${currentStatusStyle.badge}`}>
-                    {currentStatusStyle.icon && <span className="material-symbols-outlined text-[12px]">{currentStatusStyle.icon}</span>}
-                    {status}
-                </span>
-            </div>
-            <div className="flex flex-col gap-1">
-                <div className="flex items-baseline gap-1">
-                    <span className={`text-4xl font-bold ${status === 'Critique' ? 'text-primary' : ''}`}>{stock.quantite_poches}</span>
-                    <span className="text-[#886364] dark:text-white/40 font-medium">Poches</span>
-                </div>
-                <div className="w-full h-2 bg-[#f4f0f0] dark:bg-[#3d2a2a] rounded-full mt-2">
-                    <div className={`h-full rounded-full ${currentStatusStyle.progress}`} style={{ width: `${percentage}%` }}></div>
-                </div>
-            </div>
-            <div className="flex flex-col gap-3 mt-2">
-                <p className="text-xs text-[#886364] dark:text-white/40 italic flex items-center gap-1">
-                    <span className="material-symbols-outlined text-xs">schedule</span> Mis à jour il y a 5 min
-                </p>
-                <button className={`w-full py-2 rounded-lg font-bold text-sm transition-all ${currentStatusStyle.button}`}>Mettre à jour</button>
-            </div>
+  return (
+    <div
+      className={`bg-white dark:bg-[#2a1a1a] rounded-2xl p-6 shadow-sm flex flex-col gap-4 transition-colors ${currentStatusStyle.ring}`}
+    >
+      <div className="flex justify-between items-start">
+        <div className="flex flex-col">
+          <span className="text-3xl font-black text-primary">
+            {stock.groupe_sanguin}
+          </span>
         </div>
-    );
+        <span
+          className={`px-2 py-1 rounded text-xs font-bold uppercase tracking-wider flex items-center gap-1 ${currentStatusStyle.badge}`}
+        >
+          {currentStatusStyle.icon && (
+            <span className="material-symbols-outlined text-[12px]">
+              {currentStatusStyle.icon}
+            </span>
+          )}
+          {status}
+        </span>
+      </div>
+      <div className="flex flex-col gap-1">
+        <div className="flex items-baseline gap-1">
+          <span
+            className={`text-4xl font-bold ${status === "Critique" ? "text-primary" : ""}`}
+          >
+            {stock.quantite_poches}
+          </span>
+          <span className="text-[#886364] dark:text-white/40 font-medium">
+            Poches
+          </span>
+        </div>
+        <div className="w-full h-2 bg-[#f4f0f0] dark:bg-[#3d2a2a] rounded-full mt-2">
+          <div
+            className={`h-full rounded-full ${currentStatusStyle.progress}`}
+            style={{ width: `${percentage}%` }}
+          ></div>
+        </div>
+      </div>
+      <div className="flex flex-col gap-3 mt-2">
+        <p className="text-xs text-[#886364] dark:text-white/40 italic flex items-center gap-1">
+          <span className="material-symbols-outlined text-xs">schedule</span>{" "}
+          Mis à jour à l'instant
+        </p>
+        <button
+          onClick={() => onUpdate(stock.groupe_sanguin, stock.quantite_poches)}
+          className={`w-full py-2 rounded-lg font-bold text-sm transition-all ${currentStatusStyle.button}`}
+        >
+          Mettre à jour
+        </button>
+      </div>
+    </div>
+  );
 };
 
+interface UpdateModalProps {
+  isOpen: boolean;
+  group?: string;
+  currentQuantity?: number;
+  onClose: () => void;
+  onSubmit: (group: string, quantity: number) => Promise<void>;
+  isLoading?: boolean;
+}
+
+const UpdateStockModal: React.FC<UpdateModalProps> = ({
+  isOpen,
+  group,
+  currentQuantity = 0,
+  onClose,
+  onSubmit,
+  isLoading,
+}) => {
+  const [quantity, setQuantity] = useState(currentQuantity);
+
+  useEffect(() => {
+    setQuantity(currentQuantity);
+  }, [currentQuantity, isOpen]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await onSubmit(group || "", quantity);
+    onClose();
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white dark:bg-[#1a0d0d] rounded-xl p-6 max-w-sm w-full">
+        <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
+          Mettre à jour le stock - {group}
+        </h2>
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Nombre de poches
+            </label>
+            <input
+              type="number"
+              min="0"
+              value={quantity}
+              onChange={(e) => setQuantity(Number(e.target.value))}
+              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-[#2a1a1a] text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
+              disabled={isLoading}
+            />
+          </div>
+
+          <div className="flex gap-3">
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-900 transition-colors disabled:opacity-50"
+              disabled={isLoading}
+            >
+              Annuler
+            </button>
+            <button
+              type="submit"
+              className="flex-1 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50"
+              disabled={isLoading}
+            >
+              {isLoading ? "Mise à jour..." : "Confirmer"}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
 
 const BloodStock: React.FC = () => {
-    const { user } = useAuth();
-    const [stock, setStock] = useState<BloodStockItem[]>([]);
-    const [loading, setLoading] = useState(true);
+  const { user } = useAuth();
+  const [stock, setStock] = useState<BloodStockItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [selectedGroup, setSelectedGroup] = useState<string>();
+  const [selectedQuantity, setSelectedQuantity] = useState(0);
+  const [updating, setUpdating] = useState(false);
 
-    useEffect(() => {
-        const fetchStock = async () => {
-            if (!user?.centre?.id_centre) return;
-            try {
-                setLoading(true);
-                const response = await api.get(`/centres/${user.centre.id_centre}/stats`);
-                if (response.data.success) {
-                    setStock(response.data.stats.bloodDetail);
-                }
-            } catch (error) {
-                console.error("Error fetching blood stock:", error);
-            } finally {
-                setLoading(false);
-            }
-        };
-        fetchStock();
-    }, [user]);
+  useEffect(() => {
+    const fetchStock = async () => {
+      if (!user?.centre?.id_centre) return;
+      try {
+        setLoading(true);
+        setError(null);
+        const response = await api.get(
+          `/centres/${user.centre.id_centre}/stock`,
+        );
+        if (response.data.success && response.data.stock) {
+          setStock(response.data.stock);
+        }
+      } catch (err: any) {
+        console.error("Error fetching blood stock:", err);
+        setError("Erreur lors de la récupération du stock");
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchStock();
+  }, [user]);
 
-    return (
-        <div className="-m-8">
-            <div className="max-w-[1400px] mx-auto">
-                <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 mb-8">
-                    <div className="flex flex-col gap-2">
-                        <h1 className="text-[#181111] dark:text-white text-4xl font-black leading-tight tracking-tight">Inventaire Central</h1>
-                        <p className="text-[#886364] dark:text-white/60 text-lg">{user?.centre?.nom_centre}</p>
-                    </div>
-                    <div className="flex items-center gap-4 bg-white dark:bg-[#2a1a1a] p-4 rounded-xl border border-[#e5dcdc] dark:border-[#3d2a2a] shadow-sm">
-                        <div className="flex flex-col">
-                            <span className="text-sm font-bold text-[#181111] dark:text-white">Mode Urgence</span>
-                            <span className="text-xs text-[#886364] dark:text-white/60">Notifier les donneurs immédiatement</span>
-                        </div>
-                        <label className="relative flex h-[32px] w-[56px] cursor-pointer items-center rounded-full bg-[#f4f0f0] dark:bg-[#3d2a2a] p-1 has-[:checked]:bg-primary transition-colors">
-                            <input className="sr-only peer" type="checkbox" />
-                            <div className="h-6 w-6 rounded-full bg-white shadow-md transform transition-transform peer-checked:translate-x-6"></div>
-                        </label>
-                    </div>
-                </div>
-                <div className="flex flex-col md:flex-row gap-4 mb-8">
-                    <div className="flex-1 relative">
-                        <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-[#886364] dark:text-white/40">search</span>
-                        <input className="w-full h-12 pl-12 pr-4 rounded-xl border-none bg-white dark:bg-[#2a1a1a] shadow-sm focus:ring-2 focus:ring-primary/50 text-[#181111] dark:text-white placeholder:text-[#886364] dark:placeholder:text-white/40" placeholder="Rechercher des lots, IDs de donneurs..." />
-                    </div>
-                    <div className="flex gap-2">
-                        <button className="h-12 px-6 flex items-center justify-center gap-2 bg-white dark:bg-[#2a1a1a] border border-[#e5dcdc] dark:border-[#3d2a2a] rounded-xl font-semibold text-[#181111] dark:text-white hover:bg-[#f4f0f0] dark:hover:bg-[#3d2a2a] transition-all">
-                            <span className="material-symbols-outlined">filter_list</span> Filtrer
-                        </button>
-                        <button className="h-12 px-6 flex items-center justify-center gap-2 bg-white dark:bg-[#2a1a1a] border border-[#e5dcdc] dark:border-[#3d2a2a] rounded-xl font-semibold text-[#181111] dark:text-white hover:bg-[#f4f0f0] dark:hover:bg-[#3d2a2a] transition-all">
-                            <span className="material-symbols-outlined">download</span> Exporter
-                        </button>
-                    </div>
-                </div>
+  const handleUpdateClick = (group: string, quantity: number) => {
+    setSelectedGroup(group);
+    setSelectedQuantity(quantity);
+    setModalOpen(true);
+  };
 
-                {loading ? <p>Chargement de l'inventaire...</p> :
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-                        {stock.map(item => <BloodStockCard key={item.groupe_sanguin} stock={item} />)}
-                    </div>
-                }
+  const handleUpdateSubmit = async (group: string, quantity: number) => {
+    if (!user?.centre?.id_centre) return;
 
-                {/* Near Expiry Table (Static Placeholder) */}
-                <div className="bg-white dark:bg-[#2a1a1a] rounded-2xl border border-[#e5dcdc] dark:border-[#3d2a2a] overflow-hidden mb-12">
-                    <div className="px-6 py-4 border-b border-[#e5dcdc] dark:border-[#3d2a2a] flex justify-between items-center">
-                        <h3 className="font-bold text-lg">Lots proches de l'expiration (48h)</h3>
-                        <a className="text-primary text-sm font-bold hover:underline" href="#">Voir tous les lots</a>
-                    </div>
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-left">
-                            <thead className="bg-[#f8f6f6] dark:bg-[#3d2a2a] text-xs uppercase text-[#886364] dark:text-white/40 font-bold">
-                                <tr>
-                                    <th className="px-6 py-3">ID Batch</th>
-                                    <th className="px-6 py-3">Groupe</th>
-                                    <th className="px-6 py-3">ID Donneur</th>
-                                    <th className="px-6 py-3">Date Collecte</th>
-                                    <th className="px-6 py-3">Date Expiration</th>
-                                    <th className="px-6 py-3 text-right">Action</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-[#e5dcdc] dark:divide-[#3d2a2a]">
-                                <tr className="hover:bg-[#f4f0f0] dark:hover:bg-[#3d2a2a]/50 transition-colors">
-                                    <td className="px-6 py-4 text-sm font-mono">B-992-04</td>
-                                    <td className="px-6 py-4"><span className="font-bold text-primary">A-</span></td>
-                                    <td className="px-6 py-4 text-sm text-[#886364] dark:text-white/60">#DON-1022</td>
-                                    <td className="px-6 py-4 text-sm">12 Oct 2023</td>
-                                    <td className="px-6 py-4 text-sm text-primary font-bold">18 Oct 2023 (Aujourd'hui)</td>
-                                    <td className="px-6 py-4 text-right">
-                                        <button className="text-primary hover:bg-primary/10 p-2 rounded-full transition-colors"><span className="material-symbols-outlined">visibility</span></button>
-                                    </td>
-                                </tr>
-                                <tr className="hover:bg-[#f4f0f0] dark:hover:bg-[#3d2a2a]/50 transition-colors">
-                                    <td className="px-6 py-4 text-sm font-mono">B-991-88</td>
-                                    <td className="px-6 py-4"><span className="font-bold text-primary">O-</span></td>
-                                    <td className="px-6 py-4 text-sm text-[#886364] dark:text-white/60">#DON-5541</td>
-                                    <td className="px-6 py-4 text-sm">11 Oct 2023</td>
-                                    <td className="px-6 py-4 text-sm text-yellow-600 font-bold">19 Oct 2023</td>
-                                    <td className="px-6 py-4 text-right">
-                                        <button className="text-primary hover:bg-primary/10 p-2 rounded-full transition-colors"><span className="material-symbols-outlined">visibility</span></button>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
+    try {
+      setUpdating(true);
+      setError(null);
+      const response = await api.put(
+        `/centres/${user.centre.id_centre}/stock`,
+        {
+          groupe_sanguin: group,
+          quantite_poches: quantity,
+        },
+      );
+
+      if (response.data.success) {
+        setStock((prevState) =>
+          prevState.map((item) =>
+            item.groupe_sanguin === group
+              ? { ...item, quantite_poches: quantity }
+              : item,
+          ),
+        );
+      } else {
+        setError(response.data.message || "Erreur lors de la mise à jour");
+      }
+    } catch (err: any) {
+      console.error("Error updating stock:", err);
+      setError(
+        err.response?.data?.message || "Erreur lors de la mise à jour du stock",
+      );
+    } finally {
+      setUpdating(false);
+    }
+  };
+
+  return (
+    <div className="-m-8">
+      <div className="max-w-[1400px] mx-auto">
+        <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 mb-8">
+          <div className="flex flex-col gap-2">
+            <h1 className="text-[#181111] dark:text-white text-4xl font-black leading-tight tracking-tight">
+              Inventaire Central
+            </h1>
+            <p className="text-[#886364] dark:text-white/60 text-lg">
+              {user?.centre?.nom || "Centre"}
+            </p>
+          </div>
         </div>
-    );
+
+        {error && (
+          <div className="mb-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+            <p className="text-red-700 dark:text-red-300 text-sm">{error}</p>
+          </div>
+        )}
+
+        {loading ? (
+          <p className="text-center text-gray-500">
+            Chargement de l'inventaire...
+          </p>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+            {stock.map((item) => (
+              <BloodStockCard
+                key={item.groupe_sanguin}
+                stock={item}
+                onUpdate={handleUpdateClick}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+
+      <UpdateStockModal
+        isOpen={modalOpen}
+        group={selectedGroup}
+        currentQuantity={selectedQuantity}
+        onClose={() => setModalOpen(false)}
+        onSubmit={handleUpdateSubmit}
+        isLoading={updating}
+      />
+    </div>
+  );
 };
 
 export default BloodStock;

@@ -15,7 +15,6 @@ import { useRouter } from "expo-router";
 import ThemedView from "@/components/ThemedView";
 import { TabBarIcon } from "@/components/TabBarIcon";
 import { color } from "@/constant/color";
-import { ModernSpinner } from "@/components/ModernSpinner";
 import { LoadingOverlay } from "@/components/LoadingOverlay";
 import { getAllCentres, searchCentresNearby } from "@/services/user.service";
 import { getCurrentPositionAsync } from "@/utils/location";
@@ -179,10 +178,14 @@ export default function MapScreen() {
               userLocation
                 ? {
                     ...userLocation,
-                    latitudeDelta: 0.1,
-                    longitudeDelta: 0.1,
+                    latitudeDelta: 5, // Increased delta
+                    longitudeDelta: 5, // Increased delta
                   }
-                : doualaRegion
+                : {
+                    ...doualaRegion,
+                    latitudeDelta: 5, // Increased delta
+                    longitudeDelta: 5, // Increased delta
+                  }
             }
             showsUserLocation={true}
           >

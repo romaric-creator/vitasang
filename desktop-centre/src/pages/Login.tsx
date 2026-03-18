@@ -25,8 +25,12 @@ const Login = () => {
       setError("Le numéro de téléphone est requis");
       return false;
     }
-    if (telephone.replace(/\D/g, "").length < 9) {
-      setError("Numéro de téléphone invalide (minimum 9 chiffres)");
+    // Validation du format du numéro de téléphone
+    // Accepte +237 6XXXXXXXX ou 2XXXXXXXX (9 chiffres)
+    const phoneRegex = /^(?:\+237|)(6\d{8}|2\d{8})$/;
+    const cleanedPhone = telephone.replace(/\s/g, ""); // Supprime les espaces pour la validation
+    if (!phoneRegex.test(cleanedPhone)) {
+      setError("Format du numéro de téléphone invalide. Ex: +237 6XXXXXXXX ou 2XXXXXXXX");
       return false;
     }
     if (!password.trim()) {

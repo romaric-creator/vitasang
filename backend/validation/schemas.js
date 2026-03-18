@@ -13,11 +13,12 @@ const schemas = {
     }),
     telephone: Joi.string()
       .required()
-      .pattern(/^(\+237[26]\d{8}|[26]\d{8})$/)
+      // CORRECTION : Autorise optionnellement un espace après +237 pour la flexibilité
+      .pattern(/^(\+237\s?[26]\d{8}|[26]\d{8})$/)
       .messages({
         "string.empty": "Le numéro de téléphone est requis",
         "string.pattern.base":
-          "Format: +237 6XXXXXXXX ou 2XXXXXXXX (9 chiffres)",
+          "Format valide: +2376XXXXXXXX ou 6XXXXXXXX (9 chiffres)",
       }),
     mot_de_passe: Joi.string().required().min(6).max(255).messages({
       "string.empty": "Le mot de passe est requis",
@@ -37,10 +38,10 @@ const schemas = {
       .messages({
         "any.only": "Le rôle doit être: donneur, personnel ou admin",
       }),
-    id_centre: Joi.number().integer().messages({
+    id_centre: Joi.number().integer().allow(null).messages({
       "number.base": "L'id_centre doit être un nombre",
     }),
-    email: Joi.string().email().max(150).allow(null).messages({
+    email: Joi.string().email().max(150).allow(null, "").messages({
       "string.email": "L'email n'est pas valide",
     }),
   }),
@@ -49,11 +50,10 @@ const schemas = {
   login: Joi.object({
     telephone: Joi.string()
       .required()
-      .pattern(/^(\+237[26]\d{8}|[26]\d{8})$/)
+      .pattern(/^(\+237\s?[26]\d{8}|[26]\d{8})$/)
       .messages({
         "string.empty": "Le numéro de téléphone est requis",
-        "string.pattern.base":
-          "Format: +237 6XXXXXXXX ou 2XXXXXXXX (9 chiffres)",
+        "string.pattern.base": "Numéro invalide (9 chiffres après l'indicatif requis)",
       }),
     mot_de_passe: Joi.string().required().min(6).messages({
       "string.empty": "Le mot de passe est requis",
@@ -66,38 +66,22 @@ const schemas = {
     latitude: Joi.number().required().min(-90).max(90).messages({
       "number.base": "La latitude doit être un nombre",
       "any.required": "La latitude est requise",
-      "number.min": "La latitude doit être entre -90 et 90",
-      "number.max": "La latitude doit être entre -90 et 90",
     }),
     longitude: Joi.number().required().min(-180).max(180).messages({
       "number.base": "La longitude doit être un nombre",
       "any.required": "La longitude est requise",
-      "number.min": "La longitude doit être entre -180 et 180",
-      "number.max": "La longitude doit être entre -180 et 180",
     }),
     groupe_sanguin: Joi.string()
       .valid("A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-")
       .required()
       .messages({
         "any.only": "Le groupe sanguin n'est pas valide",
-        "string.empty": "Le groupe sanguin est requis",
       }),
-    radius: Joi.number().integer().min(1).max(100).default(10).messages({
-      "number.base": "Le rayon doit être un nombre",
-      "number.min": "Le rayon doit être au minimum 1 km",
-      "number.max": "Le rayon doit être au maximum 100 km",
-    }),
+    radius: Joi.number().integer().min(1).max(100).default(10),
     urgence: Joi.string()
       .valid("NORMAL", "URGENT", "TRES_URGENT")
-      .default("NORMAL")
-      .messages({
-        "any.only":
-          "Le degré d'urgence doit être: NORMAL, URGENT ou TRES_URGENT",
-      }),
-    quantite_requise: Joi.number().integer().min(1).default(1).messages({
-      "number.base": "Le nombre de poches doit être un nombre",
-      "number.min": "Au minimum 1 poche requise",
-    }),
+      .default("NORMAL"),
+    quantite_requise: Joi.number().integer().min(1).default(1),
     lieu: Joi.string().required().messages({
       "string.empty": "Le lieu est requis",
     }),
@@ -108,57 +92,36 @@ const schemas = {
   pushToken: Joi.object({
     pushToken: Joi.string().required().messages({
       "string.empty": "Le pushToken est requis",
-      "any.required": "Le pushToken est requis",
     }),
   }),
 
   // Search users validation
   searchUsers: Joi.object({
-    latitude: Joi.number().required().messages({
-      "number.base": "La latitude doit être un nombre",
-    }),
-    longitude: Joi.number().required().messages({
-      "number.base": "La longitude doit être un nombre",
-    }),
+    latitude: Joi.number().required(),
+    longitude: Joi.number().required(),
     groupe_sanguin: Joi.string()
       .valid("A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-")
       .required(),
-    radius: Joi.number().integer().min(1).max(100).default(10),
+    radius: Joi.number().integer().min(1).max(500).default(10),
   }),
 
-  // Search nearby centres (without blood group filter)
+  // Search nearby centres
   searchCentres: Joi.object({
-    latitude: Joi.number().required().messages({
-      "number.base": "La latitude doit être un nombre",
-    }),
-    longitude: Joi.number().required().messages({
-      "number.base": "La longitude doit être un nombre",
-    }),
-    radius: Joi.number().integer().min(1).max(100).default(10),
+    latitude: Joi.number().required(),
+    longitude: Joi.number().required(),
+    radius: Joi.number().integer().min(1).max(500).default(50),
   }),
 
   // Update user profile
   updateUser: Joi.object({
-    nom: Joi.string().min(2).max(100).allow("").messages({
-      "string.min": "Le nom doit avoir au moins 2 caractères",
-    }),
-    prenom: Joi.string().min(2).max(100).allow("").messages({
-      "string.min": "Le prénom doit avoir au moins 2 caractères",
-    }),
+    nom: Joi.string().min(2).max(100).allow(""),
+    prenom: Joi.string().min(2).max(100).allow(""),
     telephone: Joi.string()
-      .pattern(/^(\+237[26]\d{8}|[26]\d{8})$/)
-      .allow("")
-      .messages({
-        "string.pattern.base":
-          "Format: +237 6XXXXXXXX ou 2XXXXXXXX (9 chiffres)",
-      }),
+      .pattern(/^(\+237\s?[26]\d{8}|[26]\d{8})$/)
+      .allow(""),
     groupe_sanguin: Joi.string()
       .valid("A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-")
-      .allow("")
-      .messages({
-        "any.only":
-          "Le groupe sanguin doit être: A+, A-, B+, B-, AB+, AB-, O+, O-",
-      }),
+      .allow(""),
     ville: Joi.string().max(100).allow(""),
     latitude: Joi.number().min(-90).max(90).allow(null),
     longitude: Joi.number().min(-180).max(180).allow(null),
@@ -166,28 +129,16 @@ const schemas = {
 
   // Create rendezvous
   createRendezvous: Joi.object({
-    id_centre: Joi.number().integer().required().messages({
-      "number.base": "id_centre doit être un nombre",
-      "any.required": "id_centre est requis",
-    }),
-    date_rdv: Joi.date().required().iso().messages({
-      "date.base": "La date doit être au format ISO",
-      "any.required": "La date est requise",
-    }),
-    heure_debut: Joi.string().required().messages({
-      "string.empty": "L'heure de début est requise",
-    }),
+    id_centre: Joi.number().integer().required(),
+    date_rdv: Joi.date().required().iso(),
+    heure_debut: Joi.string().required(),
   }),
 
   // Update alert status
   updateAlert: Joi.object({
     statut: Joi.string()
       .valid("en_cours", "satisfaite", "annulee")
-      .required()
-      .messages({
-        "any.only": "Le statut doit être: en_cours, satisfaite ou annulee",
-        "string.empty": "Le statut est requis",
-      }),
+      .required(),
   }),
 };
 
