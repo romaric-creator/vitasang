@@ -15,7 +15,6 @@ import { useRouter } from "expo-router";
 import ThemedView from "@/components/ThemedView";
 import { TabBarIcon } from "@/components/TabBarIcon";
 import { color } from "@/constant/color";
-import { ModernSpinner } from "@/components/ModernSpinner";
 import { LoadingOverlay } from "@/components/LoadingOverlay";
 import { getAllCentres, searchCentresNearby } from "@/services/user.service";
 import { getCurrentPositionAsync } from "@/utils/location";
