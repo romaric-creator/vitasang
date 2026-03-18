@@ -11,7 +11,7 @@ import { TabBarIcon } from "@/components/TabBarIcon";
 import { color } from "@/constant/color";
 import { useRouter } from "expo-router";
 import ThemedView from "@/components/ThemedView";
-import { LoadingOverlay } from "@/components/LoadingOverlay";
+import { ModernSpinner } from \"@/components/ModernSpinner\";
 import * as Location from "expo-location";
 import { searchDonors, sendAlert } from "@/services/user.service";
 import { createAlertValidationSchema } from "@/validation/ValidationSchemas";
@@ -269,11 +269,7 @@ export default function CreateAlertScreen() {
                     color={color.primary}
                   />
                   {loading ? (
-                    <LoadingOverlay
-                      visible={true}
-                      spinnerSize="small"
-                      style={{ flex: 1 }}
-                    />
+                    <ModernSpinner size="small" />
                   ) : (
                     <Text style={styles.warningText}>
                       {donorCount !== null

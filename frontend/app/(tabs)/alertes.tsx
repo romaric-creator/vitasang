@@ -19,7 +19,7 @@ import {
   respondToAlert,
 } from "@/services/user.service";
 import { useTranslation } from "react-i18next";
-import { LoadingOverlay } from "@/components/LoadingOverlay";
+import { SkeletonListLoader } from "@/components/SkeletonLoader";
 
 export default function AlertesScreen() {
   const { t } = useTranslation();
@@ -194,7 +194,7 @@ export default function AlertesScreen() {
       </View>
 
       {loading && !refreshing ? (
-        <LoadingOverlay visible={true} />
+        <SkeletonListLoader count={5} itemHeight={100} />
       ) : (
         <FlatList
           data={alerts}

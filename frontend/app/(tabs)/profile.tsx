@@ -7,9 +7,8 @@ import {
   Alert,
 } from "react-native";
 import React, { useEffect, useState } from "react";
-import ThemedView from "@/components/ThemedView";
-import { LoadingOverlay } from "@/components/LoadingOverlay";
-import { TabBarIcon } from "@/components/TabBarIcon";
+import { useTranslation } from "react-i18next";
+import { SkeletonLoader, SkeletonListLoader } from "@/components/SkeletonLoader";
 import { color } from "@/constant/color";
 import { getUserIdFromStorage } from "@/utils/storage";
 import { getUserProfile } from "@/services/user.service";
@@ -80,7 +79,16 @@ export default function Profile() {
   };
 
   if (loading) {
-    return <LoadingOverlay visible={true} spinnerSize="large" fullScreen />;
+    return (
+      <ThemedView style={styles.container}>
+        <View style={styles.header}>
+          <SkeletonLoader width={120} height={120} borderRadius={60} style={{ marginBottom: 16 }} />
+          <SkeletonLoader width="60%" height={20} style={{ marginBottom: 8 }} />
+          <SkeletonLoader width="40%" height={16} />
+        </View>
+        <SkeletonListLoader count={5} itemHeight={60} />
+      </ThemedView>
+    );
   }
 
   const fullName = userData

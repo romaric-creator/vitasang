@@ -4,7 +4,13 @@
  */
 
 import React, { useMemo } from "react";
-import { Image, ImageProps, ActivityIndicator, View, StyleSheet } from "react-native";
+import {
+  Image,
+  ImageProps,
+  ActivityIndicator,
+  View,
+  StyleSheet,
+} from "react-native";
 import { useCachedImage, getCachedImagePath } from "@/hooks/useCachedImage";
 import { color } from "@/constant/color";
 
@@ -19,7 +25,7 @@ interface CachedImageProps extends Omit<ImageProps, "source"> {
 
 /**
  * Composant Image qui cache automatiquement les images téléchargées
- * 
+ *
  * Usage:
  * <CachedImage uri="https://..." style={{width: 100, height: 100}} />
  */
@@ -70,7 +76,12 @@ export const CachedImage: React.FC<CachedImageProps> = ({
 
       {/* Placeholder custom */}
       {isLoading && placeholder && (
-        <View style={[StyleSheet.absoluteFill, { justifyContent: "center", alignItems: "center" }]}>
+        <View
+          style={[
+            StyleSheet.absoluteFill,
+            { justifyContent: "center", alignItems: "center" },
+          ]}
+        >
           {placeholder}
         </View>
       )}
