@@ -14,11 +14,11 @@ const schemas = {
     telephone: Joi.string()
       .required()
       // CORRECTION : Autorise optionnellement un espace après +237 pour la flexibilité
-      .pattern(/^(\+237\s?[26]\d{8}|[26]\d{8})$/)
+      .pattern(/^(\+237\s?[26]\d{9}|[26]\d{9})$/)
       .messages({
         "string.empty": "Le numéro de téléphone est requis",
         "string.pattern.base":
-          "Format valide: +2376XXXXXXXX ou 6XXXXXXXX (9 chiffres)",
+          "Format valide: +2376XXXXXXXX ou 6XXXXXXXX (10 chiffres)",
       }),
     mot_de_passe: Joi.string().required().min(6).max(255).messages({
       "string.empty": "Le mot de passe est requis",
@@ -50,10 +50,10 @@ const schemas = {
   login: Joi.object({
     telephone: Joi.string()
       .required()
-      .pattern(/^(\+237\s?[26]\d{8}|[26]\d{8})$/)
+      .pattern(/^(\+237\s?[26]\d{9}|[26]\d{9})$/)
       .messages({
         "string.empty": "Le numéro de téléphone est requis",
-        "string.pattern.base": "Numéro invalide (9 chiffres après l'indicatif requis)",
+        "string.pattern.base": "Numéro invalide (10 chiffres requis)",
       }),
     mot_de_passe: Joi.string().required().min(6).messages({
       "string.empty": "Le mot de passe est requis",
@@ -117,7 +117,7 @@ const schemas = {
     nom: Joi.string().min(2).max(100).allow(""),
     prenom: Joi.string().min(2).max(100).allow(""),
     telephone: Joi.string()
-      .pattern(/^(\+237\s?[26]\d{8}|[26]\d{8})$/)
+      .pattern(/^(\+237\s?[26]\d{9}|[26]\d{9})$/)
       .allow(""),
     groupe_sanguin: Joi.string()
       .valid("A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-")
@@ -136,9 +136,7 @@ const schemas = {
 
   // Update alert status
   updateAlert: Joi.object({
-    statut: Joi.string()
-      .valid("en_cours", "satisfaite", "annulee")
-      .required(),
+    statut: Joi.string().valid("en_cours", "satisfaite", "annulee").required(),
   }),
 };
 
