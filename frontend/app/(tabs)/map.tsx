@@ -231,7 +231,11 @@ export default function MapScreen() {
       ) : (
         <FlatList
           data={centres}
-          keyExtractor={(item) => (item.id_centre ? item.id_centre.toString() : `centre-${Math.random()}`)}
+          keyExtractor={(item) =>
+            item.id_centre
+              ? item.id_centre.toString()
+              : `centre-${Math.random()}`
+          }
           renderItem={renderCentreItem}
           contentContainerStyle={styles.listContent}
           refreshControl={
