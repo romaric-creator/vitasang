@@ -4,6 +4,7 @@ const { verifyToken, requireRole } = require("../utils/auth.middleware");
 const { validateRequest } = require("../middleware/validation");
 const upload = require("../middleware/upload");
 const schemas = require("../validation/schemas");
+const normalizePhoneNumber = require("../middleware/normalizePhone");
 const router = express.Router();
 
 /**
@@ -66,7 +67,12 @@ const router = express.Router();
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.post("/register", validateRequest(schemas.register), controller.addUser);
+router.post(
+  "/register",
+  normalizePhoneNumber,
+  validateRequest(schemas.register),
+  controller.addUser,
+);
 
 /**
  * @swagger
@@ -111,7 +117,12 @@ router.post("/register", validateRequest(schemas.register), controller.addUser);
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.post("/login", validateRequest(schemas.login), controller.login);
+router.post(
+  "/login",
+  normalizePhoneNumber,
+  validateRequest(schemas.login),
+  controller.login,
+);
 
 /**
  * @swagger
