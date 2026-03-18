@@ -179,10 +179,14 @@ export default function MapScreen() {
               userLocation
                 ? {
                     ...userLocation,
-                    latitudeDelta: 0.1,
-                    longitudeDelta: 0.1,
+                    latitudeDelta: 5, // Increased delta
+                    longitudeDelta: 5, // Increased delta
                   }
-                : doualaRegion
+                : {
+                    ...doualaRegion,
+                    latitudeDelta: 5, // Increased delta
+                    longitudeDelta: 5, // Increased delta
+                  }
             }
             showsUserLocation={true}
           >
