@@ -88,7 +88,7 @@ export const sendAlert = async (alertData: {
   description?: string;
 }) => {
   try {
-    const response = await apiClient.post(`/alerts/search`, alertData);
+    const response = await apiClient.post(`/alerts`, alertData);
     return response.data;
   } catch (error: any) {
     throw new Error(
@@ -123,7 +123,7 @@ export const getMyAlerts = async () => {
 
 export const getActiveAlerts = async () => {
   try {
-    const response = await apiClient.get(`/alerts/active`);
+    const response = await apiClient.get(`/alerts/public`);
     return response.data;
   } catch (error: any) {
     // Gracefully handle 401/403 errors (user not authenticated)

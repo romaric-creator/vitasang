@@ -7,6 +7,12 @@ const schemas = require("../validation/schemas");
 
 const isAdmin = requireRole("admin");
 
+/**
+ * PUBLIC ROUTE - Get all live (en_cours) blood donation alerts
+ * No authentication required - anyone can see active alerts
+ */
+router.get("/public", alertsController.getLiveAlerts);
+
 // The verifyToken middleware will be used for all routes defined after this line.
 router.use(verifyToken);
 

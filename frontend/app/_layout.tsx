@@ -81,18 +81,18 @@ function RootLayoutNav() {
               }
             })(),
           );
-        }
 
-        // Fetch initial data that shouldn't block too long
-        tasks.push(
-          (async () => {
-            try {
-              await getActiveAlerts();
-            } catch (e) {
-              console.error("getActiveAlerts init", e);
-            }
-          })(),
-        );
+          // Fetch initial data that shouldn't block too long
+          tasks.push(
+            (async () => {
+              try {
+                await getActiveAlerts();
+              } catch (e) {
+                console.error("getActiveAlerts init", e);
+              }
+            })(),
+          );
+        }
 
         tasks.push(
           (async () => {
@@ -131,15 +131,18 @@ function RootLayoutNav() {
   useEffect(() => {
     if (isLoading) return; // Attendre que le statut d'auth soit chargé
 
-    // Détermine si l'utilisateur est actuellement dans un flux d'authentification ou d'urgence (Guest Alert)
-    const inAuthGroup = segments[0] === "(auth)";
+    if (!segments.length && !isAuth) return; // Protection anti-montage à vide
+
+    // Normalisation en minuscules
+    const currentSegment = segments[0]?.toLowerCase() || "";
+
+    const inAuthGroup = currentSegment === "(auth)";
     const inAuthFlow =
       inAuthGroup ||
-      segments[0] === "login" ||
-      segments[0] === "register" ||
-      segments[0] === "Splash" ||
-      segments[0] === "OnboardingCarousel" ||
-      segments[0] === "create-alert";
+      currentSegment === "login" ||
+      currentSegment === "register" ||
+      currentSegment === "splash" ||
+      currentSegment === "onboardingcarousel";
 
     if (isAuth && inAuthFlow) {
       // Si authentifié et dans le flux d'auth, rediriger vers l'application principale (les onglets)
