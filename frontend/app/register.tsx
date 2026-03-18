@@ -11,9 +11,13 @@ import {
 import { Formik } from "formik";
 import { color } from "@/constant/color";
 import { router } from "expo-router";
-import { registerUser, updatePushToken } from "@/services/user.service";
+import {
+  registerUser,
+  updatePushToken,
+  sendAlert,
+} from "@/services/user.service";
 import { registerForPushNotificationsAsync } from "@/utils/pushNotifications";
-import { storeData } from "@/utils/storage";
+import { storeData, getData, removeData } from "@/utils/storage";
 import { registerValidationSchema } from "@/validation/ValidationSchemas";
 import FormField from "@/components/FormField";
 import { PrimaryButton } from "@/components/PrimaryButton";
@@ -55,6 +59,26 @@ export default function RegisterScreen() {
         }
       } catch (tokenError) {
         console.error("Échec de l'envoi du push token au backend:", tokenError);
+      }
+
+      // TRAITER L'ALERTE EN ATTENTE (Guest flow)
+      try {
+        const pendingAlert = await getData("pending_alert");
+        if (pendingAlert) {
+          console.log("Envoi de l'alerte en attente après inscription...");
+          const result = await sendAlert(pendingAlert);
+          if (result.alertId) {
+            await removeData("pending_alert");
+            console.log("Alerte en attente envoyée avec succès.");
+            router.replace({
+              pathname: "/alert-confirmation",
+              params: { alertId: result.alertId.toString() },
+            });
+            return;
+          }
+        }
+      } catch (e) {
+        console.error("Erreur lors de l'envoi de l'alerte en attente:", e);
       }
 
       router.replace("/(tabs)");
