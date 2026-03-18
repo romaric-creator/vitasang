@@ -23,6 +23,7 @@ exports.getAllCentres = async (req, res, next) => {
     logger.info('Fetched all centres', { count: centres.length });
 
     res.status(200).json({
+      success: true,
       centres,
       total: centres.length
     });
@@ -55,7 +56,7 @@ exports.searchCentresNearby = async (req, res, next) => {
 
     logger.info('Searched nearby centres', { latitude, longitude, radius, found: centres.length });
 
-    res.status(200).json({ centres });
+    res.status(200).json({ success: true, centres });
   } catch (error) {
     logger.error('Error searching centres', { error: error.message });
     next(error);
