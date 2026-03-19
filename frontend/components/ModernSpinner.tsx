@@ -7,6 +7,7 @@ interface ModernSpinnerProps {
   color?: string;
   message?: string;
   style?: ViewStyle;
+  pose?: "waving" | "jumping" | "superhero" | "bouncing";
 }
 
 export const ModernSpinner: React.FC<ModernSpinnerProps> = ({
@@ -14,9 +15,12 @@ export const ModernSpinner: React.FC<ModernSpinnerProps> = ({
   color: spinnerColor = color.primary,
   message,
   style,
+  pose = "waving",
 }) => {
   const spinValue = useRef(new Animated.Value(0)).current;
   const pulseValue = useRef(new Animated.Value(1)).current;
+  const translateY = useRef(new Animated.Value(0)).current;
+  const scaleValue = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
     // Rotation animation - smooth spinning
@@ -44,14 +48,54 @@ export const ModernSpinner: React.FC<ModernSpinnerProps> = ({
       ]),
     );
 
+    // Bouncing animation
+    const bouncingAnim = Animated.loop(
+      Animated.sequence([
+        Animated.timing(translateY, {
+          toValue: -15,
+          duration: 500,
+          useNativeDriver: true,
+        }),
+        Animated.timing(translateY, {
+          toValue: 0,
+          duration: 500,
+          useNativeDriver: true,
+        }),
+      ]),
+    );
+
+    // Scale pulse animation
+    const scaleAnim = Animated.loop(
+      Animated.sequence([
+        Animated.timing(scaleValue, {
+          toValue: 1.2,
+          duration: 800,
+          useNativeDriver: true,
+        }),
+        Animated.timing(scaleValue, {
+          toValue: 1,
+          duration: 800,
+          useNativeDriver: true,
+        }),
+      ]),
+    );
+
     spinAnim.start();
     pulseAnim.start();
+
+    if (pose === "bouncing") {
+      bouncingAnim.start();
+    } else if (pose === "jumping") {
+      scaleAnim.start();
+    }
 
     return () => {
       spinAnim.stop();
       pulseAnim.stop();
+      bouncingAnim.stop();
+      scaleAnim.stop();
     };
-  }, [spinValue, pulseValue]);
+  }, [spinValue, pulseValue, translateY, scaleValue, pose]);
 
   const spin = spinValue.interpolate({
     inputRange: [0, 1],
@@ -63,18 +107,23 @@ export const ModernSpinner: React.FC<ModernSpinnerProps> = ({
 
   return (
     <View style={[styles.container, style]}>
-      {/* Simple rotating spinner - no SVG complexity */}
+      {/* Enhanced rotating spinner with gradient effect */}
       <Animated.View
         style={[
           styles.spinner,
           {
             width: spinnerSize,
             height: spinnerSize,
-            transform: [{ rotate: spin }],
+            transform: [
+              { rotate: spin },
+              { translateY },
+              { scale: scaleValue },
+            ],
             opacity: pulseValue,
           },
         ]}
       >
+        {/* Outer ring */}
         <View
           style={[
             styles.spinnerRing,
@@ -85,10 +134,39 @@ export const ModernSpinner: React.FC<ModernSpinnerProps> = ({
             },
           ]}
         />
+        {/* Inner ring for depth */}
+        <View
+          style={[
+            styles.innerRing,
+            {
+              borderColor: spinnerColor,
+              width: spinnerSize * 0.6,
+              height: spinnerSize * 0.6,
+            },
+          ]}
+        />
       </Animated.View>
 
+      {/* Pulsing dots under spinner */}
+      <View style={styles.dotsContainer}>
+        {[0, 1, 2].map((i) => (
+          <Animated.View
+            key={i}
+            style={[
+              styles.dot,
+              {
+                backgroundColor: spinnerColor,
+                opacity: Animated.add(pulseValue, i * 0.2),
+              },
+            ]}
+          />
+        ))}
+      </View>
+
       {/* Message optionnel */}
-      {message ? <Text style={styles.message}>{message}</Text> : null}
+      {message ? (
+        <Text style={[styles.message, { color: spinnerColor }]}>{message}</Text>
+      ) : null}
     </View>
   );
 };
@@ -97,7 +175,7 @@ const styles = StyleSheet.create({
   container: {
     justifyContent: "center",
     alignItems: "center",
-    gap: 16,
+    gap: 12,
   },
 
   spinner: {
@@ -106,18 +184,39 @@ const styles = StyleSheet.create({
   },
 
   spinnerRing: {
-    borderWidth: 4,
+    borderWidth: 3,
     borderRadius: 999,
     borderTopColor: "transparent",
     borderRightColor: "transparent",
     borderBottomColor: "transparent",
+    position: "absolute",
+  },
+
+  innerRing: {
+    borderWidth: 2,
+    borderRadius: 999,
+    borderTopColor: "transparent",
+    borderLeftColor: "transparent",
+    opacity: 0.5,
+  },
+
+  dotsContainer: {
+    flexDirection: "row",
+    gap: 8,
+    marginTop: 8,
+  },
+
+  dot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
   },
 
   message: {
     fontSize: 13,
-    fontWeight: "500",
-    color: color.textSecondary,
+    fontWeight: "600",
     textAlign: "center",
-    letterSpacing: 0.2,
+    letterSpacing: 0.3,
+    marginTop: 8,
   },
 });

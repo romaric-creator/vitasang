@@ -7,6 +7,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/config/queryKeys";
 import * as userService from "@/services/user.service";
 import { storeData, removeData } from "@/utils/storage";
+import { apiClient } from "@/config/axiosConfig";
 
 // ╔════════════════════════════════════════════════════════════════╗
 // ║                        MUTATIONS                               ║
@@ -131,11 +132,7 @@ export const useUpdateProfile = () => {
 
   return useMutation({
     mutationFn: (profileData: any) =>
-      fetch("/api/users/profile", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(profileData),
-      }).then((r) => r.json()),
+      apiClient.put(`/users/${profileData.id_utilisateur || profileData.id}`, profileData).then((r) => r.data),
 
     onSuccess: (updatedUser) => {
       // Update cache
@@ -171,7 +168,7 @@ export const useCurrentUser = (enabled: boolean = true) => {
 export const useUserProfile = (userId: number, enabled: boolean = true) => {
   return useQuery({
     queryKey: queryKeys.users.profile(userId),
-    queryFn: () => fetch(`/api/users/${userId}`).then((r) => r.json()),
+    queryFn: () => apiClient.get(`/users/${userId}`).then((r) => r.data),
     enabled: enabled && !!userId,
     staleTime: 1000 * 60 * 10, // 10 minutes for static profiles
   });

@@ -123,14 +123,23 @@ export default function MapScreen() {
     );
   };
 
-  // Filtrer les centres pour ne garder que ceux avec des coordonnées valides
-  const mappableCentres = centres.filter(
-    (c) =>
-      c.latitude &&
-      c.longitude &&
-      !isNaN(parseFloat(c.latitude)) &&
-      !isNaN(parseFloat(c.longitude)),
-  );
+  // Filtrer les centres pour ne garder que ceux avec des coordonnées valides et des IDs uniques
+  const mappableCentres = centres
+    .filter(
+      (c) =>
+        c.id_centre && // Vérifie que id_centre existe
+        c.latitude &&
+        c.longitude &&
+        !isNaN(parseFloat(c.latitude)) &&
+        !isNaN(parseFloat(c.longitude)),
+    )
+    .reduce((uniqueCentres: any[], centre) => {
+      // Élimine les doublons basés sur id_centre
+      if (!uniqueCentres.find((u) => u.id_centre === centre.id_centre)) {
+        uniqueCentres.push(centre);
+      }
+      return uniqueCentres;
+    }, []);
 
   return (
     <ThemedView style={styles.container}>
@@ -222,7 +231,11 @@ export default function MapScreen() {
       ) : (
         <FlatList
           data={centres}
-          keyExtractor={(item) => item.id_centre.toString()}
+          keyExtractor={(item) =>
+            item.id_centre
+              ? item.id_centre.toString()
+              : `centre-${Math.random()}`
+          }
           renderItem={renderCentreItem}
           contentContainerStyle={styles.listContent}
           refreshControl={

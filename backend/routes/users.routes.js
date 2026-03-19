@@ -4,6 +4,7 @@ const { verifyToken, requireRole } = require("../utils/auth.middleware");
 const { validateRequest } = require("../middleware/validation");
 const upload = require("../middleware/upload");
 const schemas = require("../validation/schemas");
+const normalizePhoneNumber = require("../middleware/normalizePhone");
 const router = express.Router();
 
 /**
@@ -66,7 +67,12 @@ const router = express.Router();
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.post("/register", validateRequest(schemas.register), controller.addUser);
+router.post(
+  "/register",
+  normalizePhoneNumber,
+  validateRequest(schemas.register),
+  controller.addUser,
+);
 
 /**
  * @swagger
@@ -111,7 +117,12 @@ router.post("/register", validateRequest(schemas.register), controller.addUser);
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.post("/login", validateRequest(schemas.login), controller.login);
+router.post(
+  "/login",
+  normalizePhoneNumber,
+  validateRequest(schemas.login),
+  controller.login,
+);
 
 /**
  * @swagger
@@ -178,6 +189,7 @@ router.get("/", verifyToken, requireRole("admin"), controller.getAllUsers);
  */
 router.get(
   "/search",
+  verifyToken,
   validateRequest(schemas.searchUsers),
   controller.searchUsers,
 );
@@ -200,7 +212,7 @@ router.get(
  *       200:
  *         description: Users with specified blood group
  */
-router.get("/groupe-sanguin/:groupe", controller.getUsersByBloodGroup);
+router.get("/groupe-sanguin/:groupe", verifyToken, controller.getUsersByBloodGroup);
 
 /**
  * @swagger

@@ -27,7 +27,7 @@ const Login = () => {
     }
     // Validation du format du numéro de téléphone
     // Accepte +237 6XXXXXXXX ou 2XXXXXXXX (9 chiffres)
-    const phoneRegex = /^(?:\+237|)(6\d{8}|2\d{8})$/;
+    const phoneRegex = /^(\+237\s?[26]\d{9}|[26]\d{9})$/;
     const cleanedPhone = telephone.replace(/\s/g, ""); // Supprime les espaces pour la validation
     if (!phoneRegex.test(cleanedPhone)) {
       setError("Format du numéro de téléphone invalide. Ex: +237 6XXXXXXXX ou 2XXXXXXXX");
@@ -68,7 +68,7 @@ const Login = () => {
 
         if (
           !userData.role ||
-          !["personnel", "admin", "centre_manager"].includes(userData.role)
+          !["personnel", "admin"].includes(userData.role)
         ) {
           setError(
             "Accès réservé au personnel des centres. Veuillez vous connecter avec un compte autorisé.",

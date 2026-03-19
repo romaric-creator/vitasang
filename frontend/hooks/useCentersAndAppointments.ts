@@ -4,6 +4,7 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/config/queryKeys";
+import { apiClient } from "@/config/axiosConfig";
 
 // ╔════════════════════════════════════════════════════════════════╗
 // ║                 CENTERS (Centres de Santé)                     ║
@@ -22,9 +23,9 @@ export const useNearbyCenters = (
   return useQuery({
     queryKey: queryKeys.centers.nearby(latitude, longitude, radius),
     queryFn: () =>
-      fetch(
-        `/api/centres/nearby?latitude=${latitude}&longitude=${longitude}&radius=${radius}`,
-      ).then((r) => r.json()),
+      apiClient.get(
+        `/centres/nearby?latitude=${latitude}&longitude=${longitude}&radius=${radius}`,
+      ).then((r) => r.data),
     staleTime: 1000 * 60 * 10, // 10 minutes
     gcTime: 1000 * 60 * 30,
     enabled: !!latitude && !!longitude,
@@ -38,7 +39,7 @@ export const useNearbyCenters = (
 export const useCenterDetail = (centerId: number, enabled: boolean = true) => {
   return useQuery({
     queryKey: queryKeys.centers.detail(centerId),
-    queryFn: () => fetch(`/api/centres/${centerId}`).then((r) => r.json()),
+    queryFn: () => apiClient.get(`/centres/${centerId}`).then((r) => r.data),
     enabled: enabled && !!centerId,
     staleTime: 1000 * 60 * 15, // 15 minutes
   });
@@ -52,7 +53,7 @@ export const useCenterStocks = (centerId: number, enabled: boolean = true) => {
   return useQuery({
     queryKey: queryKeys.centers.stocks(centerId),
     queryFn: () =>
-      fetch(`/api/centres/${centerId}/stocks`).then((r) => r.json()),
+      apiClient.get(`/centres/${centerId}/stocks`).then((r) => r.data),
     enabled: enabled && !!centerId,
     staleTime: 1000 * 60 * 20,
     refetchInterval: 1000 * 60 * 5, // Auto-refetch every 5 minutes
@@ -66,7 +67,7 @@ export const useCenterStocks = (centerId: number, enabled: boolean = true) => {
 export const useAllCentres = () => {
   return useQuery({
     queryKey: queryKeys.centers.all,
-    queryFn: () => fetch("/api/centres").then((r) => r.json()),
+    queryFn: () => apiClient.get("/centres").then((r) => r.data),
     staleTime: 1000 * 60 * 10,
   });
 };
@@ -83,7 +84,7 @@ export const useMyAppointments = (enabled: boolean = true) => {
   return useQuery({
     queryKey: queryKeys.appointments.myAppointments(),
     queryFn: () =>
-      fetch("/api/rendezvous/my-appointments").then((r) => r.json()),
+      apiClient.get("/rendezvous/my-appointments").then((r) => r.data),
     enabled,
     staleTime: 1000 * 60 * 3,
     gcTime: 1000 * 60 * 5,
@@ -101,7 +102,7 @@ export const useAppointmentDetail = (
   return useQuery({
     queryKey: queryKeys.appointments.detail(appointmentId),
     queryFn: () =>
-      fetch(`/api/rendezvous/${appointmentId}`).then((r) => r.json()),
+      apiClient.get(`/rendezvous/${appointmentId}`).then((r) => r.data),
     enabled: enabled && !!appointmentId,
     staleTime: 1000 * 60 * 10,
   });
@@ -118,7 +119,7 @@ export const useCenterAppointments = (
   return useQuery({
     queryKey: queryKeys.appointments.byCenter(centerId),
     queryFn: () =>
-      fetch(`/api/rendezvous/center/${centerId}`).then((r) => r.json()),
+      apiClient.get(`/rendezvous/center/${centerId}`).then((r) => r.data),
     enabled: enabled && !!centerId,
     staleTime: 1000 * 60 * 5,
   });
@@ -141,11 +142,7 @@ export const useCreateAppointment = () => {
       id_type_don: number;
       date_heure_rdv: string;
     }) =>
-      fetch("/api/rendezvous", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      }).then((r) => r.json()),
+      apiClient.post("/rendezvous", data).then((r) => r.data),
 
     onSuccess: (newAppointment) => {
       // Invalidate user's appointments
@@ -176,9 +173,7 @@ export const useCancelAppointment = () => {
 
   return useMutation({
     mutationFn: (appointmentId: number) =>
-      fetch(`/api/rendezvous/${appointmentId}`, {
-        method: "DELETE",
-      }).then((r) => r.json()),
+      apiClient.delete(`/rendezvous/${appointmentId}`).then((r) => r.data),
 
     onSuccess: (_, appointmentId) => {
       queryClient.removeQueries({
@@ -206,11 +201,7 @@ export const useUpdateAppointment = () => {
       appointmentId: number;
       data: any;
     }) =>
-      fetch(`/api/rendezvous/${appointmentId}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      }).then((r) => r.json()),
+      apiClient.put(`/rendezvous/${appointmentId}`, data).then((r) => r.data),
 
     onSuccess: (updatedAppointment) => {
       queryClient.setQueryData(

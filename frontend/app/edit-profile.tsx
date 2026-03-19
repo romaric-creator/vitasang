@@ -27,6 +27,7 @@ import Constants from "expo-constants"; // Import Constants
 
 import { useTranslation } from "react-i18next";
 import { LoadingOverlay } from "@/components/LoadingOverlay";
+import { SkeletonLoader } from "@/components/SkeletonLoader";
 
 export default function EditProfileScreen() {
   const { t } = useTranslation();
@@ -125,7 +126,15 @@ export default function EditProfileScreen() {
 
   if (loading) {
     return (
-      <LoadingOverlay visible={true} message={t("common.loading")} fullScreen />
+      <ThemedView style={styles.container}>
+        <PageHeader title={t("editProfile.title")} />
+        <View style={{ padding: 16, gap: 12 }}>
+          <SkeletonLoader width={100} height={100} borderRadius={50} />
+          <SkeletonLoader width="100%" height={50} style={{ marginTop: 16 }} />
+          <SkeletonLoader width="100%" height={50} />
+          <SkeletonLoader width="100%" height={50} />
+        </View>
+      </ThemedView>
     );
   }
 

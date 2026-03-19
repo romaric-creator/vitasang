@@ -4,7 +4,7 @@ describe('Joi Validation Schemas', () => {
   describe('Login Schema', () => {
     it('should validate correct login data', () => {
       const data = {
-        telephone: '+237612345678',
+        telephone: '+2376123456789',
         mot_de_passe: 'Password123',
       };
       const { error } = schemas.login.validate(data);
@@ -23,7 +23,7 @@ describe('Joi Validation Schemas', () => {
 
     it('should reject short password', () => {
       const data = {
-        telephone: '+237612345678',
+        telephone: '+2376123456789',
         mot_de_passe: 'short',
       };
       const { error } = schemas.login.validate(data);
@@ -31,7 +31,7 @@ describe('Joi Validation Schemas', () => {
     });
 
     it('should require both fields', () => {
-      const data = { telephone: '+237612345678' };
+      const data = { telephone: '+2376123456789' };
       const { error } = schemas.login.validate(data);
       expect(error).toBeDefined();
     });
@@ -41,7 +41,7 @@ describe('Joi Validation Schemas', () => {
     const validData = {
       nom: 'Dupont',
       prenom: 'Jean',
-      telephone: '+237612345678',
+      telephone: '+2376123456789',
       mot_de_passe: 'Password123',
       groupe_sanguin: 'O+',
     };

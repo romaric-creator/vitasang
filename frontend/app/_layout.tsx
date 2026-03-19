@@ -11,6 +11,7 @@ import { queryClient } from "@/config/queryClient";
 import { useAlertRetryCheck } from "@/hooks/useAlertRetryCheck";
 import { getUserIdFromStorage } from "@/utils/storage";
 import { registerForPushNotificationsAsync } from "@/utils/pushNotifications";
+import { initImageCache } from "@/hooks/useCachedImage";
 import * as Location from "expo-location";
 import {
   updatePushToken,
@@ -41,6 +42,9 @@ function RootLayoutNav() {
 
     const initApp = async () => {
       try {
+        // Initialiser le cache des images
+        await initImageCache();
+
         const userId = await getUserIdFromStorage();
 
         const tasks: Promise<any>[] = [];

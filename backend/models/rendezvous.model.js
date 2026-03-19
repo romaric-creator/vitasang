@@ -12,7 +12,7 @@ module.exports = (sequelize, DataTypes) => {
         allowNull: false,
       },
       statut_rdv: {
-        type: DataTypes.ENUM("planifie", "valide", "absent", "annule"),
+        type: DataTypes.ENUM("planifie", "valide", "absent", "annule", "confirme", "effectue"),
         defaultValue: "planifie",
       },
       code_unique: {
@@ -24,6 +24,7 @@ module.exports = (sequelize, DataTypes) => {
     {
       tableName: "Rendez_Vous",
       timestamps: true,
+      indexes: [{ fields: ["statut_rdv"] }]
     },
   );
 

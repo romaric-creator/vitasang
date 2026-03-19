@@ -14,7 +14,11 @@ module.exports = (sequelize, DataTypes) => {
       },
       canal: { type: DataTypes.ENUM("push", "email", "sms") },
     },
-    { tableName: "Notifications_Log", timestamps: false },
+    {
+      tableName: "Notifications_Log",
+      timestamps: false,
+      indexes: [{ fields: ["id_alerte"] }]
+    },
   );
 
   LogNotification.associate = (models) => {

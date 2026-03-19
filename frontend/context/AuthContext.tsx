@@ -3,6 +3,7 @@ import { DeviceEventEmitter } from 'react-native';
 import { getData, storeData, removeData } from '@/utils/storage';
 import { loginUser as apiLoginUser, sendAlert } from '@/services/user.service'; // Renommer pour éviter le conflit
 import { usePostHog } from 'posthog-react-native';
+import { setAuthToken } from '@/config/axiosConfig';
 
 interface AuthContextType {
   isAuth: boolean | null;
@@ -21,6 +22,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     // Écouter l'événement de déconnexion forcée (depuis axiosConfig)
     const logoutSubscription = DeviceEventEmitter.addListener('FORCE_LOGOUT', async () => {
+      setAuthToken(null);
       await removeData('token');
       await removeData('user');
       posthog?.reset();
@@ -32,6 +34,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         const token = await getData('token');
         const user = await getData('user');
         if (token && user) {
+          setAuthToken(token);
           posthog?.identify(user.id_utilisateur?.toString(), {
             nom: user.nom,
             prenom: user.prenom,
@@ -55,6 +58,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     setIsLoading(true);
     try {
       const data = await apiLoginUser(telephone, mot_de_passe);
+      setAuthToken(data.token);
       await storeData('token', data.token);
       const userToStore = {
         ...data.user,
@@ -95,6 +99,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const signOut = async () => {
     setIsLoading(true);
     try {
+      setAuthToken(null);
       await removeData('token');
       await removeData('user');
       posthog?.reset(); // Réinitialiser PostHog

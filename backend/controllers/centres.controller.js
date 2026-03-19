@@ -42,6 +42,18 @@ exports.searchCentresNearby = async (req, res, next) => {
       return res.status(400).json({ error: "Latitude et longitude requises" });
     }
 
+    const searchRadius = radius ? parseFloat(radius) : 10;
+    const lat = parseFloat(latitude);
+    const lng = parseFloat(longitude);
+
+    const haversine = `(
+      6371 * acos(
+        cos(radians(${lat})) * cos(radians(latitude)) * 
+        cos(radians(longitude) - radians(${lng})) + 
+        sin(radians(${lat})) * sin(radians(latitude))
+      )
+    )`;
+
     const centres = await Centre.findAll({
       attributes: [
         ['id_centre', 'id'],
@@ -50,11 +62,14 @@ exports.searchCentresNearby = async (req, res, next) => {
         'ville',
         ['contact_urgence', 'telephone'],
         'latitude',
-        'longitude'
-      ]
+        'longitude',
+        [db.sequelize.literal(haversine), 'distance']
+      ],
+      where: db.sequelize.where(db.sequelize.literal(haversine), '<=', searchRadius),
+      order: db.sequelize.literal('distance ASC')
     });
 
-    logger.info('Searched nearby centres', { latitude, longitude, radius, found: centres.length });
+    logger.info('Searched nearby centres SQL', { latitude: lat, longitude: lng, radius: searchRadius, found: centres.length });
 
     res.status(200).json({ success: true, centres });
   } catch (error) {
@@ -127,33 +142,33 @@ exports.getCentreStats = async (req, res, next) => {
     const { id } = req.params;
     const centerId = parseInt(id);
 
-    const stockStats = await StockSang.findAll({
-      where: { id_centre: centerId },
-      attributes: ['groupe_sanguin', 'quantite_poches', 'seuil_alerte_min']
-    });
-    const totalStock = stockStats.reduce((sum, item) => sum + item.quantite_poches, 0);
-
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
-
-    const appointmentsToday = await RendezVous.count({
-      where: {
-        id_centre: centerId,
-        date_heure_rdv: { [db.Sequelize.Op.gte]: today, [db.Sequelize.Op.lt]: tomorrow },
-        statut_rdv: 'planifie'
-      }
-    });
-
-    const activeAlerts = await db.Alerte.count({
-      where: { id_centre: centerId, statut: 'en_cours' }
-    });
-
     const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-    const donationsThisMonth = await db.HistoriqueDon.count({
-      where: { id_centre: centerId, date_don: { [db.Sequelize.Op.gte]: firstDayOfMonth } }
-    });
+
+    const [stockStats, appointmentsToday, activeAlerts, donationsThisMonth] = await Promise.all([
+      StockSang.findAll({
+        where: { id_centre: centerId },
+        attributes: ['groupe_sanguin', 'quantite_poches', 'seuil_alerte_min']
+      }),
+      RendezVous.count({
+        where: {
+          id_centre: centerId,
+          date_heure_rdv: { [db.Sequelize.Op.gte]: today, [db.Sequelize.Op.lt]: tomorrow },
+          statut_rdv: 'planifie'
+        }
+      }),
+      db.Alerte.count({
+        where: { id_centre: centerId, statut: 'en_cours' }
+      }),
+      db.HistoriqueDon.count({
+        where: { id_centre: centerId, date_don: { [db.Sequelize.Op.gte]: firstDayOfMonth } }
+      })
+    ]);
+
+    const totalStock = stockStats.reduce((sum, item) => sum + item.quantite_poches, 0);
 
     res.status(200).json({
       success: true,
@@ -212,15 +227,21 @@ exports.updateBloodStock = async (req, res, next) => {
 exports.getCentreRendezVous = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const rdvs = await RendezVous.findAll({
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const offset = (page - 1) * limit;
+
+    const rdvs = await RendezVous.findAndCountAll({
       where: { id_centre: parseInt(id) },
       include: [
         { model: db.Utilisateur, as: 'donneur', attributes: ['nom', 'prenom', 'telephone'] },
         { model: db.TypeDon, as: 'typeDon', attributes: ['id_type_don', ['libelle', 'libelle_type_don']] }
       ],
-      order: [['date_heure_rdv', 'ASC']]
+      order: [['date_heure_rdv', 'ASC']],
+      limit,
+      offset
     });
-    res.status(200).json({ success: true, appointments: rdvs, total: rdvs.length });
+    res.status(200).json({ success: true, appointments: rdvs.rows, total: rdvs.count, totalPages: Math.ceil(rdvs.count / limit), currentPage: page });
   } catch (error) {
     logger.error('Error fetching centre appointments', { error: error.message, centreId: req.params.id });
     next(error);

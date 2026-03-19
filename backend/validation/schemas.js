@@ -14,11 +14,11 @@ const schemas = {
     telephone: Joi.string()
       .required()
       // CORRECTION : Autorise optionnellement un espace après +237 pour la flexibilité
-      .pattern(/^(\+237\s?[26]\d{9}|[26]\d{9})$/)
+      .pattern(/^(\+237[26]\d{9}|[26]\d{9})$/)
       .messages({
         "string.empty": "Le numéro de téléphone est requis",
         "string.pattern.base":
-          "Format valide: +2376XXXXXXXX ou 6XXXXXXXX (10 chiffres)",
+          "Format valide: +2376XXXXXXXXX ou 6XXXXXXXXX (10 chiffres)",
       }),
     mot_de_passe: Joi.string().required().min(6).max(255).messages({
       "string.empty": "Le mot de passe est requis",
@@ -33,10 +33,10 @@ const schemas = {
         "string.empty": "Le groupe sanguin est requis",
       }),
     role: Joi.string()
-      .valid("donneur", "personnel", "admin")
+      .valid("donneur")
       .default("donneur")
       .messages({
-        "any.only": "Le rôle doit être: donneur, personnel ou admin",
+        "any.only": "Le rôle doit être: donneur",
       }),
     id_centre: Joi.number().integer().allow(null).messages({
       "number.base": "L'id_centre doit être un nombre",
@@ -50,10 +50,11 @@ const schemas = {
   login: Joi.object({
     telephone: Joi.string()
       .required()
-      .pattern(/^(\+237\s?[26]\d{9}|[26]\d{9})$/)
+      .pattern(/^(\+237[26]\d{9}|[26]\d{9})$/)
       .messages({
         "string.empty": "Le numéro de téléphone est requis",
-        "string.pattern.base": "Numéro invalide (10 chiffres requis)",
+        "string.pattern.base":
+          "Format invalide. Utilisez +2376XXXXXXXXX ou 6XXXXXXXXX",
       }),
     mot_de_passe: Joi.string().required().min(6).messages({
       "string.empty": "Le mot de passe est requis",
@@ -107,9 +108,9 @@ const schemas = {
 
   // Search nearby centres
   searchCentres: Joi.object({
-    latitude: Joi.number().required(),
-    longitude: Joi.number().required(),
-    radius: Joi.number().integer().min(1).max(500).default(50),
+    latitude: Joi.number().required().min(-90).max(90),
+    longitude: Joi.number().required().min(-180).max(180),
+    radius: Joi.number().integer().min(1).max(100).default(50),
   }),
 
   // Update user profile
@@ -117,7 +118,7 @@ const schemas = {
     nom: Joi.string().min(2).max(100).allow(""),
     prenom: Joi.string().min(2).max(100).allow(""),
     telephone: Joi.string()
-      .pattern(/^(\+237\s?[26]\d{9}|[26]\d{9})$/)
+      .pattern(/^(\+237[26]\d{9}|[26]\d{9})$/)
       .allow(""),
     groupe_sanguin: Joi.string()
       .valid("A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-")
