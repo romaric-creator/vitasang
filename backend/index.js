@@ -120,8 +120,8 @@ if (require.main === module) {
     .then(() => {
       logger.info("MariaDB : Connexion réussie et tables synchronisées !");
       const PORT = process.env.PORT || 3000;
-      app.listen(PORT, () => {
-        logger.info(`Serveur VITASANG démarré sur : http://localhost:${PORT}`);
+      app.listen(PORT, '0.0.0.0', () => {
+        logger.info(`Serveur VITASANG démarré sur : http://0.0.0.0:${PORT}`);
       });
     })
     .catch((err) => {
