@@ -4,7 +4,7 @@ import ThemedView from "@/components/ThemedView";
 import { color } from "@/constant/color";
 import { router } from "expo-router";
 
-export default function Splash() {
+export default function Splash({ showButtons = true }: { showButtons?: boolean }) {
   return (
     <ThemedView style={styles.container}>
       <View style={styles.content}>
@@ -16,21 +16,23 @@ export default function Splash() {
         <Text style={styles.tagline}>Sauver des vies ensemble</Text>
       </View>
 
-      <View style={styles.buttonContainer}>
-        <TouchableOpacity
-          style={styles.primaryButton}
-          onPress={() => router.push("/OnboardingCarousel")}
-        >
-          <Text style={styles.primaryButtonText}>Commencer</Text>
-        </TouchableOpacity>
+      {showButtons && (
+        <View style={styles.buttonContainer}>
+          <TouchableOpacity
+            style={styles.primaryButton}
+            onPress={() => router.push("/OnboardingCarousel")}
+          >
+            <Text style={styles.primaryButtonText}>Commencer</Text>
+          </TouchableOpacity>
 
-        <TouchableOpacity
-          style={styles.secondaryButton}
-          onPress={() => router.push("/login")}
-        >
-          <Text style={styles.secondaryButtonText}>Se connecter</Text>
-        </TouchableOpacity>
-      </View>
+          <TouchableOpacity
+            style={styles.secondaryButton}
+            onPress={() => router.push("/login")}
+          >
+            <Text style={styles.secondaryButtonText}>Se connecter</Text>
+          </TouchableOpacity>
+        </View>
+      )}
     </ThemedView>
   );
 }

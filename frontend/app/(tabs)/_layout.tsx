@@ -36,7 +36,7 @@ export default function TabLayout() {
     };
 
     // On n'active l'écouteur que si on n'est pas sous Expo Go
-    let subscription;
+    let subscription: { remove: () => void } | undefined;
     if (Constants.appOwnership !== 'expo') {
       subscription = Notifications.addNotificationResponseReceivedListener(response => {
         const data = response.notification.request.content.data;

@@ -1,5 +1,7 @@
 import { Stack, useRouter, useSegments } from "expo-router";
 import { useEffect, useState } from "react";
+import Splash from "./Splash";
+
 import { View } from "react-native";
 import { LoadingOverlay } from "@/components/LoadingOverlay";
 import { AuthProvider, useAuth } from "@/context/AuthContext";
@@ -122,14 +124,9 @@ function RootLayoutNav() {
     }
   }, [isAuth, isLoading, appReady, segments]);
 
-  // Afficher un spinner pendant le chargement initial de l'authentification
-  if (isLoading) {
-    return <LoadingOverlay visible={true} fullScreen />;
-  }
-
-  // Attendre que l'initialisation globale soit terminée
-  if (!appReady) {
-    return <LoadingOverlay visible={true} fullScreen />;
+  // Afficher l'écran de Splash pendant le chargement initial
+  if (isLoading || !appReady) {
+    return <Splash showButtons={false} />;
   }
 
   return (
