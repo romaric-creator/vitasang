@@ -49,12 +49,12 @@ describe("Centres Controller - Integration Tests", () => {
     app.use(express.json());
 
     const centresRoute = require("../../routes/centres.routes");
-    app.use("/api/centres", centresRoute);
+    app.use("/api/v1/centres", centresRoute);
   });
 
-  describe("GET /api/centres", () => {
+  describe("GET /api/v1/centres", () => {
     it("should retrieve all centres", async () => {
-      const response = await request(app).get("/api/centres");
+      const response = await request(app).get("/api/v1/centres");
 
       expect([200, 404]).toContain(response.status);
       if (response.status === 200) {
@@ -63,23 +63,23 @@ describe("Centres Controller - Integration Tests", () => {
     });
   });
 
-  describe("GET /api/centres/:id", () => {
+  describe("GET /api/v1/centres/:id", () => {
     it("should retrieve centre details", async () => {
-      const response = await request(app).get("/api/centres/1");
+      const response = await request(app).get("/api/v1/centres/1");
 
       expect([200, 404]).toContain(response.status);
     });
 
     it("should handle invalid ID", async () => {
-      const response = await request(app).get("/api/centres/invalid");
+      const response = await request(app).get("/api/v1/centres/invalid");
 
       expect([400, 404]).toContain(response.status);
     });
   });
 
-  describe("GET /api/centres/search", () => {
+  describe("GET /api/v1/centres/search", () => {
     it("should search nearby centres", async () => {
-      const response = await request(app).get("/api/centres/search").query({
+      const response = await request(app).get("/api/v1/centres/search").query({
         latitude: "33.5731",
         longitude: "-7.5898",
         radius: "10",
@@ -90,14 +90,14 @@ describe("Centres Controller - Integration Tests", () => {
 
     it("should reject missing parameters", async () => {
       const response = await request(app)
-        .get("/api/centres/search")
+        .get("/api/v1/centres/search")
         .query({ latitude: "33.5731" }); // missing longitude, radius
 
       expect(response.status).toBe(400);
     });
 
     it("should reject invalid latitude", async () => {
-      const response = await request(app).get("/api/centres/search").query({
+      const response = await request(app).get("/api/v1/centres/search").query({
         latitude: "200", // > 90
         longitude: "-7.5898",
         radius: "10",
@@ -107,7 +107,7 @@ describe("Centres Controller - Integration Tests", () => {
     });
 
     it("should reject invalid longitude", async () => {
-      const response = await request(app).get("/api/centres/search").query({
+      const response = await request(app).get("/api/v1/centres/search").query({
         latitude: "33.5731",
         longitude: "200", // > 180
         radius: "10",
@@ -117,7 +117,7 @@ describe("Centres Controller - Integration Tests", () => {
     });
 
     it("should validate radius range", async () => {
-      const response = await request(app).get("/api/centres/search").query({
+      const response = await request(app).get("/api/v1/centres/search").query({
         latitude: "33.5731",
         longitude: "-7.5898",
         radius: "200", // > 100
@@ -127,17 +127,17 @@ describe("Centres Controller - Integration Tests", () => {
     });
   });
 
-  describe("GET /api/centres/:id/availability", () => {
+  describe("GET /api/v1/centres/:id/availability", () => {
     it("should get centre availability slots", async () => {
-      const response = await request(app).get("/api/centres/1/availability");
+      const response = await request(app).get("/api/v1/centres/1/availability");
 
       expect([200, 404]).toContain(response.status);
     });
   });
 
-  describe("GET /api/centres/:id/stock", () => {
+  describe("GET /api/v1/centres/:id/stock", () => {
     it("should get blood stock levels", async () => {
-      const response = await request(app).get("/api/centres/1/stock");
+      const response = await request(app).get("/api/v1/centres/1/stock");
 
       expect([200, 401, 404]).toContain(response.status);
     });

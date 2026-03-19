@@ -6,7 +6,7 @@ describe('Validation Middleware', () => {
     body,
     query,
     params,
-    path: '/api/test',
+    path: '/api/v1/test',
     method: 'POST',
     ip: '127.0.0.1',
   });
