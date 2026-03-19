@@ -5,7 +5,9 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/Capture d’écran du 2026-01-31 23-07-03.png",
-    "scheme": ["vitasang"],
+    "scheme": [
+      "vitasang"
+    ],
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
@@ -42,7 +44,8 @@
         }
       ],
       "expo-localization",
-      "expo-notifications"
+      "expo-notifications",
+      "expo-secure-store"
     ],
     "experiments": {
       "typedRoutes": false,

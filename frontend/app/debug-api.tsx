@@ -13,14 +13,7 @@ import axios from "axios";
 const DebugApiScreen = () => {
   // Only render in development mode
   if (!__DEV__) {
-    return (
-      <View style={styles.container}>
-        <Text style={styles.title}>Access Denied</Text>
-        <Text style={styles.subtitle}>
-          Debug screen is only available in development mode
-        </Text>
-      </View>
-    );
+    return null;
   }
 
   const [statusData, setStatusData] = useState({

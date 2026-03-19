@@ -12,12 +12,13 @@ import { SkeletonLoader, SkeletonListLoader } from "@/components/SkeletonLoader"
 import { color } from "@/constant/color";
 import { getUserIdFromStorage } from "@/utils/storage";
 import { getUserProfile } from "@/services/user.service";
+import { useUserProfile } from "@/hooks/useAuth";
 import { useRouter } from "expo-router";
 import { Image } from "react-native";
 import { useAuth } from "@/context/AuthContext";
 import Constants from "expo-constants";
-
-import { useTranslation } from "react-i18next";
+import ThemedView from "@/components/ThemedView";
+import { TabBarIcon } from "@/components/TabBarIcon";
 
 const ProfileItem = ({
   icon,
@@ -43,25 +44,17 @@ export default function Profile() {
   const router = useRouter();
   const { t } = useTranslation();
   const { signOut } = useAuth();
-  const [userData, setUserData] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+  const [userId, setUserId] = useState<number | null>(null);
 
   useEffect(() => {
-    const loadProfile = async () => {
-      try {
-        const userId = await getUserIdFromStorage();
-        if (userId) {
-          const res = await getUserProfile(userId);
-          if (res.success) setUserData(res.user);
-        }
-      } catch (error) {
-        console.error("Erreur chargement profil :", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    loadProfile();
+    getUserIdFromStorage().then((id) => {
+      if (id) setUserId(Number(id));
+    });
   }, []);
+
+  const profileQuery = useUserProfile(userId as number, !!userId);
+  const loading = !userId || (profileQuery.isLoading && !profileQuery.data);
+  const userData = profileQuery.data?.user;
 
   const handleLogout = () => {
     Alert.alert(t("profile.logout"), t("profile.logoutConfirm"), [
@@ -81,7 +74,7 @@ export default function Profile() {
   if (loading) {
     return (
       <ThemedView style={styles.container}>
-        <View style={styles.header}>
+        <View style={styles.profileHeader}>
           <SkeletonLoader width={120} height={120} borderRadius={60} style={{ marginBottom: 16 }} />
           <SkeletonLoader width="60%" height={20} style={{ marginBottom: 8 }} />
           <SkeletonLoader width="40%" height={16} />
@@ -99,13 +92,13 @@ export default function Profile() {
   const alertesCount = userData?.alertesCount ?? 0;
   const profileImage = userData?.photo_profil
     ? {
-        uri: userData.photo_profil.startsWith("http")
-          ? userData.photo_profil
-          : (
-              Constants.expoConfig?.extra?.env?.EXPO_PUBLIC_API_BASE_URL ||
-              "https://vitasang.vercel.app/api"
-            ).replace("/api", "") + userData.photo_profil,
-      }
+      uri: userData.photo_profil.startsWith("http")
+        ? userData.photo_profil
+        : (
+          Constants.expoConfig?.extra?.env?.EXPO_PUBLIC_API_BASE_URL ||
+          "https://vitasang.vercel.app/api"
+        ).replace("/api", "") + userData.photo_profil,
+    }
     : null;
 
   return (

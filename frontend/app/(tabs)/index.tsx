@@ -10,14 +10,15 @@ import {
   Dimensions,
   RefreshControl,
 } from "react-native";
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import ThemedView from "@/components/ThemedView";
 import { TabBarIcon } from "@/components/TabBarIcon";
 import { color } from "@/constant/color";
 import { getUserIdFromStorage } from "@/utils/storage";
 import { useTranslation } from "react-i18next";
 import { useFocusEffect } from "@react-navigation/native";
-import { getUserProfile, getActiveAlerts } from "@/services/user.service";
+import { useUserProfile } from "@/hooks/useAuth";
+import { useActiveAlerts } from "@/hooks/useAlerts";
 import { AlertFatigueInsights } from "@/components/AlertFatigueInsights";
 import Constants from "expo-constants";
 import { usePostHog } from "posthog-react-native";
@@ -27,37 +28,31 @@ const { width } = Dimensions.get("window");
 export default function Home() {
   const { t } = useTranslation();
   const router = useRouter();
-  const [userData, setUserData] = useState<any>(null);
-  const [activeAlerts, setActiveAlerts] = useState<any[]>([]);
-  const [refreshing, setRefreshing] = useState(false);
+  const [userId, setUserId] = useState<number | null>(null);
   const posthog = usePostHog();
 
-  const loadData = useCallback(async () => {
-    try {
-      const userId = await getUserIdFromStorage();
-      if (userId) {
-        const res = await getUserProfile(userId);
-        if (res.success) setUserData(res.user);
-      }
-      const alertsRes = await getActiveAlerts();
-      if (alertsRes.success) setActiveAlerts(alertsRes.alerts || []);
-    } catch (error) {
-      console.error("Home: Error loading data:", error);
-    } finally {
-      setRefreshing(false);
-    }
+  useEffect(() => {
+    getUserIdFromStorage().then((id) => {
+      if (id) setUserId(Number(id));
+    });
   }, []);
+
+  const profileQuery = useUserProfile(userId as number, !!userId);
+  const alertsQuery = useActiveAlerts();
+
+  const refreshing = profileQuery.isRefetching || alertsQuery.isRefetching;
+  const userData = profileQuery.data?.user;
+  const activeAlerts = alertsQuery.data?.alerts || [];
 
   useFocusEffect(
     useCallback(() => {
       posthog?.capture("home_visited");
-      loadData();
-    }, [posthog, loadData]),
+    }, [posthog]),
   );
 
   const onRefresh = () => {
-    setRefreshing(true);
-    loadData();
+    profileQuery.refetch();
+    alertsQuery.refetch();
   };
 
   const fullName = userData
@@ -66,13 +61,13 @@ export default function Home() {
 
   const profileImage = userData?.photo_profil
     ? {
-        uri: userData.photo_profil.startsWith("http")
-          ? userData.photo_profil
-          : (
-              Constants.expoConfig?.extra?.env?.EXPO_PUBLIC_API_BASE_URL ||
-              "https://vitasang.vercel.app/api"
-            ).replace("/api", "") + userData.photo_profil,
-      }
+      uri: userData.photo_profil.startsWith("http")
+        ? userData.photo_profil
+        : (
+          Constants.expoConfig?.extra?.env?.EXPO_PUBLIC_API_BASE_URL ||
+          "https://vitasang.vercel.app/api"
+        ).replace("/api", "") + userData.photo_profil,
+    }
     : null;
 
   return (
@@ -173,7 +168,7 @@ export default function Home() {
               snapToInterval={width * 0.75 + 16}
               decelerationRate="fast"
             >
-              {activeAlerts.map((alert, idx) => (
+              {activeAlerts.map((alert: any, idx: number) => (
                 <TouchableOpacity
                   key={idx}
                   style={styles.urgentCard}

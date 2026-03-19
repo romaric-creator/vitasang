@@ -6,6 +6,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/config/queryKeys";
 import * as userService from "@/services/user.service";
+import { apiClient } from "@/config/axiosConfig";
 
 // ╔════════════════════════════════════════════════════════════════╗
 // ║                         QUERIES                                ║
@@ -62,8 +63,7 @@ export const useAcceptedAlerts = (enabled: boolean = true) => {
 export const useAlertDetail = (alertId: number, enabled: boolean = true) => {
   return useQuery({
     queryKey: queryKeys.alerts.detail(alertId),
-    queryFn: () =>
-      userService.getAlertDetail?.(alertId) || Promise.resolve(null),
+    queryFn: () => apiClient.get(`/alerts/${alertId}`).then((r) => r.data),
     enabled: enabled && !!alertId,
     staleTime: 1000 * 60 * 5,
   });
@@ -147,11 +147,7 @@ export const useValidateAlert = () => {
       alertId: number;
       validated: boolean;
     }) =>
-      fetch(`/api/alerts/${alertId}/validate`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ validated }),
-      }).then((r) => r.json()),
+      apiClient.post(`/alerts/${alertId}/validate`, { validated }).then((r) => r.data),
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: queryKeys.alerts.all,

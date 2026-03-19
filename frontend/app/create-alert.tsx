@@ -11,7 +11,7 @@ import { TabBarIcon } from "@/components/TabBarIcon";
 import { color } from "@/constant/color";
 import { useRouter } from "expo-router";
 import ThemedView from "@/components/ThemedView";
-import { ModernSpinner } from \"@/components/ModernSpinner\";
+import { ModernSpinner } from "@/components/ModernSpinner";
 import * as Location from "expo-location";
 import { searchDonors, sendAlert } from "@/services/user.service";
 import { createAlertValidationSchema } from "@/validation/ValidationSchemas";
@@ -274,9 +274,9 @@ export default function CreateAlertScreen() {
                     <Text style={styles.warningText}>
                       {donorCount !== null
                         ? t("alert.donorFound", {
-                            count: donorCount,
-                            group: values.groupe_sanguin,
-                          })
+                          count: donorCount,
+                          group: values.groupe_sanguin,
+                        })
                         : t("alert.searchingDonors")}
                     </Text>
                   )}

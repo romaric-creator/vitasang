@@ -12,8 +12,8 @@ const queryConfig: QueryClientConfig = {
       staleTime: 5 * 60 * 1000,
       // Garde les données en cache pendant 10 minutes même après unmount
       gcTime: 10 * 60 * 1000,
-      // Réessayer 2 fois en cas d'erreur
-      retry: 2,
+      // Réessayer 1 fois en cas d'erreur
+      retry: 1,
       // Délai avant chaque retry (exponential backoff)
       retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
       // Ne pas refetch au focus par défaut

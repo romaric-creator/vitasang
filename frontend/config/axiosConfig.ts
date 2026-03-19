@@ -11,9 +11,14 @@ import {
   type ApiError,
 } from "@/services/errorService";
 
-const API_BASE_URL = Constants.expoConfig?.extra?.env?.EXPO_PUBLIC_API_BASE_URL;
+const API_BASE_URL = (Constants.expoConfig?.extra?.env?.EXPO_PUBLIC_API_BASE_URL || "http://10.37.82.208:3000/api") + "/v1";
 const REQUEST_TIMEOUT = 10000;
-const MAX_RETRIES = 3;
+const MAX_RETRIES = 2;
+
+let memoryToken: string | null = null;
+export const setAuthToken = (token: string | null) => {
+  memoryToken = token;
+};
 /**
  * Transform and enrich error response
  */
@@ -66,7 +71,11 @@ export const createAxiosInstance = (): AxiosInstance => {
    */
   instance.interceptors.request.use(
     async (config) => {
-      const token = await getData("token");
+      let token = memoryToken;
+      if (!token) {
+        token = await getData("token");
+        if (token) setAuthToken(token);
+      }
 
       if (token && config.headers) {
         config.headers.Authorization = `Bearer ${token}`;

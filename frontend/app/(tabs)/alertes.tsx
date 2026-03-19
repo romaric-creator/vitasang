@@ -13,11 +13,7 @@ import { useRouter } from "expo-router";
 import ThemedView from "@/components/ThemedView";
 import { TabBarIcon } from "@/components/TabBarIcon";
 import { color } from "@/constant/color";
-import {
-  getMyAlerts,
-  getAcceptedAlerts,
-  respondToAlert,
-} from "@/services/user.service";
+import { useMyAlerts, useAcceptedAlerts } from "@/hooks/useAlerts";
 import { useTranslation } from "react-i18next";
 import { SkeletonListLoader } from "@/components/SkeletonLoader";
 
@@ -25,31 +21,16 @@ export default function AlertesScreen() {
   const { t } = useTranslation();
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<"sent" | "accepted">("sent");
-  const [alerts, setAlerts] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
+  const myAlertsQuery = useMyAlerts(activeTab === "sent");
+  const acceptedAlertsQuery = useAcceptedAlerts(activeTab === "accepted");
 
-  const fetchAlerts = useCallback(async () => {
-    try {
-      setLoading(true);
-      const res =
-        activeTab === "sent" ? await getMyAlerts() : await getAcceptedAlerts();
-      setAlerts(res.alerts || []);
-    } catch (error) {
-      console.error("AlertesScreen: Error fetching alerts:", error);
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  }, [activeTab]);
-
-  useEffect(() => {
-    fetchAlerts();
-  }, [activeTab]);
+  const currentQuery = activeTab === "sent" ? myAlertsQuery : acceptedAlertsQuery;
+  const loading = currentQuery.isLoading && !currentQuery.data;
+  const alerts = currentQuery.data?.alerts || [];
+  const refreshing = currentQuery.isRefetching;
 
   const onRefresh = () => {
-    setRefreshing(true);
-    fetchAlerts();
+    currentQuery.refetch();
   };
 
   const handleCall = (phone: string) => {

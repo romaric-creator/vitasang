@@ -18,7 +18,7 @@ export const useApiCall = <T extends (...args: any[]) => Promise<any>>(
   options: ApiCallOptions = {}
 ) => {
   const {
-    maxRetries = 3,
+    maxRetries = 1, // Laissé à 1 car Axios gère déjà le retry globalement
     timeout = 10000, // 10 seconds par défaut
     onError,
     onSuccess,

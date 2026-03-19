@@ -21,8 +21,8 @@ export const createQueryClient = () =>
         refetchOnMount: false,
         // Don't refetch on reconnect (manual control better for mobile)
         refetchOnReconnect: false,
-        // Retry failed requests 2 times with exponential backoff
-        retry: 2,
+        // Retry failed requests 1 time with exponential backoff
+        retry: 1,
         retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
         // Always try network (not just online)
         networkMode: "always",
