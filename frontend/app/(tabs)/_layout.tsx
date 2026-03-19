@@ -3,9 +3,10 @@ import { TabBarIcon } from "@/components/TabBarIcon";
 import { color } from "@/constant/color";
 import { Tabs, useRouter } from "expo-router";
 import React, { useEffect } from "react";
-import * as Notifications from 'expo-notifications';
 import * as Location from 'expo-location';
 import Constants from 'expo-constants';
+// On supprime l'import statique de Notifications qui fait crasher Expo Go
+
 
 import { registerForPushNotificationsAsync } from "@/utils/pushNotifications";
 import { updatePushToken, updateUserLocation } from "@/services/user.service";
@@ -38,7 +39,8 @@ export default function TabLayout() {
     // On n'active l'écouteur que si on n'est pas sous Expo Go
     let subscription: { remove: () => void } | undefined;
     if (Constants.appOwnership !== 'expo') {
-      subscription = Notifications.addNotificationResponseReceivedListener(response => {
+      const Notifications = require('expo-notifications');
+      subscription = Notifications.addNotificationResponseReceivedListener((response: any) => {
         const data = response.notification.request.content.data;
         if (data?.alertId) {
           router.push(`/alert-response/${data.alertId}?distance=${data.distance || ''}`);
