@@ -101,29 +101,26 @@ function RootLayoutNav() {
 
   // Effet pour gérer les redirections basées sur l'authentification
   useEffect(() => {
-    if (isLoading) return; // Attendre que le statut d'auth soit chargé
+    if (isLoading || !appReady) return; // Attendre loading d'auth ET initApp
 
-    if (!segments.length && !isAuth) return; // Protection anti-montage à vide
-
-    // Normalisation en minuscules
     const currentSegment = segments[0]?.toLowerCase() || "";
 
-    const inAuthGroup = currentSegment === "(auth)";
     const inAuthFlow =
-      inAuthGroup ||
+      currentSegment === "(auth)" ||
       currentSegment === "login" ||
       currentSegment === "register" ||
       currentSegment === "splash" ||
-      currentSegment === "onboardingcarousel";
+      currentSegment === "onboardingcarousel" ||
+      currentSegment === "Splash";
 
     if (isAuth && inAuthFlow) {
-      // Si authentifié et dans le flux d'auth, rediriger vers l'application principale (les onglets)
+      // Si authentifié et dans le flux d'auth, rediriger vers l'application principale
       router.replace("/(tabs)");
     } else if (!isAuth && !inAuthFlow) {
-      // Si non authentifié et pas dans le flux d'auth, rediriger vers la page de Splash
+      // Si non authentifié et pas dans le flux d'auth, rediriger vers la page de Splash (onboarding)
       router.replace("/Splash");
     }
-  }, [isAuth, isLoading, segments]);
+  }, [isAuth, isLoading, appReady, segments]);
 
   // Afficher un spinner pendant le chargement initial de l'authentification
   if (isLoading) {

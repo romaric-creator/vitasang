@@ -5,14 +5,11 @@
 
 import { useQuery, UseQueryResult } from "@tanstack/react-query";
 import { queryKeys, queryOptions } from "@/config/reactQuery";
-import * as FileSystem from "expo-file-system";
-// Note: Dans les versions récentes d'Expo SDK 54+, getInfoAsync est déprécié 
-// mais reste accessible via l'objet FileSystem classique. L'erreur peut venir d'un import destructuré.
-
+import * as FileSystem from "expo-file-system/legacy";
 import { Platform } from "react-native";
 
 // Répertoire de cache pour les images
-const IMAGE_CACHE_DIR = `${FileSystem.documentDirectory || FileSystem.cacheDirectory}images/`;
+const IMAGE_CACHE_DIR = `${(FileSystem as any).cacheDirectory || (FileSystem as any).documentDirectory}images/`;
 
 /**
  * Initialise le répertoire de cache des images
