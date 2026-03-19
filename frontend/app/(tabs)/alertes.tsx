@@ -24,7 +24,8 @@ export default function AlertesScreen() {
   const myAlertsQuery = useMyAlerts(activeTab === "sent");
   const acceptedAlertsQuery = useAcceptedAlerts(activeTab === "accepted");
 
-  const currentQuery = activeTab === "sent" ? myAlertsQuery : acceptedAlertsQuery;
+  const currentQuery =
+    activeTab === "sent" ? myAlertsQuery : acceptedAlertsQuery;
   const loading = currentQuery.isLoading && !currentQuery.data;
   const alerts = currentQuery.data?.alerts || [];
   const refreshing = currentQuery.isRefetching;

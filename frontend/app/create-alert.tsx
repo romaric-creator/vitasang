@@ -274,9 +274,9 @@ export default function CreateAlertScreen() {
                     <Text style={styles.warningText}>
                       {donorCount !== null
                         ? t("alert.donorFound", {
-                          count: donorCount,
-                          group: values.groupe_sanguin,
-                        })
+                            count: donorCount,
+                            group: values.groupe_sanguin,
+                          })
                         : t("alert.searchingDonors")}
                     </Text>
                   )}

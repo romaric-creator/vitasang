@@ -8,7 +8,10 @@ import {
 } from "react-native";
 import React, { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { SkeletonLoader, SkeletonListLoader } from "@/components/SkeletonLoader";
+import {
+  SkeletonLoader,
+  SkeletonListLoader,
+} from "@/components/SkeletonLoader";
 import { color } from "@/constant/color";
 import { getUserIdFromStorage } from "@/utils/storage";
 import { getUserProfile } from "@/services/user.service";
@@ -75,7 +78,12 @@ export default function Profile() {
     return (
       <ThemedView style={styles.container}>
         <View style={styles.profileHeader}>
-          <SkeletonLoader width={120} height={120} borderRadius={60} style={{ marginBottom: 16 }} />
+          <SkeletonLoader
+            width={120}
+            height={120}
+            borderRadius={60}
+            style={{ marginBottom: 16 }}
+          />
           <SkeletonLoader width="60%" height={20} style={{ marginBottom: 8 }} />
           <SkeletonLoader width="40%" height={16} />
         </View>
@@ -92,13 +100,13 @@ export default function Profile() {
   const alertesCount = userData?.alertesCount ?? 0;
   const profileImage = userData?.photo_profil
     ? {
-      uri: userData.photo_profil.startsWith("http")
-        ? userData.photo_profil
-        : (
-          Constants.expoConfig?.extra?.env?.EXPO_PUBLIC_API_BASE_URL ||
-          "https://vitasang.vercel.app/api"
-        ).replace("/api", "") + userData.photo_profil,
-    }
+        uri: userData.photo_profil.startsWith("http")
+          ? userData.photo_profil
+          : (
+              Constants.expoConfig?.extra?.env?.EXPO_PUBLIC_API_BASE_URL ||
+              "https://vitasang.vercel.app/api"
+            ).replace("/api", "") + userData.photo_profil,
+      }
     : null;
 
   return (

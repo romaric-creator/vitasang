@@ -26,7 +26,6 @@ app.use(helmet());
 
 // CORS Configuration - Whitelist security
 const allowedOrigins = [
-  "https://vitasang.vercel.app",
   "http://localhost:3000",
   "http://localhost:8081",
   "http://localhost:5173", // Ajoutez cette ligne

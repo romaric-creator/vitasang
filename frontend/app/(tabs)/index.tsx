@@ -65,7 +65,7 @@ export default function Home() {
         ? userData.photo_profil
         : (
           Constants.expoConfig?.extra?.env?.EXPO_PUBLIC_API_BASE_URL ||
-          "https://vitasang.vercel.app/api"
+          "https://vitasang-api.onrender.com/"
         ).replace("/api", "") + userData.photo_profil,
     }
     : null;

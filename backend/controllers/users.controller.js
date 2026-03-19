@@ -5,7 +5,6 @@ const Centre = db.Centre;
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const logger = require("../config/logger");
-const { calculateDistance } = require("../utils/geoHelpers");
 
 exports.addUser = async (req, res, next) => {
   try {
@@ -359,8 +358,8 @@ exports.searchUsers = async (req, res, next) => {
 
     const haversine = `(
       6371 * acos(
-        cos(radians(${userLat})) * cos(radians(\`profilDonneur\`.\`lat_actuelle\`)) * 
-        cos(radians(\`profilDonneur\`.\`long_actuelle\`) - radians(${userLong})) + 
+        cos(radians(${userLat})) * cos(radians(\`profilDonneur\`.\`lat_actuelle\`)) *
+        cos(radians(\`profilDonneur\`.\`long_actuelle\`) - radians(${userLong})) +
         sin(radians(${userLat})) * sin(radians(\`profilDonneur\`.\`lat_actuelle\`))
       )
     )`;
