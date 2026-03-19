@@ -9,17 +9,29 @@ services:
     envVars:
       - key: NODE_ENV
         value: production
-      - key: DB_NAME
-        value: vitasang_db
+      - key: HOST
+        value: gateway01.eu-central-1.prod.aws.tidbcloud.com
+      - key: DB_USER
+        value: eS49qYHfN2jBfa5.root
+      - key: DB_PASS
+        value: MsmJ1j86Tm3bJKPr
+      - key: DB
+        value: vitasang
       - key: DB_PORT
-        value: "3306"
+        value: "4000"
+      - key: JWT_SECRET
+        value: f4a7c1b5d9e382fa6cf2bd9087ea71a8123c5e8b
+      - key: JWT_EXPIRE
+        value: 24h
+      - key: CORS_ORIGIN
+        value: https://vitasang-admin.vercel.app
       - key: REDIS_URL
         value: rediss://default:gQAAAAAAAS0MAAIncDExMTljNGRiNzM5Mzc0MjYyOTRlNDMyMmQ1ZTMyNDcxMHAxNzcwNjg@healthy-burro-77068.upstash.io:6379
-      - key: DB_HOST
-        sync: false # Render vous demandera de remplir ça via l'interface
-      - key: DB_USER
-        sync: false
-      - key: DB_PASSWORD
-        sync: false
-      - key: JWT_SECRET
-        sync: false
+      - key: CLOUDINARY_CLOUD_NAME
+        value: dimlkizdi
+      - key: CLOUDINARY_API_KEY
+        value: "236866161262365"
+      - key: CLOUDINARY_API_SECRET
+        value: BnbgZWW041JsQ1cbu7XRgqVmnEY
+      - key: CLOUDINARY_FOLDER
+        value: vitasang
