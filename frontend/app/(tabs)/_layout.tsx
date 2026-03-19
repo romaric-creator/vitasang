@@ -5,6 +5,8 @@ import { Tabs, useRouter } from "expo-router";
 import React, { useEffect } from "react";
 import * as Notifications from 'expo-notifications';
 import * as Location from 'expo-location';
+import Constants from 'expo-constants';
+
 import { registerForPushNotificationsAsync } from "@/utils/pushNotifications";
 import { updatePushToken, updateUserLocation } from "@/services/user.service";
 import { getUserIdFromStorage } from "@/utils/storage";
@@ -12,52 +14,41 @@ import { getUserIdFromStorage } from "@/utils/storage";
 export default function TabLayout() {
   const router = useRouter();
   useEffect(() => {
-    const setupNotificationsAndLocation = async () => {
+    const setupNotifications = async () => {
+      // Les notifications Push (FCM) ne sont plus supportées dans Expo Go (SDK 53+).
+      // On évite d'appeler register pour ne pas polluer les logs.
+      if (Constants.appOwnership === 'expo') {
+        console.log("[Notifications] Skipped in Expo Go (Non supporté)");
+        return;
+      }
+
       const userId = await getUserIdFromStorage();
       if (!userId) return;
 
-      // 1. Setup Push Notifications (Indépendant)
       try {
         const token = await registerForPushNotificationsAsync();
         if (token) {
           await updatePushToken(userId, token);
-          console.log("Push token registered successfully");
         }
       } catch (error) {
-        console.error("Error setting up notifications:", error);
-      }
-
-      // 2. Setup Location (Indépendant)
-      try {
-        const { status } = await Location.requestForegroundPermissionsAsync();
-        if (status === 'granted') {
-          const location = await Location.getCurrentPositionAsync({
-            accuracy: Location.Accuracy.Balanced,
-          });
-          const success = await updateUserLocation(userId, location.coords.latitude, location.coords.longitude);
-          if (success) {
-            console.log("Location updated successfully");
-          } else {
-            console.warn("Location update failed (server rejected request)");
-          }
-        }
-      } catch (error) {
-        console.error("Error setting up location:", error);
+        console.error("[Notifications] Setup error:", error);
       }
     };
 
-    // 3. Listener pour les notifications reçues pendant que l'app est ouverte
-    const subscription = Notifications.addNotificationResponseReceivedListener(response => {
-      const data = response.notification.request.content.data;
-      if (data?.alertId) {
-        // Rediriger vers l'écran de réponse pour le destinataire
-        router.push(`/alert-response/${data.alertId}?distance=${data.distance || ''}`);
-      }
-    });
+    // On n'active l'écouteur que si on n'est pas sous Expo Go
+    let subscription;
+    if (Constants.appOwnership !== 'expo') {
+      subscription = Notifications.addNotificationResponseReceivedListener(response => {
+        const data = response.notification.request.content.data;
+        if (data?.alertId) {
+          router.push(`/alert-response/${data.alertId}?distance=${data.distance || ''}`);
+        }
+      });
+    }
 
-    setupNotificationsAndLocation();
+    setupNotifications();
 
-    return () => subscription.remove();
+    return () => subscription?.remove();
   }, []);
 
   return (
