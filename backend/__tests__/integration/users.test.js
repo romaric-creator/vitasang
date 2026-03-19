@@ -47,11 +47,11 @@ describe("Users Controller - Integration Tests", () => {
   beforeEach(() => {
     app = express();
     app.use(express.json());
-    app.post("/api/users/register", registerUser);
-    app.post("/api/users/login", loginUser);
+    app.post("/api/v1/users/register", registerUser);
+    app.post("/api/v1/users/login", loginUser);
   });
 
-  describe("POST /api/users/register", () => {
+  describe("POST /api/v1/users/register", () => {
     it("should register a new donor user", async () => {
       const userData = {
         nom: "Dupont",
@@ -63,7 +63,7 @@ describe("Users Controller - Integration Tests", () => {
       };
 
       const response = await request(app)
-        .post("/api/users/register")
+        .post("/api/v1/users/register")
         .send(userData);
 
       expect(response.status).toBe(201);
@@ -82,7 +82,7 @@ describe("Users Controller - Integration Tests", () => {
       };
 
       const response = await request(app)
-        .post("/api/users/register")
+        .post("/api/v1/users/register")
         .send(userData);
 
       // Peut retourner 400 ou 500 selon la validation
@@ -90,7 +90,7 @@ describe("Users Controller - Integration Tests", () => {
     });
   });
 
-  describe("POST /api/users/login", () => {
+  describe("POST /api/v1/users/login", () => {
     it("should login with valid credentials", async () => {
       const credentials = {
         telephone: "+237612345678",
@@ -98,7 +98,7 @@ describe("Users Controller - Integration Tests", () => {
       };
 
       const response = await request(app)
-        .post("/api/users/login")
+        .post("/api/v1/users/login")
         .send(credentials);
 
       // Peut retourner 200 ou 401 selon le mock
@@ -112,7 +112,7 @@ describe("Users Controller - Integration Tests", () => {
       };
 
       const response = await request(app)
-        .post("/api/users/login")
+        .post("/api/v1/users/login")
         .send(credentials);
 
       expect(response.status).toBe(401);
