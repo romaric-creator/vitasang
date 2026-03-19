@@ -9,14 +9,56 @@ if (process.env.NODE_ENV !== 'test') {
   const { createClient } = require('redis');
 
   redisClient = createClient({
-    url: process.env.REDIS_URL || 'redis://localhost:6379'
+    url: process.env.REDIS_URL || 'redis://localhost:6379',
+    socket: {
+      reconnectStrategy: (retries) => Math.min(retries * 50, 500),
+      connectTimeout: 5000
+    }
   });
-  redisClient.connect().catch(console.error);
 
-  storeGenerator = (prefix) => new RedisStore({
-    prefix: prefix,
-    sendCommand: (...args) => redisClient.sendCommand(args),
+  redisClient.on('error', (err) => {
+    logger.error('Redis Client Error', err);
   });
+
+  redisClient.connect().catch(err => {
+    logger.error('Could not connect to Redis, using memory fallback', err);
+  });
+
+  storeGenerator = (prefix) => {
+    const redisStore = new RedisStore({
+      prefix: prefix,
+      sendCommand: (...args) => {
+        if (redisClient.isOpen) {
+          return redisClient.sendCommand(args);
+        }
+        throw new Error('Redis client is closed');
+      },
+    });
+
+    return {
+      increment: async (key) => {
+        if (redisClient.isOpen) {
+          try {
+            return await redisStore.increment(key);
+          } catch (e) {
+            logger.error('Redis Store Error, using memory fallback', e);
+          }
+        }
+        // Fallback minimaliste en cas de panne Redis
+        return { totalHits: 1, resetTime: new Date(Date.now() + 60000) };
+      },
+      decrement: async (key) => {
+        if (redisClient.isOpen) {
+          try { await redisStore.decrement(key); } catch (e) { }
+        }
+      },
+      resetKey: async (key) => {
+        if (redisClient.isOpen) {
+          try { await redisStore.resetKey(key); } catch (e) { }
+        }
+      }
+    };
+  };
 }
 
 // Global rate limiter: 100 requests per 15 minutes
