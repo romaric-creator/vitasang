@@ -1,0 +1,25 @@
+services:
+  - type: web
+    name: vitasang-api
+    env: docker # Render lira automatiquement le Dockerfile
+    plan: free # Instance Eco $0/month
+    region: frankfurt # Serveur au plus près de l'Afrique et l'Europe
+    rootDir: backend # Le dossier qui contient l'API (ignore le code React Native)
+    autoDeploy: true # Se met à jour à chaque git push
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DB_NAME
+        value: vitasang_db
+      - key: DB_PORT
+        value: "3306"
+      - key: REDIS_URL
+        value: rediss://default:gQAAAAAAAS0MAAIncDExMTljNGRiNzM5Mzc0MjYyOTRlNDMyMmQ1ZTMyNDcxMHAxNzcwNjg@healthy-burro-77068.upstash.io:6379
+      - key: DB_HOST
+        sync: false # Render vous demandera de remplir ça via l'interface
+      - key: DB_USER
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
+      - key: JWT_SECRET
+        sync: false
