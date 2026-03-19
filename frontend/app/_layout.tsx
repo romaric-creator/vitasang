@@ -42,73 +42,41 @@ function RootLayoutNav() {
 
     const initApp = async () => {
       try {
-        // Initialiser le cache des images
-        await initImageCache();
+        // Initialiser le cache des images - Ne devrait pas bloquer l'usage
+        initImageCache();
 
         const userId = await getUserIdFromStorage();
 
-        const tasks: Promise<any>[] = [];
-
         if (userId) {
-          // Push token registration
-          tasks.push(
-            (async () => {
-              try {
-                const token = await registerForPushNotificationsAsync();
-                if (token) {
-                  await updatePushToken(Number(userId), token);
-                }
-              } catch (e) {
-                console.error("push init error", e);
-              }
-            })(),
-          );
-
-          // Location update
-          tasks.push(
-            (async () => {
-              try {
-                const { status } =
-                  await Location.requestForegroundPermissionsAsync();
-                if (status === "granted") {
-                  const location = await Location.getCurrentPositionAsync({
-                    accuracy: Location.Accuracy.Balanced,
-                  });
-                  await updateUserLocation(
-                    Number(userId),
-                    location.coords.latitude,
-                    location.coords.longitude,
-                  );
-                }
-              } catch (e) {
-                console.error("location init error", e);
-              }
-            })(),
-          );
-
-          // Fetch initial data that shouldn't block too long
-          tasks.push(
-            (async () => {
-              try {
-                await getActiveAlerts();
-              } catch (e) {
-                console.error("getActiveAlerts init", e);
-              }
-            })(),
-          );
-        }
-
-        tasks.push(
+          // Push token registration (Background)
           (async () => {
             try {
-              await getAllCentres();
+              const token = await registerForPushNotificationsAsync();
+              if (token) {
+                await updatePushToken(Number(userId), token);
+              }
             } catch (e) {
-              console.error("getAllCentres init", e);
+              // Silencieux car non critique pour le boot
             }
-          })(),
-        );
+          })();
 
-        await Promise.allSettled(tasks);
+          // Location update (Background)
+          (async () => {
+            try {
+              const { status } = await Location.requestForegroundPermissionsAsync();
+              if (status === "granted") {
+                const location = await Location.getCurrentPositionAsync({
+                  accuracy: Location.Accuracy.Balanced,
+                });
+                await updateUserLocation(
+                  Number(userId),
+                  location.coords.latitude,
+                  location.coords.longitude,
+                );
+              }
+            } catch (e) { }
+          })();
+        }
       } catch (e) {
         console.error("app init error", e);
       } finally {
