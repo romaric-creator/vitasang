@@ -189,6 +189,7 @@ router.get("/", verifyToken, requireRole("admin"), controller.getAllUsers);
  */
 router.get(
   "/search",
+  verifyToken,
   validateRequest(schemas.searchUsers),
   controller.searchUsers,
 );
@@ -211,7 +212,7 @@ router.get(
  *       200:
  *         description: Users with specified blood group
  */
-router.get("/groupe-sanguin/:groupe", controller.getUsersByBloodGroup);
+router.get("/groupe-sanguin/:groupe", verifyToken, controller.getUsersByBloodGroup);
 
 /**
  * @swagger

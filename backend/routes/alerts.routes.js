@@ -3,6 +3,7 @@ const router = express.Router();
 const alertsController = require("../controllers/alerts.controller");
 const { verifyToken, requireRole } = require("../utils/auth.middleware");
 const { validateRequest } = require("../middleware/validation");
+const { cacheMiddleware } = require("../middleware/cache");
 const schemas = require("../validation/schemas");
 
 const isAdmin = requireRole("admin");
@@ -11,7 +12,7 @@ const isAdmin = requireRole("admin");
  * PUBLIC ROUTE - Get all live (en_cours) blood donation alerts
  * No authentication required - anyone can see active alerts
  */
-router.get("/public", alertsController.getLiveAlerts);
+router.get("/public", cacheMiddleware(5 * 60), alertsController.getLiveAlerts);
 
 // The verifyToken middleware will be used for all routes defined after this line.
 router.use(verifyToken);
@@ -81,7 +82,7 @@ router.get("/pending", requireRole("admin"), alertsController.getPendingAlerts);
  *     responses:
  *       200: { description: "List of live alerts" }
  */
-router.get("/live", alertsController.getLiveAlerts);
+router.get("/live", cacheMiddleware(5 * 60), alertsController.getLiveAlerts);
 
 /**
  * @swagger

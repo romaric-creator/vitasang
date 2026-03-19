@@ -58,7 +58,7 @@ describe("Centres Controller - Integration Tests", () => {
 
       expect([200, 404]).toContain(response.status);
       if (response.status === 200) {
-        expect(Array.isArray(response.body)).toBe(true);
+        expect(Array.isArray(response.body.centres)).toBe(true);
       }
     });
   });

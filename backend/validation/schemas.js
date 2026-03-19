@@ -33,10 +33,10 @@ const schemas = {
         "string.empty": "Le groupe sanguin est requis",
       }),
     role: Joi.string()
-      .valid("donneur", "personnel", "admin")
+      .valid("donneur")
       .default("donneur")
       .messages({
-        "any.only": "Le rôle doit être: donneur, personnel ou admin",
+        "any.only": "Le rôle doit être: donneur",
       }),
     id_centre: Joi.number().integer().allow(null).messages({
       "number.base": "L'id_centre doit être un nombre",
@@ -108,9 +108,9 @@ const schemas = {
 
   // Search nearby centres
   searchCentres: Joi.object({
-    latitude: Joi.number().required(),
-    longitude: Joi.number().required(),
-    radius: Joi.number().integer().min(1).max(500).default(50),
+    latitude: Joi.number().required().min(-90).max(90),
+    longitude: Joi.number().required().min(-180).max(180),
+    radius: Joi.number().integer().min(1).max(100).default(50),
   }),
 
   // Update user profile

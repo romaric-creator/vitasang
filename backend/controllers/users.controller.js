@@ -249,14 +249,29 @@ exports.login = async (req, res, next) => {
 
 exports.getAllUsers = async (req, res, next) => {
   try {
-    const users = await Utilisateur.findAll({
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const offset = (page - 1) * limit;
+
+    const { count, rows: users } = await Utilisateur.findAndCountAll({
       include: [
         { model: ProfilDonneur, as: "profilDonneur" },
         { model: Centre },
       ],
       attributes: { exclude: ["mot_de_passe", "id_centre"] }, // Exclure le mot de passe
+      limit,
+      offset
     });
-    res.status(200).json(users);
+    res.status(200).json({
+      success: true,
+      users,
+      pagination: {
+        page,
+        limit,
+        total: count,
+        pages: Math.ceil(count / limit)
+      }
+    });
   } catch (error) {
     next(error);
   }
@@ -342,7 +357,15 @@ exports.searchUsers = async (req, res, next) => {
       bloodCompatibility[group].includes(targetBlood),
     );
 
-    // 2. Recherche SQL : Filtrage par groupes sanguins compatibles
+    const haversine = `(
+      6371 * acos(
+        cos(radians(${userLat})) * cos(radians(\`profilDonneur\`.\`lat_actuelle\`)) * 
+        cos(radians(\`profilDonneur\`.\`long_actuelle\`) - radians(${userLong})) + 
+        sin(radians(${userLat})) * sin(radians(\`profilDonneur\`.\`lat_actuelle\`))
+      )
+    )`;
+
+    // 2. Recherche SQL : Filtrage direct en base
     const potentialDonors = await Utilisateur.findAll({
       where: { role: "donneur" },
       include: [
@@ -351,45 +374,25 @@ exports.searchUsers = async (req, res, next) => {
           as: "profilDonneur",
           where: {
             groupe_sanguin: compatibleGroups,
+            [db.Sequelize.Op.and]: db.sequelize.where(db.sequelize.literal(haversine), '<=', searchRayon)
           },
           required: true,
         },
       ],
-      attributes: { exclude: ["mot_de_passe", "id_centre"] },
+      attributes: {
+        exclude: ["mot_de_passe", "id_centre"],
+        include: [
+          [db.sequelize.literal(haversine), 'distance']
+        ]
+      },
+      order: db.sequelize.literal('distance ASC')
     });
-
-    // 3. Filtrage par Proximité et calcul de distance
-    const matchedDonors = [];
-
-    potentialDonors.forEach((donor) => {
-      if (
-        donor.profilDonneur &&
-        donor.profilDonneur.lat_actuelle &&
-        donor.profilDonneur.long_actuelle
-      ) {
-        const distance = calculateDistance(
-          userLat,
-          userLong,
-          donor.profilDonneur.lat_actuelle,
-          donor.profilDonneur.long_actuelle,
-        );
-
-        if (distance <= searchRayon) {
-          const donorData = donor.toJSON();
-          donorData.distance = parseFloat(distance.toFixed(2));
-          matchedDonors.push(donorData);
-        }
-      }
-    });
-
-    // 4. Tri par distance (du plus proche au plus loin)
-    matchedDonors.sort((a, b) => a.distance - b.distance);
 
     // 5. Réponse finale au front-end
     res.status(200).json({
       success: true,
-      count: matchedDonors.length,
-      donors: matchedDonors,
+      count: potentialDonors.length,
+      donors: potentialDonors,
     });
   } catch (error) {
     logger.error("Erreur détaillée dans searchUsers:", {
@@ -520,25 +523,27 @@ exports.updateUser = async (req, res, next) => {
     if (req.body.ville !== undefined) user.region = req.body.ville; // Map ville to region
 
     // Update profil donneur if it exists or if blood/location fields are provided
-    if (
-      user.profilDonneur ||
-      req.body.groupe_sanguin ||
-      req.body.latitude !== undefined ||
-      req.body.longitude !== undefined
-    ) {
-      const profil = await ProfilDonneur.findByPk(user.id_utilisateur);
-      if (profil) {
-        if (req.body.groupe_sanguin)
-          profil.groupe_sanguin = req.body.groupe_sanguin;
-        if (req.body.latitude !== undefined)
-          profil.lat_actuelle = req.body.latitude;
-        if (req.body.longitude !== undefined)
-          profil.long_actuelle = req.body.longitude;
-        await profil.save();
+    await db.sequelize.transaction(async (t) => {
+      if (
+        user.profilDonneur ||
+        req.body.groupe_sanguin ||
+        req.body.latitude !== undefined ||
+        req.body.longitude !== undefined
+      ) {
+        const profil = await ProfilDonneur.findByPk(user.id_utilisateur, { transaction: t });
+        if (profil) {
+          if (req.body.groupe_sanguin)
+            profil.groupe_sanguin = req.body.groupe_sanguin;
+          if (req.body.latitude !== undefined)
+            profil.lat_actuelle = req.body.latitude;
+          if (req.body.longitude !== undefined)
+            profil.long_actuelle = req.body.longitude;
+          await profil.save({ transaction: t });
+        }
       }
-    }
 
-    await user.save();
+      await user.save({ transaction: t });
+    });
     logger.info("User profile updated", { userId: id });
 
     res.status(200).json({

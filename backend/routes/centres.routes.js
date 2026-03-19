@@ -3,6 +3,7 @@ const router = express.Router();
 const controller = require("../controllers/centres.controller");
 const { verifyToken } = require("../utils/auth.middleware");
 const { validateRequest } = require("../middleware/validation");
+const { cacheMiddleware } = require("../middleware/cache");
 const schemas = require("../validation/schemas");
 
 /**
@@ -36,7 +37,7 @@ const schemas = require("../validation/schemas");
  *                       email:
  *                         type: string
  */
-router.get("/", controller.getAllCentres);
+router.get("/", cacheMiddleware(15 * 60), controller.getAllCentres);
 
 /**
  * @swagger
@@ -129,7 +130,7 @@ router.get("/:id/availability", controller.getCentreAvailability);
  *         description: Dashboard statistics
  */
 router.get("/:id/stats", verifyToken, controller.getCentreStats);
-router.get("/centres",verifyToken,controller.getAllCentres);
+router.get("/centres", verifyToken, cacheMiddleware(15 * 60), controller.getAllCentres);
 // Blood Stock Routes
 router.get("/:id/stock", verifyToken, controller.getCentreBloodStock);
 router.put("/:id/stock", verifyToken, controller.updateBloodStock);

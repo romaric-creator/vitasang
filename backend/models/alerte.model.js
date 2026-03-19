@@ -30,7 +30,11 @@ module.exports = (sequelize, DataTypes) => {
         defaultValue: "en_attente_validation",
       },
     },
-    { tableName: "Alertes_Urgence", timestamps: true },
+    {
+      tableName: "Alertes_Urgence",
+      timestamps: true,
+      indexes: [{ fields: ["statut"] }]
+    },
   );
 
   Alerte.associate = (models) => {

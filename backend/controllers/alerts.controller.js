@@ -7,6 +7,7 @@ const logger = require("../config/logger");
 const { calculateDistance } = require("../utils/geoHelpers");
 const expoNotifications = require("../utils/expoNotifications");
 const { ErrorTypes } = require("../utils/errorHandler");
+const { notificationQueue } = require("../jobs/notification.queue");
 
 const bloodCompatibility = {
   "O-": ["O-", "O+", "A-", "A+", "B-", "B+", "AB-", "AB+"],
@@ -97,106 +98,20 @@ exports.validateAndNotifyAlert = async (req, res, next) => {
 
     const { groupe_requis, latitude, longitude, rayon_action_km } = alerte;
 
-    const compatibleGroups = Object.keys(bloodCompatibility).filter((group) =>
-      bloodCompatibility[group].includes(groupe_requis),
-    );
-
-    const donors = await Utilisateur.findAll({
-      where: { role: "donneur" },
-      include: [
-        {
-          model: ProfilDonneur,
-          as: "profilDonneur",
-          where: { groupe_sanguin: compatibleGroups },
-        },
-      ],
+    // Déposer la tâche de notification dans la file d'attente BullMQ
+    await notificationQueue.add("sendAlert", {
+      alertId: alerte.id_alerte,
+      groupe_requis,
+      latitude,
+      longitude,
+      rayon_action_km,
+      validatorId
     });
 
-    let messages = [];
-    const notifiedDonors = [];
-    let donorsInRadius = 0;
-    let donorsWithToken = 0;
-
-    for (const donor of donors) {
-      if (
-        donor.profilDonneur &&
-        donor.profilDonneur.lat_actuelle &&
-        donor.profilDonneur.long_actuelle
-      ) {
-        const distance = calculateDistance(
-          latitude,
-          longitude,
-          donor.profilDonneur.lat_actuelle,
-          donor.profilDonneur.long_actuelle,
-        );
-
-        if (distance <= rayon_action_km) {
-          donorsInRadius++;
-          if (donor.push_token) {
-            donorsWithToken++;
-            messages.push(
-              expoNotifications.buildPushMessage({
-                to: donor.push_token,
-                title: "Urgence Sang",
-                body: `Urgence sang ${groupe_requis} à ${distance.toFixed(2)} km de votre position !`,
-                data: {
-                  alertId: alerte.id_alerte,
-                  groupe_sanguin: groupe_requis,
-                  distance: distance.toFixed(2),
-                },
-              }),
-            );
-            await LogNotification.create({
-              id_utilisateur: donor.id_utilisateur,
-              id_alerte: alerte.id_alerte,
-              canal: "push",
-              statut_reception: "en_attente",
-              push_token: donor.push_token,
-            });
-          } else {
-            await LogNotification.create({
-              id_utilisateur: donor.id_utilisateur,
-              id_alerte: alerte.id_alerte,
-              canal: "push",
-              statut_reception: "no_token",
-            });
-          }
-          notifiedDonors.push({
-            id: donor.id_utilisateur,
-            username: donor.nom,
-            distance: distance.toFixed(2),
-          });
-        }
-      }
-    }
-
-    if (messages.length > 0) {
-      const { successful, failed } =
-        await expoNotifications.sendPushNotifications(messages);
-      for (const token of successful) {
-        await LogNotification.update(
-          { statut_reception: "envoye" },
-          { where: { push_token: token, id_alerte: alerte.id_alerte } },
-        );
-      }
-      for (const { token, error } of failed) {
-        await LogNotification.update(
-          { statut_reception: "echec", details_echec: error },
-          { where: { push_token: token, id_alerte: alerte.id_alerte } },
-        );
-        logger.error("Failed to send notification to token", { token, error });
-      }
-      logger.info("Notifications sent via Expo SDK", {
-        successful: successful.length,
-        failed: failed.length,
-      });
-    }
-
-    res.status(200).json({
+    res.status(202).json({
       success: true,
-      message: `${notifiedDonors.length} donneurs ont été notifiés.`,
+      message: "Alerte validée. Les notifications sont en cours d'envoi.",
       alertId: alerte.id_alerte,
-      donorsCount: notifiedDonors.length,
     });
   } catch (error) {
     logger.error("Error validating alert", {
@@ -335,10 +250,10 @@ exports.getAlertStatus = async (req, res, next) => {
       details:
         isInitiator || isAdmin
           ? alerte.notifications.map((n) => ({
-              donneur: `${n.destinataire.prenom} ${n.destinataire.nom}`,
-              statut: n.statut_reception,
-              telephone: n.destinataire.telephone,
-            }))
+            donneur: `${n.destinataire.prenom} ${n.destinataire.nom}`,
+            statut: n.statut_reception,
+            telephone: n.destinataire.telephone,
+          }))
           : [],
     });
   } catch (error) {

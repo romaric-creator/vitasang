@@ -21,7 +21,11 @@ module.exports = (sequelize, DataTypes) => {
       lat_actuelle: { type: DataTypes.DOUBLE, allowNull: true },
       long_actuelle: { type: DataTypes.DOUBLE, allowNull: true },
     },
-    { tableName: "Profils_Donneurs", timestamps: false },
+    {
+      tableName: "Profils_Donneurs",
+      timestamps: false,
+      indexes: [{ fields: ["groupe_sanguin"] }]
+    },
   );
 
   ProfilDonneur.associate = (models) => {

@@ -16,6 +16,9 @@ const swaggerUi = require("swagger-ui-express");
 const swaggerSpecs = require("./config/swagger");
 const { errorHandler, notFoundHandler } = require("./middleware/errorHandler");
 
+// Initialisation des tâches en arrière-plan
+require("./jobs/cleanup.cron");
+
 const app = express();
 
 app.set("trust proxy", 1); // Indispensable pour Vercel et express-rate-limit
@@ -37,7 +40,7 @@ app.use(
       if (!origin) return callback(null, true);
 
       // Always allow localhost origins for development
-      if (origin.startsWith("http://localhost")) {
+      if (process.env.NODE_ENV !== "production" && origin.startsWith("http://localhost")) {
         return callback(null, true);
       }
 
@@ -63,6 +66,7 @@ app.use(
   }),
 );
 
+app.use(require('compression')());
 app.use(express.json({ limit: "1mb" }));
 app.use(express.urlencoded({ limit: "1mb", extended: true }));
 app.use(morgan("dev"));
@@ -87,16 +91,16 @@ const centresRoute = require("./routes/centres.routes");
 
 // Apply specific rate limiters to auth endpoints BEFORE global limiter
 // This prevents double counting by allowing specific limiters to intercept these routes first
-app.use("/api/users/register", registerLimiter);
-app.use("/api/users/login", authLimiter);
+app.use("/api/v1/users/register", registerLimiter);
+app.use("/api/v1/users/login", authLimiter);
 
 // Apply global rate limiter to all other routes
 app.use(globalLimiter);
 
-app.use("/api/users", userRoute);
-app.use("/api/alerts", alertRoute);
-app.use("/api/rendez-vous", rendezvousRoute);
-app.use("/api/centres", centresRoute);
+app.use("/api/v1/users", userRoute);
+app.use("/api/v1/alerts", alertRoute);
+app.use("/api/v1/rendez-vous", rendezvousRoute);
+app.use("/api/v1/centres", centresRoute);
 
 // Route racine pour le "Home" du backend
 app.get("/", (req, res) => {
@@ -112,7 +116,7 @@ app.use(errorHandler);
 // Connexion à la base de données et démarrage du serveur (si non importé)
 if (require.main === module) {
   db.sequelize
-    .sync({ force: false })
+    .authenticate()
     .then(() => {
       logger.info("MariaDB : Connexion réussie et tables synchronisées !");
       const PORT = process.env.PORT || 3000;
@@ -121,7 +125,7 @@ if (require.main === module) {
       });
     })
     .catch((err) => {
-      logger.error("Erreur de synchronisation MariaDB :", err);
+      logger.error("Erreur de connexion MariaDB :", err);
     });
 }
 
