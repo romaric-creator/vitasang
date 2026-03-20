@@ -131,7 +131,9 @@ export default function AlertesScreen() {
         ]}
       >
         <Text style={styles.statutText}>
-          {t(`alert.status.${item.statut}`) || item.statut}
+          {t(`alert.status.${item.statut}`) !== `alert.status.${item.statut}`
+            ? t(`alert.status.${item.statut}`)
+            : item.statut.charAt(0).toUpperCase() + item.statut.slice(1)}
         </Text>
       </View>
     </TouchableOpacity>

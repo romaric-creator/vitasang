@@ -12,6 +12,7 @@ import { color } from "@/constant/color";
 import { useRouter } from "expo-router";
 import ThemedView from "@/components/ThemedView";
 import { ModernSpinner } from "@/components/ModernSpinner";
+import { LoadingOverlay } from "@/components/LoadingOverlay";
 import * as Location from "expo-location";
 import { searchDonors, sendAlert } from "@/services/user.service";
 import { createAlertValidationSchema } from "@/validation/ValidationSchemas";
@@ -23,6 +24,10 @@ import { BloodGroupSelector } from "@/components/BloodGroupSelector";
 import { PrimaryButton } from "@/components/PrimaryButton";
 import { formStyles } from "@/styles/formStyles";
 import { useTranslation } from "react-i18next";
+import {
+  SkeletonLoader,
+  SkeletonListLoader,
+} from "@/components/SkeletonLoader";
 
 export default function CreateAlertScreen() {
   const { t } = useTranslation();
@@ -148,11 +153,19 @@ export default function CreateAlertScreen() {
     <ThemedView style={styles.container}>
       <PageHeader title={t("alert.title")} />
       {isLocating ? (
-        <LoadingOverlay
-          visible={true}
-          message={t("alert.gettingLocation")}
-          fullScreen
-        />
+        <View
+          style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
+        >
+          <SkeletonLoader
+            width={120}
+            height={120}
+            borderRadius={60}
+            style={{ marginBottom: 16 }}
+          />
+          <SkeletonLoader width="60%" height={20} style={{ marginBottom: 8 }} />
+          <SkeletonLoader width="40%" height={16} />
+          <SkeletonListLoader count={3} itemHeight={40} />
+        </View>
       ) : (
         <ScrollView
           contentContainerStyle={{ padding: 16 }}
@@ -269,7 +282,7 @@ export default function CreateAlertScreen() {
                     color={color.primary}
                   />
                   {loading ? (
-                    <ModernSpinner size="small" />
+                    <Text style={styles.warningText}>Envoi en cours...</Text>
                   ) : (
                     <Text style={styles.warningText}>
                       {donorCount !== null

@@ -142,7 +142,7 @@ export default function Profile() {
           <View style={styles.statItem}>
             <Text style={styles.statValue}>{donsCount}</Text>
             <Text style={styles.statLabel}>
-              {t("profile.livesSaved") || "Vies sauvées"}
+              {"Vies sauvées"}
             </Text>
           </View>
           <View style={styles.dividerVertical} />

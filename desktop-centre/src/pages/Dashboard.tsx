@@ -140,23 +140,6 @@ const Dashboard: React.FC = () => {
                             </thead>
                             {/* Table Body - Static Data */}
                             <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
-                                {/* Row 1: Critical */}
-                                <tr className="hover:bg-gray-50/50 dark:hover:bg-white/5 transition-colors">
-                                    <td className="px-6 py-4">
-                                        <div className="flex items-center gap-3">
-                                            <div className="size-8 rounded-lg bg-red-100 text-red-600 flex items-center justify-center font-bold text-xs">JD</div>
-                                            <div>
-                                                <p className="text-sm font-bold text-gray-900 dark:text-white">Jean Dupont</p>
-                                                <p className="text-[10px] text-gray-500 uppercase">Ref: #VS-9821</p>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td className="px-6 py-4"><span className="px-3 py-1 bg-gray-100 dark:bg-white/10 rounded-lg text-sm font-bold text-gray-700 dark:text-gray-300">O-</span></td>
-                                    <td className="px-6 py-4"><span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-red-600 text-white shadow-sm shadow-red-200"><span className="size-1.5 bg-white rounded-full animate-ping"></span>CRITIQUE</span></td>
-                                    <td className="px-6 py-4"><span className="text-sm font-medium text-gray-600 dark:text-gray-400 italic">En attente de validation</span></td>
-                                    <td className="px-6 py-4"><div className="flex items-center gap-1.5 text-sm font-semibold text-primary"><span className="material-symbols-outlined text-sm">schedule</span>04 min</div></td>
-                                    <td className="px-6 py-4 text-right"><div className="flex items-center justify-end gap-2"><button className="bg-primary hover:bg-primary/90 text-white text-[10px] font-bold px-3 py-1.5 rounded uppercase tracking-tighter">Valider</button><button className="text-gray-400 hover:text-gray-600 p-1"><span className="material-symbols-outlined text-xl">more_vert</span></button></div></td>
-                                </tr>
                                 {/* Row 2: Urgent */}
                                 <tr className="hover:bg-gray-50/50 dark:hover:bg-white/5 transition-colors">
                                     <td className="px-6 py-4">

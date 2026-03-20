@@ -88,7 +88,14 @@ export default function AlertTracking() {
       <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.mainCard}>
           <Text style={styles.bloodType}>{alerte.groupe}</Text>
-          <Text style={styles.statusBadge}>{alerte.statut.toUpperCase()}</Text>
+          {alerte.statut !== "en_attente" && alerte.statut !== "en_attente_validation" && alerte.statut !== "status" && (
+            <Text style={styles.statusBadge}>
+              {alerte.statut.toUpperCase()}
+            </Text>
+          )}
+          {alerte.statut === "status" && (
+            <Text style={styles.statusBadge}>Statut inconnu</Text>
+          )}
           <Text style={styles.date}>
             Lancée le {new Date(alerte.createdAt).toLocaleTimeString()}
           </Text>

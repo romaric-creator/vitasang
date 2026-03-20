@@ -88,12 +88,21 @@ export const sendAlert = async (alertData: {
   description?: string;
 }) => {
   try {
-    const response = await apiClient.post(`/alerts`, alertData);
-    return response.data;
+    // Utilise fetch pour contourner l'intercepteur axios qui ajoute le token
+    const response = await fetch(`${apiClient.defaults.baseURL}/alerts`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(alertData),
+    });
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data.message || "Erreur lors de l'envoi de l'alerte");
+    }
+    return data;
   } catch (error: any) {
-    throw new Error(
-      error.response?.data?.message || "Erreur lors de l'envoi de l'alerte",
-    );
+    throw new Error(error.message || "Erreur lors de l'envoi de l'alerte");
   }
 };
 

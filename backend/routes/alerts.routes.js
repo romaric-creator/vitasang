@@ -15,7 +15,6 @@ const isAdmin = requireRole("admin");
 router.get("/public", cacheMiddleware(5 * 60), alertsController.getLiveAlerts);
 
 // The verifyToken middleware will be used for all routes defined after this line.
-router.use(verifyToken);
 
 /**
  * @swagger

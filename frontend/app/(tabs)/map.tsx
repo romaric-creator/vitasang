@@ -125,17 +125,16 @@ export default function MapScreen() {
 
   // Filtrer les centres pour ne garder que ceux avec des coordonnées valides et des IDs uniques
   const mappableCentres = centres
-    .filter(
-      (c) =>
-        c.id_centre && // Vérifie que id_centre existe
-        c.latitude &&
-        c.longitude &&
-        !isNaN(parseFloat(c.latitude)) &&
-        !isNaN(parseFloat(c.longitude)),
-    )
+    .filter((c) => {
+      // Accepte id ou id_centre
+      const id = c.id_centre || c.id;
+      const lat = c.latitude;
+      const lng = c.longitude;
+      return id && lat && lng && !isNaN(Number(lat)) && !isNaN(Number(lng));
+    })
     .reduce((uniqueCentres: any[], centre) => {
-      // Élimine les doublons basés sur id_centre
-      if (!uniqueCentres.find((u) => u.id_centre === centre.id_centre)) {
+      const id = centre.id_centre || centre.id;
+      if (!uniqueCentres.find((u) => (u.id_centre || u.id) === id)) {
         uniqueCentres.push(centre);
       }
       return uniqueCentres;
@@ -200,10 +199,10 @@ export default function MapScreen() {
           >
             {mappableCentres.map((centre) => (
               <Marker
-                key={centre.id_centre}
+                key={centre.id_centre || centre.id}
                 coordinate={{
-                  latitude: parseFloat(centre.latitude),
-                  longitude: parseFloat(centre.longitude),
+                  latitude: Number(centre.latitude),
+                  longitude: Number(centre.longitude),
                 }}
               >
                 <View style={styles.markerContainer}>

@@ -132,7 +132,12 @@ export const useUpdateProfile = () => {
 
   return useMutation({
     mutationFn: (profileData: any) =>
-      apiClient.put(`/users/${profileData.id_utilisateur || profileData.id}`, profileData).then((r) => r.data),
+      apiClient
+        .put(
+          `/users/${profileData.id_utilisateur || profileData.id}`,
+          profileData,
+        )
+        .then((r) => r.data),
 
     onSuccess: (updatedUser) => {
       // Update cache
@@ -168,7 +173,8 @@ export const useCurrentUser = (enabled: boolean = true) => {
 export const useUserProfile = (userId: number, enabled: boolean = true) => {
   return useQuery({
     queryKey: queryKeys.users.profile(userId),
-    queryFn: () => apiClient.get(`/users/${userId}`).then((r) => r.data),
+    queryFn: () =>
+      apiClient.get(`/users/${userId}/profile`).then((r) => r.data),
     enabled: enabled && !!userId,
     staleTime: 1000 * 60 * 10, // 10 minutes for static profiles
   });
