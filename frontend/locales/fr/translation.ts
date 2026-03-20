@@ -354,7 +354,7 @@ export default {
       loading: "Recherche de donneurs...",
       info: "Vous serez redirigé vers le suivi de votre alerte dans quelques secondes.",
     },
-    shareMessage: "🚨 *URGENCE VITALE — APPEL À LA SOLIDARITÉ* 🩸\n\nBesoin urgent de sang groupe *{{group}}* pour sauver une vie.\n\n📍 *Lieu* : {{location}}\n🗺️ *Itinéraire* : https://www.google.com/maps/search/?api=1&query={{lat}},{{lng}}\n⚠️ *Urgence* : {{urgency}}\n📦 *Besoin* : {{quantity}} poche(s)\n📞 *Contact* : {{phone}}\n\nC'est pour un don bénévole et gratuit. Si vous pouvez aider ou connaissez quelqu'un, cliquez ici :\n🔗 https://vitasang.cm/alerte/{{id}}\n\n_Partagez au maximum dans vos groupes. Chaque partage peut sauver une vie. Que le Seigneur nous garde._ 🙏🇨🇲\n#VitaSang #Cameroun #DonDeSangBénévole",
+    shareMessage: "🚨 *URGENCE VITALE — APPEL À LA SOLIDARITÉ* 🩸\n\nBesoin urgent de sang groupe *{{group}}* pour sauver une vie.\n\n📍 *Lieu* : {{location}}\n🗺️ *Itinéraire* : https://www.google.com/maps/search/?api=1&query={{latitude}},{{longitude}}\n⚠️ *Urgence* : {{urgency}}\n📦 *Besoin* : {{quantity}} poche(s)\n📞 *Contact* : {{phone}}\n\nC'est pour un don bénévole et gratuit. Si vous pouvez aider ou connaissez quelqu'un, cliquez ici :\n🔗 https://vitasang.cm/alerte/{{id}}\n\n_Partagez au maximum dans vos groupes. Chaque partage peut sauver une vie. Que le Seigneur nous garde._ 🙏🇨🇲\n#VitaSang #Cameroun #DonDeSangBénévole",
   },
   helpAndAdvice: {
     headerTitle: "Aide & Sensibilisation",

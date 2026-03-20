@@ -79,8 +79,8 @@ export default function AlertResponse() {
     const message = t("alert.shareMessage", {
       group: alertData.groupe,
       location: alertData.lieu || t("centers.address"),
-      lat: alertData.latitude || "0",
-      lng: alertData.longitude || "0",
+      latitude: alertData.latitude || "0",
+      longitude: alertData.longitude || "0",
       urgency: urgencyLabel,
       quantity: alertData.quantite || "1",
       phone: alertData.initiateur?.telephone || "",

@@ -357,7 +357,7 @@ export default {
       loading: "Searching for donors...",
       info: "You will be redirected to your alert tracking in a few seconds.",
     },
-    shareMessage: "🚨 *VITAL EMERGENCY — BLOOD DONATION APPEAL* 🩸\n\nUrgent need for blood group *{{group}}* to save a life.\n\n📍 *Location* : {{location}}\n🗺️ *Directions* : https://www.google.com/maps/search/?api=1&query={{lat}},{{lng}}\n⚠️ *Urgency* : {{urgency}}\n📦 *Need* : {{quantity}} bag(s)\n📞 *Contact* : {{phone}}\n\nThis is for a free and voluntary donation. If you can help or know someone who can, click here:\n🔗 https://vitasang.cm/alerte/{{id}}\n\n_Please share widely in your groups. Every share can save a life. God bless us._ 🙏🇨🇲\n#VitaSang #Cameroon #VoluntaryBloodDonation",
+    shareMessage: "🚨 *VITAL EMERGENCY — BLOOD DONATION APPEAL* 🩸\n\nUrgent need for blood group *{{group}}* to save a life.\n\n📍 *Location* : {{location}}\n🗺️ *Directions* : https://www.google.com/maps/search/?api=1&query={{latitude}},{{longitude}}\n⚠️ *Urgency* : {{urgency}}\n📦 *Need* : {{quantity}} bag(s)\n📞 *Contact* : {{phone}}\n\nThis is for a free and voluntary donation. If you can help or know someone who can, click here:\n🔗 https://vitasang.cm/alerte/{{id}}\n\n_Please share widely in your groups. Every share can save a life. God bless us._ 🙏🇨🇲\n#VitaSang #Cameroon #VoluntaryBloodDonation",
   },
   helpAndAdvice: {
     headerTitle: "Help & Awareness",

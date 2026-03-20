@@ -44,8 +44,8 @@ export default function AlertesScreen() {
     const message = t("alert.shareMessage", {
       group: item.groupe,
       location: item.lieu || "Hôpital proche",
-      lat: item.latitude || "0",
-      lng: item.longitude || "0",
+      latitude: item.latitude || "0",
+      longitude: item.longitude || "0",
       urgency: urgencyLabel,
       quantity: item.quantite || item.quantite_requise || "1",
       phone: item.telephone_initiateur || "",

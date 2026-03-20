@@ -82,8 +82,8 @@ export default function AlertTracking() {
     const message = t("alert.shareMessage", {
       group: alerte.groupe,
       location: alerte.lieu || t("centers.address"),
-      lat: alerte.latitude || "0",
-      lng: alerte.longitude || "0",
+      latitude: alerte.latitude || "0",
+      longitude: alerte.longitude || "0",
       urgency: urgencyLabel,
       quantity: alerte.quantite || "1",
       phone: alerte.initiateur?.telephone || alerte.telephone_contact || "",
