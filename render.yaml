@@ -24,9 +24,9 @@ services:
       - key: JWT_EXPIRE
         value: 24h
       - key: CORS_ORIGIN
-        value: https://vitasang-admin.vercel.app
+        value: http://localhost:5173/
       - key: REDIS_URL
-        value: redis-cli --tls -u redis://default:gQAAAAAAATJDAAIncDJjNGY3ZTdmY2QxODM0NThlYTM0N2I1ODMzODI3NWZjOHAyNzg0MDM@large-mutt-78403.upstash.io:6379
+        value: rediss://default:gQAAAAAAATJDAAIncDJjNGY3ZTdmY2QxODM0NThlYTM0N2I1ODMzODI3NWZjOHAyNzg0MDM@large-mutt-78403.upstash.io:6379
       - key: CLOUDINARY_CLOUD_NAME
         value: dimlkizdi
       - key: CLOUDINARY_API_KEY
