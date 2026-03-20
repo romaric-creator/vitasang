@@ -54,20 +54,22 @@ function RootLayoutNav() {
           (async () => {
             // Sous Expo Go, registerForPushNotificationsAsync peut échouer ou provoquer des logs d'erreurs
             // On ne l'appelle que si on est hors Expo Go
-            if (require('expo-constants').default.appOwnership === 'expo') return;
+            if (require("expo-constants").default.appOwnership === "expo")
+              return;
 
             try {
               const token = await registerForPushNotificationsAsync();
               if (token) {
                 await updatePushToken(Number(userId), token);
               }
-            } catch (e) { }
+            } catch (e) {}
           })();
 
           // Location update (Background)
           (async () => {
             try {
-              const { status } = await Location.requestForegroundPermissionsAsync();
+              const { status } =
+                await Location.requestForegroundPermissionsAsync();
               if (status === "granted") {
                 const location = await Location.getCurrentPositionAsync({
                   accuracy: Location.Accuracy.Balanced,
@@ -78,7 +80,7 @@ function RootLayoutNav() {
                   location.coords.longitude,
                 );
               }
-            } catch (e) { }
+            } catch (e) {}
           })();
         }
       } catch (e) {
@@ -121,8 +123,8 @@ function RootLayoutNav() {
       // Si authentifié et dans le flux d'auth, rediriger vers l'application principale
       router.replace("/(tabs)");
     } else if (!isAuth && !inAuthFlow) {
-      // Si non authentifié et pas dans le flux d'auth, rediriger vers la page de Splash (onboarding)
-      router.replace("/Splash");
+      // Si non authentifié et pas dans le flux d'auth, rediriger vers l'onboarding directement
+      router.replace("/OnboardingCarousel");
     }
   }, [isAuth, isLoading, appReady, segments]);
 

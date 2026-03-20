@@ -11,7 +11,9 @@ import {
   type ApiError,
 } from "@/services/errorService";
 
-const API_BASE_URL = (Constants.expoConfig?.extra?.env?.EXPO_PUBLIC_API_BASE_URL || "https://vitasang-api.onrender.com/api") + "/v1";
+const API_BASE_URL =
+  Constants.expoConfig?.extra?.env?.EXPO_PUBLIC_API_BASE_URL ||
+  "https://vitasang-api.onrender.com/api";
 const REQUEST_TIMEOUT = 10000;
 const MAX_RETRIES = 2;
 
