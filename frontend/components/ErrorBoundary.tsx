@@ -1,6 +1,7 @@
 import React, { ReactNode } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { color } from '@/constant/color';
+import { useTranslation } from 'react-i18next';
 
 interface ErrorBoundaryProps {
   children: ReactNode;
@@ -11,8 +12,12 @@ interface ErrorBoundaryState {
   error: Error | null;
 }
 
-export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
-  constructor(props: ErrorBoundaryProps) {
+interface ErrorBoundaryInternalProps extends ErrorBoundaryProps {
+  t: (key: string) => string;
+}
+
+class ErrorBoundaryInternal extends React.Component<ErrorBoundaryInternalProps, ErrorBoundaryState> {
+  constructor(props: ErrorBoundaryInternalProps) {
     super(props);
     this.state = { hasError: false, error: null };
   }
@@ -31,19 +36,30 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
 
   render() {
     if (this.state.hasError) {
+      const { t } = this.props;
       return (
         <View style={styles.container}>
           <View style={styles.errorCard}>
-            <Text style={styles.errorTitle}>Oops! Une erreur est survenue</Text>
+            <View style={styles.iconContainer}>
+              <View style={styles.iconCircle}>
+                <Text style={styles.iconEmoji}>⚠️</Text>
+              </View>
+            </View>
+
+            <Text style={styles.errorTitle}>{t('common.errors.oops')}</Text>
             <Text style={styles.errorMessage}>
-              {this.state.error?.message || 'Une erreur inattendue est survenue.'}
+              {this.state.error?.message || t('common.errors.unexpected')}
             </Text>
-            <TouchableOpacity 
+
+            <TouchableOpacity
               style={styles.button}
               onPress={this.resetError}
+              activeOpacity={0.8}
             >
-              <Text style={styles.buttonText}>Réessayer</Text>
+              <Text style={styles.buttonText}>{t('common.errors.retry')}</Text>
             </TouchableOpacity>
+
+            <Text style={styles.footerText}>VitaSang Safety Shield</Text>
           </View>
         </View>
       );
@@ -53,48 +69,86 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
   }
 }
 
+export const ErrorBoundary = ({ children }: ErrorBoundaryProps) => {
+  const { t } = useTranslation();
+  return <ErrorBoundaryInternal t={t}>{children}</ErrorBoundaryInternal>;
+};
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#f9f9f9',
+    backgroundColor: '#F8FAFC', // light slate background
+    padding: 24,
   },
   errorCard: {
     backgroundColor: 'white',
-    padding: 24,
-    borderRadius: 12,
-    marginHorizontal: 24,
-    borderLeftWidth: 4,
-    borderLeftColor: color.primary,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    padding: 32,
+    borderRadius: 32,
+    width: '100%',
+    alignItems: 'center',
+    elevation: 8,
+    shadowColor: '#E11D48',
+    shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    shadowRadius: 20,
+  },
+  iconContainer: {
+    marginBottom: 24,
+  },
+  iconCircle: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: '#FFF1F2',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  iconEmoji: {
+    fontSize: 40,
   },
   errorTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: color.primary,
+    fontSize: 24,
+    fontWeight: '900',
+    color: '#0F172A',
     marginBottom: 12,
+    textAlign: 'center',
+    letterSpacing: -0.5,
   },
   errorMessage: {
-    fontSize: 14,
-    color: '#666',
-    lineHeight: 20,
-    marginBottom: 20,
+    fontSize: 16,
+    color: '#64748B',
+    lineHeight: 24,
+    marginBottom: 32,
+    textAlign: 'center',
+    fontWeight: '500',
   },
   button: {
     backgroundColor: color.primary,
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    borderRadius: 8,
+    paddingVertical: 18,
+    paddingHorizontal: 32,
+    borderRadius: 20,
+    width: '100%',
     alignItems: 'center',
+    elevation: 4,
+    shadowColor: color.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
   },
   buttonText: {
     color: 'white',
-    fontWeight: '600',
-    fontSize: 14,
+    fontWeight: '800',
+    fontSize: 16,
+    letterSpacing: 0.5,
+  },
+  footerText: {
+    marginTop: 24,
+    fontSize: 12,
+    color: '#CBD5E1',
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 2,
   },
 });

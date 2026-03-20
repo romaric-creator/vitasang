@@ -1,16 +1,18 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, useCallback } from "react";
 import {
   StyleSheet,
   View,
   Text,
   TouchableOpacity,
   ScrollView,
+  Linking,
 } from "react-native";
 import { LoadingOverlay } from "@/components/LoadingOverlay";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { TabBarIcon } from "@/components/TabBarIcon";
 import { color } from "@/constant/color";
 import { getAlertStatus } from "@/services/user.service";
+import { useTranslation } from "react-i18next";
 
 interface NotifiedDonor {
   id: number;
@@ -19,6 +21,7 @@ interface NotifiedDonor {
 }
 
 export default function AlertTracking() {
+  const { t } = useTranslation();
   const params = useLocalSearchParams();
   const { id, notifiedDonors: notifiedDonorsParam } = params;
   const router = useRouter();
@@ -73,16 +76,45 @@ export default function AlertTracking() {
 
   const { stats, alerte, details } = data;
 
+  const handleShareWhatsApp = useCallback(() => {
+    if (!alerte) return;
+    const urgencyLabel = t(`alert.urgencyLevels.${alerte.urgence || "NORMAL"}`);
+    const message = t("alert.shareMessage", {
+      group: alerte.groupe,
+      location: alerte.lieu || t("centers.address"),
+      lat: alerte.latitude || "0",
+      lng: alerte.longitude || "0",
+      urgency: urgencyLabel,
+      quantity: alerte.quantite || "1",
+      phone: alerte.initiateur?.telephone || alerte.telephone_contact || "",
+      id: id || alerte.id || "0000",
+    });
+    const url = `whatsapp://send?text=${encodeURIComponent(message)}`;
+
+    Linking.canOpenURL(url).then((supported) => {
+      if (supported) {
+        Linking.openURL(url);
+      } else {
+        Linking.openURL(`https://wa.me/?text=${encodeURIComponent(message)}`);
+      }
+    });
+  }, [alerte, t, id]);
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()}>
           <TabBarIcon name="arrow-left" size={24} color="black" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Suivi de l'Alerte</Text>
-        <TouchableOpacity onPress={fetchStatus}>
-          <TabBarIcon name="refresh" size={20} color={color.primary} />
-        </TouchableOpacity>
+        <Text style={styles.headerTitle}>{t('alert.tracking.title')}</Text>
+        <View style={{ flexDirection: 'row', gap: 15 }}>
+          <TouchableOpacity onPress={handleShareWhatsApp}>
+            <TabBarIcon name="whatsapp" size={20} color="#25D366" family="fontawesome" />
+          </TouchableOpacity>
+          <TouchableOpacity onPress={fetchStatus}>
+            <TabBarIcon name="refresh" size={20} color={color.primary} />
+          </TouchableOpacity>
+        </View>
       </View>
 
       <ScrollView contentContainerStyle={styles.content}>
@@ -94,22 +126,22 @@ export default function AlertTracking() {
             </Text>
           )}
           {alerte.statut === "status" && (
-            <Text style={styles.statusBadge}>Statut inconnu</Text>
+            <Text style={styles.statusBadge}>{t('alert.tracking.unknownStatus')}</Text>
           )}
           <Text style={styles.date}>
-            Lancée le {new Date(alerte.createdAt).toLocaleTimeString()}
+            {t('alert.tracking.launchedOn', { date: new Date(alerte.createdAt).toLocaleTimeString() })}
           </Text>
         </View>
 
         <View style={styles.statsGrid}>
           <StatBox
-            label="Notifi&eacute;s"
+            label={t('alert.tracking.stats.notified')}
             value={stats.total}
             color={color.info}
           />
-          <StatBox label="Lus" value={stats.lu} color={color.warning} />
+          <StatBox label={t('alert.tracking.stats.read')} value={stats.lu} color={color.warning} />
           <StatBox
-            label="Accept&eacute;s"
+            label={t('alert.tracking.stats.accepted')}
             value={stats.accepte}
             color={color.success}
           />
@@ -118,11 +150,11 @@ export default function AlertTracking() {
         {notifiedDonors.length > 0 && (
           <>
             <Text style={[styles.sectionTitle, { marginTop: 20 }]}>
-              Donneurs Notifiés ({notifiedDonors.length})
+              {t('alert.tracking.notifiedDonors')} ({notifiedDonors.length})
             </Text>
             {notifiedDonors.map((donor, index) => (
               <View key={donor.id} style={styles.donorRow}>
-                <Text style={styles.donorName}>Donneur {index + 1}</Text>
+                <Text style={styles.donorName}>{t('alert.tracking.donorIndex', { index: index + 1 })}</Text>
                 <Text style={styles.donorPhone}>{donor.distance} km</Text>
               </View>
             ))}
@@ -130,7 +162,7 @@ export default function AlertTracking() {
         )}
 
         <Text style={styles.sectionTitle}>
-          Détails des Notifications ({details.length})
+          {t('alert.tracking.notificationDetails')} ({details.length})
         </Text>
         {details.map((item: any, index: number) => (
           <View key={index} style={styles.donorRow}>
@@ -154,7 +186,7 @@ export default function AlertTracking() {
         style={styles.footerBtn}
         onPress={() => router.replace("/(tabs)")}
       >
-        <Text style={styles.footerBtnText}>Retour à l'accueil</Text>
+        <Text style={styles.footerBtnText}>{t('alert.tracking.backHome')}</Text>
       </TouchableOpacity>
     </View>
   );

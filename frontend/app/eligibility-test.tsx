@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import {
   StyleSheet,
   Text,
@@ -12,45 +12,21 @@ import { TabBarIcon } from "@/components/TabBarIcon";
 import { color } from "@/constant/color";
 import { PrimaryButton } from "@/components/PrimaryButton";
 import { PageHeader } from "@/components/PageHeader";
+import { useTranslation } from "react-i18next";
 
-const QUESTIONS = [
-  {
-    id: 1,
-    question: "Pesez-vous plus de 50 kg ?",
-    hint: "Le volume de sang prélevé dépend de votre poids total.",
-  },
-  {
-    id: 2,
-    question: "Avez-vous entre 18 et 70 ans ?",
-    hint: "C'est la tranche d'âge légale pour donner son sang.",
-  },
-  {
-    id: 3,
-    question: "Avez-vous mangé et êtes-vous bien hydraté ?",
-    hint: "Ne jamais donner à jeun pour éviter les malaises.",
-  },
-  {
-    id: 4,
-    question: "Avez-vous eu de la fièvre au cours des 2 dernières semaines ?",
-    hint: "Une infection récente peut être transmise par le sang.",
-    negative: true,
-  },
-  {
-    id: 5,
-    question: "Avez-vous fait un tatouage ou piercing ces 4 derniers mois ?",
-    hint: "C'est un délai de précaution pour les risques infectieux.",
-    negative: true,
-  },
-  {
-    id: 6,
-    question: "Avez-vous pris des antibiotiques ces 7 derniers jours ?",
-    hint: "Il faut attendre la fin du traitement.",
-    negative: true,
-  },
-];
 
 export default function EligibilityTestScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
+
+  const QUESTIONS = useMemo(() => [
+    { id: 1, question: t("alert.response.eligibility.questions.q1.text"), hint: t("alert.response.eligibility.questions.q1.hint") },
+    { id: 2, question: t("alert.response.eligibility.questions.q2.text"), hint: t("alert.response.eligibility.questions.q2.hint") },
+    { id: 3, question: t("alert.response.eligibility.questions.q3.text"), hint: t("alert.response.eligibility.questions.q3.hint") },
+    { id: 4, question: t("alert.response.eligibility.questions.q4.text"), hint: t("alert.response.eligibility.questions.q4.hint"), negative: true },
+    { id: 5, question: t("alert.response.eligibility.questions.q5.text"), hint: t("alert.response.eligibility.questions.q5.hint"), negative: true },
+    { id: 6, question: t("alert.response.eligibility.questions.q6.text"), hint: t("alert.response.eligibility.questions.q6.hint"), negative: true },
+  ], [t]);
   const [currentStep, setCurrentStep] = useState(0);
   const [answers, setAnswers] = useState<Record<number, boolean>>({});
   const [showResult, setShowResult] = useState(false);
@@ -85,7 +61,7 @@ export default function EligibilityTestScreen() {
     return (
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.container}>
-          <PageHeader title="Résultat du test" />
+          <PageHeader title={t("alert.response.eligibility.resultTitle")} />
           <View style={styles.resultContainer}>
             <View
               style={[
@@ -101,27 +77,25 @@ export default function EligibilityTestScreen() {
             </View>
             <Text style={styles.resultTitle}>
               {isEligible
-                ? "Vous semblez éligible !"
-                : "Un report est peut-être nécessaire"}
+                ? t("alert.response.eligibility.eligible")
+                : t("alert.response.eligibility.notEligible")}
             </Text>
             <Text style={styles.resultDescription}>
               {isEligible
-                ? "D'après vos réponses, vous remplissez les conditions de base pour donner votre sang aujourd'hui."
-                : "Certaines de vos réponses indiquent qu'il est préférable d'attendre ou de consulter un médecin avant de donner."}
+                ? t("alert.response.eligibility.eligibleDesc")
+                : t("alert.response.eligibility.notEligibleDesc")}
             </Text>
 
             <View style={styles.notebox}>
-              <Text style={styles.noteTitle}>Important</Text>
+              <Text style={styles.noteTitle}>{t("alert.response.eligibility.noteTitle")}</Text>
               <Text style={styles.noteText}>
-                Ce test est indicatif. Seul le médecin du centre de don peut
-                valider définitivement votre aptitude après un entretien
-                confidentiel.
+                {t("alert.response.eligibility.noteText")}
               </Text>
             </View>
 
             <View style={styles.actionButtons}>
               <PrimaryButton
-                title={isEligible ? "TROUVER UN CENTRE" : "RECOMMENCER"}
+                title={isEligible ? t("common.actions.findCenter") : t("common.actions.retry")}
                 onPress={() =>
                   isEligible ? router.push("/(tabs)/map") : resetTest()
                 }
@@ -130,7 +104,7 @@ export default function EligibilityTestScreen() {
                 style={styles.secondaryBtn}
                 onPress={() => router.back()}
               >
-                <Text style={styles.secondaryBtnText}>RETOUR À L'ACCUEIL</Text>
+                <Text style={styles.secondaryBtnText}>{t("common.actions.backHome")}</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -145,14 +119,14 @@ export default function EligibilityTestScreen() {
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
-        <PageHeader title="Test d'éligibilité" />
+        <PageHeader title={t("alert.response.eligibility.testTitle")} />
 
         <View style={styles.progressSection}>
           <View style={styles.progressBarBg}>
             <View style={[styles.progressBarFill, { width: `${progress}%` }]} />
           </View>
           <Text style={styles.stepText}>
-            Question {currentStep + 1} sur {QUESTIONS.length}
+            {t("alert.response.eligibility.stepText", { current: currentStep + 1, total: QUESTIONS.length })}
           </Text>
         </View>
 
@@ -173,13 +147,13 @@ export default function EligibilityTestScreen() {
             style={[styles.answerBtn, { backgroundColor: "#F3F4F6" }]}
             onPress={() => handleAnswer(true)}
           >
-            <Text style={styles.answerBtnText}>OUI</Text>
+            <Text style={styles.answerBtnText}>{t("common.actions.yes")}</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={[styles.answerBtn, { backgroundColor: "#F3F4F6" }]}
             onPress={() => handleAnswer(false)}
           >
-            <Text style={styles.answerBtnText}>NON</Text>
+            <Text style={styles.answerBtnText}>{t("common.actions.no")}</Text>
           </TouchableOpacity>
         </View>
       </View>

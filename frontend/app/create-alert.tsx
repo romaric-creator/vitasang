@@ -89,7 +89,7 @@ export default function CreateAlertScreen() {
         router.push("/register");
       } catch (e) {
         console.error("Failed to save pending alert:", e);
-        setErrorMsg("Impossible de sauvegarder l'alerte. Veuillez réessayer.");
+        setErrorMsg(t("alert.error") || "Impossible de sauvegarder l'alerte. Veuillez réessayer.");
       }
     }
   };
@@ -101,7 +101,7 @@ export default function CreateAlertScreen() {
         router.push("/login");
       } catch (e) {
         console.error("Failed to save pending alert:", e);
-        setErrorMsg("Impossible de sauvegarder l'alerte. Veuillez réessayer.");
+        setErrorMsg(t("alert.error") || "Impossible de sauvegarder l'alerte. Veuillez réessayer.");
       }
     }
   };
@@ -300,7 +300,7 @@ export default function CreateAlertScreen() {
                     color={color.primary}
                   />
                   {loading ? (
-                    <Text style={styles.warningText}>Envoi en cours...</Text>
+                    <Text style={styles.warningText}>{t("alert.sending")}</Text>
                   ) : (
                     <Text style={styles.warningText}>
                       {donorCount !== null

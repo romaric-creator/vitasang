@@ -15,7 +15,10 @@ const Dashboard: React.FC = () => {
 
     useEffect(() => {
         const fetchStats = async () => {
-            if (!user?.centre?.id_centre) return;
+            if (!user?.centre?.id_centre) {
+                setLoading(false);
+                return;
+            }
 
             try {
                 setLoading(true);

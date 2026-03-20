@@ -7,8 +7,34 @@ export default {
     success: "Success",
     bloodGroup: "Blood group",
     loading: "Loading...",
+    errors: {
+      oops: "Oops! An error occurred",
+      unexpected: "An unexpected error occurred.",
+      retry: "Retry",
+      ok: "OK",
+      error: "Error",
+      warning: "Warning",
+      info: "Information",
+    },
+    actions: {
+      skip: "Skip",
+      next: "Next",
+      start: "Start",
+      backHome: "BACK TO HOME",
+      findCenter: "FIND A CENTER",
+      retry: "RETRY",
+      yes: "YES",
+      no: "NO",
+    },
+  },
+  tabs: {
+    home: "Home",
+    map: "Centers",
+    alerts: "Alerts",
+    profile: "Profile",
   },
   home: {
+    tagline: "Saving lives together",
     profileLabel: "Profile",
     launchAlert: "Launch an Alert",
     urgentNeed: "Urgent Need?",
@@ -32,6 +58,35 @@ export default {
     noUrgentAlerts: "No urgent alerts right now.",
     helpAndAwareness: "Help & Awareness",
     discoverTips: "Discover all our tips",
+    tipsSection: {
+      title: "Help & Awareness",
+      subtitle: "Discover the impact of your donation",
+      didYouKnow: "Did you know?",
+      didYouKnowText: "One person in two will need blood during their lifetime",
+      stats: {
+        frequency: "Max frequency",
+        perDonation: "Per donation",
+        duration: "Avg duration",
+      },
+      tips: {
+        heart: {
+          title: "Heart Health",
+          desc: "Blood donation reduces cardiovascular risks",
+        },
+        hydration: {
+          title: "Stay Hydrated",
+          desc: "Drink water before and after donation",
+        },
+        safety: {
+          title: "Health Safety",
+          desc: "100% safe and sterile process",
+        },
+        impact: {
+          title: "Social Impact",
+          desc: "Save up to 3 lives per donation",
+        },
+      },
+    },
   },
   profile: {
     title: "My Profile",
@@ -240,6 +295,23 @@ export default {
         q4: "Are you pregnant or breastfeeding? (If applicable)",
         warning: "If you answer YES to any of these questions, it is better not to donate today.",
         confirmBtn: "I CONFIRM MY ELIGIBILITY",
+        testTitle: "Eligibility Test",
+        resultTitle: "Test Result",
+        eligible: "You seem eligible!",
+        notEligible: "A delay might be necessary",
+        eligibleDesc: "Based on your answers, you meet the basic conditions to donate blood today.",
+        notEligibleDesc: "Some of your answers indicate it's better to wait or consult a doctor before donating.",
+        noteTitle: "Important",
+        noteText: "This test is indicative. Only the donation center doctor can definitively validate your suitability after a confidential interview.",
+        stepText: "Question {{current}} of {{total}}",
+        questions: {
+          q1: { text: "Do you weigh more than 50 kg?", hint: "The volume of blood collected depends on your total weight." },
+          q2: { text: "Are you between 18 and 70 years old?", hint: "This is the legal age range for blood donation." },
+          q3: { text: "Have you eaten and are you well hydrated?", hint: "Never donate on an empty stomach to avoid discomfort." },
+          q4: { text: "Have you had a fever in the last 2 weeks?", hint: "A recent infection can be transmitted through blood." },
+          q5: { text: "Have you had a tattoo or piercing in the last 4 months?", hint: "This is a precautionary period for infectious risks." },
+          q6: { text: "Have you taken antibiotics in the last 7 days?", hint: "You must wait until the end of the treatment." },
+        },
       },
     },
     tabs: {
@@ -251,6 +323,20 @@ export default {
       en_cours: "In progress",
       resolu: "Resolved",
       annule: "Cancelled",
+    },
+    tracking: {
+      title: "Alert Tracking",
+      unknownStatus: "Unknown status",
+      launchedOn: "Launched on {{date}}",
+      notifiedDonors: "Notified Donors",
+      donorIndex: "Donor {{index}}",
+      notificationDetails: "Notification Details",
+      backHome: "Back to Home",
+      stats: {
+        notified: "Notified",
+        read: "Read",
+        accepted: "Accepted",
+      },
     },
     actions: {
       accept: "Accept",
@@ -271,7 +357,7 @@ export default {
       loading: "Searching for donors...",
       info: "You will be redirected to your alert tracking in a few seconds.",
     },
-    shareMessage: "🚨 *URGENT — Blood Donation* 🚨\n\nBlood Type: *{{group}}*\nHospital: *{{location}}*\nContact: *{{phone}}*\n\nYou can help on VitaSang:\nhttps://vitasang.cm/alert/{{id}}\n\n_This message was certified and sent via the medical app VitaSang_ 🩸",
+    shareMessage: "🚨 *VITAL EMERGENCY — BLOOD DONATION APPEAL* 🩸\n\nUrgent need for blood group *{{group}}* to save a life.\n\n📍 *Location* : {{location}}\n🗺️ *Directions* : https://www.google.com/maps/search/?api=1&query={{lat}},{{lng}}\n⚠️ *Urgency* : {{urgency}}\n📦 *Need* : {{quantity}} bag(s)\n📞 *Contact* : {{phone}}\n\nThis is for a free and voluntary donation. If you can help or know someone who can, click here:\n🔗 https://vitasang.cm/alerte/{{id}}\n\n_Please share widely in your groups. Every share can save a life. God bless us._ 🙏🇨🇲\n#VitaSang #Cameroon #VoluntaryBloodDonation",
   },
   helpAndAdvice: {
     headerTitle: "Help & Awareness",
@@ -327,5 +413,32 @@ export default {
     success: "Alert sent! An agent will contact you shortly.",
     error: "Error sending the alert.",
     loginLink: "Back to login",
+    placeholders: {
+      patientName: "e.g. John Doe",
+      contactPhone: "e.g. 651234567",
+      hospital: "e.g. Laquintinie Hospital",
+      description: "e.g. Need 2 units after accident",
+    },
+    validation: {
+      required: "is required",
+      phoneFormat: "Format: 6XXXXXXXX",
+    },
+  },
+  onboarding: {
+    slide1: {
+      title: "Find nearby donors",
+      description: "Connect with compatible blood donors in your area in case of emergency.",
+    },
+    slide2: {
+      title: "Track your donations",
+      description: "Keep a history of your donations and receive reminders for your next life-saving opportunity.",
+    },
+    slide3: {
+      title: "Receive urgent alerts",
+      description: "Stay informed in real-time about urgent blood needs and act quickly.",
+    },
+    actions: {
+      emergency: "Emergency: Launch an alert",
+    },
   },
 };

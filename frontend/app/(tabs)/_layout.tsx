@@ -3,6 +3,7 @@ import { TabBarIcon } from "@/components/TabBarIcon";
 import { color } from "@/constant/color";
 import { Tabs, useRouter } from "expo-router";
 import React, { useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import * as Location from 'expo-location';
 import Constants from 'expo-constants';
 // On supprime l'import statique de Notifications qui fait crasher Expo Go
@@ -13,6 +14,7 @@ import { updatePushToken, updateUserLocation } from "@/services/user.service";
 import { getUserIdFromStorage } from "@/utils/storage";
 
 export default function TabLayout() {
+  const { t } = useTranslation();
   const router = useRouter();
   useEffect(() => {
     const setupNotifications = async () => {
@@ -81,7 +83,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: "Accueil",
+          title: t("tabs.home"),
           tabBarIcon: ({ color }) => (
             <TabBarIcon name="home" size={26} color={color} />
           ),
@@ -90,7 +92,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="map"
         options={{
-          title: "Centres",
+          title: t("tabs.map"),
           tabBarIcon: ({ color }) => (
             <TabBarIcon name="map" size={26} color={color} />
           ),
@@ -99,7 +101,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="alertes"
         options={{
-          title: "Alertes",
+          title: t("tabs.alerts"),
           tabBarIcon: ({ color }) => (
             <TabBarIcon name="bell" size={26} color={color} />
           ),
@@ -108,7 +110,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="profile"
         options={{
-          title: "Profil",
+          title: t("tabs.profile"),
           tabBarIcon: ({ color }) => (
             <TabBarIcon name="user" size={26} color={color} />
           ),

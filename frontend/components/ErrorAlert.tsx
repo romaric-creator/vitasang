@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { color } from '@/constant/color';
 import { TabBarIcon } from './TabBarIcon';
+import { useTranslation } from 'react-i18next';
 
 interface ErrorAlertProps {
   visible: boolean;
@@ -14,118 +15,167 @@ interface ErrorAlertProps {
 
 export const ErrorAlert = ({
   visible,
-  title = 'Erreur',
+  title,
   message,
   onDismiss,
   onRetry,
   type = 'error',
 }: ErrorAlertProps) => {
-  if (!visible) {
-    return null;
-  }
+  const { t } = useTranslation();
+  if (!visible) return null;
 
-  const backgroundColor =
-    type === 'error'
-      ? '#FFE5E5'
-      : type === 'warning'
-      ? '#FFF3CD'
-      : '#D1ECF1';
+  const displayTitle = title || (
+    type === 'error' ? t('common.errors.error') :
+      type === 'warning' ? t('common.errors.warning') :
+        t('common.errors.info')
+  );
 
-  const borderColor =
-    type === 'error'
-      ? '#F5222D'
-      : type === 'warning'
-      ? '#FAAD14'
-      : '#17A2B8';
-
-  const iconColor =
-    type === 'error'
-      ? '#F5222D'
-      : type === 'warning'
-      ? '#FAAD14'
-      : '#17A2B8';
+  const colors = {
+    error: {
+      bg: color.dangerLight,
+      accent: color.primary,
+      text: color.primary,
+      icon: 'exclamation-circle'
+    },
+    warning: {
+      bg: color.warningLight,
+      accent: color.warning,
+      text: '#92400E', // Darker amber for readability
+      icon: 'exclamation-triangle'
+    },
+    info: {
+      bg: color.infoLight,
+      accent: color.info,
+      text: '#1E40AF', // Darker blue for readability
+      icon: 'info-circle'
+    }
+  }[type];
 
   return (
-    <View style={[styles.container, { backgroundColor, borderColor }]}>
-      <View style={styles.header}>
-        <TabBarIcon 
-          name={type === 'error' ? 'exclamation-circle' : type === 'warning' ? 'exclamation-triangle' : 'info-circle'} 
-          color={iconColor}
-          size={18}
-        />
-        <Text style={styles.title}>{title}</Text>
-      </View>
+    <View style={styles.outerContainer}>
+      <View style={[styles.container, { backgroundColor: colors.bg }]}>
+        <View style={[styles.accentBar, { backgroundColor: colors.accent }]} />
 
-      <Text style={styles.message}>{message}</Text>
+        <View style={styles.contentContainer}>
+          <View style={styles.header}>
+            <View style={[styles.iconCircle, { backgroundColor: 'white' }]}>
+              <TabBarIcon
+                name={colors.icon as any}
+                color={colors.accent}
+                size={20}
+              />
+            </View>
+            <Text style={[styles.title, { color: colors.text }]}>{displayTitle}</Text>
+          </View>
 
-      <View style={styles.actions}>
-        {onRetry && (
-          <TouchableOpacity
-            style={[styles.button, styles.retryButton]}
-            onPress={onRetry}
-          >
-            <Text style={styles.retryText}>Réessayer</Text>
-          </TouchableOpacity>
-        )}
-        <TouchableOpacity
-          style={[styles.button, styles.dismissButton]}
-          onPress={onDismiss}
-        >
-          <Text style={styles.dismissText}>OK</Text>
-        </TouchableOpacity>
+          <Text style={styles.message}>{message}</Text>
+
+          <View style={styles.actions}>
+            {onRetry && (
+              <TouchableOpacity
+                style={[styles.button, styles.retryButton]}
+                onPress={onRetry}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.retryText}>{t('common.errors.retry')}</Text>
+              </TouchableOpacity>
+            )}
+            <TouchableOpacity
+              style={[styles.button, styles.dismissButton]}
+              onPress={onDismiss}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.dismissText}>{t('common.errors.ok')}</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
       </View>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
+  outerContainer: {
+    paddingHorizontal: 16,
+    marginVertical: 12,
+  },
   container: {
-    borderRadius: 8,
-    borderLeftWidth: 4,
-    padding: 12,
-    marginVertical: 8,
-    marginHorizontal: 16,
+    borderRadius: 20,
+    overflow: 'hidden',
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    flexDirection: 'row',
+  },
+  accentBar: {
+    width: 6,
+    height: '100%',
+  },
+  contentContainer: {
+    flex: 1,
+    padding: 20,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: 10,
+  },
+  iconCircle: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
   },
   title: {
-    fontSize: 16,
-    fontWeight: '600',
-    marginLeft: 8,
+    fontSize: 18,
+    fontWeight: '900',
     flex: 1,
+    letterSpacing: -0.5,
   },
   message: {
-    fontSize: 14,
-    marginBottom: 12,
-    lineHeight: 20,
+    fontSize: 15,
+    color: color.textMain,
+    marginBottom: 18,
+    lineHeight: 22,
+    fontWeight: '500',
   },
   actions: {
     flexDirection: 'row',
-    gap: 8,
+    gap: 10,
   },
   button: {
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 6,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 12,
     flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   retryButton: {
     backgroundColor: color.primary,
   },
   retryText: {
     color: 'white',
-    fontWeight: '600',
-    textAlign: 'center',
+    fontWeight: '800',
+    fontSize: 14,
   },
   dismissButton: {
-    backgroundColor: 'rgba(0,0,0,0.1)',
+    backgroundColor: 'rgba(255, 255, 255, 0.6)',
+    borderWidth: 1,
+    borderColor: 'rgba(0, 0, 0, 0.05)',
   },
   dismissText: {
-    color: '#333',
-    fontWeight: '600',
-    textAlign: 'center',
+    color: color.textMain,
+    fontWeight: '700',
+    fontSize: 14,
   },
 });

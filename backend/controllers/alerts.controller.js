@@ -256,6 +256,8 @@ exports.getLiveAlerts = async (req, res, next) => {
         statut: a.statut,
         date: a.createdAt,
         lieu: a.lieu,
+        latitude: a.latitude,
+        longitude: a.longitude,
         urgence: a.degre_urgence,
         initiateur: a.initiateur
           ? `${a.initiateur.prenom} ${a.initiateur.nom}`
@@ -308,8 +310,9 @@ exports.getAlertStatus = async (req, res, next) => {
     const isNotified = alerte.notifications.some(
       (n) => n.id_utilisateur === userId,
     );
+    const isPubliclyLive = alerte.statut === "en_cours";
 
-    if (!isInitiator && !isAdmin && !isNotified) {
+    if (!isInitiator && !isAdmin && !isNotified && !isPubliclyLive) {
       throw ErrorTypes.UNAUTHORIZED_ACCESS();
     }
 
@@ -335,6 +338,10 @@ exports.getAlertStatus = async (req, res, next) => {
         groupe: alerte.groupe_requis,
         statut: alerte.statut,
         lieu: alerte.lieu,
+        latitude: alerte.latitude,
+        longitude: alerte.longitude,
+        urgence: alerte.degre_urgence,
+        quantite: alerte.quantite_requise,
         description: alerte.description,
         createdAt: alerte.createdAt,
         initiateur: alerte.initiateur ? {
@@ -372,7 +379,10 @@ exports.getUserAlerts = async (req, res, next) => {
     const alerts = await Alerte.findAll({
       where: { id_initiateur: id_utilisateur },
       order: [["createdAt", "DESC"]],
-      include: [{ model: LogNotification, as: "notifications" }],
+      include: [
+        { model: LogNotification, as: "notifications" },
+        { model: Utilisateur, as: "initiateur", attributes: ["telephone"] }
+      ],
     });
     res.json({
       success: true,
@@ -385,6 +395,12 @@ exports.getUserAlerts = async (req, res, next) => {
         acceptedCount: a.notifications.filter(
           (n) => n.statut_reception === "accepte",
         ).length,
+        urgence: a.degre_urgence,
+        quantite: a.quantite_requise,
+        lieu: a.lieu,
+        latitude: a.latitude,
+        longitude: a.longitude,
+        telephone_initiateur: a.initiateur ? a.initiateur.telephone : a.telephone_contact,
       })),
     });
   } catch (error) {
@@ -555,6 +571,10 @@ exports.getAcceptedAlerts = async (req, res, next) => {
         statut: n.alerte.statut,
         date: n.alerte.createdAt,
         lieu: n.alerte.lieu,
+        latitude: n.alerte.latitude,
+        longitude: n.alerte.longitude,
+        urgence: n.alerte.degre_urgence,
+        quantite: n.alerte.quantite_requise,
         initiateur: n.alerte.initiateur
           ? `${n.alerte.initiateur.prenom} ${n.alerte.initiateur.nom}`
           : n.alerte.nom_patient || "Urgence SOS",

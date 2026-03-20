@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useMemo } from 'react';
 import {
   View,
   Text,
@@ -20,6 +20,7 @@ import { router } from 'expo-router';
 import { color } from '@/constant/color';
 import ThemedView from '@/components/ThemedView';
 import { TabBarIcon } from '@/components/TabBarIcon';
+import { useTranslation } from 'react-i18next';
 
 const { width: viewportWidth } = Dimensions.get('window');
 
@@ -256,38 +257,31 @@ const SanguAlertes = () => (
 // ─────────────────────────────────────────────
 const MASCOTS = [SanguLocaliseur, SanguHistorique, SanguAlertes];
 
-interface OnboardingSlide {
-  id: string;
-  title: string;
-  description: string;
-}
-
-const slides: OnboardingSlide[] = [
-  {
-    id: '1',
-    title: 'Trouvez des donneurs proches',
-    description:
-      "Connectez-vous avec des donneurs de sang compatibles dans votre région en cas d'urgence.",
-  },
-  {
-    id: '2',
-    title: 'Suivez vos dons',
-    description:
-      'Gardez un historique de vos dons et recevez des rappels pour votre prochaine opportunité de sauver une vie.',
-  },
-  {
-    id: '3',
-    title: 'Recevez des alertes urgentes',
-    description:
-      'Soyez informé en temps réel des besoins urgents en sang et agissez rapidement.',
-  },
-];
 
 export default function OnboardingCarousel() {
+  const { t } = useTranslation();
   const [activeSlide, setActiveSlide] = useState(0);
   const flatListRef = useRef<FlatList>(null);
 
-  const _renderItem = ({ item, index }: { item: OnboardingSlide; index: number }) => {
+  const slides = useMemo(() => [
+    {
+      id: '1',
+      title: t('onboarding.slide1.title'),
+      description: t('onboarding.slide1.description'),
+    },
+    {
+      id: '2',
+      title: t('onboarding.slide2.title'),
+      description: t('onboarding.slide2.description'),
+    },
+    {
+      id: '3',
+      title: t('onboarding.slide3.title'),
+      description: t('onboarding.slide3.description'),
+    },
+  ], [t]);
+
+  const _renderItem = ({ item, index }: { item: any; index: number }) => {
     const MascotComponent = MASCOTS[index];
     return (
       <View style={[styles.slide, { width: viewportWidth }]}>
@@ -324,7 +318,7 @@ export default function OnboardingCarousel() {
   return (
     <ThemedView style={styles.container}>
       <TouchableOpacity style={styles.skipButton} onPress={handleSkip}>
-        <Text style={styles.skipButtonText}>Passer</Text>
+        <Text style={styles.skipButtonText}>{t('common.actions.skip')}</Text>
       </TouchableOpacity>
 
       <FlatList
@@ -361,12 +355,12 @@ export default function OnboardingCarousel() {
           onPress={() => router.push('/guest-alert')}
         >
           <TabBarIcon name="exclamation-triangle" size={18} color="white" />
-          <Text style={styles.alertButtonText}>Urgence : Lancer une alerte</Text>
+          <Text style={styles.alertButtonText}>{t('onboarding.actions.emergency')}</Text>
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.nextButton} onPress={handleNext}>
           <Text style={styles.nextButtonText}>
-            {activeSlide === slides.length - 1 ? 'Commencer' : 'Suivant'}
+            {activeSlide === slides.length - 1 ? t('common.actions.start') : t('common.actions.next')}
           </Text>
         </TouchableOpacity>
       </View>

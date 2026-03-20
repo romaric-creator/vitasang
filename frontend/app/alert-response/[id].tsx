@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import {
   StyleSheet,
   View,
@@ -73,20 +73,50 @@ export default function AlertResponse() {
     if (phone) Linking.openURL(`tel:${phone}`);
   };
 
+  const handleShareWhatsApp = useCallback(() => {
+    if (!alertData) return;
+    const urgencyLabel = t(`alert.urgencyLevels.${alertData.urgence || "NORMAL"}`);
+    const message = t("alert.shareMessage", {
+      group: alertData.groupe,
+      location: alertData.lieu || t("centers.address"),
+      lat: alertData.latitude || "0",
+      lng: alertData.longitude || "0",
+      urgency: urgencyLabel,
+      quantity: alertData.quantite || "1",
+      phone: alertData.initiateur?.telephone || "",
+      id: alertData.id || id || "0000",
+    });
+    const url = `whatsapp://send?text=${encodeURIComponent(message)}`;
+
+    Linking.canOpenURL(url).then((supported) => {
+      if (supported) {
+        Linking.openURL(url);
+      } else {
+        Linking.openURL(`https://wa.me/?text=${encodeURIComponent(message)}`);
+      }
+    });
+  }, [alertData, t, id]);
+
   if (loading) {
     return <LoadingOverlay visible={true} fullScreen />;
   }
 
   if (!alertData) {
     return (
-      <View style={styles.center}>
-        <Text>{t("common.error")}</Text>
-        <TouchableOpacity onPress={() => router.back()}>
-          <Text style={{ color: color.primary, marginTop: 10 }}>
+      <ThemedView style={styles.center}>
+        <TabBarIcon name="exclamation-circle" size={64} color={color.disabled} />
+        <Text style={[styles.sectionTitle, { marginTop: 20, textAlign: 'center' }]}>
+          {t("common.errors.unexpected")}
+        </Text>
+        <TouchableOpacity
+          style={[styles.btn, styles.acceptBtn, { marginTop: 30, paddingHorizontal: 40 }]}
+          onPress={() => router.back()}
+        >
+          <Text style={styles.acceptBtnText}>
             {t("editProfile.back")}
           </Text>
         </TouchableOpacity>
-      </View>
+      </ThemedView>
     );
   }
 
@@ -132,6 +162,14 @@ export default function AlertResponse() {
               <Text style={styles.detailText}>{alertData.description}</Text>
             </View>
           )}
+
+          <TouchableOpacity
+            style={[styles.callFullBtn, { backgroundColor: "#25D366", marginTop: 10 }]}
+            onPress={handleShareWhatsApp}
+          >
+            <TabBarIcon name="whatsapp" size={18} color="white" />
+            <Text style={styles.callFullBtnText}>{t("alert.actions.share")}</Text>
+          </TouchableOpacity>
         </View>
 
         {!hasAccepted ? (

@@ -17,20 +17,18 @@ import ThemedView from "@/components/ThemedView";
 import { TabBarIcon } from "@/components/TabBarIcon";
 import { color } from "@/constant/color";
 import { LoadingOverlay } from "@/components/LoadingOverlay";
-import { getAllCentres, searchCentresNearby } from "@/services/user.service";
-import { getCurrentPositionAsync } from "@/utils/location";
+import { useAllCentres } from "@/hooks/useQueryHooks";
 import { useTranslation } from "react-i18next";
 import { DataCard, DataCardRow } from "@/components/DataCard";
+import { getCurrentPositionAsync } from "@/utils/location";
 
 export default function MapScreen() {
   const { t } = useTranslation();
   const router = useRouter();
   const mapRef = useRef<MapView>(null);
 
-  const [centres, setCentres] = useState<any[]>([]);
-  const [allCentres, setAllCentres] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
+  const { data: centresData, isLoading: centresLoading, refetch: refetchCentres } = useAllCentres();
+
   const [searchQuery, setSearchQuery] = useState("");
   const [viewMode, setViewMode] = useState<"map" | "list">("map");
   const [userLocation, setUserLocation] = useState<{
@@ -46,15 +44,21 @@ export default function MapScreen() {
     longitudeDelta: 0.1,
   };
 
-  useEffect(() => {
-    loadData();
-  }, []);
+  const centres = useMemo(() => {
+    if (!centresData) return [];
+    if (searchQuery.trim() === "") return centresData;
+    return centresData.filter(
+      (c: any) =>
+        c.nom.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        c.ville.toLowerCase().includes(searchQuery.toLowerCase()),
+    );
+  }, [centresData, searchQuery]);
 
-  const loadData = async () => {
-    setLoading(true);
-    await Promise.all([fetchCentres(), fetchUserLocation()]);
-    setLoading(false);
-  };
+  const loading = centresLoading || (centresData === undefined);
+
+  useEffect(() => {
+    fetchUserLocation();
+  }, []);
 
   const fetchUserLocation = async () => {
     try {
@@ -65,36 +69,8 @@ export default function MapScreen() {
     }
   };
 
-  const fetchCentres = async () => {
-    try {
-      const res = await getAllCentres();
-      if (res.success && res.centres) {
-        setAllCentres(res.centres);
-        setCentres(res.centres);
-      }
-    } catch (error) {
-      console.error("Error fetching centres:", error);
-    }
-  };
-
   const onRefresh = async () => {
-    setRefreshing(true);
-    await fetchCentres();
-    setRefreshing(false);
-  };
-
-  const handleSearch = (text: string) => {
-    setSearchQuery(text);
-    if (text.trim() === "") {
-      setCentres(allCentres);
-    } else {
-      const filtered = allCentres.filter(
-        (c) =>
-          c.nom.toLowerCase().includes(text.toLowerCase()) ||
-          c.ville.toLowerCase().includes(text.toLowerCase()),
-      );
-      setCentres(filtered);
-    }
+    await refetchCentres();
   };
 
   const renderCentreItem = ({ item }: { item: any }) => {
@@ -128,13 +104,13 @@ export default function MapScreen() {
   // Optimisation : Mémoïser le calcul des centres affichables
   const mappableCentres = useMemo(() => {
     return centres
-      .filter((c) => {
+      .filter((c: any) => {
         const id = c.id_centre || c.id;
         const lat = c.latitude;
         const lng = c.longitude;
         return id && lat && lng && !isNaN(Number(lat)) && !isNaN(Number(lng));
       })
-      .reduce((uniqueCentres: any[], centre) => {
+      .reduce((uniqueCentres: any[], centre: any) => {
         const id = centre.id_centre || centre.id;
         if (!uniqueCentres.find((u) => (u.id_centre || u.id) === id)) {
           uniqueCentres.push(centre);
@@ -183,11 +159,11 @@ export default function MapScreen() {
             style={styles.searchInput}
             placeholder={t("centers.searchPlaceholder")}
             value={searchQuery}
-            onChangeText={handleSearch}
+            onChangeText={setSearchQuery}
             placeholderTextColor={color.textLight}
           />
           {searchQuery !== "" && (
-            <TouchableOpacity onPress={() => handleSearch("")}>
+            <TouchableOpacity onPress={() => setSearchQuery("")}>
               <TabBarIcon
                 name="times-circle"
                 size={16}
@@ -249,7 +225,7 @@ export default function MapScreen() {
           removeClippedSubviews={Platform.OS === 'android'}
           refreshControl={
             <RefreshControl
-              refreshing={refreshing}
+              refreshing={centresLoading}
               onRefresh={onRefresh}
               colors={[color.primary]}
             />
@@ -324,7 +300,7 @@ export default function MapScreen() {
         </TouchableOpacity>
       </Modal>
 
-      {loading && !refreshing && <LoadingOverlay visible={true} fullScreen />}
+      {loading && <LoadingOverlay visible={true} fullScreen />}
     </ThemedView>
   );
 }

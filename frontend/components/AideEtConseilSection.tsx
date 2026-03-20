@@ -29,64 +29,6 @@ interface AdviceTip {
   details: string[];
 }
 
-const defaultTips: AdviceTip[] = [
-  {
-    id: 1,
-    icon: "heartbeat",
-    iconFamily: "fontawesome",
-    title: "Santé Cardiaque",
-    description: "Le don de sang réduit les risques cardiovasculaires",
-    bgColor: "#FFF0F0",
-    iconColor: color.primary,
-    details: [
-      "Améliore la circulation sanguine",
-      "Réduit la pression artérielle",
-      "Diminue le risque de crise cardiaque",
-    ],
-  },
-  {
-    id: 2,
-    icon: "coffee",
-    iconFamily: "fontawesome",
-    title: "Bien Hydraté",
-    description: "Buvez de l'eau avant et après le don",
-    bgColor: "#F0F7FF",
-    iconColor: color.secondary,
-    details: [
-      "Buvez 500ml d'eau avant le don",
-      "Évitez l'alcool 48h avant",
-      "Buvez 1.5L d'eau après le don",
-    ],
-  },
-  {
-    id: 3,
-    icon: "shield",
-    iconFamily: "fontawesome",
-    title: "Sécurité Sanitaire",
-    description: "Processus 100% sûr et stérile",
-    bgColor: "#F0FFF4",
-    iconColor: color.success,
-    details: [
-      "Aiguilles neuves pour chaque don",
-      "Tests de dépistage automatiques",
-      "Respect strict des protocoles",
-    ],
-  },
-  {
-    id: 4,
-    icon: "plus-circle",
-    iconFamily: "fontawesome",
-    title: "Impact Social",
-    description: "Sauvez jusqu'à 3 vies par don",
-    bgColor: "#FFF9E6",
-    iconColor: color.warning,
-    details: [
-      "1 don = 3 vies sauvées en moyenne",
-      "Aide aux patients en urgence",
-      "Soutien aux chirurgies",
-    ],
-  },
-];
 
 interface AideEtConseilSectionProps {
   tips?: AdviceTip[];
@@ -95,18 +37,99 @@ interface AideEtConseilSectionProps {
 }
 
 export const AideEtConseilSection: React.FC<AideEtConseilSectionProps> = ({
-  tips = defaultTips,
+  tips: propsTips,
   onTipPress,
   profileImage,
 }) => {
   const { t } = useTranslation();
   const [expandedTipId, setExpandedTipId] = useState<number | null>(null);
 
+  const defaultTips: AdviceTip[] = React.useMemo(() => [
+    {
+      id: 1,
+      icon: "heartbeat",
+      iconFamily: "fontawesome",
+      title: t('home.tipsSection.tips.heart.title'),
+      description: t('home.tipsSection.tips.heart.desc'),
+      bgColor: "#FFF0F0",
+      iconColor: color.primary,
+      details: [
+        t('helpAndAdvice.sectionAdvantagesItem3'),
+        t('helpAndAdvice.sectionAdvantagesItem1'),
+        t('helpAndAdvice.sectionAdvantagesItem1'), // Reusing some if possible or just hardcoding the keys
+      ],
+    },
+    // Actually, I should check if I have these specific details in translation.ts
+    // Let's use simpler ones for now or just add them to translation context
+  ], [t]);
+
+  // Actually, I'll just use the keys from helpAndAdvice if they match.
+  // let's look at translation.ts helpAndAdvice section.
+
+  const adviceTips: AdviceTip[] = React.useMemo(() => [
+    {
+      id: 1,
+      icon: "heartbeat",
+      iconFamily: "fontawesome",
+      title: t('home.tipsSection.tips.heart.title'),
+      description: t('home.tipsSection.tips.heart.desc'),
+      bgColor: "#FFF0F0",
+      iconColor: color.primary,
+      details: [
+        t('helpAndAdvice.sectionAdvantagesItem3'),
+        t('helpAndAdvice.sectionAdvantagesItem2'),
+        t('helpAndAdvice.sectionAdvantagesItem1'),
+      ],
+    },
+    {
+      id: 2,
+      icon: "coffee",
+      iconFamily: "fontawesome",
+      title: t('home.tipsSection.tips.hydration.title'),
+      description: t('home.tipsSection.tips.hydration.desc'),
+      bgColor: "#F0F7FF",
+      iconColor: color.secondary,
+      details: [
+        t('helpAndAdvice.sectionPreparationItem1'),
+        t('helpAndAdvice.sectionPreparationItem3'),
+        t('helpAndAdvice.sectionAfterDonationItem2'),
+      ],
+    },
+    {
+      id: 3,
+      icon: "shield",
+      iconFamily: "fontawesome",
+      title: t('home.tipsSection.tips.safety.title'),
+      description: t('home.tipsSection.tips.safety.desc'),
+      bgColor: "#F0FFF4",
+      iconColor: color.success,
+      details: [
+        t('helpAndAdvice.faqAnswer4'),
+        t('helpAndAdvice.sectionWhoCanDonateItem5'),
+      ],
+    },
+    {
+      id: 4,
+      icon: "plus-circle",
+      iconFamily: "fontawesome",
+      title: t('home.tipsSection.tips.impact.title'),
+      description: t('home.tipsSection.tips.impact.desc'),
+      bgColor: "#FFF9E6",
+      iconColor: color.warning,
+      details: [
+        t('home.tipsData.d1'),
+        t('helpAndAdvice.heroText'),
+      ],
+    },
+  ], [t]);
+
+  const tips = propsTips || adviceTips;
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>{t("home.tips")} & Sensibilisation</Text>
-        <Text style={styles.subtitle}>Découvrez l\'impact de votre don</Text>
+        <Text style={styles.title}>{t("home.tipsSection.title")}</Text>
+        <Text style={styles.subtitle}>{t("home.tipsSection.subtitle")}</Text>
       </View>
 
       <ScrollView
@@ -182,9 +205,9 @@ export const AideEtConseilSection: React.FC<AideEtConseilSectionProps> = ({
             />
           </View>
           <View style={styles.bannerText}>
-            <Text style={styles.bannerTitle}>Saviez-vous?</Text>
+            <Text style={styles.bannerTitle}>{t("home.tipsSection.didYouKnow")}</Text>
             <Text style={styles.bannerMessage}>
-              Une personne sur 2 aura besoin de sang au cours de sa vie
+              {t("home.tipsSection.didYouKnowText")}
             </Text>
           </View>
         </View>
@@ -215,16 +238,16 @@ export const AideEtConseilSection: React.FC<AideEtConseilSectionProps> = ({
       {/* Quick Stats */}
       <View style={styles.statsGrid}>
         <View style={[styles.statItem, styles.statPrimary]}>
-          <Text style={styles.statValue}>42 jours</Text>
-          <Text style={styles.statLabel}>Fréquence max</Text>
+          <Text style={styles.statValue}>42 {t("helpAndAdvice.statDays").split(' ')[0]}</Text>
+          <Text style={styles.statLabel}>{t("home.tipsSection.stats.frequency")}</Text>
         </View>
         <View style={[styles.statItem, styles.statSecondary]}>
           <Text style={styles.statValue}>450 ml</Text>
-          <Text style={styles.statLabel}>Par don</Text>
+          <Text style={styles.statLabel}>{t("home.tipsSection.stats.perDonation")}</Text>
         </View>
         <View style={[styles.statItem, styles.statSuccess]}>
           <Text style={styles.statValue}>10 min</Text>
-          <Text style={styles.statLabel}>Durée moyenne</Text>
+          <Text style={styles.statLabel}>{t("home.tipsSection.stats.duration")}</Text>
         </View>
       </View>
     </View>

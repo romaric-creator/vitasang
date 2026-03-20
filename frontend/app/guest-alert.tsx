@@ -29,13 +29,13 @@ export default function GuestAlertScreen() {
     const [generalError, setGeneralError] = useState("");
 
     const guestAlertSchema = yup.object().shape({
-        nom_patient: yup.string().required(t("guestAlert.patientName") + " est requis"),
+        nom_patient: yup.string().required(`${t("guestAlert.patientName")} ${t("guestAlert.validation.required")}`),
         telephone_contact: yup
             .string()
-            .required(t("guestAlert.contactPhone") + " est requis")
-            .matches(/^6[5-9]\d{7}$/, "Format: 6XXXXXXXX"),
-        groupe_sanguin: yup.string().required(t("guestAlert.groupNeeded") + " est requis"),
-        lieu: yup.string().required(t("guestAlert.hospital") + " est requis"),
+            .required(`${t("guestAlert.contactPhone")} ${t("guestAlert.validation.required")}`)
+            .matches(/^6[5-9]\d{7}$/, t("guestAlert.validation.phoneFormat")),
+        groupe_sanguin: yup.string().required(`${t("guestAlert.groupNeeded")} ${t("guestAlert.validation.required")}`),
+        lieu: yup.string().required(`${t("guestAlert.hospital")} ${t("guestAlert.validation.required")}`),
         description: yup.string(),
     });
 
@@ -121,7 +121,7 @@ export default function GuestAlertScreen() {
                                     value={values.nom_patient}
                                     onChangeText={handleChange("nom_patient")}
                                     onBlur={handleBlur("nom_patient")}
-                                    placeholder="Ex: Jean Dupont"
+                                    placeholder={t("guestAlert.placeholders.patientName")}
                                     error={errors.nom_patient}
                                     touched={touched.nom_patient}
                                 />
@@ -131,7 +131,7 @@ export default function GuestAlertScreen() {
                                     value={values.telephone_contact}
                                     onChangeText={handleChange("telephone_contact")}
                                     onBlur={handleBlur("telephone_contact")}
-                                    placeholder="Ex: 651234567"
+                                    placeholder={t("guestAlert.placeholders.contactPhone")}
                                     keyboardType="phone-pad"
                                     error={errors.telephone_contact}
                                     touched={touched.telephone_contact}
@@ -150,7 +150,7 @@ export default function GuestAlertScreen() {
                                     value={values.lieu}
                                     onChangeText={handleChange("lieu")}
                                     onBlur={handleBlur("lieu")}
-                                    placeholder="Ex: Hôpital Laquintinie"
+                                    placeholder={t("guestAlert.placeholders.hospital")}
                                     error={errors.lieu}
                                     touched={touched.lieu}
                                 />
@@ -160,7 +160,7 @@ export default function GuestAlertScreen() {
                                     value={values.description}
                                     onChangeText={handleChange("description")}
                                     onBlur={handleBlur("description")}
-                                    placeholder="Ex: Besoin de 2 poches suite accident"
+                                    placeholder={t("guestAlert.placeholders.description")}
                                     multiline
                                     numberOfLines={3}
                                 />

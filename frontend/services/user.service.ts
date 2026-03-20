@@ -2,7 +2,7 @@ import { apiClient } from "@/config/axiosConfig";
 
 export const loginUser = async (telephone: string, mot_de_passe: string) => {
   try {
-    const response = await apiClient.post(`/users/login`, {
+    const response = await apiClient.post(`users/login`, {
       telephone,
       mot_de_passe,
     });
@@ -30,7 +30,7 @@ export const registerUser = async (
   code_parrainage?: string,
 ) => {
   try {
-    const response = await apiClient.post(`/users/register`, {
+    const response = await apiClient.post(`users/register`, {
       nom,
       prenom,
       telephone,
@@ -60,7 +60,7 @@ export const searchDonors = async (
   radius: number,
 ) => {
   try {
-    const response = await apiClient.get(`/users/search`, {
+    const response = await apiClient.get(`users/search`, {
       params: { latitude, longitude, groupe_sanguin, radius },
     });
 
@@ -88,27 +88,16 @@ export const sendAlert = async (alertData: {
   description?: string;
 }) => {
   try {
-    // Utilise fetch pour contourner l'intercepteur axios qui ajoute le token
-    const response = await fetch(`${apiClient.defaults.baseURL}/alerts`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(alertData),
-    });
-    const data = await response.json();
-    if (!response.ok) {
-      throw new Error(data.message || "Erreur lors de l'envoi de l'alerte");
-    }
-    return data;
+    const response = await apiClient.post(`alerts`, alertData);
+    return response.data;
   } catch (error: any) {
-    throw new Error(error.message || "Erreur lors de l'envoi de l'alerte");
+    throw new Error(error.userMessage || error.message || "Erreur lors de l'envoi de l'alerte");
   }
 };
 
 export const getAlertStatus = async (alertId: number) => {
   try {
-    const response = await apiClient.get(`/alerts/${alertId}/status`);
+    const response = await apiClient.get(`alerts/${alertId}/status`);
     return response.data;
   } catch (error: any) {
     throw new Error(
@@ -120,7 +109,7 @@ export const getAlertStatus = async (alertId: number) => {
 
 export const getMyAlerts = async () => {
   try {
-    const response = await apiClient.get(`/alerts/my-alerts`);
+    const response = await apiClient.get(`alerts/my-alerts`);
     return response.data;
   } catch (error: any) {
     throw new Error(
@@ -132,7 +121,7 @@ export const getMyAlerts = async () => {
 
 export const getActiveAlerts = async () => {
   try {
-    const response = await apiClient.get(`/alerts/public`);
+    const response = await apiClient.get(`alerts/public`);
     return response.data;
   } catch (error: any) {
     // Gracefully handle 401/403 errors (user not authenticated)
@@ -151,7 +140,7 @@ export const getActiveAlerts = async () => {
 
 export const getUserProfile = async (userId: number) => {
   try {
-    const response = await apiClient.get(`/users/${userId}/profile`);
+    const response = await apiClient.get(`users/${userId}/profile`);
     return response.data;
   } catch (error: any) {
     throw new Error(
@@ -163,7 +152,7 @@ export const getUserProfile = async (userId: number) => {
 
 export const updatePushToken = async (userId: number, pushToken: string) => {
   try {
-    const response = await apiClient.put(`/users/${userId}/push-token`, {
+    const response = await apiClient.put(`users/${userId}/push-token`, {
       pushToken,
     });
     return response.data;
@@ -181,7 +170,7 @@ export const updateUserProfile = async (userId: number, profileData: any) => {
       ...profileData,
       groupe_sanguin: profileData.groupe_sanguin === "" ? null : profileData.groupe_sanguin,
     };
-    const response = await apiClient.put(`/users/${userId}`, data);
+    const response = await apiClient.put(`users/${userId}`, data);
     return response.data;
   } catch (error: any) {
     throw new Error(
@@ -197,7 +186,7 @@ export const updateUserLocation = async (
   longitude: number,
 ) => {
   try {
-    const response = await apiClient.put(`/users/${userId}`, {
+    const response = await apiClient.put(`users/${userId}`, {
       latitude,
       longitude,
     });
@@ -210,7 +199,7 @@ export const updateUserLocation = async (
 
 export const getUserHistory = async (userId: number) => {
   try {
-    const response = await apiClient.get(`/users/${userId}/history`);
+    const response = await apiClient.get(`users/${userId}/history`);
     return response.data;
   } catch (error: any) {
     throw new Error(
@@ -222,7 +211,7 @@ export const getUserHistory = async (userId: number) => {
 
 export const getMyAppointments = async (userId: number) => {
   try {
-    const response = await apiClient.get(`/rendez-vous/my-appointments`);
+    const response = await apiClient.get(`rendez-vous/my-appointments`);
     return response.data;
   } catch (error: any) {
     throw new Error(
@@ -234,7 +223,7 @@ export const getMyAppointments = async (userId: number) => {
 
 export const cancelAppointment = async (appointmentId: number) => {
   try {
-    const response = await apiClient.delete(`/rendez-vous/${appointmentId}`);
+    const response = await apiClient.delete(`rendez-vous/${appointmentId}`);
     return response.data;
   } catch (error: any) {
     throw new Error(
@@ -245,7 +234,7 @@ export const cancelAppointment = async (appointmentId: number) => {
 
 export const getAllCentres = async () => {
   try {
-    const response = await apiClient.get(`/centres`);
+    const response = await apiClient.get(`centres`);
     return response.data;
   } catch (error: any) {
     throw new Error(
@@ -261,7 +250,7 @@ export const searchCentresNearby = async (params: {
   radius: number;
 }) => {
   try {
-    const response = await apiClient.get(`/centres/search`, { params });
+    const response = await apiClient.get(`centres/search`, { params });
     return response.data;
   } catch (error: any) {
     throw new Error(
@@ -288,7 +277,7 @@ export const uploadProfilePicture = async (
     } as any);
 
     const response = await apiClient.post(
-      `/users/${userId}/upload-photo`,
+      `users/${userId}/upload-photo`,
       formData,
       {
         headers: {
@@ -311,7 +300,7 @@ export const respondToAlert = async (
   response: "accepte" | "ignore",
 ) => {
   try {
-    const res = await apiClient.post(`/alerts/${alertId}/respond`, {
+    const res = await apiClient.post(`alerts/${alertId}/respond`, {
       response,
     });
     return res.data;
@@ -324,7 +313,7 @@ export const respondToAlert = async (
 
 export const getAcceptedAlerts = async () => {
   try {
-    const res = await apiClient.get(`/alerts/accepted`);
+    const res = await apiClient.get(`alerts/accepted`);
 
     return res.data;
   } catch (error: any) {
@@ -337,7 +326,7 @@ export const getAcceptedAlerts = async () => {
 
 export const getCentreDetails = async (id: number) => {
   try {
-    const response = await apiClient.get(`/centres/${id}`);
+    const response = await apiClient.get(`centres/${id}`);
 
     return response.data;
   } catch (error: any) {
@@ -354,7 +343,7 @@ export const createAppointment = async (data: {
   heure_debut: string;
 }) => {
   try {
-    const response = await apiClient.post(`/rendez-vous`, data);
+    const response = await apiClient.post(`rendez-vous`, data);
 
     return response.data;
   } catch (error: any) {

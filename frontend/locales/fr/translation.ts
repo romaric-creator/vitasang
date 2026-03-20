@@ -7,8 +7,34 @@ export default {
     success: "Succès",
     bloodGroup: "Groupe sanguin",
     loading: "Chargement...",
+    errors: {
+      oops: "Oops! Une erreur est survenue",
+      unexpected: "Une erreur inattendue est survenue.",
+      retry: "Réessayer",
+      ok: "OK",
+      error: "Erreur",
+      warning: "Avertissement",
+      info: "Information",
+    },
+    actions: {
+      skip: "Passer",
+      next: "Suivant",
+      start: "Commencer",
+      backHome: "RETOUR À L'ACCUEIL",
+      findCenter: "TROUVER UN CENTRE",
+      retry: "RECOMMENCER",
+      yes: "OUI",
+      no: "NON",
+    },
+  },
+  tabs: {
+    home: "Accueil",
+    map: "Centres",
+    alerts: "Alertes",
+    profile: "Profil",
   },
   home: {
+    tagline: "Sauver des vies ensemble",
     profileLabel: "Profil",
     launchAlert: "Lancer une Alerte",
     urgentNeed: "Besoin Urgent ?",
@@ -32,6 +58,35 @@ export default {
     noUrgentAlerts: "Aucune urgence en cours.",
     helpAndAwareness: "Aide & Sensibilisation",
     discoverTips: "Découvrez tous nos conseils",
+    tipsSection: {
+      title: "Aide & Sensibilisation",
+      subtitle: "Découvrez l'impact de votre don",
+      didYouKnow: "Saviez-vous ?",
+      didYouKnowText: "Une personne sur 2 aura besoin de sang au cours de sa vie",
+      stats: {
+        frequency: "Fréquence max",
+        perDonation: "Par don",
+        duration: "Durée moyenne",
+      },
+      tips: {
+        heart: {
+          title: "Santé Cardiaque",
+          desc: "Le don de sang réduit les risques cardiovasculaires",
+        },
+        hydration: {
+          title: "Bien Hydraté",
+          desc: "Buvez de l'eau avant et après le don",
+        },
+        safety: {
+          title: "Sécurité Sanitaire",
+          desc: "Processus 100% sûr et stérile",
+        },
+        impact: {
+          title: "Impact Social",
+          desc: "Sauvez jusqu'à 3 vies par don",
+        },
+      },
+    },
   },
   profile: {
     title: "Mon Profil",
@@ -237,6 +292,23 @@ export default {
         q4: "Êtes-vous enceinte ou allaitez-vous ? (Si applicable)",
         warning: "Si vous répondez OUI à l'une de ces questions, il est préférable de ne pas donner aujourd'hui.",
         confirmBtn: "JE CONFIRME MON ÉLIGIBILITÉ",
+        testTitle: "Test d'éligibilité",
+        resultTitle: "Résultat du test",
+        eligible: "Vous semblez éligible !",
+        notEligible: "Un report est peut-être nécessaire",
+        eligibleDesc: "D'après vos réponses, vous remplissez les conditions de base pour donner votre sang aujourd'hui.",
+        notEligibleDesc: "Certaines de vos réponses indiquent qu'il est préférable d'attendre ou de consulter un médecin avant de donner.",
+        noteTitle: "Important",
+        noteText: "Ce test est indicatif. Seul le médecin du centre de don peut valider définitivement votre aptitude après un entretien confidentiel.",
+        stepText: "Question {{current}} sur {{total}}",
+        questions: {
+          q1: { text: "Pesez-vous plus de 50 kg ?", hint: "Le volume de sang prélevé dépend de votre poids total." },
+          q2: { text: "Avez-vous entre 18 et 70 ans ?", hint: "C'est la tranche d'âge légale pour donner son sang." },
+          q3: { text: "Avez-vous mangé et êtes-vous bien hydraté ?", hint: "Ne jamais donner à jeun pour éviter les malaises." },
+          q4: { text: "Avez-vous eu de la fièvre au cours des 2 dernières semaines ?", hint: "Une infection récente peut être transmise par le sang." },
+          q5: { text: "Avez-vous fait un tatouage ou piercing ces 4 derniers mois ?", hint: "C'est un délai de précaution pour les risques infectieux." },
+          q6: { text: "Avez-vous pris des antibiotiques ces 7 derniers jours ?", hint: "Il faut attendre la fin du traitement." },
+        },
       },
     },
     tabs: {
@@ -248,6 +320,20 @@ export default {
       en_cours: "En cours",
       resolu: "Résolu",
       annule: "Annulé",
+    },
+    tracking: {
+      title: "Suivi de l'Alerte",
+      unknownStatus: "Statut inconnu",
+      launchedOn: "Lancée le {{date}}",
+      notifiedDonors: "Donneurs Notifiés",
+      donorIndex: "Donneur {{index}}",
+      notificationDetails: "Détails des Notifications",
+      backHome: "Retour à l'accueil",
+      stats: {
+        notified: "Notifiés",
+        read: "Lus",
+        accepted: "Acceptés",
+      },
     },
     actions: {
       accept: "Accepter",
@@ -268,7 +354,7 @@ export default {
       loading: "Recherche de donneurs...",
       info: "Vous serez redirigé vers le suivi de votre alerte dans quelques secondes.",
     },
-    shareMessage: "🚨 *URGENT — Don de sang* 🚨\n\nGroupe : *{{group}}*\nHôpital : *{{location}}*\nContactez : *{{phone}}*\n\nVous pouvez aider sur VitaSang :\nhttps://vitasang.cm/alerte/{{id}}\n\n_Ce message a été certifié et envoyé via l'application médicale VitaSang_ 🩸",
+    shareMessage: "🚨 *URGENCE VITALE — APPEL À LA SOLIDARITÉ* 🩸\n\nBesoin urgent de sang groupe *{{group}}* pour sauver une vie.\n\n📍 *Lieu* : {{location}}\n🗺️ *Itinéraire* : https://www.google.com/maps/search/?api=1&query={{lat}},{{lng}}\n⚠️ *Urgence* : {{urgency}}\n📦 *Besoin* : {{quantity}} poche(s)\n📞 *Contact* : {{phone}}\n\nC'est pour un don bénévole et gratuit. Si vous pouvez aider ou connaissez quelqu'un, cliquez ici :\n🔗 https://vitasang.cm/alerte/{{id}}\n\n_Partagez au maximum dans vos groupes. Chaque partage peut sauver une vie. Que le Seigneur nous garde._ 🙏🇨🇲\n#VitaSang #Cameroun #DonDeSangBénévole",
   },
   helpAndAdvice: {
     headerTitle: "Aide & Sensibilisation",
@@ -324,5 +410,32 @@ export default {
     success: "Alerte envoyée ! Un agent va vous contacter très rapidement.",
     error: "Erreur lors de l'envoi de l'alerte.",
     loginLink: "Retour à la connexion",
+    placeholders: {
+      patientName: "Ex: Jean Dupont",
+      contactPhone: "Ex: 651234567",
+      hospital: "Ex: Hôpital Laquintinie",
+      description: "Ex: Besoin de 2 poches suite accident",
+    },
+    validation: {
+      required: "est requis",
+      phoneFormat: "Format: 6XXXXXXXX",
+    },
+  },
+  onboarding: {
+    slide1: {
+      title: "Trouvez des donneurs proches",
+      description: "Connectez-vous avec des donneurs de sang compatibles dans votre région en cas d'urgence.",
+    },
+    slide2: {
+      title: "Suivez vos dons",
+      description: "Gardez un historique de vos dons et recevez des rappels pour votre prochaine opportunité de sauver une vie.",
+    },
+    slide3: {
+      title: "Recevez des alertes urgentes",
+      description: "Soyez informé en temps réel des besoins urgents en sang et agissez rapidement.",
+    },
+    actions: {
+      emergency: "Urgence : Lancer une alerte",
+    },
   },
 };

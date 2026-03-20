@@ -100,13 +100,13 @@ export default function Profile() {
   const alertesCount = userData?.alertesCount ?? 0;
   const profileImage = userData?.photo_profil
     ? {
-        uri: userData.photo_profil.startsWith("http")
-          ? userData.photo_profil
-          : (
-              Constants.expoConfig?.extra?.env?.EXPO_PUBLIC_API_BASE_URL ||
-              "https://vitasang.vercel.app/api"
-            ).replace("/api", "") + userData.photo_profil,
-      }
+      uri: userData.photo_profil.startsWith("http")
+        ? userData.photo_profil
+        : (
+          Constants.expoConfig?.extra?.env?.EXPO_PUBLIC_API_BASE_URL ||
+          ""
+        ).replace("/api", "") + userData.photo_profil,
+    }
     : null;
 
   return (

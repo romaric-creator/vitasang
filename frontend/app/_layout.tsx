@@ -79,6 +79,18 @@ function RootLayoutNav() {
         // 4. Alert Retry Check (Différé)
         const { checkAlertsBackground } = require("@/services/alertRetryService");
         checkAlertsBackground(showAlert);
+
+        // 5. Pré-chargement des centres (React Query)
+        const { queryClient: qc } = require("@/config/queryClient");
+        const { queryKeys } = require("@/config/reactQuery");
+        const { getAllCentres: getCentres } = require("@/services/user.service");
+        qc.prefetchQuery({
+          queryKey: queryKeys.centres.list(),
+          queryFn: async () => {
+            const res = await getCentres();
+            return res.centres;
+          },
+        }).catch(() => { });
       } catch (e) { }
     };
 

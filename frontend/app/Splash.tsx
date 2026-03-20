@@ -3,12 +3,14 @@ import { View, Text, Image, StyleSheet, TouchableOpacity } from "react-native";
 import ThemedView from "@/components/ThemedView";
 import { color } from "@/constant/color";
 import { router } from "expo-router";
+import { useTranslation } from "react-i18next";
 
 export default function Splash({
   showButtons = true,
 }: {
   showButtons?: boolean;
 }) {
+  const { t } = useTranslation();
   return (
     <ThemedView style={styles.container}>
       <View style={styles.content}>
@@ -17,7 +19,7 @@ export default function Splash({
           style={styles.logo}
         />
         <Text style={styles.appName}>VitaSang</Text>
-        <Text style={styles.tagline}>Sauver des vies ensemble</Text>
+        <Text style={styles.tagline}>{t("home.tagline")}</Text>
       </View>
 
       {showButtons && (
@@ -26,7 +28,7 @@ export default function Splash({
             style={styles.primaryButton}
             onPress={() => router.push("/OnboardingCarousel")}
           >
-            <Text style={styles.primaryButtonText}>Commencer</Text>
+            <Text style={styles.primaryButtonText}>{t("common.actions.start")}</Text>
           </TouchableOpacity>
         </View>
       )}
