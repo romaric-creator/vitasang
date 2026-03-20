@@ -13,6 +13,9 @@ module.exports = (sequelize, DataTypes) => {
         defaultValue: "envoye",
       },
       canal: { type: DataTypes.ENUM("push", "email", "sms") },
+      push_token: { type: DataTypes.TEXT, allowNull: true },
+      details_echec: { type: DataTypes.TEXT, allowNull: true },
+      push_ticket_id: { type: DataTypes.STRING(100), allowNull: true },
     },
     {
       tableName: "Notifications_Log",

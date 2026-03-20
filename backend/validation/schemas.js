@@ -136,7 +136,7 @@ const schemas = {
 
   // Update alert status
   updateAlert: Joi.object({
-    statut: Joi.string().valid("en_cours", "satisfaite", "annulee").required(),
+    statut: Joi.string().valid("en_attente_validation", "en_cours", "resolu", "annule").required(),
   }),
 };
 

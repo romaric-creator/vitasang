@@ -265,6 +265,26 @@ exports.updateRendezVousStatut = async (req, res, next) => {
     rdv.statut_rdv = statut_rdv;
     await rdv.save();
 
+    if (statut_rdv === 'confirme' || statut_rdv === 'effectue') {
+      await db.HistoriqueDon.create({
+        id_donneur: rdv.id_donneur,
+        id_centre: parseInt(id),
+        id_type_don: rdv.id_type_don || 1,
+        date_don: new Date(),
+        statut_don: 'réussi'
+      });
+      const profil = await db.ProfilDonneur.findByPk(rdv.id_donneur);
+      if (profil) {
+        profil.dernier_don = new Date();
+        const typeDon = await db.TypeDon.findByPk(rdv.id_type_don || 1);
+        const delai = typeDon ? typeDon.delai_attente_jours : 56;
+        const prochainDon = new Date();
+        prochainDon.setDate(prochainDon.getDate() + delai);
+        profil.prochain_don_possible = prochainDon;
+        await profil.save();
+      }
+    }
+
     res.status(200).json({ success: true, message: 'Statut mis à jour.', rdv });
   } catch (error) {
     logger.error('Error updating rdv status', { error: error.message, centreId: req.params.id });

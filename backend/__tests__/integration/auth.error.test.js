@@ -1,11 +1,4 @@
-// Mock Sentry BEFORE importing app
-jest.mock("@sentry/node", () => ({
-  init: jest.fn(),
-  Handlers: {
-    requestHandler: jest.fn(() => (req, res, next) => next()),
-    errorHandler: jest.fn(() => (err, req, res, next) => next(err)),
-  },
-}));
+// Removed Sentry mock since it's not installed
 
 const request = require("supertest");
 const app = require("../../index");
@@ -41,7 +34,7 @@ describe("Authentication Error Cases", () => {
       const res = await request(app).post("/api/v1/users/register").send({
         nom: "Test",
         prenom: "User",
-        telephone: "+237612345678",
+        telephone: "6512345678",
         mot_de_passe: "123", // Too short
         groupe_sanguin: "O+",
       });
@@ -54,7 +47,7 @@ describe("Authentication Error Cases", () => {
       const res = await request(app).post("/api/v1/users/register").send({
         nom: "Test",
         prenom: "User",
-        telephone: "+237612345678",
+        telephone: "6512345678",
         mot_de_passe: "Pass123",
         groupe_sanguin: "XYZ", // Invalid
       });
@@ -68,7 +61,7 @@ describe("Authentication Error Cases", () => {
       await request(app).post("/api/v1/users/register").send({
         nom: "Test",
         prenom: "User",
-        telephone: "+237699999999",
+        telephone: "6599999999",
         mot_de_passe: "Pass123",
         groupe_sanguin: "O+",
       });
@@ -77,7 +70,7 @@ describe("Authentication Error Cases", () => {
       const res = await request(app).post("/api/v1/users/register").send({
         nom: "Test2",
         prenom: "User2",
-        telephone: "+237699999999", // Same phone
+        telephone: "6599999999", // Same phone
         mot_de_passe: "Pass456",
         groupe_sanguin: "B+",
       });
@@ -93,7 +86,7 @@ describe("Authentication Error Cases", () => {
       await request(app).post("/api/v1/users/register").send({
         nom: "Test",
         prenom: "User",
-        telephone: "+237688888888",
+        telephone: "6588888888",
         mot_de_passe: "TestPass123",
         groupe_sanguin: "O+",
       });
@@ -101,7 +94,7 @@ describe("Authentication Error Cases", () => {
 
     it("should return 400 for missing credentials", async () => {
       const res = await request(app).post("/api/v1/users/login").send({
-        telephone: "+237688888888",
+        telephone: "6588888888",
         // Missing password
       });
 
@@ -111,7 +104,7 @@ describe("Authentication Error Cases", () => {
 
     it("should return 404 for non-existent user", async () => {
       const res = await request(app).post("/api/v1/users/login").send({
-        telephone: "+237611111111",
+        telephone: "6511111111",
         mot_de_passe: "TestPass123",
       });
 
@@ -121,7 +114,7 @@ describe("Authentication Error Cases", () => {
 
     it("should return 401 for wrong password", async () => {
       const res = await request(app).post("/api/v1/users/login").send({
-        telephone: "+237688888888",
+        telephone: "6588888888",
         mot_de_passe: "WrongPass123",
       });
 
@@ -131,7 +124,7 @@ describe("Authentication Error Cases", () => {
 
     it("should return 200 and token for valid credentials", async () => {
       const res = await request(app).post("/api/v1/users/login").send({
-        telephone: "+237688888888",
+        telephone: "6588888888",
         mot_de_passe: "TestPass123",
       });
 
@@ -149,7 +142,7 @@ describe("Authentication Error Cases", () => {
       const registerRes = await request(app).post("/api/v1/users/register").send({
         nom: "Test",
         prenom: "User",
-        telephone: "+237677777777",
+        telephone: "6577777777",
         mot_de_passe: "TestPass123",
         groupe_sanguin: "O+",
       });
@@ -215,7 +208,7 @@ describe("Authentication Error Cases", () => {
       // Make requests until rate limit is hit
       for (let i = 0; i < 101; i++) {
         res = await request(app).post("/api/v1/users/login").send({
-          telephone: "+237600000000",
+          telephone: "6500000000",
           mot_de_passe: "Pass123",
         });
 

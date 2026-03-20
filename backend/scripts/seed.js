@@ -31,9 +31,9 @@ function generatePhoneNumber(index) {
   const operator = operators[index % operators.length];
 
   // On utilise l'index pour garantir l'unicité sur les 7 derniers chiffres
-  // Format final : +237 + 6 + XX (opérateur) + XXXXXXX (index) = 13 caractères total
+  // Format final : 6 + XX (opérateur) + XXXXXXX (index) = 9 caractères total
   const uniquePart = String(index).padStart(7, "0");
-  return `+2376${operator.slice(-1)}${uniquePart}`;
+  return `6${operator.slice(-1)}${uniquePart}`;
 }
 
 function generateRandomCoordinateInRadius(centerLat, centerLon, radiusKm) {

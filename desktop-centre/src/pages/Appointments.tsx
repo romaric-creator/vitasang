@@ -22,7 +22,7 @@ const Appointments: React.FC = () => {
         setLoading(true);
         setError(null);
         const response = await api.get(
-          `/rendezvous/centre/${user.centre.id_centre}`,
+          `/centres/${user.centre.id_centre}/appointments`,
         );
 
         if (response.data.success && response.data.rendezvous) {

@@ -29,54 +29,54 @@ interface Section {
 const sections: Section[] = [
   {
     id: 1,
-    title: "Avantages du Don",
+    title: t("helpAndAdvice.sectionAdvantagesTitle"),
     icon: "heart",
     color: color.primary,
     items: [
-      "Réduit le risque de maladies cardiovasculaires",
-      "Équilibre le taux de fer dans le sang",
-      "Améliore la circulation sanguine",
-      "Stimule la production de nouvelles cellules sanguines",
-      "Détection précoce de problèmes de santé",
+      t("helpAndAdvice.sectionAdvantagesItem1"),
+      t("helpAndAdvice.sectionAdvantagesItem2"),
+      t("helpAndAdvice.sectionAdvantagesItem3"),
+      t("helpAndAdvice.sectionAdvantagesItem4"),
+      t("helpAndAdvice.sectionAdvantagesItem5"),
     ],
   },
   {
     id: 2,
-    title: "Préparation au Don",
+    title: t("helpAndAdvice.sectionPreparationTitle"),
     icon: "check-circle",
     color: color.success,
     items: [
-      "Buvez abondamment (eau) 48h avant",
-      "Mangez sainement et équilibré",
-      "Évitez l'alcool 24h avant",
-      "Dormez suffisamment (7-8h)",
-      "Apportez une bonne alimentation riche en fer",
+      t("helpAndAdvice.sectionPreparationItem1"),
+      t("helpAndAdvice.sectionPreparationItem2"),
+      t("helpAndAdvice.sectionPreparationItem3"),
+      t("helpAndAdvice.sectionPreparationItem4"),
+      t("helpAndAdvice.sectionPreparationItem5"),
     ],
   },
   {
     id: 3,
-    title: "Après le Don",
+    title: t("helpAndAdvice.sectionAfterDonationTitle"),
     icon: "heartbeat",
     color: color.secondary,
     items: [
-      "Repos de 10-15 minutes à la clinique",
-      "Buvez beaucoup d'eau (1,5L minimum)",
-      "Mangez une collation légère",
-      "Évitez l'exercice intense 24h",
-      "Mangez des aliments riches en fer",
+      t("helpAndAdvice.sectionAfterDonationItem1"),
+      t("helpAndAdvice.sectionAfterDonationItem2"),
+      t("helpAndAdvice.sectionAfterDonationItem3"),
+      t("helpAndAdvice.sectionAfterDonationItem4"),
+      t("helpAndAdvice.sectionAfterDonationItem5"),
     ],
   },
   {
     id: 4,
-    title: "Qui Peut Donner?",
+    title: t("helpAndAdvice.sectionWhoCanDonateTitle"),
     icon: "users",
     color: color.info,
     items: [
-      "18-65 ans (ou plus selon la santé)",
-      "Poids minimum: 50 kg",
-      "Bonne santé générale",
-      "Ne pas être enceinte",
-      "Pas de maladie transmissible",
+      t("helpAndAdvice.sectionWhoCanDonateItem1"),
+      t("helpAndAdvice.sectionWhoCanDonateItem2"),
+      t("helpAndAdvice.sectionWhoCanDonateItem3"),
+      t("helpAndAdvice.sectionWhoCanDonateItem4"),
+      t("helpAndAdvice.sectionWhoCanDonateItem5"),
     ],
   },
 ];
@@ -95,7 +95,7 @@ export default function AideEtConseilScreen() {
         <TouchableOpacity onPress={() => router.back()}>
           <TabBarIcon name="arrow-left" size={24} color={color.textMain} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Aide & Sensibilisation</Text>
+        <Text style={styles.headerTitle}>{t("helpAndAdvice.headerTitle")}</Text>
         <View style={{ width: 24 }} />
       </View>
 
@@ -108,18 +108,15 @@ export default function AideEtConseilScreen() {
           <View style={styles.heroIcon}>
             <TabBarIcon name="heart" size={48} color={color.primary} />
           </View>
-          <Text style={styles.heroTitle}>Pourquoi Donner du Sang?</Text>
-          <Text style={styles.heroText}>
-            Chaque don peut sauver jusqu'à 3 vies. En donnant votre sang, vous
-            participez à une chaîne de solidarité vitale.
-          </Text>
+          <Text style={styles.heroTitle}>{t("helpAndAdvice.heroTitle")}</Text>
+          <Text style={styles.heroText}>{t("helpAndAdvice.heroText")}</Text>
         </View>
 
         {/* Statistics */}
         <View style={styles.statsContainer}>
-          <StatCard value="42" label="jours entre\nchaque don" />
-          <StatCard value="450" label="ml prélevés\npar don" />
-          <StatCard value="3" label="vies sauvées\npar don" />
+          <StatCard value="42" label={t("helpAndAdvice.statDays")} />
+          <StatCard value="450" label={t("helpAndAdvice.statMl")} />
+          <StatCard value="3" label={t("helpAndAdvice.statLivesSaved")} />
         </View>
 
         {/* Sections Expandables */}
@@ -140,23 +137,23 @@ export default function AideEtConseilScreen() {
 
         {/* FAQ Section */}
         <View style={styles.faqSection}>
-          <Text style={styles.faqTitle}>Questions Fréquentes</Text>
+          <Text style={styles.faqTitle}>{t("helpAndAdvice.faqTitle")}</Text>
 
           <FaqItem
-            question="Est-ce que c'est douloureux?"
-            answer="Non, la piqûre initiale est mineure. Après quelques secondes, vous ne sentirez plus rien."
+            question={t("helpAndAdvice.faqQuestion1")}
+            answer={t("helpAndAdvice.faqAnswer1")}
           />
           <FaqItem
-            question="Combien de temps dure un don?"
-            answer="En général, le don prend entre 8 et 10 minutes. Compter 30 minutes au total avec l'accueil et le repos."
+            question={t("helpAndAdvice.faqQuestion2")}
+            answer={t("helpAndAdvice.faqAnswer2")}
           />
           <FaqItem
-            question="Peut-on donner si on a des tatouages?"
-            answer="Oui, si les tatouages ont plus de 4 mois. Sinon, il faut attendre 4 mois après pour donner."
+            question={t("helpAndAdvice.faqQuestion3")}
+            answer={t("helpAndAdvice.faqAnswer3")}
           />
           <FaqItem
-            question="Quels sont les risques?"
-            answer="Les risques sont très minimes. Les aiguilles stériles réduisent les risques d'infection à quasi zéro."
+            question={t("helpAndAdvice.faqQuestion4")}
+            answer={t("helpAndAdvice.faqAnswer4")}
           />
         </View>
 
@@ -166,16 +163,13 @@ export default function AideEtConseilScreen() {
           onPress={() => router.push("/create-alert")}
         >
           <TabBarIcon name="bolt" size={24} color="white" />
-          <Text style={styles.ctaText}>Lancer une Alerte</Text>
+          <Text style={styles.ctaText}>{t("home.launchAlert")}</Text>
         </TouchableOpacity>
 
         {/* Info Banner */}
         <View style={styles.infoBanner}>
           <TabBarIcon name="info-circle" size={20} color={color.info} />
-          <Text style={styles.infoText}>
-            Pour plus d'informations, consultez votre centre de transfusion
-            local.
-          </Text>
+          <Text style={styles.infoText}>{t("helpAndAdvice.infoBanner")}</Text>
         </View>
       </ScrollView>
     </ThemedView>

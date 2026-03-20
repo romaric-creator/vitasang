@@ -53,6 +53,7 @@ if (process.env.NODE_ENV !== "test") {
                     as: "profilDonneur",
                     where: {
                         groupe_sanguin: compatibleGroups,
+                        disponible: true,
                         [db.Sequelize.Op.and]: db.sequelize.where(db.sequelize.literal(haversine), "<=", rayon_action_km)
                     },
                     required: true,

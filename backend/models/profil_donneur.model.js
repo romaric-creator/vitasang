@@ -18,6 +18,21 @@ module.exports = (sequelize, DataTypes) => {
       taille: { type: DataTypes.DECIMAL(5, 2) },
       dernier_don: { type: DataTypes.DATEONLY },
       prochain_don_possible: { type: DataTypes.DATEONLY },
+      disponible: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: true,
+        comment: 'Indique si le donneur accepte de recevoir des alertes'
+      },
+      raison_indisponibilite: {
+        type: DataTypes.STRING(100),
+        allowNull: true,
+        comment: 'Maladie, voyage, allaitement, etc.'
+      },
+      date_disponibilite: {
+        type: DataTypes.DATEONLY,
+        allowNull: true,
+        comment: 'Date de retour en disponibilité'
+      },
       lat_actuelle: { type: DataTypes.DOUBLE, allowNull: true },
       long_actuelle: { type: DataTypes.DOUBLE, allowNull: true },
     },

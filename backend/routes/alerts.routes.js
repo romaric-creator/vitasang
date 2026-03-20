@@ -35,6 +35,7 @@ router.get("/public", cacheMiddleware(5 * 60), alertsController.getLiveAlerts);
  */
 router.post(
   "/",
+  verifyToken,
   validateRequest(schemas.createAlert),
   alertsController.createAlert,
 );
@@ -55,7 +56,7 @@ router.post(
  */
 router.post(
   "/:id/validate",
-  requireRole("admin"), // Assuming only admins can validate
+  requireRole(["admin", "personnel"]), // Personnel and admins can validate
   alertsController.validateAndNotifyAlert,
 );
 

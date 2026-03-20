@@ -7,6 +7,16 @@ module.exports = (sequelize, DataTypes) => {
         primaryKey: true,
         autoIncrement: true,
       },
+      id_initiateur: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        references: { model: 'Utilisateurs', key: 'id_utilisateur' }
+      },
+      id_centre: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+        references: { model: 'Centres_Sante', key: 'id_centre' }
+      },
       groupe_requis: {
         type: DataTypes.ENUM("A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"),
       },

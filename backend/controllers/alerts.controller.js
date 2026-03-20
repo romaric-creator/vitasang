@@ -308,7 +308,7 @@ exports.deleteAlert = async (req, res, next) => {
         "Vous ne pouvez annuler que vos propres alertes",
       );
     }
-    alerte.statut = "annulee";
+    alerte.statut = "annule";
     await alerte.save();
     res
       .status(200)

@@ -122,7 +122,7 @@ export default function Home() {
 
           <View style={styles.bentoColumn}>
             <View style={[styles.bentoItem, styles.bloodBlock]}>
-              <Text style={styles.bloodLabel}>Groupe</Text>
+              <Text style={styles.bloodLabel}>{t("home.bloodGroup")}</Text>
               <Text style={styles.bloodValue}>
                 {userData?.groupe_sanguin || "--"}
               </Text>
@@ -138,7 +138,7 @@ export default function Home() {
                 color={color.primary}
               />
               <Text style={styles.statusLabel}>{t("home.nextDonation")}</Text>
-              <Text style={styles.statusValue}>DISPONIBLE</Text>
+              <Text style={styles.statusValue}>{t("home.available")}</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -198,7 +198,7 @@ export default function Home() {
                       size={12}
                       color={color.textSecondary}
                     />
-                    <Text style={styles.urgentDistance}>À proximité</Text>
+                    <Text style={styles.urgentDistance}>{t("home.nearby")}</Text>
                     <View style={styles.urgentAction}>
                       <Text style={styles.urgentActionText}>
                         {t("home.donate")}
@@ -214,7 +214,7 @@ export default function Home() {
                 <TabBarIcon name="smile-o" size={32} color={color.success} />
               </View>
               <Text style={styles.emptyText}>{t("alert.empty.sent")}</Text>
-              <Text style={styles.emptySubText}>Aucune urgence en cours.</Text>
+              <Text style={styles.emptySubText}>{t("home.noUrgentAlerts")}</Text>
             </View>
           )}
         </View>
@@ -234,10 +234,10 @@ export default function Home() {
             </View>
             <View style={styles.aideSectionText}>
               <Text style={styles.aideSectionTitle}>
-                Aide & Sensibilisation
+                {t("home.helpAndAwareness")}
               </Text>
               <Text style={styles.aideSectionDesc}>
-                Découvrez tous nos conseils
+                {t("home.discoverTips")}
               </Text>
             </View>
           </View>

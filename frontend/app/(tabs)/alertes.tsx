@@ -40,7 +40,11 @@ export default function AlertesScreen() {
   };
 
   const handleShareWhatsApp = (item: any) => {
-    const message = `🚨 *URGENCE SANGUINE* 🚨\n\nBesoin urgent de sang groupe *${item.groupe}*\n📍 Lieu : ${item.lieu || "Hôpital proche"}\n📱 Contact : ${item.telephone_initiateur || ""}\n\nPartagé via l'application *VitaSang* 🩸\nAidez-nous en partageant ce message !`;
+    const message = t("alert.shareMessage", {
+      group: item.groupe,
+      location: item.lieu || "Hôpital proche",
+      phone: item.telephone_initiateur || "",
+    });
     const url = `whatsapp://send?text=${encodeURIComponent(message)}`;
 
     Linking.canOpenURL(url).then((supported) => {
@@ -118,7 +122,7 @@ export default function AlertesScreen() {
                 onPress={() => handleShareWhatsApp(item)}
               >
                 <TabBarIcon name="whatsapp" size={12} color="white" />
-                <Text style={styles.callBtnText}>Partager</Text>
+                <Text style={styles.callBtnText}>{t("alert.actions.share")}</Text>
               </TouchableOpacity>
             </View>
           </View>

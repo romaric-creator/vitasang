@@ -38,26 +38,24 @@ export default function AlertConfirmationScreen() {
 
         {/* Success Message */}
         <Text style={styles.title}>
-          {t("alerts.confirmation.title") || "Alerte lancée!"}
+          {t("alert.confirmation.title")}
         </Text>
         <Text style={styles.subtitle}>
-          {t("alerts.confirmation.message") ||
-            "Votre alerte est en cours d'envoi aux donneurs proches..."}
+          {t("alert.confirmation.message")}
         </Text>
 
         {/* Loading Spinner */}
         <View style={styles.spinnerContainer}>
           <ActivityIndicator size="large" color={color.primary} />
           <Text style={styles.loadingText}>
-            {t("alerts.confirmation.loading") || "Recherche de donneurs..."}
+            {t("alert.confirmation.loading")}
           </Text>
         </View>
 
         {/* Info Box */}
         <View style={styles.infoBox}>
           <Text style={styles.infoText}>
-            {t("alerts.confirmation.info") ||
-              "Vous serez redirigé vers le suivi de votre alerte dans quelques secondes."}
+            {t("alert.confirmation.info")}
           </Text>
         </View>
       </View>
