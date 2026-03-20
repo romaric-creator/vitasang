@@ -21,10 +21,10 @@ require("./jobs/cleanup.cron");
 
 const app = express();
 
-app.set("trust proxy", 1); // Indispensable pour Vercel et express-rate-limit
+app.set("trust proxy", 1);
 app.use(helmet());
 
-// CORS Configuration - Whitelist security
+// CORS Configuration
 const allowedOrigins = [
   "http://localhost:3000",
   "http://localhost:8081",
@@ -35,21 +35,23 @@ const allowedOrigins = [
 app.use(
   cors({
     origin: (origin, callback) => {
-      // Autoriser les requêtes sans origin (mobile apps, curl, Postman)
+      // Autoriser les requêtes sans origin (mobile, curl, Postman)
       if (!origin) return callback(null, true);
 
-      // Toujours autoriser localhost peu importe l'environnement
+      // Toujours autoriser localhost peu importe l'env
       if (origin.includes("localhost")) {
         return callback(null, true);
       }
 
-      // Vérifier la whitelist pour les autres origins
-      if (allowedOrigins.indexOf(origin) !== -1) {
+      // Vérifier la whitelist
+      if (allowedOrigins.includes(origin)) {
         return callback(null, true);
       }
 
-      const msg = `CORS bloqué pour l'origine : ${origin}`;
-      return callback(new Error(msg), false);
+      // ✅ Ne pas throw une Error → sinon errorHandler répond sans header CORS
+      // On retourne false : le navigateur verra un refus propre
+      logger.warn(`CORS bloqué pour : ${origin}`);
+      return callback(null, false);
     },
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
@@ -80,11 +82,11 @@ const alertRoute = require("./routes/alerts.routes");
 const rendezvousRoute = require("./routes/rendezvous.routes");
 const centresRoute = require("./routes/centres.routes");
 
-// Apply specific rate limiters to auth endpoints BEFORE global limiter
+// Limiters spécifiques AVANT le global
 app.use("/api/v1/users/register", registerLimiter);
 app.use("/api/v1/users/login", authLimiter);
 
-// Apply global rate limiter to all other routes
+// Global rate limiter
 app.use(globalLimiter);
 
 app.use("/api/v1/users", userRoute);
@@ -92,25 +94,25 @@ app.use("/api/v1/alerts", alertRoute);
 app.use("/api/v1/rendez-vous", rendezvousRoute);
 app.use("/api/v1/centres", centresRoute);
 
-// Route racine pour le "Home" du backend
+// Route racine
 app.get("/", (req, res) => {
   res.json({ message: "bienvenu sur vitasang.api.com", version: "1.0.0" });
 });
 
-// 404 Not Found Handler - MUST be after all routes
+// 404 Handler
 app.use(notFoundHandler);
 
-// Global Error Handler - MUST be after all routes and middleware
+// Global Error Handler
 app.use(errorHandler);
 
-// Connexion à la base de données et démarrage du serveur (si non importé)
+// Démarrage serveur (si lancé directement)
 if (require.main === module) {
   db.sequelize
     .authenticate()
     .then(() => {
       logger.info("MariaDB : Connexion réussie et tables synchronisées !");
       const PORT = process.env.PORT || 3000;
-      app.listen(PORT, '0.0.0.0', () => {
+      app.listen(PORT, "0.0.0.0", () => {
         logger.info(`Serveur VITASANG démarré sur : http://0.0.0.0:${PORT}`);
       });
     })

@@ -1,11 +1,9 @@
 const rateLimit = require('express-rate-limit');
 const logger = require('../config/logger');
 
-let redisClient;
-let storeGenerator = () => undefined; // Default memory store
+let redisClient = null;
 
 if (process.env.NODE_ENV !== 'test') {
-  const RedisStore = require('rate-limit-redis').default || require('rate-limit-redis');
   const { createClient } = require('redis');
 
   redisClient = createClient({
@@ -17,52 +15,72 @@ if (process.env.NODE_ENV !== 'test') {
   });
 
   redisClient.on('error', (err) => {
-    logger.error('Redis Client Error', err);
+    logger.error('Redis Client Error', { message: err.message });
   });
 
   redisClient.connect().catch((err) => {
-    logger.error('Could not connect to Redis, using memory fallback', err);
+    logger.error('Could not connect to Redis, using memory fallback', { message: err.message });
   });
+}
 
-  storeGenerator = (prefix) => {
-    const redisStore = new RedisStore({
-      prefix: prefix,
-      // ✅ Fix: args.flat() pour éviter le tableau imbriqué avec redis v4
-      sendCommand: (...args) => {
-        if (redisClient.isOpen) {
-          return redisClient.sendCommand(args.flat());
-        }
-        throw new Error('Redis client is closed');
-      },
-    });
+/**
+ * Store custom qui utilise directement INCR / EXPIRE de Redis
+ * Compatible avec redis v4 + Upstash (pas de EVAL)
+ */
+function makeStore(prefix, windowMs) {
+  // Fallback mémoire si Redis absent
+  const memoryStore = new Map();
 
-    return {
-      increment: async (key) => {
-        if (redisClient.isOpen) {
-          try {
-            return await redisStore.increment(key);
-          } catch (e) {
-            logger.error('Redis Store Error, using memory fallback', e);
+  return {
+    async increment(key) {
+      const fullKey = `${prefix}${key}`;
+      const windowSec = Math.ceil(windowMs / 1000);
+
+      if (redisClient && redisClient.isOpen) {
+        try {
+          const hits = await redisClient.incr(fullKey);
+          if (hits === 1) {
+            await redisClient.expire(fullKey, windowSec);
           }
+          const ttl = await redisClient.ttl(fullKey);
+          return {
+            totalHits: hits,
+            resetTime: new Date(Date.now() + ttl * 1000),
+          };
+        } catch (e) {
+          logger.error('Redis increment error, using memory fallback', { message: e.message });
         }
-        // Fallback minimaliste en cas de panne Redis
-        return { totalHits: 1, resetTime: new Date(Date.now() + 60000) };
-      },
-      decrement: async (key) => {
-        if (redisClient.isOpen) {
-          try {
-            await redisStore.decrement(key);
-          } catch (e) {}
-        }
-      },
-      resetKey: async (key) => {
-        if (redisClient.isOpen) {
-          try {
-            await redisStore.resetKey(key);
-          } catch (e) {}
-        }
-      },
-    };
+      }
+
+      // Fallback mémoire
+      const now = Date.now();
+      const entry = memoryStore.get(fullKey);
+      if (!entry || now > entry.resetTime) {
+        memoryStore.set(fullKey, { totalHits: 1, resetTime: now + windowMs });
+        return { totalHits: 1, resetTime: new Date(now + windowMs) };
+      }
+      entry.totalHits++;
+      return { totalHits: entry.totalHits, resetTime: new Date(entry.resetTime) };
+    },
+
+    async decrement(key) {
+      const fullKey = `${prefix}${key}`;
+      if (redisClient && redisClient.isOpen) {
+        try {
+          await redisClient.decr(fullKey);
+        } catch (e) {}
+      }
+    },
+
+    async resetKey(key) {
+      const fullKey = `${prefix}${key}`;
+      if (redisClient && redisClient.isOpen) {
+        try {
+          await redisClient.del(fullKey);
+        } catch (e) {}
+      }
+      memoryStore.delete(fullKey);
+    },
   };
 }
 
@@ -70,50 +88,38 @@ if (process.env.NODE_ENV !== 'test') {
 const globalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 100,
-  message: 'Trop de requêtes depuis cette adresse IP, veuillez réessayer plus tard.',
   standardHeaders: true,
   legacyHeaders: false,
-  store: storeGenerator('rl:global:'),
+  store: makeStore('rl:global:', 15 * 60 * 1000),
   handler: (req, res) => {
-    logger.warn('Rate limit exceeded', {
-      ip: req.ip,
-      path: req.path,
-    });
+    logger.warn('Rate limit exceeded', { ip: req.ip, path: req.path });
     res.status(429).json({
       message: 'Trop de requêtes. Veuillez réessayer plus tard.',
     });
   },
 });
 
-// Authentication endpoints rate limiter: 5 attempts per 15 minutes
+// Auth rate limiter: 5 attempts per 15 minutes
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 5,
-  message: 'Trop de tentatives de connexion, veuillez réessayer dans 15 minutes.',
   skipSuccessfulRequests: true,
-  store: storeGenerator('rl:auth:'),
+  store: makeStore('rl:auth:', 15 * 60 * 1000),
   handler: (req, res) => {
-    logger.warn('Auth rate limit exceeded', {
-      ip: req.ip,
-      endpoint: req.path,
-      method: req.method,
-    });
+    logger.warn('Auth rate limit exceeded', { ip: req.ip, endpoint: req.path });
     res.status(429).json({
       message: 'Trop de tentatives. Veuillez réessayer dans 15 minutes.',
     });
   },
 });
 
-// Registration rate limiter: 10 attempts per day
+// Register rate limiter: 10 attempts per day
 const registerLimiter = rateLimit({
   windowMs: 24 * 60 * 60 * 1000,
   max: 10,
-  message: "Trop d'inscriptions depuis cette adresse IP, veuillez réessayer demain.",
-  store: storeGenerator('rl:register:'),
+  store: makeStore('rl:register:', 24 * 60 * 60 * 1000),
   handler: (req, res) => {
-    logger.warn('Registration rate limit exceeded', {
-      ip: req.ip,
-    });
+    logger.warn('Registration rate limit exceeded', { ip: req.ip });
     res.status(429).json({
       message: "Trop d'inscriptions. Veuillez réessayer demain.",
     });
