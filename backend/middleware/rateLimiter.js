@@ -12,24 +12,25 @@ if (process.env.NODE_ENV !== 'test') {
     url: process.env.REDIS_URL || 'redis://localhost:6379',
     socket: {
       reconnectStrategy: (retries) => Math.min(retries * 50, 500),
-      connectTimeout: 5000
-    }
+      connectTimeout: 5000,
+    },
   });
 
   redisClient.on('error', (err) => {
     logger.error('Redis Client Error', err);
   });
 
-  redisClient.connect().catch(err => {
+  redisClient.connect().catch((err) => {
     logger.error('Could not connect to Redis, using memory fallback', err);
   });
 
   storeGenerator = (prefix) => {
     const redisStore = new RedisStore({
       prefix: prefix,
+      // ✅ Fix: args.flat() pour éviter le tableau imbriqué avec redis v4
       sendCommand: (...args) => {
         if (redisClient.isOpen) {
-          return redisClient.sendCommand(args);
+          return redisClient.sendCommand(args.flat());
         }
         throw new Error('Redis client is closed');
       },
@@ -49,26 +50,30 @@ if (process.env.NODE_ENV !== 'test') {
       },
       decrement: async (key) => {
         if (redisClient.isOpen) {
-          try { await redisStore.decrement(key); } catch (e) { }
+          try {
+            await redisStore.decrement(key);
+          } catch (e) {}
         }
       },
       resetKey: async (key) => {
         if (redisClient.isOpen) {
-          try { await redisStore.resetKey(key); } catch (e) { }
+          try {
+            await redisStore.resetKey(key);
+          } catch (e) {}
         }
-      }
+      },
     };
   };
 }
 
 // Global rate limiter: 100 requests per 15 minutes
 const globalLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // 100 requests per windowMs
+  windowMs: 15 * 60 * 1000,
+  max: 100,
   message: 'Trop de requêtes depuis cette adresse IP, veuillez réessayer plus tard.',
-  standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
-  legacyHeaders: false, // Disable the `X-RateLimit-*` headers
-  store: storeGenerator("rl:global:"),
+  standardHeaders: true,
+  legacyHeaders: false,
+  store: storeGenerator('rl:global:'),
   handler: (req, res) => {
     logger.warn('Rate limit exceeded', {
       ip: req.ip,
@@ -85,8 +90,8 @@ const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 5,
   message: 'Trop de tentatives de connexion, veuillez réessayer dans 15 minutes.',
-  skipSuccessfulRequests: true, // Only count failed requests
-  store: storeGenerator("rl:auth:"),
+  skipSuccessfulRequests: true,
+  store: storeGenerator('rl:auth:'),
   handler: (req, res) => {
     logger.warn('Auth rate limit exceeded', {
       ip: req.ip,
@@ -101,16 +106,16 @@ const authLimiter = rateLimit({
 
 // Registration rate limiter: 10 attempts per day
 const registerLimiter = rateLimit({
-  windowMs: 24 * 60 * 60 * 1000, // 24 hours
+  windowMs: 24 * 60 * 60 * 1000,
   max: 10,
-  message: 'Trop d\'inscriptions depuis cette adresse IP, veuillez réessayer demain.',
-  store: storeGenerator("rl:register:"),
+  message: "Trop d'inscriptions depuis cette adresse IP, veuillez réessayer demain.",
+  store: storeGenerator('rl:register:'),
   handler: (req, res) => {
     logger.warn('Registration rate limit exceeded', {
       ip: req.ip,
     });
     res.status(429).json({
-      message: 'Trop d\'inscriptions. Veuillez réessayer demain.',
+      message: "Trop d'inscriptions. Veuillez réessayer demain.",
     });
   },
 });
