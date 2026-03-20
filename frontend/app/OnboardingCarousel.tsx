@@ -358,7 +358,7 @@ export default function OnboardingCarousel() {
       <View style={styles.footer}>
         <TouchableOpacity
           style={styles.alertButton}
-          onPress={() => router.push('/create-alert')}
+          onPress={() => router.push('/guest-alert')}
         >
           <TabBarIcon name="exclamation-triangle" size={18} color="white" />
           <Text style={styles.alertButtonText}>Urgence : Lancer une alerte</Text>

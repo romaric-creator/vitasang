@@ -194,6 +194,7 @@ export default {
   alert: {
     title: "Nouvelle Alerte",
     submit: "DIFFUSER L'ALERTE",
+    sosGeneral: "SOS GÉNÉRAL (Inconnu)",
     donorFound: "{{count}} donneurs {{group}} trouvés dans un rayon de 10km.",
     searchingDonors: "Recherche de donneurs compatibles...",
     gettingLocation: "Récupération de votre localisation...",

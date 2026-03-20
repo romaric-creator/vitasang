@@ -8,6 +8,7 @@ interface BloodGroupSelectorProps {
     onSelect: (group: string) => void;
     error?: string;
     touched?: boolean;
+    isAlert?: boolean;
 }
 
 const BLOOD_GROUPS = ["A+", "A-", "AB+", "AB-", "B+", "B-", "O+", "O-"];
@@ -20,6 +21,7 @@ export const BloodGroupSelector: React.FC<BloodGroupSelectorProps> = ({
     onSelect,
     error,
     touched,
+    isAlert,
 }) => {
     const { t } = useTranslation();
     const isError = touched && !!error;
@@ -68,6 +70,26 @@ export const BloodGroupSelector: React.FC<BloodGroupSelectorProps> = ({
                         {t('register.bloodGroupUnknown') || "Je ne connais pas mon groupe"}
                     </Text>
                 </TouchableOpacity>
+
+                {isAlert && (
+                    <TouchableOpacity
+                        style={[
+                            styles.sosOption,
+                            value === "INCONNU" && styles.selectedSOSOption,
+                        ]}
+                        onPress={() => onSelect("INCONNU")}
+                        activeOpacity={0.7}
+                    >
+                        <Text
+                            style={[
+                                styles.label,
+                                value === "INCONNU" && styles.selectedLabel,
+                            ]}
+                        >
+                            🆘 {t('alert.sosGeneral') || "SOS GÉNÉRAL (Inconnu)"}
+                        </Text>
+                    </TouchableOpacity>
+                )}
             </View>
             {error && isError && (
                 <Text style={formStyles.errorText}>{error}</Text>
@@ -120,5 +142,20 @@ const styles = StyleSheet.create({
     selectedUnknownOption: {
         backgroundColor: color.primary,
         borderColor: color.primary,
+    },
+    sosOption: {
+        width: "100%",
+        marginTop: 8,
+        paddingVertical: 14,
+        borderRadius: 12,
+        borderWidth: 2,
+        borderColor: color.error,
+        justifyContent: "center",
+        alignItems: "center",
+        backgroundColor: "#FFF5F5",
+    },
+    selectedSOSOption: {
+        backgroundColor: color.error,
+        borderColor: color.error,
     },
 });

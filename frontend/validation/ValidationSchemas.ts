@@ -48,6 +48,7 @@ export const registerValidationSchema = yup.object().shape({
     .oneOf([yup.ref('mot_de_passe')], 'Les mots de passe ne correspondent pas'),
   groupe_sanguin: yup
     .string()
+    .transform((v) => (v === "" ? null : v))
     .oneOf(['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'], 'Groupe sanguin invalide')
     .nullable(),
 });
@@ -56,7 +57,7 @@ export const createAlertValidationSchema = yup.object().shape({
   groupe_sanguin: yup
     .string()
     .required('Le groupe sanguin est requis')
-    .oneOf(['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'], 'Groupe sanguin invalide'),
+    .oneOf(['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-', 'INCONNU'], 'Groupe sanguin invalide'),
   urgence: yup
     .string()
     .required('Le niveau d\'urgence est requis')

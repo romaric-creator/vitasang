@@ -73,9 +73,12 @@ if (process.env.NODE_ENV !== "test") {
             "AB+": ["AB+"],
         };
 
-        const compatibleGroups = Object.keys(bloodCompatibility).filter((group) =>
-            bloodCompatibility[group].includes(groupe_requis)
-        );
+        const compatibleGroups =
+            groupe_requis === "INCONNU"
+                ? ["O-"]
+                : Object.keys(bloodCompatibility).filter((group) =>
+                    bloodCompatibility[group].includes(groupe_requis)
+                );
 
         const donors = await Utilisateur.findAll({
             where: { role: "donneur" },

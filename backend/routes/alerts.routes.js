@@ -1,12 +1,10 @@
 const express = require("express");
 const router = express.Router();
 const alertsController = require("../controllers/alerts.controller");
-const { verifyToken, requireRole } = require("../utils/auth.middleware");
+const { verifyToken, isAdmin, isAdminOrPersonnel } = require("../utils/auth.middleware");
 const { validateRequest } = require("../middleware/validation");
 const { cacheMiddleware } = require("../middleware/cache");
 const schemas = require("../validation/schemas");
-
-const isAdmin = requireRole("admin");
 
 /**
  * PUBLIC ROUTE - Get all live (en_cours) blood donation alerts
@@ -23,7 +21,8 @@ router.post(
   alertsController.createGuestAlert,
 );
 
-// The verifyToken middleware will be used for all routes defined after this line.
+// --- PROTECTED ROUTES (Requires Token) ---
+router.use(verifyToken);
 
 /**
  * @swagger
@@ -44,7 +43,6 @@ router.post(
  */
 router.post(
   "/",
-  verifyToken,
   validateRequest(schemas.createAlert),
   alertsController.createAlert,
 );
@@ -65,7 +63,7 @@ router.post(
  */
 router.post(
   "/:id/validate",
-  requireRole(["admin", "personnel"]), // Personnel and admins can validate
+  isAdminOrPersonnel,
   alertsController.validateAndNotifyAlert,
 );
 
@@ -79,7 +77,7 @@ router.post(
  *     responses:
  *       200: { description: "List of pending alerts" }
  */
-router.get("/pending", requireRole("admin"), alertsController.getPendingAlerts);
+router.get("/pending", isAdmin, alertsController.getPendingAlerts);
 
 /**
  * @swagger
@@ -91,7 +89,7 @@ router.get("/pending", requireRole("admin"), alertsController.getPendingAlerts);
  *     responses:
  *       200: { description: "List of live alerts" }
  */
-router.get("/live", cacheMiddleware(5 * 60), alertsController.getLiveAlerts);
+// Public version available at /public
 
 /**
  * @swagger

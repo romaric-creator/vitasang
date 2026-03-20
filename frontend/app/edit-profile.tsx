@@ -12,6 +12,7 @@ import { useRouter } from "expo-router";
 import { Formik } from "formik";
 import { color } from "@/constant/color";
 import { getUserIdFromStorage, storeData } from "@/utils/storage";
+import ThemedView from "@/components/ThemedView";
 import { getUserProfile, updateUserProfile } from "@/services/user.service";
 import { useNotification } from "@/context/NotificationContext";
 import { editProfileValidationSchema } from "@/validation/ValidationSchemas";
@@ -56,9 +57,9 @@ export default function EditProfileScreen() {
             const photoUrl = res.user.photo_profil.startsWith("http")
               ? res.user.photo_profil
               : Constants.expoConfig?.extra?.env?.EXPO_PUBLIC_API_BASE_URL?.replace(
-                  "/api",
-                  "",
-                ) + res.user.photo_profil;
+                "/api",
+                "",
+              ) + res.user.photo_profil;
             setCurrentImage(photoUrl);
           }
         } else {

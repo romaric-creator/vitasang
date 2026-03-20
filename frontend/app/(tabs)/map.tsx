@@ -158,6 +158,8 @@ export default function MapScreen() {
           latitude: Number(centre.latitude),
           longitude: Number(centre.longitude),
         }}
+        title={centre.nom}
+        description={centre.adresse}
         tracksViewChanges={tracksViewChanges}
       >
         <View style={styles.markerContainer}>
@@ -218,33 +220,33 @@ export default function MapScreen() {
         </TouchableOpacity>
       </View>
 
-      {viewMode === "map" ? (
-        <View style={styles.mapContainer}>
-          <MapView
-            provider={Platform.OS === "android" ? PROVIDER_GOOGLE : undefined}
-            ref={mapRef}
-            style={styles.map}
-            initialRegion={
-              userLocation
-                ? {
-                  ...userLocation,
-                  latitudeDelta: 5, // Increased delta
-                  longitudeDelta: 5, // Increased delta
-                }
-                : {
-                  ...doualaRegion,
-                  latitudeDelta: 5, // Increased delta
-                  longitudeDelta: 5, // Increased delta
-                }
-            }
-            showsUserLocation={true}
-          >
-            {mappableCentres.map((centre) => (
-              <CentreMarker key={centre.id_centre || centre.id} centre={centre} />
-            ))}
-          </MapView>
-        </View>
-      ) : (
+      <View style={[styles.mapContainer, viewMode !== "map" && { display: 'none' }]}>
+        <MapView
+          provider={Platform.OS === "android" ? PROVIDER_GOOGLE : undefined}
+          ref={mapRef}
+          style={styles.map}
+          initialRegion={
+            userLocation
+              ? {
+                ...userLocation,
+                latitudeDelta: 5,
+                longitudeDelta: 5,
+              }
+              : {
+                ...doualaRegion,
+                latitudeDelta: 5,
+                longitudeDelta: 5,
+              }
+          }
+          showsUserLocation={true}
+        >
+          {mappableCentres.map((centre) => (
+            <CentreMarker key={centre.id_centre || centre.id} centre={centre} />
+          ))}
+        </MapView>
+      </View>
+
+      <View style={[viewMode !== "list" && { display: 'none' }, { flex: 1 }]}>
         <FlatList
           data={centres}
           keyExtractor={(item) =>
@@ -270,7 +272,7 @@ export default function MapScreen() {
             </View>
           }
         />
-      )}
+      </View>
 
       {loading && !refreshing && <LoadingOverlay visible={true} fullScreen />}
     </ThemedView>

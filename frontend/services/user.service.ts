@@ -35,7 +35,7 @@ export const registerUser = async (
       prenom,
       telephone,
       mot_de_passe,
-      groupe_sanguin,
+      groupe_sanguin: groupe_sanguin === "" ? null : groupe_sanguin,
       role,
       code_parrainage,
     });
@@ -113,7 +113,7 @@ export const getAlertStatus = async (alertId: number) => {
   } catch (error: any) {
     throw new Error(
       error.response?.data?.message ||
-        "Erreur lors de la récupération du statut",
+      "Erreur lors de la récupération du statut",
     );
   }
 };
@@ -125,7 +125,7 @@ export const getMyAlerts = async () => {
   } catch (error: any) {
     throw new Error(
       error.response?.data?.message ||
-        "Erreur lors de la récupération de vos alertes",
+      "Erreur lors de la récupération de vos alertes",
     );
   }
 };
@@ -144,7 +144,7 @@ export const getActiveAlerts = async () => {
     console.error("Erreur lors de la récupération des alertes actives:", error);
     throw new Error(
       error.response?.data?.message ||
-        "Erreur lors de la récupération des urgences",
+      "Erreur lors de la récupération des urgences",
     );
   }
 };
@@ -156,7 +156,7 @@ export const getUserProfile = async (userId: number) => {
   } catch (error: any) {
     throw new Error(
       error.response?.data?.message ||
-        "Erreur lors de la récupération du profil",
+      "Erreur lors de la récupération du profil",
     );
   }
 };
@@ -171,18 +171,22 @@ export const updatePushToken = async (userId: number, pushToken: string) => {
     console.error("Erreur lors de la mise à jour du token push:", error);
     throw new Error(
       error.response?.data?.message ||
-        "Erreur lors de la mise à jour du token push",
+      "Erreur lors de la mise à jour du token push",
     );
   }
 };
 export const updateUserProfile = async (userId: number, profileData: any) => {
   try {
-    const response = await apiClient.put(`/users/${userId}`, profileData);
+    const data = {
+      ...profileData,
+      groupe_sanguin: profileData.groupe_sanguin === "" ? null : profileData.groupe_sanguin,
+    };
+    const response = await apiClient.put(`/users/${userId}`, data);
     return response.data;
   } catch (error: any) {
     throw new Error(
       error.response?.data?.message ||
-        "Erreur lors de la mise à jour du profil",
+      "Erreur lors de la mise à jour du profil",
     );
   }
 };
@@ -211,7 +215,7 @@ export const getUserHistory = async (userId: number) => {
   } catch (error: any) {
     throw new Error(
       error.response?.data?.message ||
-        "Erreur lors de la récupération de l'historique",
+      "Erreur lors de la récupération de l'historique",
     );
   }
 };
@@ -223,7 +227,7 @@ export const getMyAppointments = async (userId: number) => {
   } catch (error: any) {
     throw new Error(
       error.response?.data?.message ||
-        "Erreur lors de la récupération des rendez-vous",
+      "Erreur lors de la récupération des rendez-vous",
     );
   }
 };
@@ -246,7 +250,7 @@ export const getAllCentres = async () => {
   } catch (error: any) {
     throw new Error(
       error.response?.data?.message ||
-        "Erreur lors de la récupération des centres",
+      "Erreur lors de la récupération des centres",
     );
   }
 };
@@ -326,7 +330,7 @@ export const getAcceptedAlerts = async () => {
   } catch (error: any) {
     throw new Error(
       error.response?.data?.message ||
-        "Erreur lors de la récupération des interventions",
+      "Erreur lors de la récupération des interventions",
     );
   }
 };
@@ -339,7 +343,7 @@ export const getCentreDetails = async (id: number) => {
   } catch (error: any) {
     throw new Error(
       error.response?.data?.message ||
-        "Erreur lors de la récupération du centre",
+      "Erreur lors de la récupération du centre",
     );
   }
 };
@@ -356,7 +360,7 @@ export const createAppointment = async (data: {
   } catch (error: any) {
     throw new Error(
       error.response?.data?.message ||
-        "Erreur lors de la création du rendez-vous",
+      "Erreur lors de la création du rendez-vous",
     );
   }
 };

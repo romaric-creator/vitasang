@@ -138,6 +138,7 @@ export default function GuestAlertScreen() {
                                 />
 
                                 <BloodGroupSelector
+                                    isAlert
                                     value={values.groupe_sanguin}
                                     onSelect={(val) => setFieldValue("groupe_sanguin", val)}
                                     error={errors.groupe_sanguin}

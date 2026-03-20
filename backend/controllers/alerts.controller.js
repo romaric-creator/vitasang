@@ -250,19 +250,21 @@ exports.getLiveAlerts = async (req, res, next) => {
 
     res.json({
       success: true,
-      alerts: alerts
-        .filter((a) => a.initiateur !== null) // Filtre les alertes sans utilisateur
-        .map((a) => ({
-          id: a.id_alerte,
-          groupe: a.groupe_requis,
-          statut: a.statut,
-          date: a.createdAt,
-          lieu: a.lieu,
-          urgence: a.degre_urgence,
-          initiateur: `${a.initiateur.prenom} ${a.initiateur.nom}`,
-          telephone_initiateur: a.initiateur.telephone,
-          quantite_requise: a.quantite_requise,
-        })),
+      alerts: alerts.map((a) => ({
+        id: a.id_alerte,
+        groupe: a.groupe_requis,
+        statut: a.statut,
+        date: a.createdAt,
+        lieu: a.lieu,
+        urgence: a.degre_urgence,
+        initiateur: a.initiateur
+          ? `${a.initiateur.prenom} ${a.initiateur.nom}`
+          : a.nom_patient || "Urgence SOS",
+        telephone_initiateur: a.initiateur
+          ? a.initiateur.telephone
+          : a.telephone_contact,
+        quantite_requise: a.quantite_requise,
+      })),
     });
   } catch (error) {
     logger.error("Error fetching live alerts", { error: error.message });
@@ -335,10 +337,14 @@ exports.getAlertStatus = async (req, res, next) => {
         lieu: alerte.lieu,
         description: alerte.description,
         createdAt: alerte.createdAt,
-        initiateur: {
+        initiateur: alerte.initiateur ? {
           nom: alerte.initiateur.nom,
           prenom: alerte.initiateur.prenom,
           telephone: alerte.initiateur.telephone,
+        } : {
+          nom: alerte.nom_patient || "Patient",
+          prenom: "Urgence",
+          telephone: alerte.telephone_contact,
         },
       },
       stats,
@@ -549,8 +555,12 @@ exports.getAcceptedAlerts = async (req, res, next) => {
         statut: n.alerte.statut,
         date: n.alerte.createdAt,
         lieu: n.alerte.lieu,
-        initiateur: `${n.alerte.initiateur.prenom} ${n.alerte.initiateur.nom}`,
-        telephone_initiateur: n.alerte.initiateur.telephone,
+        initiateur: n.alerte.initiateur
+          ? `${n.alerte.initiateur.prenom} ${n.alerte.initiateur.nom}`
+          : n.alerte.nom_patient || "Urgence SOS",
+        telephone_initiateur: n.alerte.initiateur
+          ? n.alerte.initiateur.telephone
+          : n.alerte.telephone_contact,
       })),
     });
   } catch (error) {

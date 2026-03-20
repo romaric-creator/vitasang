@@ -212,6 +212,7 @@ export default function CreateAlertScreen() {
             }) => (
               <View>
                 <BloodGroupSelector
+                  isAlert
                   value={values.groupe_sanguin}
                   onSelect={(group) => {
                     handleChange("groupe_sanguin")(group);

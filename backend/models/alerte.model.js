@@ -20,7 +20,7 @@ module.exports = (sequelize, DataTypes) => {
         references: { model: 'Centres_Sante', key: 'id_centre' }
       },
       groupe_requis: {
-        type: DataTypes.ENUM("A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"),
+        type: DataTypes.ENUM("A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-", "INCONNU"),
       },
       degre_urgence: {
         type: DataTypes.ENUM("NORMAL", "URGENT", "TRES_URGENT"),

@@ -59,4 +59,7 @@ const requireRole = (roles) => {
   };
 };
 
-module.exports = { verifyToken, requireRole };
+const isAdminOrPersonnel = requireRole(["admin", "personnel"]);
+const isAdmin = requireRole("admin");
+
+module.exports = { verifyToken, requireRole, isAdminOrPersonnel, isAdmin };

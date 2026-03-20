@@ -198,6 +198,7 @@ export default {
   alert: {
     title: "New Alert",
     submit: "BROADCAST ALERT",
+    sosGeneral: "GENERAL SOS (Unknown)",
     donorFound: "{{count}} {{group}} donors found within 10km.",
     searchingDonors: "Searching for compatible donors...",
     locationError: "Location permission denied or unavailable",

@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const controller = require('../controllers/campaigns.controller');
-const { verifyToken, isAdminOrPersonnel } = require('../utils/auth.middleware');
+const { verifyToken, isAdminOrPersonnel } = require("../utils/auth.middleware");
 
 // GET /api/v1/campaigns - Get campaign history for the center
 router.get('/', verifyToken, isAdminOrPersonnel, controller.getCampaigns);
