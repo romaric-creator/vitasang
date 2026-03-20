@@ -34,8 +34,6 @@ export default function AlertResponse() {
       try {
         const data = await getAlertStatus(Number(id));
         setAlertData(data.alerte);
-        // Check if user already responded in the notifications log if possible
-        // For now just load data
       } catch (error) {
         console.error("AlertResponse: Error fetching alert:", error);
       } finally {
@@ -44,6 +42,14 @@ export default function AlertResponse() {
     };
     if (id) fetchAlert();
   }, [id]);
+
+  // Auto-respond when returning from eligibility screen
+  useEffect(() => {
+    if (params.confirmedEligibility === "true" && alertData && !hasAccepted && !isResponding) {
+      handleResponse("accepte");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [params.confirmedEligibility, alertData]);
 
   const handleResponse = async (response: "accepte" | "ignore") => {
     try {
