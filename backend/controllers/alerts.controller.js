@@ -512,15 +512,21 @@ exports.respondToAlert = async (req, res, next) => {
       );
     }
 
-    const notification = await LogNotification.findOne({
+    let notification = await LogNotification.findOne({
       where: { id_alerte: id, id_utilisateur: userId },
     });
-    if (!notification) {
-      throw ErrorTypes.NOT_FOUND("Vous n'êtes pas concerné par cette alerte.");
-    }
 
-    notification.statut_reception = response;
-    await notification.save();
+    if (!notification) {
+      // Create notification entry if it doesn't exist (e.g. user found it via public feed)
+      notification = await LogNotification.create({
+        id_alerte: id,
+        id_utilisateur: userId,
+        statut_reception: response,
+      });
+    } else {
+      notification.statut_reception = response;
+      await notification.save();
+    }
 
     logger.info("User responded to alert", { userId, alertId: id, response });
 

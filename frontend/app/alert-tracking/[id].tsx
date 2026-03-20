@@ -70,13 +70,8 @@ export default function AlertTracking() {
     };
   }, [id, notifiedDonorsParam]);
 
-  if (loading || !data) {
-    return <LoadingOverlay visible={true} fullScreen />;
-  }
-
-  const { stats, alerte, details } = data;
-
   const handleShareWhatsApp = useCallback(() => {
+    const alerte = data?.alerte;
     if (!alerte) return;
     const urgencyLabel = t(`alert.urgencyLevels.${alerte.urgence || "NORMAL"}`);
     const message = t("alert.shareMessage", {
@@ -98,7 +93,13 @@ export default function AlertTracking() {
         Linking.openURL(`https://wa.me/?text=${encodeURIComponent(message)}`);
       }
     });
-  }, [alerte, t, id]);
+  }, [data, t, id]);
+
+  if (loading || !data) {
+    return <LoadingOverlay visible={true} fullScreen />;
+  }
+
+  const { stats, alerte, details } = data;
 
   return (
     <View style={styles.container}>

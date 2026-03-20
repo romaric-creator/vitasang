@@ -136,8 +136,7 @@ export default function AlertResponse() {
             <Text style={styles.bloodText}>{alertData.groupe}</Text>
           </View>
           <Text style={styles.urgencyText}>
-            {t(`alert.urgencyLevels.${alertData.statut?.toUpperCase()}`) ||
-              alertData.statut?.toUpperCase()}
+            {t(`alert.urgencyLevels.${(alertData.urgence || "NORMAL").toUpperCase()}`)}
           </Text>
           {distance && (
             <Text style={styles.distanceText}>
@@ -217,17 +216,27 @@ export default function AlertResponse() {
           </View>
         ) : (
           <View style={styles.contactCard}>
-            <Text style={styles.sectionTitle}>
+            <TabBarIcon name="check-circle" size={48} color={color.success} />
+            <Text style={[styles.sectionTitle, { marginTop: 12, marginBottom: 4 }]}>
               {t("alert.response.contactInfo")}
             </Text>
             <Text style={styles.initiateurName}>
               {alertData.initiateur?.prenom} {alertData.initiateur?.nom}
             </Text>
+
             <TouchableOpacity style={styles.callFullBtn} onPress={handleCall}>
               <TabBarIcon name="phone" size={18} color="white" />
               <Text style={styles.callFullBtnText}>
-                {alertData.initiateur?.telephone}
+                {alertData.initiateur?.telephone || t("common.loading")}
               </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.callFullBtn, { backgroundColor: "#25D366", marginTop: 10 }]}
+              onPress={handleShareWhatsApp}
+            >
+              <TabBarIcon name="whatsapp" size={18} color="white" />
+              <Text style={styles.callFullBtnText}>{t("alert.actions.share")}</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
