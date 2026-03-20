@@ -9,6 +9,7 @@ import {
   TextInput,
   Dimensions,
   Platform,
+  Modal,
 } from "react-native";
 import MapView, { Marker, PROVIDER_GOOGLE, Callout } from "react-native-maps";
 import { useRouter } from "expo-router";
@@ -36,6 +37,7 @@ export default function MapScreen() {
     latitude: number;
     longitude: number;
   } | null>(null);
+  const [selectedCentre, setSelectedCentre] = useState<any | null>(null);
 
   const doualaRegion = {
     latitude: 4.0511,
@@ -158,9 +160,8 @@ export default function MapScreen() {
           latitude: Number(centre.latitude),
           longitude: Number(centre.longitude),
         }}
-        title={centre.nom}
-        description={centre.adresse}
         tracksViewChanges={tracksViewChanges}
+        onPress={() => setSelectedCentre(centre)}
       >
         <View style={styles.markerContainer}>
           <View style={styles.markerPin}>
@@ -168,21 +169,9 @@ export default function MapScreen() {
           </View>
           <View style={styles.markerArrow} />
         </View>
-        <Callout
-          tooltip
-          onPress={() =>
-            router.push(`/book-appointment/${centre.id_centre}`)
-          }
-        >
-          <View style={styles.calloutContainer}>
-            <Text style={styles.calloutTitle}>{centre.nom}</Text>
-            <Text style={styles.calloutText}>{centre.adresse}</Text>
-            <Text style={styles.calloutPhone}>{centre.telephone}</Text>
-          </View>
-        </Callout>
       </Marker>
     );
-  }), [router]);
+  }), [setSelectedCentre]);
 
   return (
     <ThemedView style={styles.container}>
@@ -274,6 +263,67 @@ export default function MapScreen() {
         />
       </View>
 
+      <Modal
+        visible={!!selectedCentre}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setSelectedCentre(null)}
+      >
+        <TouchableOpacity
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPress={() => setSelectedCentre(null)}
+        >
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <View style={styles.modalIndicator} />
+            </View>
+
+            {selectedCentre && (
+              <View style={styles.modalBody}>
+                <View style={styles.modalIconContainer}>
+                  <TabBarIcon name="hospital-o" size={32} color={color.primary} />
+                </View>
+
+                <Text style={styles.modalTitle}>{selectedCentre.nom}</Text>
+                <Text style={styles.modalVille}>{selectedCentre.ville}</Text>
+
+                <View style={styles.modalDivider} />
+
+                <View style={styles.modalInfoRow}>
+                  <TabBarIcon name="map-marker" size={18} color={color.textSecondary} />
+                  <Text style={styles.modalInfoText}>{selectedCentre.adresse}</Text>
+                </View>
+
+                <View style={styles.modalInfoRow}>
+                  <TabBarIcon name="phone" size={18} color={color.textSecondary} />
+                  <Text style={[styles.modalInfoText, { color: color.primary, fontWeight: '700' }]}>
+                    {selectedCentre.telephone}
+                  </Text>
+                </View>
+
+                <TouchableOpacity
+                  style={styles.bookBtn}
+                  onPress={() => {
+                    setSelectedCentre(null);
+                    router.push(`/book-appointment/${selectedCentre.id_centre}`);
+                  }}
+                >
+                  <Text style={styles.bookBtnText}>{t("appointments.book")}</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={styles.closeBtn}
+                  onPress={() => setSelectedCentre(null)}
+                >
+                  <Text style={styles.closeBtnText}>{t("alert.actions.close")}</Text>
+                </TouchableOpacity>
+              </View>
+            )}
+          </View>
+        </TouchableOpacity>
+      </Modal>
+
       {loading && !refreshing && <LoadingOverlay visible={true} fullScreen />}
     </ThemedView>
   );
@@ -347,22 +397,100 @@ const styles = StyleSheet.create({
     borderTopColor: color.primary,
     marginTop: -1,
   },
-  calloutContainer: {
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "flex-end",
+  },
+  modalContent: {
     backgroundColor: "white",
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    paddingBottom: 40,
+    maxHeight: "80%",
+  },
+  modalHeader: {
+    alignItems: "center",
+    paddingVertical: 12,
+  },
+  modalIndicator: {
+    width: 40,
+    height: 4,
+    backgroundColor: color.border,
+    borderRadius: 2,
+  },
+  modalBody: {
+    paddingHorizontal: 24,
+    alignItems: "center",
+  },
+  modalIconContainer: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: color.dangerLight,
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 16,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: "900",
+    color: color.textMain,
+    textAlign: "center",
+  },
+  modalVille: {
+    fontSize: 14,
+    color: color.textSecondary,
+    marginBottom: 20,
+  },
+  modalDivider: {
+    width: "100%",
+    height: 1,
+    backgroundColor: color.border,
+    marginBottom: 20,
+  },
+  modalInfoRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    width: "100%",
+    marginBottom: 16,
+  },
+  modalInfoText: {
+    fontSize: 14,
+    color: color.textMain,
+    flex: 1,
+  },
+  bookBtn: {
+    width: "100%",
+    backgroundColor: color.primary,
+    height: 54,
     borderRadius: 12,
-    padding: 12,
-    width: 180,
+    justifyContent: "center",
+    alignItems: "center",
+    marginTop: 10,
+    marginBottom: 12,
+    elevation: 2,
+  },
+  bookBtnText: {
+    color: "white",
+    fontSize: 16,
+    fontWeight: "700",
+  },
+  closeBtn: {
+    width: "100%",
+    height: 54,
+    borderRadius: 12,
+    justifyContent: "center",
+    alignItems: "center",
     borderWidth: 1,
     borderColor: color.border,
   },
-  calloutTitle: {
-    fontWeight: "800",
-    fontSize: 13,
-    color: color.textMain,
-    marginBottom: 4,
+  closeBtnText: {
+    color: color.textSecondary,
+    fontSize: 16,
+    fontWeight: "600",
   },
-  calloutText: { fontSize: 11, color: color.textSecondary, marginBottom: 4 },
-  calloutPhone: { fontSize: 11, fontWeight: "700", color: color.primary },
   emptyContainer: { marginTop: 100, alignItems: "center" },
   emptyText: { marginTop: 10, color: color.textSecondary, fontWeight: "600" },
   loaderBg: {

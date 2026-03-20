@@ -244,6 +244,7 @@ export default {
       myResponses: "Mes Interventions",
     },
     status: {
+      en_attente_validation: "En attente",
       en_cours: "En cours",
       resolu: "Résolu",
       annule: "Annulé",

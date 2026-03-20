@@ -247,6 +247,7 @@ export default {
       myResponses: "My Responses",
     },
     status: {
+      en_attente_validation: "Pending",
       en_cours: "In progress",
       resolu: "Resolved",
       annule: "Cancelled",

@@ -99,6 +99,18 @@ export default function AlertesScreen() {
               <Text style={styles.alertStat}>
                 {item.notifiedCount} {t("profile.alerts")}
               </Text>
+              <View
+                style={[
+                  styles.statutBadgeMini,
+                  { backgroundColor: getStatutColor(item.statut) },
+                ]}
+              >
+                <Text style={styles.statutTextMini}>
+                  {t(`alert.status.${item.statut}`) !== `alert.status.${item.statut}`
+                    ? t(`alert.status.${item.statut}`)
+                    : item.statut.charAt(0).toUpperCase() + item.statut.slice(1)}
+                </Text>
+              </View>
               <TouchableOpacity
                 style={styles.shareIconBtn}
                 onPress={() => handleShareWhatsApp(item)}
@@ -130,18 +142,20 @@ export default function AlertesScreen() {
             </View>
           )}
         </View>
-        <View
-          style={[
-            styles.statutBadge,
-            { backgroundColor: getStatutColor(item.statut) },
-          ]}
-        >
-          <Text style={styles.statutText}>
-            {t(`alert.status.${item.statut}`) !== `alert.status.${item.statut}`
-              ? t(`alert.status.${item.statut}`)
-              : item.statut.charAt(0).toUpperCase() + item.statut.slice(1)}
-          </Text>
-        </View>
+        {activeTab === "accepted" && (
+          <View
+            style={[
+              styles.statutBadge,
+              { backgroundColor: getStatutColor(item.statut) },
+            ]}
+          >
+            <Text style={styles.statutText}>
+              {t(`alert.status.${item.statut}`) !== `alert.status.${item.statut}`
+                ? t(`alert.status.${item.statut}`)
+                : item.statut.charAt(0).toUpperCase() + item.statut.slice(1)}
+            </Text>
+          </View>
+        )}
       </TouchableOpacity>
     );
   });
@@ -332,6 +346,13 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   statutText: { color: "white", fontSize: 10, fontWeight: "700" },
+  statutBadgeMini: {
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 6,
+    marginLeft: 4,
+  },
+  statutTextMini: { color: "white", fontSize: 9, fontWeight: "800" },
   empty: { marginTop: 100, alignItems: "center", gap: 12 },
   emptyText: { fontSize: 18, fontWeight: "700", color: color.textMain },
   emptySubText: {
