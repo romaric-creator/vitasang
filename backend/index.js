@@ -28,36 +28,28 @@ app.use(helmet());
 const allowedOrigins = [
   "http://localhost:3000",
   "http://localhost:8081",
-  "http://localhost:5173", // Ajoutez cette ligne
+  "http://localhost:5173",
   process.env.FRONTEND_URL,
 ].filter(Boolean);
 
 app.use(
   cors({
     origin: (origin, callback) => {
-      // Allow requests with no origin (like mobile apps or curl requests)
+      // Autoriser les requêtes sans origin (mobile apps, curl, Postman)
       if (!origin) return callback(null, true);
 
-      // Always allow localhost origins for development
-      if (process.env.NODE_ENV !== "production" && origin.startsWith("http://localhost")) {
+      // Toujours autoriser localhost peu importe l'environnement
+      if (origin.includes("localhost")) {
         return callback(null, true);
       }
 
-      // For production, only allow HTTPS origins from the allowed list
-      if (process.env.NODE_ENV === "production") {
-        if (allowedOrigins.filter((url) => url.startsWith("https")).indexOf(origin) === -1) {
-          const msg = `The CORS policy for this site does not allow access from the specified Origin: ${origin}`;
-          return callback(new Error(msg), false);
-        }
-        return callback(null, true);
-      } else {
-        // For non-production, allow all configured origins
-        if (allowedOrigins.indexOf(origin) === -1) {
-          const msg = `The CORS policy for this site does not allow access from the specified Origin: ${origin}`;
-          return callback(new Error(msg), false);
-        }
+      // Vérifier la whitelist pour les autres origins
+      if (allowedOrigins.indexOf(origin) !== -1) {
         return callback(null, true);
       }
+
+      const msg = `CORS bloqué pour l'origine : ${origin}`;
+      return callback(new Error(msg), false);
     },
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
@@ -89,7 +81,6 @@ const rendezvousRoute = require("./routes/rendezvous.routes");
 const centresRoute = require("./routes/centres.routes");
 
 // Apply specific rate limiters to auth endpoints BEFORE global limiter
-// This prevents double counting by allowing specific limiters to intercept these routes first
 app.use("/api/v1/users/register", registerLimiter);
 app.use("/api/v1/users/login", authLimiter);
 
