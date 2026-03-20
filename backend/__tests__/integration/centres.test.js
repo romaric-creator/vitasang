@@ -32,6 +32,15 @@ jest.mock("../../models", () => ({
     findAll: jest.fn().mockResolvedValue([]),
     findOne: jest.fn().mockResolvedValue(null),
   },
+  sequelize: {
+    literal: jest.fn().mockReturnValue('mock_literal'),
+    where: jest.fn().mockReturnValue({}),
+  },
+  Sequelize: {
+    Op: {
+      and: Symbol('and'),
+    },
+  },
 }));
 
 jest.mock("../../utils/geoHelpers", () => ({

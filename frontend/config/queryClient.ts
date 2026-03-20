@@ -13,8 +13,8 @@ export const createQueryClient = () =>
       queries: {
         // Cache data for 5 minutes - prevents unnecessary API calls
         staleTime: 1000 * 60 * 5,
-        // Keep data in memory for 10 minutes even if unused
-        gcTime: 1000 * 60 * 10,
+        // Keep data in memory for 24 hours even if unused (Offline First)
+        gcTime: 1000 * 60 * 60 * 24,
         // Don't refetch when window regains focus (mobile doesn't have this concept)
         refetchOnWindowFocus: false,
         // Don't refetch when component remounts if data is fresh

@@ -108,6 +108,23 @@ export const clearImageCache = async () => {
 };
 
 /**
+ * Nettoie le cache image si la taille dépasse la limite en Mo
+ */
+export const manageImageCacheSize = async (maxSizeMB: number = 50) => {
+  try {
+    const size = await getImageCacheSize();
+    const maxSizeBytes = maxSizeMB * 1024 * 1024;
+
+    if (size > maxSizeBytes) {
+      console.log(`[ImageCache] Limite atteinte (${(size / (1024 * 1024)).toFixed(2)}MB > ${maxSizeMB}MB). Nettoyage global...`);
+      await clearImageCache();
+    }
+  } catch (error) {
+    console.error("[ImageCache] Erreur lors du nettoyage auto:", error);
+  }
+};
+
+/**
  * Récupère la taille du cache des images
  */
 export const getImageCacheSize = async (): Promise<number> => {

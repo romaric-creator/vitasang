@@ -7,6 +7,7 @@ import {
   StyleSheet,
   KeyboardAvoidingView,
   Platform,
+  Image,
 } from "react-native";
 import { Formik } from "formik";
 import { router } from "expo-router";
@@ -16,6 +17,7 @@ import FormField from "@/components/FormField";
 import { PrimaryButton } from "@/components/PrimaryButton";
 import { formStyles } from "@/styles/formStyles";
 import { useAuth } from "@/context/AuthContext";
+import { TabBarIcon } from "@/components/TabBarIcon";
 
 import { useTranslation } from "react-i18next";
 
@@ -56,8 +58,22 @@ export default function LoginScreen() {
         <View style={styles.container}>
           {/* Header Section */}
           <View style={styles.headerSection}>
+            <Image
+              source={require("@/assets/images/logo.png")}
+              style={styles.logo}
+            />
             <Text style={styles.title}>{t("login.title")}</Text>
             <Text style={styles.subtitle}>{t("login.subtitle")}</Text>
+
+            <TouchableOpacity
+              style={styles.sosBtn}
+              onPress={() => router.push("/guest-alert")}
+            >
+              <View style={styles.sosContent}>
+                <TabBarIcon name="bolt" size={18} color="white" />
+                <Text style={styles.sosText}>{t("guestAlert.title")}</Text>
+              </View>
+            </TouchableOpacity>
           </View>
 
           {/* Form Section with Formik */}
@@ -146,8 +162,16 @@ const styles = StyleSheet.create({
     paddingBottom: 20,
   },
   headerSection: {
-    marginBottom: 32,
+    marginBottom: 24,
+    alignItems: "center",
   },
+  logo: {
+    width: 100,
+    height: 100,
+    resizeMode: "contain",
+    marginBottom: 16,
+  },
+
   title: {
     color: color.primary,
     fontWeight: "800",
@@ -156,9 +180,32 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   subtitle: {
-    fontWeight: "600",
     color: color.textSecondary,
     fontSize: 14,
+  },
+  sosBtn: {
+    marginTop: 20,
+    backgroundColor: color.primary,
+    borderRadius: 12,
+    overflow: "hidden",
+    elevation: 4,
+    shadowColor: color.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+  },
+  sosContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 12,
+    gap: 10,
+  },
+  sosText: {
+    color: "white",
+    fontSize: 14,
+    fontWeight: "900",
+    letterSpacing: 0.5,
   },
   formContainer: {
     flex: 1,

@@ -19,7 +19,7 @@ module.exports = (sequelize, DataTypes) => {
       mot_de_passe: { type: DataTypes.STRING(255), allowNull: false },
       telephone: { type: DataTypes.STRING(20), unique: true },
       role: {
-        type: DataTypes.ENUM("donneur", "personnel", "admin"),
+        type: DataTypes.ENUM("donneur", "personnel", "admin", "cnts"),
         defaultValue: "donneur",
       },
       push_token: { type: DataTypes.TEXT },

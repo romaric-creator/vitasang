@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback, memo } from "react";
 import {
   StyleSheet,
   Text,
@@ -34,16 +34,17 @@ export default function AlertesScreen() {
     currentQuery.refetch();
   };
 
-  const handleCall = (phone: string) => {
+  const handleCall = useCallback((phone: string) => {
     if (!phone) return;
     Linking.openURL(`tel:${phone}`);
-  };
+  }, []);
 
-  const handleShareWhatsApp = (item: any) => {
+  const handleShareWhatsApp = useCallback((item: any) => {
     const message = t("alert.shareMessage", {
       group: item.groupe,
       location: item.lieu || "Hôpital proche",
       phone: item.telephone_initiateur || "",
+      id: item.id || "0000",
     });
     const url = `whatsapp://send?text=${encodeURIComponent(message)}`;
 
@@ -51,97 +52,103 @@ export default function AlertesScreen() {
       if (supported) {
         Linking.openURL(url);
       } else {
-        // Fallback si WhatsApp n'est pas installé
         Linking.openURL(`https://wa.me/?text=${encodeURIComponent(message)}`);
       }
     });
-  };
+  }, [t]);
 
-  const getStatutColor = (statut: string) => {
-    switch (statut) {
-      case "en_cours":
-        return "#F39C12";
-      case "resolu":
-      case "satisfaite":
-        return "#2ECC71";
-      case "annule":
-        return "#E74C3C";
-      default:
-        return "#BDC3C7";
+  const onCardPress = useCallback((id: number) => {
+    if (activeTab === "sent") {
+      router.push(`/alert-tracking/${id}`);
     }
-  };
+  }, [activeTab, router]);
 
-  const renderItem = ({ item }: { item: any }) => (
-    <TouchableOpacity
-      style={styles.alertCard}
-      onPress={() =>
-        activeTab === "sent" && router.push(`/alert-tracking/${item.id}`)
+  // Composant d'item mémorisé pour éviter les re-rendus inutiles
+  const AlertCard = memo(({ item }: { item: any }) => {
+    const getStatutColor = (statut: string) => {
+      switch (statut) {
+        case "en_cours": return "#F39C12";
+        case "resolu":
+        case "satisfaite": return "#2ECC71";
+        case "annule": return "#E74C3C";
+        default: return "#BDC3C7";
       }
-      disabled={activeTab === "accepted"}
-    >
-      <View style={[styles.bloodCircle]}>
-        <Text style={styles.bloodText}>{item.groupe}</Text>
-      </View>
-      <View style={{ flex: 1 }}>
-        <Text style={styles.alertDate}>
-          {new Date(item.date).toLocaleDateString(undefined, {
-            day: "numeric",
-            month: "short",
-            hour: "2-digit",
-            minute: "2-digit",
-          })}
-        </Text>
-        {activeTab === "sent" ? (
-          <View style={styles.statsRow}>
-            <TabBarIcon name="bell" size={12} color={color.textSecondary} />
-            <Text style={styles.alertStat}>
-              {item.notifiedCount} {t("profile.alerts")}
-            </Text>
-            <TouchableOpacity
-              style={styles.shareIconBtn}
-              onPress={() => handleShareWhatsApp(item)}
-            >
-              <TabBarIcon name="whatsapp" size={16} color="#25D366" />
-            </TouchableOpacity>
-          </View>
-        ) : (
-          <View>
-            <Text style={styles.initiateurName}>{item.initiateur}</Text>
-            <View style={styles.actionRow}>
+    };
+
+    return (
+      <TouchableOpacity
+        style={styles.alertCard}
+        onPress={() => onCardPress(item.id)}
+        disabled={activeTab === "accepted"}
+      >
+        <View style={[styles.bloodCircle]}>
+          <Text style={styles.bloodText}>{item.groupe}</Text>
+        </View>
+        <View style={{ flex: 1 }}>
+          <Text style={styles.alertDate}>
+            {new Date(item.date).toLocaleDateString(undefined, {
+              day: "numeric",
+              month: "short",
+              hour: "2-digit",
+              minute: "2-digit",
+            })}
+          </Text>
+          {activeTab === "sent" ? (
+            <View style={styles.statsRow}>
+              <TabBarIcon name="bell" size={12} color={color.textSecondary} />
+              <Text style={styles.alertStat}>
+                {item.notifiedCount} {t("profile.alerts")}
+              </Text>
               <TouchableOpacity
-                style={styles.callBtn}
-                onPress={() => handleCall(item.telephone_initiateur)}
-              >
-                <TabBarIcon name="phone" size={12} color="white" />
-                <Text style={styles.callBtnText}>
-                  {t("alert.actions.call")}
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.shareBtn}
+                style={styles.shareIconBtn}
                 onPress={() => handleShareWhatsApp(item)}
               >
-                <TabBarIcon name="whatsapp" size={12} color="white" />
-                <Text style={styles.callBtnText}>{t("alert.actions.share")}</Text>
+                <TabBarIcon name="whatsapp" size={16} color="#25D366" />
               </TouchableOpacity>
             </View>
-          </View>
-        )}
-      </View>
-      <View
-        style={[
-          styles.statutBadge,
-          { backgroundColor: getStatutColor(item.statut) },
-        ]}
-      >
-        <Text style={styles.statutText}>
-          {t(`alert.status.${item.statut}`) !== `alert.status.${item.statut}`
-            ? t(`alert.status.${item.statut}`)
-            : item.statut.charAt(0).toUpperCase() + item.statut.slice(1)}
-        </Text>
-      </View>
-    </TouchableOpacity>
-  );
+          ) : (
+            <View>
+              <Text style={styles.initiateurName}>{item.initiateur}</Text>
+              <View style={styles.actionRow}>
+                <TouchableOpacity
+                  style={styles.callBtn}
+                  onPress={() => handleCall(item.telephone_initiateur)}
+                >
+                  <TabBarIcon name="phone" size={12} color="white" />
+                  <Text style={styles.callBtnText}>
+                    {t("alert.actions.call")}
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.shareBtn}
+                  onPress={() => handleShareWhatsApp(item)}
+                >
+                  <TabBarIcon name="whatsapp" size={12} color="white" />
+                  <Text style={styles.callBtnText}>{t("alert.actions.share")}</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          )}
+        </View>
+        <View
+          style={[
+            styles.statutBadge,
+            { backgroundColor: getStatutColor(item.statut) },
+          ]}
+        >
+          <Text style={styles.statutText}>
+            {t(`alert.status.${item.statut}`) !== `alert.status.${item.statut}`
+              ? t(`alert.status.${item.statut}`)
+              : item.statut.charAt(0).toUpperCase() + item.statut.slice(1)}
+          </Text>
+        </View>
+      </TouchableOpacity>
+    );
+  });
+
+  const renderItem = useCallback(({ item }: { item: any }) => (
+    <AlertCard item={item} />
+  ), [AlertCard]);
 
   return (
     <ThemedView style={styles.container}>
@@ -189,6 +196,10 @@ export default function AlertesScreen() {
           keyExtractor={(item) => item.id.toString()}
           renderItem={renderItem}
           contentContainerStyle={{ paddingBottom: 100 }}
+          initialNumToRender={6}
+          maxToRenderPerBatch={10}
+          windowSize={5}
+          removeClippedSubviews={Platform.OS === 'android'}
           refreshControl={
             <RefreshControl
               refreshing={refreshing}

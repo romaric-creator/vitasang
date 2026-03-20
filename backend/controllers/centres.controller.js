@@ -3,6 +3,7 @@ const Centre = db.Centre;
 const StockSang = db.StockSang;
 const RendezVous = db.RendezVous;
 const logger = require("../config/logger");
+const { haversineSQL } = require("../utils/geoHelpers");
 
 // Récupérer tous les centres
 exports.getAllCentres = async (req, res, next) => {
@@ -46,13 +47,7 @@ exports.searchCentresNearby = async (req, res, next) => {
     const lat = parseFloat(latitude);
     const lng = parseFloat(longitude);
 
-    const haversine = `(
-      6371 * acos(
-        cos(radians(${lat})) * cos(radians(latitude)) * 
-        cos(radians(longitude) - radians(${lng})) + 
-        sin(radians(${lat})) * sin(radians(latitude))
-      )
-    )`;
+    const haversine = haversineSQL(lat, lng);
 
     const centres = await Centre.findAll({
       attributes: [

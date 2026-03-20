@@ -1,6 +1,7 @@
 const db = require("../models");
 const logger = require("../config/logger");
 const expoNotifications = require("../utils/expoNotifications");
+const { haversineSQL } = require("../utils/geoHelpers");
 
 let notificationQueue = { add: async () => { } };
 
@@ -14,21 +15,52 @@ if (process.env.NODE_ENV !== "test") {
 
     notificationQueue = new Queue("notifications", { connection });
 
+    // Simulation des canaux WhatsApp et SMS (Guide Section 4.1)
+    const sendWhatsAppMessage = async (phone, message) => {
+        logger.info(`[WhatsApp SOS] Tentative d'envoi à ${phone}`);
+        // Ici on appellerait l'API Meta ou un service tiers
+        return { success: true };
+    };
+
+    const sendSMS = async (phone, message) => {
+        logger.info(`[SMS SOS] Tentative d'envoi à ${phone}`);
+        // Ici on appellerait une passerelle SMS Orange/MTN
+        return { success: true };
+    };
+
     const worker = new Worker("notifications", async (job) => {
         const Utilisateur = db.Utilisateur;
         const ProfilDonneur = db.ProfilDonneur;
         const LogNotification = db.LogNotification;
 
-        const { alertId, groupe_requis, latitude, longitude, rayon_action_km, validatorId } = job.data;
-        logger.info("Worker started notifications for alert", { alertId });
+        if (job.name === "sendCampaignNotification") {
+            const { donneurId, telephone, nom, titre, message, centreId } = job.data;
+            logger.info("Worker started campaign notification for donor", { donneurId });
 
-        const haversine = `(
-      6371 * acos(
-        cos(radians(${latitude})) * cos(radians(\`profilDonneur\`.\`lat_actuelle\`)) * 
-        cos(radians(\`profilDonneur\`.\`long_actuelle\`) - radians(${longitude})) + 
-        sin(radians(${latitude})) * sin(radians(\`profilDonneur\`.\`lat_actuelle\`))
-      )
-    )`;
+            const donor = await Utilisateur.findByPk(donneurId);
+            if (donor && donor.push_token) {
+                const pushMessage = expoNotifications.buildPushMessage({
+                    to: donor.push_token,
+                    title: titre,
+                    body: message,
+                    data: { type: 'campaign', centreId }
+                });
+
+                const { successful, failed } = await expoNotifications.sendPushNotifications([pushMessage]);
+                if (successful.length > 0) {
+                    logger.info(`Campaign push sent to ${donneurId}`);
+                } else {
+                    logger.warn(`Campaign push failed for ${donneurId}`, failed);
+                }
+            }
+            return { processed: 1 };
+        }
+
+        // Sinon, c'est une alerte d'urgence classique
+        const { alertId, groupe_requis, latitude, longitude, rayon_action_km, validatorId } = job.data;
+        logger.info("Worker started emergency notifications for alert", { alertId });
+
+        const haversine = haversineSQL(latitude, longitude, "profilDonneur", "lat_actuelle", "long_actuelle");
 
         const bloodCompatibility = {
             "O-": ["O-", "O+", "A-", "A+", "B-", "B+", "AB-", "AB+"],
@@ -64,55 +96,58 @@ if (process.env.NODE_ENV !== "test") {
             }
         });
 
-        let messages = [];
-        let logsToCreate = [];
-
         for (const donor of donors) {
             const distance = parseFloat(donor.dataValues.distance).toFixed(2);
+            let notified = false;
+            const messageText = `Urgence sang ${groupe_requis} à ${distance} km de votre position !`;
 
+            // 1. Canal FCM (Push)
             if (donor.push_token) {
-                messages.push(
-                    expoNotifications.buildPushMessage({
-                        to: donor.push_token,
-                        title: "Urgence Sang",
-                        body: `Urgence sang ${groupe_requis} à ${distance} km de votre position !`,
-                        data: { alertId, groupe_sanguin: groupe_requis, distance },
-                    }),
-                );
-                logsToCreate.push({
-                    id_utilisateur: donor.id_utilisateur,
-                    id_alerte: alertId,
-                    canal: "push",
-                    statut_reception: "en_attente",
-                    push_token: donor.push_token,
+                const pushMessage = expoNotifications.buildPushMessage({
+                    to: donor.push_token,
+                    title: "Urgence Sang",
+                    body: messageText,
+                    data: { alertId, groupe_sanguin: groupe_requis, distance },
                 });
-            } else {
-                logsToCreate.push({
-                    id_utilisateur: donor.id_utilisateur,
-                    id_alerte: alertId,
-                    canal: "push",
-                    statut_reception: "no_token",
-                });
-            }
-        }
 
-        if (logsToCreate.length > 0) {
-            await LogNotification.bulkCreate(logsToCreate);
-        }
-
-        if (messages.length > 0) {
-            const { successful, failed } = await expoNotifications.sendPushNotifications(messages);
-            for (const token of successful) {
-                await LogNotification.update(
-                    { statut_reception: "envoye" },
-                    { where: { push_token: token, id_alerte: alertId } }
-                );
+                const { successful } = await expoNotifications.sendPushNotifications([pushMessage]);
+                if (successful.length > 0) {
+                    notified = true;
+                    await LogNotification.create({
+                        id_utilisateur: donor.id_utilisateur,
+                        id_alerte: alertId,
+                        canal: "push",
+                        statut_reception: "envoye",
+                        push_token: donor.push_token,
+                    });
+                }
             }
-            for (const { token, error } of failed) {
-                await LogNotification.update(
-                    { statut_reception: "echec", details_echec: error },
-                    { where: { push_token: token, id_alerte: alertId } }
-                );
+
+            // 2. Canal WhatsApp (si Push a échoué ou non disponible)
+            if (!notified && donor.telephone) {
+                const waResult = await sendWhatsAppMessage(donor.telephone, `Vitasang SOS: ${messageText}`);
+                if (waResult.success) {
+                    notified = true;
+                    await LogNotification.create({
+                        id_utilisateur: donor.id_utilisateur,
+                        id_alerte: alertId,
+                        canal: "whatsapp",
+                        statut_reception: "envoye",
+                    });
+                }
+            }
+
+            // 3. Canal SMS (Dernier recours)
+            if (!notified && donor.telephone) {
+                const smsResult = await sendSMS(donor.telephone, `SOS VITASANG: ${messageText}`);
+                if (smsResult.success) {
+                    await LogNotification.create({
+                        id_utilisateur: donor.id_utilisateur,
+                        id_alerte: alertId,
+                        canal: "sms",
+                        statut_reception: "envoye",
+                    });
+                }
             }
         }
 

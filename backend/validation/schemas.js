@@ -25,11 +25,10 @@ const schemas = {
     }),
     groupe_sanguin: Joi.string()
       .valid("A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-")
-      .required()
+      .allow(null, "")
       .messages({
         "any.only":
           "Le groupe sanguin doit être: A+, A-, B+, B-, AB+, AB-, O+, O-",
-        "string.empty": "Le groupe sanguin est requis",
       }),
     role: Joi.string()
       .valid("donneur")
@@ -137,6 +136,32 @@ const schemas = {
   // Update alert status
   updateAlert: Joi.object({
     statut: Joi.string().valid("en_attente_validation", "en_cours", "resolu", "annule").required(),
+  }),
+
+  // Guest alert validation
+  createGuestAlert: Joi.object({
+    nom_patient: Joi.string().required().min(2).max(100).messages({
+      "string.empty": "Le nom du patient est requis",
+    }),
+    telephone_contact: Joi.string()
+      .required()
+      .pattern(/^6[5-9]\d{7}$/)
+      .messages({
+        "string.empty": "Le numéro de contact est requis",
+        "string.pattern.base": "Format valide: 6XXXXXXXX (9 chiffres)",
+      }),
+    groupe_sanguin: Joi.string()
+      .valid("A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-")
+      .required()
+      .messages({
+        "any.only": "Le groupe sanguin n'est pas valide",
+      }),
+    lieu: Joi.string().required().messages({
+      "string.empty": "Le lieu est requis",
+    }),
+    latitude: Joi.number().required(),
+    longitude: Joi.number().required(),
+    description: Joi.string().allow(""),
   }),
 };
 

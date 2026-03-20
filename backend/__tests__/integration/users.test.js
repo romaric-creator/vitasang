@@ -4,7 +4,7 @@ jest.mock("../../models", () => ({
       id_utilisateur: 1,
       nom: "Dupont",
       prenom: "Jean",
-      telephone: "+237612345678",
+      telephone: "6512345678",
       mot_de_passe: "$2a$10$hashedpassword",
       groupe_sanguin: "O+",
       role: "donneur",
@@ -13,7 +13,7 @@ jest.mock("../../models", () => ({
       id_utilisateur: 1,
       nom: "Dupont",
       prenom: "Jean",
-      telephone: "+237612345678",
+      telephone: "6512345678",
       mot_de_passe: "$2a$10$hashedpassword",
       groupe_sanguin: "O+",
       role: "donneur",
@@ -56,7 +56,7 @@ describe("Users Controller - Integration Tests", () => {
       const userData = {
         nom: "Dupont",
         prenom: "Jean",
-        telephone: "+237612345678",
+        telephone: "6512345678",
         mot_de_passe: "Password123",
         groupe_sanguin: "O+",
         role: "donneur",
@@ -75,7 +75,7 @@ describe("Users Controller - Integration Tests", () => {
       const userData = {
         nom: "Dupont",
         // prenom missing
-        telephone: "+237612345678",
+        telephone: "6512345678",
         mot_de_passe: "Password123",
         groupe_sanguin: "O+",
         role: "donneur",
@@ -93,7 +93,7 @@ describe("Users Controller - Integration Tests", () => {
   describe("POST /api/v1/users/login", () => {
     it("should login with valid credentials", async () => {
       const credentials = {
-        telephone: "+237612345678",
+        telephone: "6512345678",
         mot_de_passe: "Password123",
       };
 
@@ -107,7 +107,7 @@ describe("Users Controller - Integration Tests", () => {
 
     it("should return 401 with invalid password", async () => {
       const credentials = {
-        telephone: "+237612345678",
+        telephone: "6512345678",
         mot_de_passe: "WrongPassword",
       };
 

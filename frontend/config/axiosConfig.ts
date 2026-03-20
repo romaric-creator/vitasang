@@ -3,6 +3,7 @@ import { DeviceEventEmitter } from "react-native";
 import { getData, removeData } from "@/utils/storage";
 import Constants from "expo-constants";
 import { router } from "expo-router";
+import { analyticsService } from "@/services/analyticsService";
 import {
   parseApiError,
   getUserFriendlyMessage,
@@ -122,6 +123,15 @@ export const createAxiosInstance = (): AxiosInstance => {
     async (error: AxiosError) => {
       const apiError = transformErrorResponse(error);
       const userMessage = getUserFriendlyMessage(apiError);
+
+      // Tracking des erreurs API dans PostHog
+      analyticsService.trackEvent(analyticsService.events.API_ERROR, {
+        code: apiError.code,
+        statusCode: apiError.statusCode,
+        url: error.config?.url,
+        method: error.config?.method?.toUpperCase(),
+      });
+
 
       if (__DEV__) {
         console.error("[API Error]", {

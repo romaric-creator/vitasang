@@ -14,6 +14,15 @@ const isAdmin = requireRole("admin");
  */
 router.get("/public", cacheMiddleware(5 * 60), alertsController.getLiveAlerts);
 
+/**
+ * PUBLIC ROUTE - Create an emergency alert as a guest (non-registered)
+ */
+router.post(
+  "/guest",
+  validateRequest(schemas.createGuestAlert),
+  alertsController.createGuestAlert,
+);
+
 // The verifyToken middleware will be used for all routes defined after this line.
 
 /**

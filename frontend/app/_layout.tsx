@@ -1,26 +1,24 @@
 import { Stack, useRouter, useSegments } from "expo-router";
 import { useEffect, useState } from "react";
 import Splash from "./Splash";
-
 import { View } from "react-native";
+
+import { PostHogProvider, usePostHog } from "posthog-react-native";
+import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
+import { createAsyncStoragePersister } from "@tanstack/query-async-storage-persister";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+
 import { LoadingOverlay } from "@/components/LoadingOverlay";
 import { AuthProvider, useAuth } from "@/context/AuthContext";
 import { NotificationProvider } from "@/context/NotificationContext";
 import { color } from "@/constant/color";
-import { PostHogProvider, usePostHog } from "posthog-react-native";
-import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "@/config/queryClient";
-import { useAlertRetryCheck } from "@/hooks/useAlertRetryCheck";
 import { getUserIdFromStorage } from "@/utils/storage";
-import { registerForPushNotificationsAsync } from "@/utils/pushNotifications";
-import { initImageCache } from "@/hooks/useCachedImage";
-import * as Location from "expo-location";
-import {
-  updatePushToken,
-  updateUserLocation,
-  getActiveAlerts,
-  getAllCentres,
-} from "@/services/user.service";
+
+
+// Imports différés pour accélérer le démarrage (Cold Start)
+// Les bibliothèques lourdes sont chargées uniquement au besoin via require()
+
 
 // Initialisation i18n
 import "../i18n";
@@ -33,74 +31,66 @@ function RootLayoutNav() {
   const posthog = usePostHog();
   const [appReady, setAppReady] = useState(false);
 
-  // Initialize alert retry check background task
-  useAlertRetryCheck();
+  const { show: showAlert } = require("@/context/NotificationContext").useNotification();
 
-  // Application-level initialization that must run before landing on the home (tabs)
+  // Tâches de fond non-bloquantes lancées une seule fois
   useEffect(() => {
-    if (isLoading) return; // wait for auth status
+    if (isLoading) return;
 
-    let mounted = true;
-
-    const initApp = async () => {
+    const runBackgroundTasks = async () => {
       try {
-        // Initialiser le cache des images - Ne devrait pas bloquer l'usage
-        initImageCache();
-
         const userId = await getUserIdFromStorage();
-
-        if (userId) {
-          // Push token registration (Background)
-          (async () => {
-            // Sous Expo Go, registerForPushNotificationsAsync peut échouer ou provoquer des logs d'erreurs
-            // On ne l'appelle que si on est hors Expo Go
-            if (require("expo-constants").default.appOwnership === "expo")
-              return;
-
-            try {
-              const token = await registerForPushNotificationsAsync();
-              if (token) {
-                await updatePushToken(Number(userId), token);
-              }
-            } catch (e) {}
-          })();
-
-          // Location update (Background)
-          (async () => {
-            try {
-              const { status } =
-                await Location.requestForegroundPermissionsAsync();
-              if (status === "granted") {
-                const location = await Location.getCurrentPositionAsync({
-                  accuracy: Location.Accuracy.Balanced,
-                });
-                await updateUserLocation(
-                  Number(userId),
-                  location.coords.latitude,
-                  location.coords.longitude,
-                );
-              }
-            } catch (e) {}
-          })();
+        if (!userId) {
+          setAppReady(true);
+          return;
         }
-      } catch (e) {
-        console.error("app init error", e);
-      } finally {
-        if (mounted) setAppReady(true);
-      }
+
+        // 1. Initialiser le cache image (Différé)
+        const { initImageCache, manageImageCacheSize } = require("@/hooks/useCachedImage");
+        initImageCache().then(() => manageImageCacheSize(50)).catch(() => { });
+
+        // 2. Token Push (Différé)
+        const Constants = require("expo-constants").default;
+        if (Constants.appOwnership !== "expo") {
+          const { registerForPushNotificationsAsync } = require("@/utils/pushNotifications");
+          const { updatePushToken } = require("@/services/user.service");
+          registerForPushNotificationsAsync().then((token: string) => {
+            if (token) updatePushToken(Number(userId), token);
+          }).catch(() => { });
+        }
+
+        // 3. Localisation (Différé)
+        const Location = require("expo-location");
+        Location.requestForegroundPermissionsAsync().then(({ status }: any) => {
+          if (status === "granted") {
+            Location.getCurrentPositionAsync({
+              accuracy: Location.Accuracy.Balanced,
+            }).then((location: any) => {
+              const { updateUserLocation } = require("@/services/user.service");
+              updateUserLocation(
+                Number(userId),
+                location.coords.latitude,
+                location.coords.longitude,
+              );
+            }).catch(() => { });
+          }
+        }).catch(() => { });
+
+        // 4. Alert Retry Check (Différé)
+        const { checkAlertsBackground } = require("@/services/alertRetryService");
+        checkAlertsBackground(showAlert);
+      } catch (e) { }
     };
 
-    initApp();
+    runBackgroundTasks();
+    setAppReady(true); // On marque l'app comme prête immédiatement après avoir lancé les tâches
+  }, [isLoading, showAlert]);
 
-    return () => {
-      mounted = false;
-    };
-  }, [isLoading]);
-
-  // Suivi automatique des écrans (Screen Tracking)
+  // Screen Tracking (Différé)
   useEffect(() => {
     if (segments && segments.length > 0) {
       const screenName = segments.join("/");
+      // @ts-ignore - On ignore car PostHog est chargé dynamiquement ailleurs
       posthog?.screen(screenName);
     }
   }, [segments, posthog]);
@@ -157,10 +147,18 @@ function RootLayoutNav() {
   );
 }
 
+const asyncStoragePersister = createAsyncStoragePersister({
+  storage: AsyncStorage,
+});
+
+
 // Le RootLayout principal qui fournit les contextes d'authentification, notifications et React Query
 export default function RootLayout() {
   return (
-    <QueryClientProvider client={queryClient}>
+    <PersistQueryClientProvider
+      client={queryClient}
+      persistOptions={{ persister: asyncStoragePersister }}
+    >
       <PostHogProvider
         apiKey="phc_RCtl1OvR1kNIFgIEy1jwOODKDO2qnhBCvNurxY1j4Il"
         options={{
@@ -174,6 +172,6 @@ export default function RootLayout() {
           </NotificationProvider>
         </AuthProvider>
       </PostHogProvider>
-    </QueryClientProvider>
+    </PersistQueryClientProvider>
   );
 }

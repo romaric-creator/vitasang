@@ -9,8 +9,10 @@ import {
   Image,
   Dimensions,
   RefreshControl,
+  FlatList,
+  Platform,
 } from "react-native";
-import React, { useState, useCallback, useEffect } from "react";
+import React, { useState, useCallback, useEffect, useMemo, memo } from "react";
 import ThemedView from "@/components/ThemedView";
 import { TabBarIcon } from "@/components/TabBarIcon";
 import { color } from "@/constant/color";
@@ -162,35 +164,36 @@ export default function Home() {
           </View>
 
           {activeAlerts.length > 0 ? (
-            <ScrollView
+            <FlatList
               horizontal
               showsHorizontalScrollIndicator={false}
               snapToInterval={width * 0.75 + 16}
               decelerationRate="fast"
-            >
-              {activeAlerts.map((alert: any, idx: number) => (
+              data={activeAlerts}
+              keyExtractor={(item, index) => item.id?.toString() || index.toString()}
+              removeClippedSubviews={Platform.OS === 'android'}
+              renderItem={({ item }) => (
                 <TouchableOpacity
-                  key={idx}
                   style={styles.urgentCard}
                   onPress={() =>
                     router.push({
                       pathname: "/alert-response/[id]",
-                      params: { id: alert.id },
+                      params: { id: item.id },
                     })
                   }
                 >
                   <View style={styles.urgentHeader}>
                     <View style={styles.urgentBloodCircle}>
-                      <Text style={styles.urgentBloodText}>{alert.groupe}</Text>
+                      <Text style={styles.urgentBloodText}>{item.groupe}</Text>
                     </View>
                     <View style={styles.urgentUrgencyBadge}>
                       <Text style={styles.urgentUrgencyText}>
-                        {alert.urgence}
+                        {item.urgence}
                       </Text>
                     </View>
                   </View>
                   <Text style={styles.urgentHospital} numberOfLines={1}>
-                    {alert.lieu}
+                    {item.lieu}
                   </Text>
                   <View style={styles.urgentFooter}>
                     <TabBarIcon
@@ -206,8 +209,8 @@ export default function Home() {
                     </View>
                   </View>
                 </TouchableOpacity>
-              ))}
-            </ScrollView>
+              )}
+            />
           ) : (
             <View style={styles.emptyState}>
               <View style={styles.emptyIconCircle}>

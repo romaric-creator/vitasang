@@ -10,7 +10,7 @@ import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import BloodStock from "./pages/BloodStock";
 import Appointments from "./pages/Appointments";
-import Alerts from "./pages/Alerts";
+import Campaigns from "./pages/Campaigns";
 // ...existing code...
 
 function App() {
@@ -57,15 +57,16 @@ function App() {
           }
         />
         <Route
-          path="/alerts"
+          path="/campaigns"
           element={
-            <ProtectedRoute requiredRole={["admin", "centre_manager"]}>
+            <ProtectedRoute requiredRole={["admin", "personnel", "centre_manager"]}>
               <Layout>
-                <Alerts />
+                <Campaigns />
               </Layout>
             </ProtectedRoute>
           }
         />
+
         // ...existing code...
         {/* Redirect Root and 404 */}
         <Route path="/" element={<Navigate to="/dashboard" replace />} />

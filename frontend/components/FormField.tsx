@@ -18,6 +18,8 @@ interface FormFieldProps {
   helperText?: string;
   maxLength?: number;
   editable?: boolean;
+  multiline?: boolean;
+  numberOfLines?: number;
 }
 
 export const FormField: React.FC<FormFieldProps> = ({
@@ -33,7 +35,9 @@ export const FormField: React.FC<FormFieldProps> = ({
   required = false,
   helperText,
   maxLength,
-  editable = true
+  editable = true,
+  multiline = false,
+  numberOfLines = 1
 }) => {
   const isError = touched && !!error;
   const [isSecure, setIsSecure] = useState(secureTextEntry);
@@ -61,6 +65,8 @@ export const FormField: React.FC<FormFieldProps> = ({
           keyboardType={keyboardType}
           maxLength={maxLength}
           editable={editable}
+          multiline={multiline}
+          numberOfLines={numberOfLines}
         />
         {secureTextEntry && (
           <TouchableOpacity

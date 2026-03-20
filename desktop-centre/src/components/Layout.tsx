@@ -9,10 +9,9 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
 
   // A helper function to apply active styles for NavLink
   const getNavLinkClass = ({ isActive }: { isActive: boolean }) =>
-    `flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors text-sm ${
-      isActive
-        ? "bg-primary/10 text-primary font-semibold"
-        : "text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5"
+    `flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors text-sm ${isActive
+      ? "bg-primary/10 text-primary font-semibold"
+      : "text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5"
     }`;
 
   const handleLogout = () => {
@@ -48,10 +47,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
               <span className="material-symbols-outlined">dashboard</span>
               <span>Tableau de bord</span>
             </NavLink>
-            <NavLink to="/alerts" className={getNavLinkClass}>
-              <span className="material-symbols-outlined">emergency</span>
-              <span>Demandes SOS</span>
-            </NavLink>
+
             <NavLink to="/stock" className={getNavLinkClass}>
               <span className="material-symbols-outlined">inventory_2</span>
               <span>Gestion des stocks</span>
@@ -60,6 +56,10 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
               <span className="material-symbols-outlined">event_available</span>
               <span>Rendez-vous</span>
             </NavLink>
+            <NavLink to="/campaigns" className={getNavLinkClass}>
+              <span className="material-symbols-outlined">campaign</span>
+              <span>Campagnes</span>
+            </NavLink>
             // ...existing code...
           </nav>
         </div>
@@ -67,11 +67,11 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
         {/* Sidebar Footer */}
         <div className="p-6 space-y-2">
           <button
-            onClick={() => navigate("/alerts")}
+            onClick={() => navigate("/campaigns")}
             className="w-full bg-primary hover:bg-primary/90 text-white font-bold py-3 px-4 rounded-lg flex items-center justify-center gap-2 transition-transform active:scale-95"
           >
-            <span className="material-symbols-outlined text-lg">add_alert</span>
-            <span className="text-sm uppercase tracking-wide">Créer SOS</span>
+            <span className="material-symbols-outlined text-lg">campaign</span>
+            <span className="text-sm uppercase tracking-wide">Lancer Campagne</span>
           </button>
         </div>
       </aside>

@@ -12,7 +12,7 @@ module.exports = (sequelize, DataTypes) => {
       },
       groupe_sanguin: {
         type: DataTypes.ENUM("A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"),
-        allowNull: false,
+        allowNull: true,
       },
       poids: { type: DataTypes.DECIMAL(5, 2) },
       taille: { type: DataTypes.DECIMAL(5, 2) },

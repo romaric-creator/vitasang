@@ -18,7 +18,9 @@ import FormField from "@/components/FormField";
 import { PrimaryButton } from "@/components/PrimaryButton";
 import { TabBarIcon } from "@/components/TabBarIcon";
 import { getCentreDetails, createAppointment } from "@/services/user.service";
+import { analyticsService } from "@/services/analyticsService";
 import { LoadingOverlay } from "@/components/LoadingOverlay";
+
 import { useTranslation } from "react-i18next";
 
 const BookingSchema = Yup.object().shape({
@@ -69,11 +71,16 @@ export default function BookAppointmentScreen() {
       };
       const res = await createAppointment(appointmentData);
       if (res.success) {
+        analyticsService.trackEvent(analyticsService.events.APPOINTMENT_BOOKED, {
+          centreId: centreId,
+          centreName: centre.nom_centre,
+        });
         show("success", t("booking.success"));
         router.replace("/rendezvous");
       } else {
         show("error", t("booking.submitError"));
       }
+
     } catch (error) {
       show("error", t("booking.submitError"));
     } finally {
@@ -131,7 +138,7 @@ export default function BookAppointmentScreen() {
                 placeholder={t("booking.datePlaceholder")}
                 error={errors.date}
                 touched={touched.date}
-                // In a real app, you would replace this with a proper DatePicker component
+              // In a real app, you would replace this with a proper DatePicker component
               />
               <FormField
                 label={t("booking.timeLabel")}
@@ -141,7 +148,7 @@ export default function BookAppointmentScreen() {
                 placeholder={t("booking.timePlaceholder")}
                 error={errors.time}
                 touched={touched.time}
-                // In a real app, you would replace this with a proper TimePicker component
+              // In a real app, you would replace this with a proper TimePicker component
               />
               <PrimaryButton
                 title={t("booking.submit")}

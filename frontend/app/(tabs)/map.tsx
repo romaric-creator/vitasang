@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, useMemo, memo } from "react";
 import {
   StyleSheet,
   View,
@@ -123,22 +123,64 @@ export default function MapScreen() {
     );
   };
 
-  // Filtrer les centres pour ne garder que ceux avec des coordonnées valides et des IDs uniques
-  const mappableCentres = centres
-    .filter((c) => {
-      // Accepte id ou id_centre
-      const id = c.id_centre || c.id;
-      const lat = c.latitude;
-      const lng = c.longitude;
-      return id && lat && lng && !isNaN(Number(lat)) && !isNaN(Number(lng));
-    })
-    .reduce((uniqueCentres: any[], centre) => {
-      const id = centre.id_centre || centre.id;
-      if (!uniqueCentres.find((u) => (u.id_centre || u.id) === id)) {
-        uniqueCentres.push(centre);
-      }
-      return uniqueCentres;
+  // Optimisation : Mémoïser le calcul des centres affichables
+  const mappableCentres = useMemo(() => {
+    return centres
+      .filter((c) => {
+        const id = c.id_centre || c.id;
+        const lat = c.latitude;
+        const lng = c.longitude;
+        return id && lat && lng && !isNaN(Number(lat)) && !isNaN(Number(lng));
+      })
+      .reduce((uniqueCentres: any[], centre) => {
+        const id = centre.id_centre || centre.id;
+        if (!uniqueCentres.find((u) => (u.id_centre || u.id) === id)) {
+          uniqueCentres.push(centre);
+        }
+        return uniqueCentres;
+      }, []);
+  }, [centres]);
+
+  // Composant Marqueur optimisé pour les téléphones bas de gamme
+  const CentreMarker = useMemo(() => memo(({ centre }: { centre: any }) => {
+    const [tracksViewChanges, setTracksViewChanges] = useState(true);
+
+    useEffect(() => {
+      // Désactive le tracking après le rendu initial pour économiser du CPU
+      const timer = setTimeout(() => setTracksViewChanges(false), 500);
+      return () => clearTimeout(timer);
     }, []);
+
+    return (
+      <Marker
+        key={centre.id_centre || centre.id}
+        coordinate={{
+          latitude: Number(centre.latitude),
+          longitude: Number(centre.longitude),
+        }}
+        tracksViewChanges={tracksViewChanges}
+      >
+        <View style={styles.markerContainer}>
+          <View style={styles.markerPin}>
+            <TabBarIcon name="hospital-o" size={14} color="white" />
+          </View>
+          <View style={styles.markerArrow} />
+        </View>
+        <Callout
+          tooltip
+          onPress={() =>
+            router.push(`/book-appointment/${centre.id_centre}`)
+          }
+        >
+          <View style={styles.calloutContainer}>
+            <Text style={styles.calloutTitle}>{centre.nom}</Text>
+            <Text style={styles.calloutText}>{centre.adresse}</Text>
+            <Text style={styles.calloutPhone}>{centre.telephone}</Text>
+          </View>
+        </Callout>
+      </Marker>
+    );
+  }), [router]);
 
   return (
     <ThemedView style={styles.container}>
@@ -185,45 +227,20 @@ export default function MapScreen() {
             initialRegion={
               userLocation
                 ? {
-                    ...userLocation,
-                    latitudeDelta: 5, // Increased delta
-                    longitudeDelta: 5, // Increased delta
-                  }
+                  ...userLocation,
+                  latitudeDelta: 5, // Increased delta
+                  longitudeDelta: 5, // Increased delta
+                }
                 : {
-                    ...doualaRegion,
-                    latitudeDelta: 5, // Increased delta
-                    longitudeDelta: 5, // Increased delta
-                  }
+                  ...doualaRegion,
+                  latitudeDelta: 5, // Increased delta
+                  longitudeDelta: 5, // Increased delta
+                }
             }
             showsUserLocation={true}
           >
             {mappableCentres.map((centre) => (
-              <Marker
-                key={centre.id_centre || centre.id}
-                coordinate={{
-                  latitude: Number(centre.latitude),
-                  longitude: Number(centre.longitude),
-                }}
-              >
-                <View style={styles.markerContainer}>
-                  <View style={styles.markerPin}>
-                    <TabBarIcon name="hospital-o" size={14} color="white" />
-                  </View>
-                  <View style={styles.markerArrow} />
-                </View>
-                <Callout
-                  tooltip
-                  onPress={() =>
-                    router.push(`/book-appointment/${centre.id_centre}`)
-                  }
-                >
-                  <View style={styles.calloutContainer}>
-                    <Text style={styles.calloutTitle}>{centre.nom}</Text>
-                    <Text style={styles.calloutText}>{centre.adresse}</Text>
-                    <Text style={styles.calloutPhone}>{centre.telephone}</Text>
-                  </View>
-                </Callout>
-              </Marker>
+              <CentreMarker key={centre.id_centre || centre.id} centre={centre} />
             ))}
           </MapView>
         </View>
@@ -231,12 +248,14 @@ export default function MapScreen() {
         <FlatList
           data={centres}
           keyExtractor={(item) =>
-            item.id_centre
-              ? item.id_centre.toString()
-              : `centre-${Math.random()}`
+            item.id_centre ? item.id_centre.toString() : `c-${item.id}`
           }
           renderItem={renderCentreItem}
           contentContainerStyle={styles.listContent}
+          initialNumToRender={5}
+          maxToRenderPerBatch={10}
+          windowSize={5}
+          removeClippedSubviews={Platform.OS === 'android'}
           refreshControl={
             <RefreshControl
               refreshing={refreshing}

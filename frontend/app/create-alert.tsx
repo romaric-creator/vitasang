@@ -15,6 +15,8 @@ import { ModernSpinner } from "@/components/ModernSpinner";
 import { LoadingOverlay } from "@/components/LoadingOverlay";
 import * as Location from "expo-location";
 import { searchDonors, sendAlert } from "@/services/user.service";
+import { analyticsService } from "@/services/analyticsService";
+
 import { createAlertValidationSchema } from "@/validation/ValidationSchemas";
 import { useAuth } from "@/context/AuthContext";
 import { storeData } from "@/utils/storage";
@@ -113,6 +115,12 @@ export default function CreateAlertScreen() {
       return;
     }
 
+    analyticsService.trackEvent(analyticsService.events.ALERT_CREATION_STARTED, {
+      groupe: values.groupe_sanguin,
+      urgence: values.urgence,
+    });
+
+
     const alertData = {
       latitude: location.coords.latitude,
       longitude: location.coords.longitude,
@@ -135,14 +143,23 @@ export default function CreateAlertScreen() {
     try {
       const result = await sendAlert(alertData);
       if (result.alertId) {
+        analyticsService.trackEvent(analyticsService.events.ALERT_CREATED, {
+          alertId: result.alertId,
+        });
         router.replace({
           pathname: "/alert-tracking/[id]",
           params: { id: result.alertId },
         });
       } else {
         setErrorMsg(t("alert.idError"));
+        analyticsService.trackEvent(analyticsService.events.ALERT_FAILED, {
+          error: "No alertId returned",
+        });
       }
     } catch (error: any) {
+      analyticsService.trackEvent(analyticsService.events.ALERT_FAILED, {
+        error: error.message,
+      });
       setErrorMsg(error.message || t("alert.genericError"));
     } finally {
       setLoading(false);
@@ -287,9 +304,9 @@ export default function CreateAlertScreen() {
                     <Text style={styles.warningText}>
                       {donorCount !== null
                         ? t("alert.donorFound", {
-                            count: donorCount,
-                            group: values.groupe_sanguin,
-                          })
+                          count: donorCount,
+                          group: values.groupe_sanguin,
+                        })
                         : t("alert.searchingDonors")}
                     </Text>
                   )}

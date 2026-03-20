@@ -8,6 +8,11 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from "react-native";
+import { formStyles } from "@/styles/formStyles";
+import { useAuth } from "@/context/AuthContext";
+import { analyticsService } from "@/services/analyticsService";
+import { TabBarIcon } from "@/components/TabBarIcon";
+
 import { Formik } from "formik";
 import { color } from "@/constant/color";
 import { router } from "expo-router";
@@ -17,6 +22,8 @@ import {
   sendAlert,
 } from "@/services/user.service";
 import { registerForPushNotificationsAsync } from "@/utils/pushNotifications";
+
+
 import { storeData, getData, removeData } from "@/utils/storage";
 import { registerValidationSchema } from "@/validation/ValidationSchemas";
 import FormField from "@/components/FormField";
@@ -33,6 +40,7 @@ export default function RegisterScreen() {
   const handleRegister = async (values: any) => {
     setGeneralError("");
     setLoading(true);
+    analyticsService.trackEvent("register_started");
 
     try {
       const data = await registerUser(
@@ -81,6 +89,10 @@ export default function RegisterScreen() {
         console.error("Erreur lors de l'envoi de l'alerte en attente:", e);
       }
 
+      analyticsService.trackEvent(analyticsService.events.REGISTER_SUCCESS, {
+        groupe: values.groupe_sanguin,
+      });
+
       router.replace("/(tabs)");
     } catch (err: any) {
       console.error("Registration error:", err.message);
@@ -110,6 +122,7 @@ export default function RegisterScreen() {
       ];
       const hasErrors = step1Errors.some((field) => errors[field]);
       if (!hasErrors) {
+        analyticsService.trackEvent("register_step1_completed");
         setStep(2);
       }
     });

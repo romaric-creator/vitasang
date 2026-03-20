@@ -4,10 +4,52 @@ const Utilisateur = db.Utilisateur;
 const ProfilDonneur = db.ProfilDonneur;
 const LogNotification = db.LogNotification;
 const logger = require("../config/logger");
-const { calculateDistance } = require("../utils/geoHelpers");
+const { calculateDistance, haversineSQL } = require("../utils/geoHelpers");
 const expoNotifications = require("../utils/expoNotifications");
 const { ErrorTypes } = require("../utils/errorHandler");
 const { notificationQueue } = require("../jobs/notification.queue");
+
+/**
+ * Tente de valider automatiquement une alerte si elle est proche d'un centre.
+ * @param {object} alerte L'instance de l'alerte Sequelize
+ */
+const attemptAutoValidation = async (alerte) => {
+  const { latitude, longitude, id_alerte, groupe_requis, rayon_action_km } = alerte;
+
+  const haversine = haversineSQL(latitude, longitude);
+  const [centresProches] = await db.sequelize.query(`
+    SELECT id_centre, nom_centre, ${haversine} AS distance
+    FROM Centres_Sante
+    HAVING distance <= 2
+    ORDER BY distance ASC
+    LIMIT 1
+  `);
+
+  if (centresProches.length > 0) {
+    logger.info("Auto-validating alert (proximity to center)", {
+      alertId: id_alerte,
+      centerId: centresProches[0].id_centre,
+      distance: centresProches[0].distance
+    });
+
+    alerte.statut = "en_cours";
+    alerte.id_centre = centresProches[0].id_centre;
+    await alerte.save();
+
+    // Déposer immédiatement dans la file d'attente
+    await notificationQueue.add("sendAlert", {
+      alertId: id_alerte,
+      groupe_requis,
+      latitude,
+      longitude,
+      rayon_action_km,
+      validatorId: null // Auto-validated
+    });
+
+    return true;
+  }
+  return false;
+};
 
 const bloodCompatibility = {
   "O-": ["O-", "O+", "A-", "A+", "B-", "B+", "AB-", "AB+"],
@@ -53,20 +95,73 @@ exports.createAlert = async (req, res, next) => {
       statut: "en_attente_validation", // New default status
     });
 
-    logger.info("Alert created and is awaiting validation", {
+    logger.info("Alert created, checking for auto-validation", {
       alertId: alerte.id_alerte,
     });
 
+    const isAutoValidated = await attemptAutoValidation(alerte);
+
     res.status(201).json({
       success: true,
-      message: "Alerte créée et en attente de validation.",
+      message: isAutoValidated
+        ? "Alerte validée automatiquement grâce à votre proximité avec un hôpital !"
+        : "Alerte créée et en attente de validation.",
       alerte,
+      autoValidated: isAutoValidated
     });
   } catch (error) {
     logger.error("Error creating alert", {
       error: error.message,
       userId: id_initiateur,
     });
+    next(error);
+  }
+};
+
+exports.createGuestAlert = async (req, res, next) => {
+  const {
+    latitude,
+    longitude,
+    groupe_sanguin,
+    lieu,
+    description,
+    nom_patient,
+    telephone_contact,
+  } = req.body;
+
+  try {
+    logger.info("Creating GUEST alert", { nom_patient, groupe_sanguin });
+
+    const alerte = await Alerte.create({
+      groupe_requis: groupe_sanguin,
+      degre_urgence: "URGENT", // Guest alerts are usually urgent
+      rayon_action_km: 15,    // Default radius for guests
+      id_initiateur: null,    // Explicitly null for guest
+      latitude,
+      longitude,
+      lieu,
+      description: description || `Urgence pour ${nom_patient}`,
+      nom_patient,
+      telephone_contact,
+      statut: "en_attente_validation",
+    });
+
+    logger.info("Guest alert created, checking for auto-validation", {
+      alertId: alerte.id_alerte,
+    });
+
+    const isAutoValidated = await attemptAutoValidation(alerte);
+
+    res.status(201).json({
+      success: true,
+      message: isAutoValidated
+        ? "Urgence SOS validée automatiquement ! Les donneurs sont en cours de notification."
+        : "Alerte d'urgence créée ! Un agent va la valider très rapidement.",
+      alertId: alerte.id_alerte,
+      autoValidated: isAutoValidated
+    });
+  } catch (error) {
+    logger.error("Error creating guest alert", { error: error.message });
     next(error);
   }
 };

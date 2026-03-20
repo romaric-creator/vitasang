@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback, memo } from "react";
 import {
   StyleSheet,
   Text,
@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   FlatList,
   RefreshControl,
+  Platform,
 } from "react-native";
 import { ModernSpinner } from "@/components/ModernSpinner";
 import { SkeletonListLoader } from "@/components/SkeletonLoader";
@@ -68,7 +69,7 @@ export default function Historique() {
     setRefreshing(false);
   };
 
-  const formatDate = (dateString: string) => {
+  const formatDate = useCallback((dateString: string) => {
     try {
       const date = new Date(dateString);
       return date.toLocaleDateString(
@@ -82,9 +83,9 @@ export default function Historique() {
     } catch {
       return dateString;
     }
-  };
+  }, [i18n.language]);
 
-  const DonationCard = ({ item }: { item: DonationHistory }) => {
+  const DonationCard = memo(({ item }: { item: DonationHistory }) => {
     const data: DataCardRow[] = [
       { label: t("history.date"), value: formatDate(item.date_don) },
       { label: t("history.center"), value: item.centre?.nom || "N/A" },
@@ -98,7 +99,11 @@ export default function Historique() {
         data={data}
       />
     );
-  };
+  });
+
+  const renderItem = useCallback(({ item }: { item: DonationHistory }) => (
+    <DonationCard item={item} />
+  ), [DonationCard]);
 
   if (loading) {
     return (
@@ -126,7 +131,7 @@ export default function Historique() {
       ) : (
         <FlatList
           data={donations}
-          renderItem={({ item }) => <DonationCard item={item} />}
+          renderItem={renderItem}
           keyExtractor={(item) => item.id.toString()}
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
@@ -134,6 +139,10 @@ export default function Historique() {
           scrollEnabled={true}
           contentContainerStyle={styles.listContent}
           showsVerticalScrollIndicator={false}
+          initialNumToRender={8}
+          maxToRenderPerBatch={10}
+          windowSize={5}
+          removeClippedSubviews={Platform.OS === 'android'}
         />
       )}
     </ThemedView>

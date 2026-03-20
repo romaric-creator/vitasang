@@ -26,65 +26,65 @@ interface Section {
   items: string[];
 }
 
-const sections: Section[] = [
-  {
-    id: 1,
-    title: t("helpAndAdvice.sectionAdvantagesTitle"),
-    icon: "heart",
-    color: color.primary,
-    items: [
-      t("helpAndAdvice.sectionAdvantagesItem1"),
-      t("helpAndAdvice.sectionAdvantagesItem2"),
-      t("helpAndAdvice.sectionAdvantagesItem3"),
-      t("helpAndAdvice.sectionAdvantagesItem4"),
-      t("helpAndAdvice.sectionAdvantagesItem5"),
-    ],
-  },
-  {
-    id: 2,
-    title: t("helpAndAdvice.sectionPreparationTitle"),
-    icon: "check-circle",
-    color: color.success,
-    items: [
-      t("helpAndAdvice.sectionPreparationItem1"),
-      t("helpAndAdvice.sectionPreparationItem2"),
-      t("helpAndAdvice.sectionPreparationItem3"),
-      t("helpAndAdvice.sectionPreparationItem4"),
-      t("helpAndAdvice.sectionPreparationItem5"),
-    ],
-  },
-  {
-    id: 3,
-    title: t("helpAndAdvice.sectionAfterDonationTitle"),
-    icon: "heartbeat",
-    color: color.secondary,
-    items: [
-      t("helpAndAdvice.sectionAfterDonationItem1"),
-      t("helpAndAdvice.sectionAfterDonationItem2"),
-      t("helpAndAdvice.sectionAfterDonationItem3"),
-      t("helpAndAdvice.sectionAfterDonationItem4"),
-      t("helpAndAdvice.sectionAfterDonationItem5"),
-    ],
-  },
-  {
-    id: 4,
-    title: t("helpAndAdvice.sectionWhoCanDonateTitle"),
-    icon: "users",
-    color: color.info,
-    items: [
-      t("helpAndAdvice.sectionWhoCanDonateItem1"),
-      t("helpAndAdvice.sectionWhoCanDonateItem2"),
-      t("helpAndAdvice.sectionWhoCanDonateItem3"),
-      t("helpAndAdvice.sectionWhoCanDonateItem4"),
-      t("helpAndAdvice.sectionWhoCanDonateItem5"),
-    ],
-  },
-];
-
 export default function AideEtConseilScreen() {
   const { t } = useTranslation();
   const router = useRouter();
   const [expandedSection, setExpandedSection] = useState<number | null>(null);
+
+  const sections: Section[] = [
+    {
+      id: 1,
+      title: t("helpAndAdvice.sectionAdvantagesTitle"),
+      icon: "heart",
+      color: color.primary,
+      items: [
+        t("helpAndAdvice.sectionAdvantagesItem1"),
+        t("helpAndAdvice.sectionAdvantagesItem2"),
+        t("helpAndAdvice.sectionAdvantagesItem3"),
+        t("helpAndAdvice.sectionAdvantagesItem4"),
+        t("helpAndAdvice.sectionAdvantagesItem5"),
+      ],
+    },
+    {
+      id: 2,
+      title: t("helpAndAdvice.sectionPreparationTitle"),
+      icon: "check-circle",
+      color: color.success,
+      items: [
+        t("helpAndAdvice.sectionPreparationItem1"),
+        t("helpAndAdvice.sectionPreparationItem2"),
+        t("helpAndAdvice.sectionPreparationItem3"),
+        t("helpAndAdvice.sectionPreparationItem4"),
+        t("helpAndAdvice.sectionPreparationItem5"),
+      ],
+    },
+    {
+      id: 3,
+      title: t("helpAndAdvice.sectionAfterDonationTitle"),
+      icon: "heartbeat",
+      color: color.secondary,
+      items: [
+        t("helpAndAdvice.sectionAfterDonationItem1"),
+        t("helpAndAdvice.sectionAfterDonationItem2"),
+        t("helpAndAdvice.sectionAfterDonationItem3"),
+        t("helpAndAdvice.sectionAfterDonationItem4"),
+        t("helpAndAdvice.sectionAfterDonationItem5"),
+      ],
+    },
+    {
+      id: 4,
+      title: t("helpAndAdvice.sectionWhoCanDonateTitle"),
+      icon: "users",
+      color: color.info,
+      items: [
+        t("helpAndAdvice.sectionWhoCanDonateItem1"),
+        t("helpAndAdvice.sectionWhoCanDonateItem2"),
+        t("helpAndAdvice.sectionWhoCanDonateItem3"),
+        t("helpAndAdvice.sectionWhoCanDonateItem4"),
+        t("helpAndAdvice.sectionWhoCanDonateItem5"),
+      ],
+    },
+  ];
 
   return (
     <ThemedView style={styles.container}>

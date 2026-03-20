@@ -11,6 +11,7 @@ interface BloodGroupSelectorProps {
 }
 
 const BLOOD_GROUPS = ["A+", "A-", "AB+", "AB-", "B+", "B-", "O+", "O-"];
+const UNKNOWN_VALUE = "";
 
 import { useTranslation } from "react-i18next";
 
@@ -26,7 +27,7 @@ export const BloodGroupSelector: React.FC<BloodGroupSelectorProps> = ({
     return (
         <View style={formStyles.field}>
             <Text style={formStyles.label}>
-                {t('common.bloodGroup')} <Text style={{ color: color.error }}>*</Text>
+                {t('common.bloodGroup')}
             </Text>
             <View style={[styles.grid, isError && { borderColor: color.error }]}>
                 {BLOOD_GROUPS.map((group) => (
@@ -49,6 +50,24 @@ export const BloodGroupSelector: React.FC<BloodGroupSelectorProps> = ({
                         </Text>
                     </TouchableOpacity>
                 ))}
+
+                <TouchableOpacity
+                    style={[
+                        styles.unknownOption,
+                        (value === UNKNOWN_VALUE || !value) && styles.selectedUnknownOption,
+                    ]}
+                    onPress={() => onSelect(UNKNOWN_VALUE)}
+                    activeOpacity={0.7}
+                >
+                    <Text
+                        style={[
+                            styles.label,
+                            (value === UNKNOWN_VALUE || !value) && styles.selectedLabel,
+                        ]}
+                    >
+                        {t('register.bloodGroupUnknown') || "Je ne connais pas mon groupe"}
+                    </Text>
+                </TouchableOpacity>
             </View>
             {error && isError && (
                 <Text style={formStyles.errorText}>{error}</Text>
@@ -86,5 +105,20 @@ const styles = StyleSheet.create({
     },
     selectedLabel: {
         color: color.textWhite,
+    },
+    unknownOption: {
+        width: "100%",
+        marginTop: 8,
+        paddingVertical: 12,
+        borderRadius: 10,
+        borderWidth: 1,
+        borderColor: color.border,
+        justifyContent: "center",
+        alignItems: "center",
+        backgroundColor: "white",
+    },
+    selectedUnknownOption: {
+        backgroundColor: color.primary,
+        borderColor: color.primary,
     },
 });

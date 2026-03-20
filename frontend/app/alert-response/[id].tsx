@@ -13,6 +13,7 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { TabBarIcon } from "@/components/TabBarIcon";
 import { color } from "@/constant/color";
 import { getAlertStatus, respondToAlert } from "@/services/user.service";
+import { analyticsService } from "@/services/analyticsService";
 import { useTranslation } from "react-i18next";
 import ThemedView from "@/components/ThemedView";
 import { useNotification } from "@/context/NotificationContext";
@@ -49,9 +50,15 @@ export default function AlertResponse() {
       setIsResponding(true);
       await respondToAlert(Number(id), response);
       if (response === "accepte") {
+        analyticsService.trackEvent(analyticsService.events.ALERT_ACCEPTED, {
+          alertId: id,
+        });
         setHasAccepted(true);
         show("success", t("alert.response.success"));
       } else {
+        analyticsService.trackEvent(analyticsService.events.ALERT_IGNORED, {
+          alertId: id,
+        });
         router.replace("/(tabs)");
       }
     } catch (error: any) {
@@ -148,7 +155,16 @@ export default function AlertResponse() {
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.btn, styles.acceptBtn]}
-                onPress={() => handleResponse("accepte")}
+                onPress={() => {
+                  if (params.confirmedEligibility === "true") {
+                    handleResponse("accepte");
+                  } else {
+                    router.push({
+                      pathname: "/alert-response/[id]/eligibility",
+                      params: { id },
+                    });
+                  }
+                }}
                 disabled={isResponding}
               >
                 {isResponding ? (

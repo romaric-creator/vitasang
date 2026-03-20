@@ -19,10 +19,26 @@ function calculateDistance(lat1, lon1, lat2, lon2) {
   return distance;
 }
 
-function deg2rad(deg) {
-  return deg * (Math.PI / 180);
+/**
+ * Retourne la clause SQL Haversine pour calculer la distance dans une requête.
+ * @param {number} lat Latitude cible
+ * @param {number} lng Longitude cible
+ * @param {string} tableAlias Alias de la table contenant les colonnes lat/long
+ * @param {string} latCol Nom de la colonne latitude (défaut: 'latitude')
+ * @param {string} lngCol Nom de la colonne longitude (défaut: 'longitude')
+ */
+function haversineSQL(lat, lng, tableAlias = "", latCol = "latitude", lngCol = "longitude") {
+  const prefix = tableAlias ? `\`${tableAlias}\`.` : "";
+  return `(
+    6371 * acos(
+      cos(radians(${lat})) * cos(radians(${prefix}\`${latCol}\`)) *
+      cos(radians(${prefix}\`${lngCol}\`) - radians(${lng})) +
+      sin(radians(${lat})) * sin(radians(${prefix}\`${latCol}\`))
+    )
+  )`;
 }
 
 module.exports = {
   calculateDistance,
+  haversineSQL,
 };

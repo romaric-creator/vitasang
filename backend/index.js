@@ -81,6 +81,7 @@ const userRoute = require("./routes/users.routes");
 const alertRoute = require("./routes/alerts.routes");
 const rendezvousRoute = require("./routes/rendezvous.routes");
 const centresRoute = require("./routes/centres.routes");
+const campaignsRoute = require("./routes/campaigns.routes");
 
 // Limiters spécifiques AVANT le global
 app.use("/api/users/register", registerLimiter);
@@ -93,6 +94,7 @@ app.use("/api/users", userRoute);
 app.use("/api/alerts", alertRoute);
 app.use("/api/rendez-vous", rendezvousRoute);
 app.use("/api/centres", centresRoute);
+app.use("/api/campaigns", campaignsRoute);
 
 // Route racine
 app.get("/", (req, res) => {

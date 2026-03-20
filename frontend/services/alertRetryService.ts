@@ -238,3 +238,29 @@ export const useAlertRetry = () => {
     dismissAlert,
   };
 };
+
+/**
+ * Fonction utilitaire pour lancer le check en arrière-plan sans hook
+ */
+export const checkAlertsBackground = async (showAlert: any) => {
+  try {
+    const alertsReadyForRetry = await AlertRetryManager.getAlertsReadyForRetry();
+
+    if (alertsReadyForRetry.length > 0) {
+      for (const alert of alertsReadyForRetry) {
+        await AlertRetryManager.markAlertAsRetried(alert.id);
+        const message = `${alert.type || "Alerte de don"} - ${alert.lieu || "Localisation"} est toujours active`;
+        showAlert(message, {
+          duration: 8000,
+          action: {
+            text: "Répondre",
+            onPress: () => { },
+          },
+        });
+      }
+    }
+    await AlertRetryManager.cleanupExpiredAlerts();
+  } catch (error) {
+    console.error("Error in checkAlertsBackground:", error);
+  }
+};

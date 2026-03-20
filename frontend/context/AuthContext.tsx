@@ -4,6 +4,7 @@ import { getData, storeData, removeData } from '@/utils/storage';
 import { loginUser as apiLoginUser, sendAlert } from '@/services/user.service'; // Renommer pour éviter le conflit
 import { usePostHog } from 'posthog-react-native';
 import { setAuthToken } from '@/config/axiosConfig';
+import { ANALYTICS_EVENT, AnalyticsEvent } from '@/services/analyticsService';
 
 interface AuthContextType {
   isAuth: boolean | null;
@@ -29,6 +30,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setIsAuth(false);
     });
 
+    // Écouter les événements de tracking globaux
+    const analyticsSubscription = DeviceEventEmitter.addListener(ANALYTICS_EVENT, (event: AnalyticsEvent) => {
+      if (posthog) {
+        posthog.capture(event.name, event.properties);
+      }
+    });
+
+
     const checkAuthStatus = async () => {
       try {
         const token = await getData('token');
@@ -51,13 +60,18 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     };
     checkAuthStatus();
 
-    return () => logoutSubscription.remove();
+    return () => {
+      logoutSubscription.remove();
+      analyticsSubscription.remove();
+    };
   }, [posthog]);
 
   const signIn = async (telephone: string, mot_de_passe: string) => {
     setIsLoading(true);
+    posthog?.capture('login_started');
     try {
       const data = await apiLoginUser(telephone, mot_de_passe);
+      posthog?.capture('login_success', { role: data.user.role });
       setAuthToken(data.token);
       await storeData('token', data.token);
       const userToStore = {
@@ -87,8 +101,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       }
 
       setIsAuth(true);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Sign in failed:", error);
+      posthog?.capture('login_failed', { error: error.message });
       setIsAuth(false);
       throw error; // Re-throw to allow UI to handle specific login errors
     } finally {

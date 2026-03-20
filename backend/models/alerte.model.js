@@ -9,9 +9,11 @@ module.exports = (sequelize, DataTypes) => {
       },
       id_initiateur: {
         type: DataTypes.INTEGER,
-        allowNull: false,
+        allowNull: true,
         references: { model: 'Utilisateurs', key: 'id_utilisateur' }
       },
+      nom_patient: { type: DataTypes.STRING(100) },
+      telephone_contact: { type: DataTypes.STRING(20) },
       id_centre: {
         type: DataTypes.INTEGER,
         allowNull: true,
