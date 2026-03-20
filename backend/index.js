@@ -59,7 +59,7 @@ app.use(
   }),
 );
 
-app.use(require('compression')());
+app.use(require("compression")());
 app.use(express.json({ limit: "1mb" }));
 app.use(express.urlencoded({ limit: "1mb", extended: true }));
 app.use(morgan("dev"));
@@ -83,16 +83,16 @@ const rendezvousRoute = require("./routes/rendezvous.routes");
 const centresRoute = require("./routes/centres.routes");
 
 // Limiters spécifiques AVANT le global
-app.use("/api/v1/users/register", registerLimiter);
-app.use("/api/v1/users/login", authLimiter);
+app.use("/api/users/register", registerLimiter);
+app.use("/api/users/login", authLimiter);
 
 // Global rate limiter
 app.use(globalLimiter);
 
-app.use("/api/v1/users", userRoute);
-app.use("/api/v1/alerts", alertRoute);
-app.use("/api/v1/rendez-vous", rendezvousRoute);
-app.use("/api/v1/centres", centresRoute);
+app.use("/api/users", userRoute);
+app.use("/api/alerts", alertRoute);
+app.use("/api/rendez-vous", rendezvousRoute);
+app.use("/api/centres", centresRoute);
 
 // Route racine
 app.get("/", (req, res) => {

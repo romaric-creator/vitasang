@@ -11,7 +11,7 @@ import Dashboard from "./pages/Dashboard";
 import BloodStock from "./pages/BloodStock";
 import Appointments from "./pages/Appointments";
 import Alerts from "./pages/Alerts";
-import Map from "./pages/Map";
+// ...existing code...
 
 function App() {
   return (
@@ -19,7 +19,6 @@ function App() {
       <Routes>
         {/* Public Routes */}
         <Route path="/login" element={<Login />} />
-
         {/* Protected Routes inside Layout */}
         <Route
           path="/dashboard"
@@ -67,19 +66,7 @@ function App() {
             </ProtectedRoute>
           }
         />
-        <Route
-          path="/map"
-          element={
-            <ProtectedRoute
-              requiredRole={["personnel", "admin", "centre_manager"]}
-            >
-              <Layout>
-                <Map />
-              </Layout>
-            </ProtectedRoute>
-          }
-        />
-
+        // ...existing code...
         {/* Redirect Root and 404 */}
         <Route path="/" element={<Navigate to="/dashboard" replace />} />
         <Route path="*" element={<Navigate to="/dashboard" replace />} />

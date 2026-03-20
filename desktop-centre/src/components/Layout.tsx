@@ -60,10 +60,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
               <span className="material-symbols-outlined">event_available</span>
               <span>Rendez-vous</span>
             </NavLink>
-            <NavLink to="/map" className={getNavLinkClass}>
-              <span className="material-symbols-outlined">map</span>
-              <span>Carte des centres</span>
-            </NavLink>
+            // ...existing code...
           </nav>
         </div>
 

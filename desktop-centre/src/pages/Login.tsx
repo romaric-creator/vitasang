@@ -25,14 +25,7 @@ const Login = () => {
       setError("Le numéro de téléphone est requis");
       return false;
     }
-    // Validation du format du numéro de téléphone
-    // Accepte +237 6XXXXXXXX ou 2XXXXXXXX (9 chiffres)
-    const phoneRegex = /^(\+237\s?[26]\d{9}|[26]\d{9})$/;
-    const cleanedPhone = telephone.replace(/\s/g, ""); // Supprime les espaces pour la validation
-    if (!phoneRegex.test(cleanedPhone)) {
-      setError("Format du numéro de téléphone invalide. Ex: +237 6XXXXXXXX ou 2XXXXXXXX");
-      return false;
-    }
+
     if (!password.trim()) {
       setError("Le mot de passe est requis");
       return false;
