@@ -26,7 +26,7 @@ services:
       - key: CORS_ORIGIN
         value: https://vitasang-admin.vercel.app
       - key: REDIS_URL
-        value: rediss://default:gQAAAAAAAS0MAAIncDExMTljNGRiNzM5Mzc0MjYyOTRlNDMyMmQ1ZTMyNDcxMHAxNzcwNjg@healthy-burro-77068.upstash.io:6379
+        value: redis-cli --tls -u redis://default:gQAAAAAAATJDAAIncDJjNGY3ZTdmY2QxODM0NThlYTM0N2I1ODMzODI3NWZjOHAyNzg0MDM@large-mutt-78403.upstash.io:6379
       - key: CLOUDINARY_CLOUD_NAME
         value: dimlkizdi
       - key: CLOUDINARY_API_KEY
