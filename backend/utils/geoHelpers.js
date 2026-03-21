@@ -1,4 +1,13 @@
 /**
+ * Convertit des degrés en radians.
+ * @param {number} deg
+ * @returns {number}
+ */
+function deg2rad(deg) {
+  return deg * (Math.PI / 180);
+}
+
+/**
  * Calcule la distance entre deux points GPS en utilisant la formule de Haversine.
  * @param {number} lat1 Latitude du point 1
  * @param {number} lon1 Longitude du point 1

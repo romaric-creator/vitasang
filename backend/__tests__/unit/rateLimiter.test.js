@@ -10,7 +10,7 @@ describe("Rate Limiter Middleware", () => {
   beforeEach(() => {
     req = {
       ip: "192.168.1.1",
-      path: "/api/v1/test",
+      path: "/api/test",
       method: "GET",
       headers: {
         "x-forwarded-for": "192.168.1.1",

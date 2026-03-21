@@ -26,6 +26,8 @@ jest.mock('../../models', () => ({
   },
   sequelize: {
     transaction: jest.fn((fn) => fn({ transaction: true })),
+    query: jest.fn().mockResolvedValue([[], {}]),
+    literal: jest.fn((val) => val),
   },
 }));
 
@@ -98,7 +100,7 @@ describe('Alerts Controller - Integration Tests', () => {
 
     // Import routes after mocks are set up
     const alertRoute = require('../../routes/alerts.routes');
-    app.use('/api/v1/alerts', alertRoute);
+    app.use('/api/alerts', alertRoute);
 
     // Generic error handler for tests
     app.use((err, req, res, next) => {
@@ -109,7 +111,7 @@ describe('Alerts Controller - Integration Tests', () => {
     });
   });
 
-  describe('POST /api/v1/alerts (Create Alert)', () => {
+  describe('POST /api/alerts (Create Alert)', () => {
     it('should create alert with valid data', async () => {
       const alertData = {
         latitude: 3.848,
@@ -121,7 +123,7 @@ describe('Alerts Controller - Integration Tests', () => {
       };
 
       const response = await request(app)
-        .post('/api/v1/alerts')
+        .post('/api/alerts')
         .set('Authorization', `Bearer ${token}`)
         .send(alertData);
 
@@ -141,7 +143,7 @@ describe('Alerts Controller - Integration Tests', () => {
       };
 
       const response = await request(app)
-        .post('/api/v1/alerts')
+        .post('/api/alerts')
         .set('Authorization', `Bearer ${token}`)
         .send(alertData);
 
@@ -155,7 +157,7 @@ describe('Alerts Controller - Integration Tests', () => {
       };
 
       const response = await request(app)
-        .post('/api/v1/alerts')
+        .post('/api/alerts')
         .set('Authorization', `Bearer ${token}`)
         .send(alertData);
 
@@ -174,7 +176,7 @@ describe('Alerts Controller - Integration Tests', () => {
       };
 
       const response = await request(app)
-        .post('/api/v1/alerts')
+        .post('/api/alerts')
         .set('Authorization', `Bearer ${token}`)
         .send(alertData);
 
@@ -193,7 +195,7 @@ describe('Alerts Controller - Integration Tests', () => {
       };
 
       const response = await request(app)
-        .post('/api/v1/alerts')
+        .post('/api/alerts')
         .set('Authorization', `Bearer ${token}`)
         .send(alertData);
 
@@ -201,13 +203,13 @@ describe('Alerts Controller - Integration Tests', () => {
     });
   });
 
-  describe('GET /api/v1/alerts/:id/status', () => {
+  describe('GET /api/alerts/:id/status', () => {
     it('should attempt to retrieve alert details', async () => {
       const { Alerte } = require('../../models');
       Alerte.findByPk.mockResolvedValue(null); // Not found
 
       const response = await request(app)
-        .get('/api/v1/alerts/1/status')
+        .get('/api/alerts/1/status')
         .set('Authorization', `Bearer ${token}`);
 
       // Either found (200) or not found (404)
@@ -215,14 +217,14 @@ describe('Alerts Controller - Integration Tests', () => {
     });
   });
 
-  describe('PUT /api/v1/alerts/:id (Update Alert)', () => {
+  describe('PUT /api/alerts/:id (Update Alert)', () => {
     it('should attempt to update alert status', async () => {
       const updateData = {
         statut: 'annulee',
       };
 
       const response = await request(app)
-        .put('/api/v1/alerts/1')
+        .put('/api/alerts/1')
         .set('Authorization', `Bearer ${token}`)
         .send(updateData);
 
@@ -235,7 +237,7 @@ describe('Alerts Controller - Integration Tests', () => {
       };
 
       const response = await request(app)
-        .put('/api/v1/alerts/1')
+        .put('/api/alerts/1')
         .set('Authorization', `Bearer ${token}`)
         .send(updateData);
 
@@ -243,10 +245,10 @@ describe('Alerts Controller - Integration Tests', () => {
     });
   });
 
-  describe('DELETE /api/v1/alerts/:id (Cancel Alert)', () => {
+  describe('DELETE /api/alerts/:id (Cancel Alert)', () => {
     it('should attempt to cancel alert', async () => {
       const response = await request(app)
-        .delete('/api/v1/alerts/1')
+        .delete('/api/alerts/1')
         .set('Authorization', `Bearer ${token}`);
 
       expect([200, 403, 404]).toContain(response.status);

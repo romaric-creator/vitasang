@@ -12,7 +12,8 @@ const sequelize = new Sequelize(dbConfig.DB, dbConfig.USER, dbConfig.PASSWORD, {
   host: dbConfig.HOST,
   port: dbConfig.PORT,
   dialect: dbConfig.dialect,
-  dialectModule: require("mysql2"), // Ajout indispensable pour Vercel
+  dialectModule: dbConfig.dialect === "sqlite" ? require("sqlite3") : require("mysql2"),
+  storage: dbConfig.storage,
   pool: {
     max: dbConfig.pool.max,
     min: dbConfig.pool.min,

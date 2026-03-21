@@ -22,6 +22,8 @@ jest.mock('../../models', () => ({
   },
   sequelize: {
     transaction: jest.fn((fn) => fn({ transaction: true })),
+    query: jest.fn().mockResolvedValue([[], {}]),
+    literal: jest.fn((val) => val),
   },
 }));
 
@@ -88,7 +90,7 @@ describe('Rendez-vous Controller - Integration Tests', () => {
     });
 
     const rendezvousRoute = require('../../routes/rendezvous.routes');
-    app.use('/api/v1/rendez-vous', rendezvousRoute);
+    app.use('/api/rendez-vous', rendezvousRoute);
 
     // Generic error handler for tests
     app.use((err, req, res, next) => {
@@ -100,7 +102,7 @@ describe('Rendez-vous Controller - Integration Tests', () => {
     });
   });
 
-  describe('POST /api/v1/rendez-vous (Create)', () => {
+  describe('POST /api/rendez-vous (Create)', () => {
     it('should create rendez-vous with valid data', async () => {
       // CORRECTION: Le schéma attend 'date_rdv', pas 'date_rendezvous'
       const rdvData = {
@@ -110,7 +112,7 @@ describe('Rendez-vous Controller - Integration Tests', () => {
       };
 
       const response = await request(app)
-        .post('/api/v1/rendez-vous')
+        .post('/api/rendez-vous')
         .set('Authorization', `Bearer ${token}`)
         .send(rdvData);
 
@@ -126,7 +128,7 @@ describe('Rendez-vous Controller - Integration Tests', () => {
       };
 
       const response = await request(app)
-        .post('/api/v1/rendez-vous')
+        .post('/api/rendez-vous')
         .set('Authorization', `Bearer ${token}`)
         .send(rdvData);
 
@@ -141,7 +143,7 @@ describe('Rendez-vous Controller - Integration Tests', () => {
       };
 
       const response = await request(app)
-        .post('/api/v1/rendez-vous')
+        .post('/api/rendez-vous')
         .set('Authorization', `Bearer ${token}`)
         .send(rdvData);
 
@@ -156,7 +158,7 @@ describe('Rendez-vous Controller - Integration Tests', () => {
       };
 
       const response = await request(app)
-        .post('/api/v1/rendez-vous')
+        .post('/api/rendez-vous')
         .set('Authorization', `Bearer ${token}`)
         .send(rdvData);
 
@@ -164,20 +166,20 @@ describe('Rendez-vous Controller - Integration Tests', () => {
     });
   });
 
-  describe('GET /api/v1/rendez-vous/my-appointments', () => {
+  describe('GET /api/rendez-vous/my-appointments', () => {
     it('should retrieve user rendez-vous list', async () => {
       const response = await request(app)
-        .get('/api/v1/rendez-vous/my-appointments')
+        .get('/api/rendez-vous/my-appointments')
         .set('Authorization', `Bearer ${token}`);
 
       expect([200, 404]).toContain(response.status);
     });
   });
 
-  describe('GET /api/v1/rendez-vous/:id', () => {
+  describe('GET /api/rendez-vous/:id', () => {
     it('should get rendez-vous details when found', async () => {
       const response = await request(app)
-        .get('/api/v1/rendez-vous/1')
+        .get('/api/rendez-vous/1')
         .set('Authorization', `Bearer ${token}`);
 
       expect([200, 403, 404]).toContain(response.status);
@@ -188,17 +190,17 @@ describe('Rendez-vous Controller - Integration Tests', () => {
       RendezVous.findByPk.mockResolvedValue(null);
 
       const response = await request(app)
-        .get('/api/v1/rendez-vous/99999')
+        .get('/api/rendez-vous/99999')
         .set('Authorization', `Bearer ${token}`);
 
       expect(response.status).toBe(404);
     });
   });
 
-  describe('DELETE /api/v1/rendez-vous/:id (Cancel)', () => {
+  describe('DELETE /api/rendez-vous/:id (Cancel)', () => {
     it('should cancel rendez-vous owned by user', async () => {
       const response = await request(app)
-        .delete('/api/v1/rendez-vous/1')
+        .delete('/api/rendez-vous/1')
         .set('Authorization', `Bearer ${token}`);
 
       expect([200, 403, 404]).toContain(response.status);
@@ -209,7 +211,7 @@ describe('Rendez-vous Controller - Integration Tests', () => {
       RendezVous.findByPk.mockResolvedValue(null);
 
       const response = await request(app)
-        .delete('/api/v1/rendez-vous/99999')
+        .delete('/api/rendez-vous/99999')
         .set('Authorization', `Bearer ${token}`);
 
       expect(response.status).toBe(404);

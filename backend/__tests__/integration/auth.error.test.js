@@ -4,9 +4,9 @@ const request = require("supertest");
 const app = require("../../index");
 
 describe("Authentication Error Cases", () => {
-  describe("POST /api/v1/users/register - Error Handling", () => {
+  describe("POST /api/users/register - Error Handling", () => {
     it("should return 400 for missing required fields", async () => {
-      const res = await request(app).post("/api/v1/users/register").send({
+      const res = await request(app).post("/api/users/register").send({
         nom: "Test",
         prenom: "User",
         // missing telephone, mot_de_passe, groupe_sanguin
@@ -18,7 +18,7 @@ describe("Authentication Error Cases", () => {
     });
 
     it("should return 400 for invalid phone format", async () => {
-      const res = await request(app).post("/api/v1/users/register").send({
+      const res = await request(app).post("/api/users/register").send({
         nom: "Test",
         prenom: "User",
         telephone: "123456", // Invalid format
@@ -31,7 +31,7 @@ describe("Authentication Error Cases", () => {
     });
 
     it("should return 400 for weak password", async () => {
-      const res = await request(app).post("/api/v1/users/register").send({
+      const res = await request(app).post("/api/users/register").send({
         nom: "Test",
         prenom: "User",
         telephone: "6512345678",
@@ -44,7 +44,7 @@ describe("Authentication Error Cases", () => {
     });
 
     it("should return 400 for invalid blood type", async () => {
-      const res = await request(app).post("/api/v1/users/register").send({
+      const res = await request(app).post("/api/users/register").send({
         nom: "Test",
         prenom: "User",
         telephone: "6512345678",
@@ -58,7 +58,7 @@ describe("Authentication Error Cases", () => {
 
     it("should return 409 for duplicate user", async () => {
       // First registration
-      await request(app).post("/api/v1/users/register").send({
+      await request(app).post("/api/users/register").send({
         nom: "Test",
         prenom: "User",
         telephone: "6599999999",
@@ -67,7 +67,7 @@ describe("Authentication Error Cases", () => {
       });
 
       // Duplicate registration
-      const res = await request(app).post("/api/v1/users/register").send({
+      const res = await request(app).post("/api/users/register").send({
         nom: "Test2",
         prenom: "User2",
         telephone: "6599999999", // Same phone
@@ -80,10 +80,10 @@ describe("Authentication Error Cases", () => {
     });
   });
 
-  describe("POST /api/v1/users/login - Error Handling", () => {
+  describe("POST /api/users/login - Error Handling", () => {
     beforeEach(async () => {
       // Create a test user
-      await request(app).post("/api/v1/users/register").send({
+      await request(app).post("/api/users/register").send({
         nom: "Test",
         prenom: "User",
         telephone: "6588888888",
@@ -93,7 +93,7 @@ describe("Authentication Error Cases", () => {
     });
 
     it("should return 400 for missing credentials", async () => {
-      const res = await request(app).post("/api/v1/users/login").send({
+      const res = await request(app).post("/api/users/login").send({
         telephone: "6588888888",
         // Missing password
       });
@@ -103,7 +103,7 @@ describe("Authentication Error Cases", () => {
     });
 
     it("should return 404 for non-existent user", async () => {
-      const res = await request(app).post("/api/v1/users/login").send({
+      const res = await request(app).post("/api/users/login").send({
         telephone: "6511111111",
         mot_de_passe: "TestPass123",
       });
@@ -113,7 +113,7 @@ describe("Authentication Error Cases", () => {
     });
 
     it("should return 401 for wrong password", async () => {
-      const res = await request(app).post("/api/v1/users/login").send({
+      const res = await request(app).post("/api/users/login").send({
         telephone: "6588888888",
         mot_de_passe: "WrongPass123",
       });
@@ -123,7 +123,7 @@ describe("Authentication Error Cases", () => {
     });
 
     it("should return 200 and token for valid credentials", async () => {
-      const res = await request(app).post("/api/v1/users/login").send({
+      const res = await request(app).post("/api/users/login").send({
         telephone: "6588888888",
         mot_de_passe: "TestPass123",
       });
@@ -139,7 +139,7 @@ describe("Authentication Error Cases", () => {
     let userId;
 
     beforeEach(async () => {
-      const registerRes = await request(app).post("/api/v1/users/register").send({
+      const registerRes = await request(app).post("/api/users/register").send({
         nom: "Test",
         prenom: "User",
         telephone: "6577777777",
@@ -164,7 +164,7 @@ describe("Authentication Error Cases", () => {
     });
 
     it("should return 401 for missing token on protected route", async () => {
-      const res = await request(app).get(`/api/v1/users/${userId}`);
+      const res = await request(app).get(`/api/users/${userId}`);
       // No Authorization header
 
       expect(res.status).toBe(401);
@@ -173,7 +173,7 @@ describe("Authentication Error Cases", () => {
 
     it("should return 401 for invalid token format", async () => {
       const res = await request(app)
-        .get(`/api/v1/users/${userId}`)
+        .get(`/api/users/${userId}`)
         .set("Authorization", "Bearer invalid_token_format");
 
       expect(res.status).toBe(401);
@@ -183,7 +183,7 @@ describe("Authentication Error Cases", () => {
       // This would test actual JWT expiration
       // For now we'll test with a malformed JWT
       const res = await request(app)
-        .get(`/api/v1/users/${userId}`)
+        .get(`/api/users/${userId}`)
         .set(
           "Authorization",
           "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.invalid.signature",
@@ -194,7 +194,7 @@ describe("Authentication Error Cases", () => {
 
     it("should allow access with valid token", async () => {
       const res = await request(app)
-        .get(`/api/v1/users/${userId}`)
+        .get(`/api/users/${userId}`)
         .set("Authorization", `Bearer ${token}`);
 
       expect(res.status).not.toBe(401);
@@ -207,7 +207,7 @@ describe("Authentication Error Cases", () => {
 
       // Make requests until rate limit is hit
       for (let i = 0; i < 101; i++) {
-        res = await request(app).post("/api/v1/users/login").send({
+        res = await request(app).post("/api/users/login").send({
           telephone: "6500000000",
           mot_de_passe: "Pass123",
         });
