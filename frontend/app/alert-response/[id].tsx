@@ -255,6 +255,26 @@ export default function AlertResponse() {
             </TouchableOpacity>
 
             <TouchableOpacity
+              style={[styles.callFullBtn, { backgroundColor: color.primary, marginTop: 10 }]}
+              onPress={() => {
+                if (alertData.initiateur?.id_utilisateur) {
+                  router.push({
+                    pathname: "/messages/[id]",
+                    params: {
+                      id: alertData.initiateur.id_utilisateur,
+                      name: `${alertData.initiateur.prenom} ${alertData.initiateur.nom}`,
+                    },
+                  });
+                }
+              }}
+            >
+              <TabBarIcon name="envelope" size={18} color="white" />
+              <Text style={styles.callFullBtnText}>
+                {t("alert.response.chatInitiator")}
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
               style={styles.closeBtn}
               onPress={() => router.replace("/(tabs)/alertes")}
             >

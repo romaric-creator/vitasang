@@ -296,6 +296,7 @@ export default {
       no: "Pas maintenant",
       success: "Merci ! Le demandeur a été notifié.",
       contactInfo: "Coordonnées du demandeur",
+      chatInitiator: "Discuter avec le demandeur",
       eligibility: {
         title: "Auto-Éligibilité",
         subtitle: "Répondez honnêtement pour votre propre sécurité.",

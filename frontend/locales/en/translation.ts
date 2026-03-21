@@ -299,6 +299,7 @@ export default {
       no: "Not now",
       success: "Thank you! The requester has been notified.",
       contactInfo: "Requester Contact Info",
+      chatInitiator: "Chat with the requester",
       eligibility: {
         title: "Self-Eligibility Check",
         subtitle: "Please answer honestly for your own safety.",

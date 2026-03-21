@@ -11,18 +11,21 @@ import {
   RefreshControl,
   FlatList,
   Platform,
+  Switch,
 } from "react-native";
 import React, { useState, useCallback, useEffect, useMemo, memo } from "react";
 import ThemedView from "@/components/ThemedView";
 import { TabBarIcon } from "@/components/TabBarIcon";
 import { color } from "@/constant/color";
 import { getUserIdFromStorage } from "@/utils/storage";
+import { updateDonorProfile } from "@/services/user.service";
 import { useTranslation } from "react-i18next";
 import { useFocusEffect } from "@react-navigation/native";
 import { useUserProfile } from "@/hooks/useAuth";
 import { useActiveAlerts } from "@/hooks/useAlerts";
 import { AlertFatigueInsights } from "@/components/AlertFatigueInsights";
 import Constants from "expo-constants";
+import { isCompatible } from "@/utils/bloodCompatibility";
 import { usePostHog } from "posthog-react-native";
 
 const { width } = Dimensions.get("window");
@@ -130,18 +133,37 @@ export default function Home() {
               </Text>
             </View>
 
-            <TouchableOpacity
-              style={[styles.bentoItem, styles.statusBlock]}
-              onPress={() => router.push("/eligibility-test")}
-            >
-              <TabBarIcon
-                name="calendar-check-o"
-                size={18}
-                color={color.primary}
-              />
-              <Text style={styles.statusLabel}>{t("home.nextDonation")}</Text>
-              <Text style={styles.statusValue}>{t("home.available")}</Text>
-            </TouchableOpacity>
+            <View style={[styles.bentoItem, styles.statusBlock]}>
+              <View style={styles.statusHeader}>
+                <TabBarIcon
+                  name="heartbeat"
+                  size={18}
+                  color={color.primary}
+                />
+                <Switch
+                  value={userData?.profilDonneur?.disponible !== false}
+                  onValueChange={async (val: boolean) => {
+                    if (userId) {
+                      try {
+                        await updateDonorProfile(userId, { disponible: val });
+                        profileQuery.refetch();
+                      } catch (e) {
+                        console.error("Error toggling availability:", e);
+                      }
+                    }
+                  }}
+                  trackColor={{ false: "#ccc", true: color.success }}
+                  thumbColor="white"
+                  style={{ transform: [{ scaleX: 0.8 }, { scaleY: 0.8 }] }}
+                />
+              </View>
+              <Text style={styles.statusLabel}>{t("profile.availability")}</Text>
+              <Text style={styles.statusValue}>
+                {userData?.profilDonneur?.disponible !== false
+                  ? t("profile.availableStatus")
+                  : t("profile.unavailableStatus")}
+              </Text>
+            </View>
           </View>
         </View>
 
@@ -186,10 +208,18 @@ export default function Home() {
                     <View style={styles.urgentBloodCircle}>
                       <Text style={styles.urgentBloodText}>{item.groupe}</Text>
                     </View>
-                    <View style={styles.urgentUrgencyBadge}>
-                      <Text style={styles.urgentUrgencyText}>
-                        {item.urgence}
-                      </Text>
+                    <View style={styles.urgentBadgesContainer}>
+                      <View style={styles.urgencyBadge}>
+                        <Text style={styles.urgentUrgencyText}>
+                          {t(`alert.urgencyLevels.${item.urgence || "NORMAL"}`)}
+                        </Text>
+                      </View>
+                      {userData?.groupe_sanguin && isCompatible(userData.groupe_sanguin, item.groupe) && (
+                        <View style={styles.compatibilityBadge}>
+                          <TabBarIcon name="check" size={10} color="white" />
+                          <Text style={styles.compatibilityText}>{t("common.compatible") || "Compatible"}</Text>
+                        </View>
+                      )}
                     </View>
                   </View>
                   <Text style={styles.urgentHospital} numberOfLines={1}>
@@ -623,5 +653,36 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: color.textSecondary,
     fontWeight: "600",
+  },
+  statusHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 4,
+  },
+  urgentBadgesContainer: {
+    flexDirection: "row",
+    gap: 8,
+    alignItems: "center",
+  },
+  urgencyBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+    backgroundColor: color.dangerLight,
+  },
+  compatibilityBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    backgroundColor: color.success,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+  },
+  compatibilityText: {
+    color: "white",
+    fontSize: 10,
+    fontWeight: "800",
   },
 });

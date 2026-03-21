@@ -14,6 +14,9 @@ import ThemedView from "@/components/ThemedView";
 import { TabBarIcon } from "@/components/TabBarIcon";
 import { color } from "@/constant/color";
 import { useMyAlerts, useAcceptedAlerts } from "@/hooks/useAlerts";
+import { useUserProfile } from "@/hooks/useAuth";
+import { getUserIdFromStorage } from "@/utils/storage";
+import { isCompatible } from "@/utils/bloodCompatibility";
 import { useTranslation } from "react-i18next";
 import { SkeletonListLoader } from "@/components/SkeletonLoader";
 
@@ -21,6 +24,17 @@ export default function AlertesScreen() {
   const { t } = useTranslation();
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<"sent" | "accepted">("sent");
+  const [userId, setUserId] = useState<number | null>(null);
+
+  useEffect(() => {
+    getUserIdFromStorage().then((id) => {
+      if (id) setUserId(Number(id));
+    });
+  }, []);
+
+  const profileQuery = useUserProfile(userId as number, !!userId);
+  const userData = profileQuery.data?.user;
+
   const myAlertsQuery = useMyAlerts(activeTab === "sent");
   const acceptedAlertsQuery = useAcceptedAlerts(activeTab === "accepted");
 
@@ -86,8 +100,16 @@ export default function AlertesScreen() {
         onPress={() => onCardPress(item.id)}
         disabled={activeTab === "accepted"}
       >
-        <View style={[styles.bloodCircle]}>
-          <Text style={styles.bloodText}>{item.groupe}</Text>
+        <View style={styles.bloodContainer}>
+          <View style={[styles.bloodCircle]}>
+            <Text style={styles.bloodText}>{item.groupe}</Text>
+          </View>
+          {userData?.groupe_sanguin && isCompatible(userData.groupe_sanguin, item.groupe) && (
+            <View style={styles.compatibilityBadge}>
+              <TabBarIcon name="check" size={8} color="white" />
+              <Text style={styles.compatibilityText}>{t("common.compatible") || "OK"}</Text>
+            </View>
+          )}
         </View>
         <View style={{ flex: 1 }}>
           <Text style={styles.alertDate}>
@@ -137,11 +159,21 @@ export default function AlertesScreen() {
                   </Text>
                 </TouchableOpacity>
                 <TouchableOpacity
-                  style={styles.shareBtn}
-                  onPress={() => handleShareWhatsApp(item)}
+                  style={styles.chatBtn}
+                  onPress={() => {
+                    if (item.id_initiateur || item.id_demandeur) {
+                      router.push({
+                        pathname: "/messages/[id]",
+                        params: {
+                          id: item.id_initiateur || item.id_demandeur,
+                          name: item.initiateur || item.nom_demandeur || t("messages.title"),
+                        },
+                      });
+                    }
+                  }}
                 >
-                  <TabBarIcon name="whatsapp" size={12} color="white" />
-                  <Text style={styles.callBtnText}>{t("alert.actions.share")}</Text>
+                  <TabBarIcon name="envelope" size={12} color="white" />
+                  <Text style={styles.callBtnText}>{t("profile.messages")}</Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -303,6 +335,24 @@ const styles = StyleSheet.create({
     borderColor: color.border,
     elevation: 2,
   },
+  bloodContainer: {
+    alignItems: "center",
+    gap: 4,
+  },
+  compatibilityBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: color.success,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 6,
+    gap: 2,
+  },
+  compatibilityText: {
+    color: "white",
+    fontSize: 8,
+    fontWeight: "800",
+  },
   bloodCircle: {
     width: 48,
     height: 48,
@@ -323,6 +373,15 @@ const styles = StyleSheet.create({
   },
   actionRow: { flexDirection: "row", gap: 8 },
   callBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    backgroundColor: color.primary,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 8,
+  },
+  chatBtn: {
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
