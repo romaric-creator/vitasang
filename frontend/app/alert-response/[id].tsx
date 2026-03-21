@@ -59,6 +59,15 @@ export default function AlertResponse() {
         analyticsService.trackEvent(analyticsService.events.ALERT_ACCEPTED, {
           alertId: id,
         });
+        // Re-fetch alert data to get full initiator details (phone number)
+        try {
+          const refreshed = await getAlertStatus(Number(id));
+          if (refreshed?.alerte) {
+            setAlertData(refreshed.alerte);
+          }
+        } catch (e) {
+          console.warn("Could not refresh alert data:", e);
+        }
         setHasAccepted(true);
         show("success", t("alert.response.success"));
       } else {
