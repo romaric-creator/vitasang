@@ -51,16 +51,7 @@ const attemptAutoValidation = async (alerte) => {
   return false;
 };
 
-const bloodCompatibility = {
-  "O-": ["O-", "O+", "A-", "A+", "B-", "B+", "AB-", "AB+"],
-  "O+": ["O+", "A+", "B+", "AB+"],
-  "A-": ["A-", "A+", "AB-", "AB+"],
-  "A+": ["A+", "AB+"],
-  "B-": ["B-", "B+", "AB-", "AB+"],
-  "B+": ["B+", "AB+"],
-  "AB-": ["AB-", "AB+"],
-  "AB+": ["AB+"],
-};
+const { BLOOD_COMPATIBILITY } = require("../utils/bloodCompatibility");
 
 // Step 1: Just create the alert with a pending status
 exports.createAlert = async (req, res, next) => {
@@ -420,11 +411,16 @@ exports.deleteAlert = async (req, res, next) => {
     if (!alerte) {
       throw ErrorTypes.RESOURCE_NOT_FOUND("Alerte");
     }
-    if (alerte.id_initiateur !== userId) {
+
+    const isAdmin = req.user.role === "admin";
+    const isInitiator = alerte.id_initiateur === userId;
+
+    if (!isInitiator && !isAdmin) {
       throw ErrorTypes.UNAUTHORIZED_ACCESS(
-        "Vous ne pouvez annuler que vos propres alertes",
+        "Vous ne pouvez annuler que vos propres alertes ou vous n'avez pas les droits administrateur",
       );
     }
+
     alerte.statut = "annule";
     await alerte.save();
     res
@@ -529,6 +525,26 @@ exports.respondToAlert = async (req, res, next) => {
     }
 
     logger.info("User responded to alert", { userId, alertId: id, response });
+
+    // Auto-resolve check if response is 'accepte'
+    if (response === "accepte") {
+      const alerte = await Alerte.findByPk(id);
+      if (alerte && alerte.statut === "en_cours") {
+        const acceptedCount = await LogNotification.count({
+          where: { id_alerte: id, statut_reception: "accepte" },
+        });
+
+        if (acceptedCount >= alerte.quantite_requise) {
+          alerte.statut = "resolu";
+          await alerte.save();
+          logger.info("Alert automatically resolved (quota reached)", {
+            alertId: id,
+            acceptedCount,
+            required: alerte.quantite_requise,
+          });
+        }
+      }
+    }
 
     res.json({
       success: true,

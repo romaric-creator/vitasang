@@ -15,13 +15,38 @@ exports.createRendezVous = async (req, res, next) => {
 
     const dateTime = new Date(`${date_rdv}T${heure_debut}:00`);
 
+    // Anti-double-booking check
+    const centre = await Centre.findByPk(id_centre);
+    if (!centre) {
+      return res.status(404).json({ error: "Centre non trouvé" });
+    }
+
+    const maxPerSlot = centre.capacite_stockage_max
+      ? Math.max(1, Math.floor(centre.capacite_stockage_max / 10))
+      : 3;
+
+    const existingCount = await RendezVous.count({
+      where: {
+        id_centre,
+        date_heure_rdv: dateTime,
+        statut_rdv: { [db.Sequelize.Op.ne]: "annule" },
+      },
+    });
+
+    if (existingCount >= maxPerSlot) {
+      return res.status(409).json({
+        message:
+          "Désolé, ce créneau est désormais complet. Veuillez en choisir un autre.",
+      });
+    }
+
     const rdv = await RendezVous.create({
       id_donneur,
       id_centre,
       id_type_don: id_type_don || 1,
       date_heure_rdv: dateTime,
-      statut_rdv: 'planifie',
-      code_unique: Math.random().toString(36).substring(2, 12).toUpperCase()
+      statut_rdv: "planifie",
+      code_unique: Math.random().toString(36).substring(2, 12).toUpperCase(),
     });
 
     logger.info('Rendez-vous created', { rdvId: rdv.id_rdv });

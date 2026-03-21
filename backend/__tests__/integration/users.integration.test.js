@@ -16,10 +16,10 @@ describe('User Endpoints Integration Tests', () => {
     await db.sequelize.close();
   });
 
-  describe('POST /api/auth/register', () => {
+  describe('POST /api/users/register', () => {
     it('should successfully register a new user', async () => {
       const response = await request(app)
-        .post('/api/auth/register')
+        .post('/api/users/register')
         .send({
           nom: 'Test',
           prenom: 'User',
@@ -38,7 +38,7 @@ describe('User Endpoints Integration Tests', () => {
 
     it('should reject registration with invalid email/phone format', async () => {
       const response = await request(app)
-        .post('/api/auth/register')
+        .post('/api/users/register')
         .send({
           nom: 'Test',
           prenom: 'User',
@@ -54,7 +54,7 @@ describe('User Endpoints Integration Tests', () => {
 
     it('should reject registration with weak password', async () => {
       const response = await request(app)
-        .post('/api/auth/register')
+        .post('/api/users/register')
         .send({
           nom: 'Test',
           prenom: 'User',
@@ -70,7 +70,7 @@ describe('User Endpoints Integration Tests', () => {
 
     it('should reject registration with invalid blood type', async () => {
       const response = await request(app)
-        .post('/api/auth/register')
+        .post('/api/users/register')
         .send({
           nom: 'Test',
           prenom: 'User',
@@ -86,7 +86,7 @@ describe('User Endpoints Integration Tests', () => {
 
     it('should reject registration with missing required fields', async () => {
       const response = await request(app)
-        .post('/api/auth/register')
+        .post('/api/users/register')
         .send({
           nom: 'Test'
         });
@@ -96,11 +96,11 @@ describe('User Endpoints Integration Tests', () => {
     });
   });
 
-  describe('POST /api/auth/login', () => {
+  describe('POST /api/users/login', () => {
     beforeEach(async () => {
       // Create a test user first
       await request(app)
-        .post('/api/auth/register')
+        .post('/api/users/register')
         .send({
           nom: 'Login',
           prenom: 'Test',
@@ -113,7 +113,7 @@ describe('User Endpoints Integration Tests', () => {
 
     it('should successfully login with valid credentials', async () => {
       const response = await request(app)
-        .post('/api/auth/login')
+        .post('/api/users/login')
         .send({
           telephone: '+212698765432',
           mot_de_passe: 'LoginTest123'
@@ -127,7 +127,7 @@ describe('User Endpoints Integration Tests', () => {
 
     it('should reject login with invalid phone', async () => {
       const response = await request(app)
-        .post('/api/auth/login')
+        .post('/api/users/login')
         .send({
           telephone: 'invalid-phone',
           mot_de_passe: 'LoginTest123'
@@ -138,7 +138,7 @@ describe('User Endpoints Integration Tests', () => {
 
     it('should reject login with incorrect password', async () => {
       const response = await request(app)
-        .post('/api/auth/login')
+        .post('/api/users/login')
         .send({
           telephone: '+212698765432',
           mot_de_passe: 'WrongPassword'
@@ -149,7 +149,7 @@ describe('User Endpoints Integration Tests', () => {
 
     it('should reject login with non-existent user', async () => {
       const response = await request(app)
-        .post('/api/auth/login')
+        .post('/api/users/login')
         .send({
           telephone: '+212699999999',
           mot_de_passe: 'AnyPassword'
@@ -210,7 +210,7 @@ describe('User Endpoints Integration Tests', () => {
     it('should update user location with valid token', async () => {
       // First login to get token
       const loginResponse = await request(app)
-        .post('/api/auth/login')
+        .post('/api/users/login')
         .send({
           telephone: '+212698765432',
           mot_de_passe: 'LoginTest123'
@@ -242,7 +242,7 @@ describe('User Endpoints Integration Tests', () => {
 
     it('should reject location update with invalid coordinates', async () => {
       const loginResponse = await request(app)
-        .post('/api/auth/login')
+        .post('/api/users/login')
         .send({
           telephone: '+212698765432',
           mot_de_passe: 'LoginTest123'
@@ -265,7 +265,7 @@ describe('User Endpoints Integration Tests', () => {
   describe('POST /api/users/push-token', () => {
     it('should register push token with valid data', async () => {
       const loginResponse = await request(app)
-        .post('/api/auth/login')
+        .post('/api/users/login')
         .send({
           telephone: '+212698765432',
           mot_de_passe: 'LoginTest123'
@@ -285,7 +285,7 @@ describe('User Endpoints Integration Tests', () => {
 
     it('should reject invalid push token format', async () => {
       const loginResponse = await request(app)
-        .post('/api/auth/login')
+        .post('/api/users/login')
         .send({
           telephone: '+212698765432',
           mot_de_passe: 'LoginTest123'

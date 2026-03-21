@@ -29,7 +29,15 @@ exports.sendMessage = async (req, res, next) => {
             contenu,
         });
 
-        logger.info("Message sent", { from: senderId, to: id_destinataire });
+        const { notificationQueue } = require("../jobs/notification.queue");
+        await notificationQueue.add("sendMessageNotification", {
+            senderId,
+            recipientId: parseInt(id_destinataire),
+            contenu: contenu.substring(0, 50),
+            senderName: `${req.user.prenom} ${req.user.nom}`
+        });
+
+        logger.info("Message sent and notification queued", { from: senderId, to: id_destinataire });
 
         res.status(201).json({
             success: true,
@@ -98,29 +106,32 @@ exports.getInbox = async (req, res, next) => {
         const userId = req.user.id;
 
         // Get the latest message from each unique conversation partner
+        // Compatible with MySQL 5.7 (replaces ROW_NUMBER() window function)
         const conversations = await db.sequelize.query(
             `SELECT m.*, 
-        u.nom, u.prenom, u.photo_profil,
-        (SELECT COUNT(*) FROM Messages WHERE id_expediteur = partner_id AND id_destinataire = :userId AND est_lu = false) as unread_count
-      FROM (
-        SELECT *,
-          CASE WHEN id_expediteur = :userId THEN id_destinataire ELSE id_expediteur END as partner_id,
-          ROW_NUMBER() OVER (PARTITION BY 
-            CASE WHEN id_expediteur = :userId THEN id_destinataire ELSE id_expediteur END 
-            ORDER BY createdAt DESC
-          ) as rn
-        FROM Messages
-        WHERE id_expediteur = :userId OR id_destinataire = :userId
-      ) m
-      JOIN Utilisateurs u ON u.id_utilisateur = m.partner_id
-      WHERE m.rn = 1
-      ORDER BY m.createdAt DESC`,
+                u.nom, u.prenom, u.photo_profil,
+                (SELECT COUNT(*) FROM Messages WHERE id_expediteur = m.partner_id AND id_destinataire = :userId AND est_lu = 0) as unread_count
+             FROM (
+                SELECT m1.*,
+                    CASE WHEN m1.id_expediteur = :userId THEN m1.id_destinataire ELSE m1.id_expediteur END as partner_id
+                FROM Messages m1
+                JOIN (
+                    SELECT 
+                        CASE WHEN id_expediteur = :userId THEN id_destinataire ELSE id_expediteur END as partner,
+                        MAX(createdAt) as max_date
+                    FROM Messages
+                    WHERE id_expediteur = :userId OR id_destinataire = :userId
+                    GROUP BY partner
+                ) m2 ON (CASE WHEN m1.id_expediteur = :userId THEN m1.id_destinataire ELSE m1.id_expediteur END) = m2.partner 
+                   AND m1.createdAt = m2.max_date
+             ) m
+             JOIN Utilisateurs u ON u.id_utilisateur = m.partner_id
+             ORDER BY m.createdAt DESC`,
             {
                 replacements: { userId },
                 type: db.Sequelize.QueryTypes.SELECT,
             },
         );
-
         res.status(200).json({ success: true, conversations });
     } catch (error) {
         logger.error("Error fetching inbox", { error: error.message });

@@ -18,6 +18,7 @@ const { errorHandler, notFoundHandler } = require("./middleware/errorHandler");
 
 // Initialisation des tâches en arrière-plan
 require("./jobs/cleanup.cron");
+require("./jobs/notification.queue");
 
 const app = express();
 
@@ -38,12 +39,7 @@ app.use(
       // Autoriser les requêtes sans origin (mobile, curl, Postman)
       if (!origin) return callback(null, true);
 
-      // Toujours autoriser localhost peu importe l'env
-      if (origin.includes("localhost")) {
-        return callback(null, true);
-      }
-
-      // Vérifier la whitelist
+      // Vérifier la whitelist (qui contient déjà les localhost autorisés)
       if (allowedOrigins.includes(origin)) {
         return callback(null, true);
       }
@@ -98,9 +94,13 @@ app.use("/api/centres", centresRoute);
 app.use("/api/campaigns", campaignsRoute);
 app.use("/api/messages", messagesRoute);
 
-// Route racine
+// Route racine & Health Check
 app.get("/", (req, res) => {
   res.json({ message: "bienvenu sur vitasang.api.com", version: "1.0.0" });
+});
+
+app.get("/health", (req, res) => {
+  res.json({ status: "OK", timestamp: new Date().toISOString() });
 });
 
 // 404 Handler

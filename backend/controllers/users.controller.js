@@ -186,7 +186,7 @@ exports.login = async (req, res, next) => {
 
     // On cherche l'utilisateur et on inclut ses données associées
     const user = await Utilisateur.findOne({
-      where: { telephone },
+      where: { telephone, est_actif: true },
       include: [
         {
           model: ProfilDonneur,
@@ -199,7 +199,10 @@ exports.login = async (req, res, next) => {
     });
 
     if (!user) {
-      return res.status(401).json({ message: "Identifiants incorrects" });
+      return res.status(404).json({
+        message:
+          "Identifiants incorrects ou compte désactivé. Veuillez vérifier votre numéro.",
+      });
     }
 
     const isMatch = await bcrypt.compare(mot_de_passe, user.mot_de_passe);
@@ -318,16 +321,7 @@ exports.getUsersByBloodGroup = async (req, res, next) => {
 };
 
 // Table de compatibilité sanguine (Qui peut donner à qui)
-const bloodCompatibility = {
-  "O-": ["O-", "O+", "A-", "A+", "B-", "B+", "AB-", "AB+"],
-  "O+": ["O+", "A+", "B+", "AB+"],
-  "A-": ["A-", "A+", "AB-", "AB+"],
-  "A+": ["A+", "AB+"],
-  "B-": ["B-", "B+", "AB-", "AB+"],
-  "B+": ["B+", "AB+"],
-  "AB-": ["AB-", "AB+"],
-  "AB+": ["AB+"],
-};
+const { BLOOD_COMPATIBILITY } = require("../utils/bloodCompatibility");
 
 /**
  * Recherche les donneurs par groupe sanguin et par proximité géographique.
@@ -352,8 +346,8 @@ exports.searchUsers = async (req, res, next) => {
     const targetBlood = decodeURIComponent(groupe_sanguin).replace(" ", "+");
 
     // Trouver quels groupes peuvent donner au groupe cible
-    const compatibleGroups = Object.keys(bloodCompatibility).filter((group) =>
-      bloodCompatibility[group].includes(targetBlood),
+    const compatibleGroups = Object.keys(BLOOD_COMPATIBILITY).filter((group) =>
+      BLOOD_COMPATIBILITY[group].includes(targetBlood),
     );
 
     const haversine = `(

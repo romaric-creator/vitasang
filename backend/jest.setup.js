@@ -3,12 +3,11 @@
 
 // Mock environment variables for testing
 process.env.NODE_ENV = 'test';
-process.env.DB_HOST = 'localhost';
-process.env.DB_USER = 'root';
-process.env.DB_PASS = 'root1234';
-process.env.DB = 'vitasang_test';
+process.env.DB_DIALECT = 'sqlite';
+process.env.DB_STORAGE = ':memory:';
 process.env.JWT_SECRET = 'test-secret-key-do-not-use-in-production';
 process.env.PORT = 3001;
+process.env.DB_LOGGING = 'false';
 
 // Suppress info logs during tests
 const originalLog = console.log;

@@ -1,13 +1,17 @@
-// Vérifier les variables d'environnement critiques
-if (!process.env.DB_PASS) {
-  throw new Error(
-    "CRITIQUE: Variable d'environnement DB_PASS est obligatoire et non définie",
-  );
-}
-if (!process.env.DB_USER) {
-  throw new Error(
-    "CRITIQUE: Variable d'environnement DB_USER est obligatoire et non définie. Si vous utilisez une base de données comme TiDB Cloud, assurez-vous que le nom d'utilisateur inclut le préfixe requis (ex: 'your_prefix.your_username').",
-  );
+// Vérifier les variables d'environnement critiques (Sauf en mode test SQLite)
+const isTestSQLite = process.env.NODE_ENV === 'test' && process.env.DB_DIALECT === 'sqlite';
+
+if (!isTestSQLite) {
+  if (!process.env.DB_PASS) {
+    throw new Error(
+      "CRITIQUE: Variable d'environnement DB_PASS est obligatoire et non définie",
+    );
+  }
+  if (!process.env.DB_USER) {
+    throw new Error(
+      "CRITIQUE: Variable d'environnement DB_USER est obligatoire et non définie.",
+    );
+  }
 }
 
 module.exports = {
@@ -16,9 +20,10 @@ module.exports = {
   USER: process.env.DB_USER || "root",
   PASSWORD: process.env.DB_PASS,
   DB: process.env.DB || "vitasang",
-  dialect: "mysql",
+  dialect: process.env.DB_DIALECT || "mysql",
+  storage: process.env.DB_STORAGE, // Pour SQLite
   dialectOptions: {
-    ssl: {
+    ssl: process.env.DB_DIALECT === "sqlite" ? false : {
       minVersion: "TLSv1.2",
       rejectUnauthorized: process.env.NODE_ENV === "production" ? true : false,
     },

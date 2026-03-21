@@ -9,10 +9,10 @@ module.exports = (sequelize, DataTypes) => {
       },
       date_envoi: { type: DataTypes.DATE, defaultValue: DataTypes.NOW },
       statut_reception: {
-        type: DataTypes.ENUM("envoye", "lu", "accepte", "ignore", "delivered", "failed", "no_token"),
+        type: DataTypes.ENUM("envoye", "lu", "accepte", "ignore", "delivered", "failed", "no_token", "reçu", "échec", "refuse"),
         defaultValue: "envoye",
       },
-      canal: { type: DataTypes.ENUM("push", "email", "sms") },
+      canal: { type: DataTypes.ENUM("push", "email", "sms", "whatsapp") },
       push_token: { type: DataTypes.TEXT, allowNull: true },
       details_echec: { type: DataTypes.TEXT, allowNull: true },
       push_ticket_id: { type: DataTypes.STRING(100), allowNull: true },

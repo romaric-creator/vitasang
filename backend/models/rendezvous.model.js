@@ -18,6 +18,7 @@ module.exports = (sequelize, DataTypes) => {
       code_unique: {
         type: DataTypes.STRING(12),
         allowNull: true,
+        unique: true,
         comment: "Code QR ou texte pour l'arrivée au centre",
       },
     },

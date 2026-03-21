@@ -11,7 +11,7 @@ describe('Alert Endpoints Integration Tests', () => {
 
     // Create a test user and get token
     const response = await request(app)
-      .post('/api/auth/register')
+      .post('/api/users/register')
       .send({
         nom: 'Alert',
         prenom: 'Tester',
