@@ -1,5 +1,16 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import api from "../services/api";
+
+interface CampaignRecord {
+    id_campagne: number;
+    titre: string;
+    message: string;
+    groupe_sanguin_cible: string | null;
+    donneurs_touches: number;
+    statut: string;
+    createdAt: string;
+    centre?: { nom_centre: string };
+}
 
 export default function Campaigns() {
     const [titre, setTitre] = useState("");
@@ -8,6 +19,21 @@ export default function Campaigns() {
     const [loading, setLoading] = useState(false);
     const [successMsg, setSuccessMsg] = useState("");
     const [errorMsg, setErrorMsg] = useState("");
+    const [campaigns, setCampaigns] = useState<CampaignRecord[]>([]);
+    const [loadingHistory, setLoadingHistory] = useState(true);
+
+    const fetchCampaigns = async () => {
+        try {
+            const res = await api.get("/campaigns");
+            if (res.data.success) setCampaigns(res.data.campaigns);
+        } catch (err) {
+            console.error("Erreur chargement campagnes:", err);
+        } finally {
+            setLoadingHistory(false);
+        }
+    };
+
+    useEffect(() => { fetchCampaigns(); }, []);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -31,6 +57,7 @@ export default function Campaigns() {
                 setTitre("");
                 setMessage("");
                 setGroupeSanguin("");
+                fetchCampaigns(); // Refresh history
             } else {
                 setErrorMsg(response.data.message || "Erreur lors de l'envoi.");
             }
@@ -143,6 +170,46 @@ export default function Campaigns() {
                         </button>
                     </div>
                 </form>
+            </div>
+
+            {/* Campaign History */}
+            <div className="bg-white dark:bg-[#1a0d0d] rounded-2xl border border-gray-100 dark:border-gray-800 p-6 shadow-sm">
+                <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-gray-100">
+                    Historique des Campagnes
+                </h3>
+
+                {loadingHistory ? (
+                    <p className="text-sm text-gray-500">Chargement...</p>
+                ) : campaigns.length === 0 ? (
+                    <p className="text-sm text-gray-500">Aucune campagne lancée pour le moment.</p>
+                ) : (
+                    <div className="space-y-3">
+                        {campaigns.map((c) => (
+                            <div
+                                key={c.id_campagne}
+                                className="flex items-center justify-between p-4 bg-gray-50 dark:bg-white/5 rounded-xl border border-gray-100 dark:border-gray-700"
+                            >
+                                <div className="flex-1">
+                                    <p className="font-semibold text-gray-900 dark:text-white">{c.titre}</p>
+                                    <p className="text-xs text-gray-500 mt-1 line-clamp-1">{c.message}</p>
+                                </div>
+                                <div className="flex items-center gap-4 ml-4">
+                                    {c.groupe_sanguin_cible && (
+                                        <span className="px-2 py-1 text-xs font-bold bg-red-100 text-red-700 rounded-lg">
+                                            {c.groupe_sanguin_cible}
+                                        </span>
+                                    )}
+                                    <span className="text-sm text-gray-500">
+                                        {c.donneurs_touches} donneur{c.donneurs_touches > 1 ? "s" : ""}
+                                    </span>
+                                    <span className="text-xs text-gray-400">
+                                        {new Date(c.createdAt).toLocaleDateString("fr-FR")}
+                                    </span>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                )}
             </div>
         </div>
     );

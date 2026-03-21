@@ -353,3 +353,52 @@ export const createAppointment = async (data: {
     );
   }
 };
+
+// --- Donor Profile ---
+
+export const getDonorProfile = async (userId: number) => {
+  try {
+    const response = await apiClient.get(`users/${userId}/profile`);
+    return response.data;
+  } catch (error: any) {
+    throw new Error(
+      error.response?.data?.message ||
+      "Erreur lors de la récupération du profil donneur",
+    );
+  }
+};
+
+export const updateDonorProfile = async (
+  userId: number,
+  data: {
+    disponible?: boolean;
+    raison_indisponibilite?: string;
+    date_disponibilite?: string;
+    poids?: number;
+    taille?: number;
+  },
+) => {
+  try {
+    const response = await apiClient.put(`users/${userId}/donor-profile`, data);
+    return response.data;
+  } catch (error: any) {
+    throw new Error(
+      error.response?.data?.message ||
+      "Erreur lors de la mise à jour du profil donneur",
+    );
+  }
+};
+
+// --- Centre Availability ---
+
+export const getCentreAvailability = async (centreId: number) => {
+  try {
+    const response = await apiClient.get(`centres/${centreId}/availability`);
+    return response.data;
+  } catch (error: any) {
+    throw new Error(
+      error.response?.data?.message ||
+      "Erreur lors de la récupération des disponibilités",
+    );
+  }
+};
