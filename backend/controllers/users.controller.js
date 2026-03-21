@@ -704,3 +704,40 @@ exports.uploadProfilePicture = async (req, res, next) => {
     next(error);
   }
 };
+// Update donor profile (availability, weight, etc.)
+exports.updateDonorProfile = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const requestingUserId = req.user.id;
+
+    if (parseInt(id) !== requestingUserId && req.user.role !== "admin") {
+      return res.status(403).json({ message: "Action non autorisée." });
+    }
+
+    const { disponible, raison_indisponibilite, date_disponibilite, poids, taille } = req.body;
+
+    const [profil, created] = await ProfilDonneur.findOrCreate({
+      where: { id_donneur: parseInt(id) },
+      defaults: { groupe_sanguin: null }
+    });
+
+    if (disponible !== undefined) profil.disponible = !!disponible;
+    if (raison_indisponibilite !== undefined) profil.raison_indisponibilite = raison_indisponibilite;
+    if (date_disponibilite !== undefined) profil.date_disponibilite = date_disponibilite;
+    if (poids !== undefined) profil.poids = poids;
+    if (taille !== undefined) profil.taille = taille;
+
+    await profil.save();
+
+    logger.info("Donor profile updated", { userId: id, disponible: profil.disponible });
+
+    res.status(200).json({
+      success: true,
+      message: "Profil donneur mis à jour avec succès.",
+      profil
+    });
+  } catch (error) {
+    logger.error("Error updating donor profile", { error: error.message, userId: req.params.id });
+    next(error);
+  }
+};

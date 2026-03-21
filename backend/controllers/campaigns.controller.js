@@ -1,4 +1,4 @@
-const { Utilisateur, ProfilDonneur, Centre, db } = require('../models');
+const { Utilisateur, ProfilDonneur, Centre, Campagne, db } = require('../models');
 const { notificationQueue } = require('../jobs/notification.queue');
 
 /**
@@ -9,7 +9,7 @@ const campaignsController = {
     launchCampaign: async (req, res) => {
         try {
             const { titre, message, filtres } = req.body;
-            const centreId = req.user.centreId || req.user.centre?.id_centre; // Selon payload token
+            const centreId = req.user.centreId || req.user.centre?.id_centre;
 
             if (!titre || !message) {
                 return res.status(400).json({ success: false, message: 'Le titre et le message sont requis.' });
@@ -17,8 +17,7 @@ const campaignsController = {
 
             // 1. Définir les critères de recherche pour les donneurs
             const whereCondition = { disponible: true };
-
-            if (filtres && filtres.groupe_sanguin) {
+            if (filtres?.groupe_sanguin) {
                 whereCondition.groupe_sanguin = filtres.groupe_sanguin;
             }
 
@@ -40,31 +39,38 @@ const campaignsController = {
                 });
             }
 
-            // 3. Préparer les jobs pour BullMQ
+            // 3. Persister la campagne en BDD
+            const campagne = await Campagne.create({
+                titre,
+                message,
+                groupe_sanguin_cible: filtres?.groupe_sanguin || null,
+                donneurs_touches: donneursCibles.length,
+                statut: 'lancee',
+                id_centre: centreId || null,
+            });
+
+            // 4. Préparer les jobs pour BullMQ
             const jobs = donneursCibles.map(donneur => ({
                 name: 'sendCampaignNotification',
                 data: {
                     donneurId: donneur.utilisateur.id_utilisateur,
                     telephone: donneur.utilisateur.telephone,
                     nom: donneur.utilisateur.nom,
-                    titre: titre,
-                    message: message,
-                    centreId: centreId
+                    titre,
+                    message,
+                    centreId,
+                    campagneId: campagne.id_campagne,
                 },
-                opts: {
-                    attempts: 3,
-                    backoff: { type: 'exponential', delay: 2000 }
-                }
+                opts: { attempts: 3, backoff: { type: 'exponential', delay: 2000 } }
             }));
 
-            // Ajouter les jobs à la file existante (notificationQueue)
-            // La file devra pouvoir traiter ce nom de job.
             await notificationQueue.addBulk(jobs);
 
             return res.status(201).json({
                 success: true,
-                message: `Campagne "${titre}" lancée avec succès. Mode asynchrone activé.`,
-                donneursTouches: donneursCibles.length
+                message: `Campagne "${titre}" lancée avec succès.`,
+                donneursTouches: donneursCibles.length,
+                campagne,
             });
 
         } catch (error) {
@@ -73,17 +79,22 @@ const campaignsController = {
         }
     },
 
-    // Obtenir l'historique (Simulé ou réel si l'on crée un Modèle Campagne plus tard)
-    // Pour l'instant, retourne un tableau vide ou données statiques si le Frontend l'exige
+    // Obtenir l'historique réel des campagnes
     getCampaigns: async (req, res) => {
         try {
-            // Pour une v1 rapide, on peut juste retourner 200 avec [] 
-            // Si une vraie table "Campagne" est souhaitée, on la créera dans un second temps.
-            return res.status(200).json({
-                success: true,
-                campaigns: []
+            const centreId = req.user.centreId || req.user.centre?.id_centre;
+            const whereClause = centreId ? { id_centre: centreId } : {};
+
+            const campaigns = await Campagne.findAll({
+                where: whereClause,
+                include: [{ model: Centre, as: 'centre', attributes: ['nom_centre', 'adresse'] }],
+                order: [['createdAt', 'DESC']],
+                limit: 50,
             });
+
+            return res.status(200).json({ success: true, campaigns });
         } catch (error) {
+            console.error('Erreur getCampaigns:', error);
             return res.status(500).json({ success: false, message: 'Erreur lors de la récupération des campagnes.' });
         }
     }

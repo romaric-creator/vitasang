@@ -102,7 +102,7 @@ exports.getCentreDetail = async (req, res, next) => {
   }
 };
 
-// Récupérer disponibilités d'un centre
+// Récupérer disponibilités dynamiques d'un centre (basé sur les RDV réels)
 exports.getCentreAvailability = async (req, res, next) => {
   try {
     const { id } = req.params;
@@ -112,19 +112,50 @@ exports.getCentreAvailability = async (req, res, next) => {
       return res.status(404).json({ error: "Centre non trouvé" });
     }
 
+    const allTimes = ['09:00', '10:00', '11:00', '14:00', '15:00', '16:00'];
+    const maxPerSlot = centre.capacite_stockage_max ? Math.max(1, Math.floor(centre.capacite_stockage_max / 10)) : 3;
+
     const slots = [];
     const today = new Date();
+
     for (let i = 1; i <= 7; i++) {
       const date = new Date(today);
       date.setDate(date.getDate() + i);
+      const dateStr = date.toISOString().split('T')[0];
+
+      // Count existing RDV for each time slot on this date
+      const startOfDay = new Date(dateStr + 'T00:00:00');
+      const endOfDay = new Date(dateStr + 'T23:59:59');
+
+      const existingRdvs = await RendezVous.findAll({
+        where: {
+          id_centre: parseInt(id),
+          date_heure_rdv: {
+            [db.Sequelize.Op.gte]: startOfDay,
+            [db.Sequelize.Op.lte]: endOfDay,
+          },
+          statut_rdv: { [db.Sequelize.Op.ne]: 'annule' },
+        },
+        attributes: ['date_heure_rdv'],
+      });
+
+      // Build a map of booked times
+      const bookedCounts = {};
+      existingRdvs.forEach(rdv => {
+        const h = new Date(rdv.date_heure_rdv).toTimeString().slice(0, 5);
+        bookedCounts[h] = (bookedCounts[h] || 0) + 1;
+      });
+
+      const availableTimes = allTimes.filter(t => (bookedCounts[t] || 0) < maxPerSlot);
 
       slots.push({
-        date: date.toISOString().split('T')[0],
-        times: ['09:00', '10:00', '11:00', '14:00', '15:00', '16:00']
+        date: dateStr,
+        times: availableTimes,
+        bookedSlots: bookedCounts,
       });
     }
 
-    res.status(200).json({ centreId: id, slots });
+    res.status(200).json({ centreId: id, slots, maxPerSlot });
   } catch (error) {
     logger.error('Error fetching availability', { error: error.message, centreId: req.params.id });
     next(error);
@@ -261,12 +292,17 @@ exports.updateRendezVousStatut = async (req, res, next) => {
     await rdv.save();
 
     if (statut_rdv === 'confirme' || statut_rdv === 'effectue') {
-      await db.HistoriqueDon.create({
-        id_donneur: rdv.id_donneur,
-        id_centre: parseInt(id),
-        id_type_don: rdv.id_type_don || 1,
-        date_don: new Date(),
-        statut_don: 'réussi'
+      // Prevent duplicate entries
+      await db.HistoriqueDon.findOrCreate({
+        where: {
+          id_donneur: rdv.id_donneur,
+          id_centre: parseInt(id),
+          id_type_don: rdv.id_type_don || 1,
+          date_don: new Date().toISOString().split('T')[0],
+        },
+        defaults: {
+          statut_don: 'réussi'
+        }
       });
       const profil = await db.ProfilDonneur.findByPk(rdv.id_donneur);
       if (profil) {

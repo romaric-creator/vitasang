@@ -425,4 +425,10 @@ router.post(
   controller.uploadProfilePicture,
 );
 
+router.put(
+  "/:id/donor-profile",
+  verifyToken,
+  controller.updateDonorProfile,
+);
+
 module.exports = router;
