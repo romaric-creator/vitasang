@@ -5,6 +5,7 @@ import {
   TouchableOpacity,
   ScrollView,
   Alert,
+  Switch,
 } from "react-native";
 import React, { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -14,7 +15,7 @@ import {
 } from "@/components/SkeletonLoader";
 import { color } from "@/constant/color";
 import { getUserIdFromStorage } from "@/utils/storage";
-import { getUserProfile } from "@/services/user.service";
+import { getUserProfile, updateDonorProfile } from "@/services/user.service";
 import { useUserProfile } from "@/hooks/useAuth";
 import { useRouter } from "expo-router";
 import { Image } from "react-native";
@@ -48,6 +49,8 @@ export default function Profile() {
   const { t } = useTranslation();
   const { signOut } = useAuth();
   const [userId, setUserId] = useState<number | null>(null);
+  const [isAvailable, setIsAvailable] = useState(true);
+  const [togglingAvailability, setTogglingAvailability] = useState(false);
 
   useEffect(() => {
     getUserIdFromStorage().then((id) => {
@@ -59,6 +62,27 @@ export default function Profile() {
   const loading = !userId || (profileQuery.isLoading && !profileQuery.data);
   const userData = profileQuery.data?.user;
 
+  // Sync availability state with profile data
+  useEffect(() => {
+    if (userData?.profilDonneur) {
+      setIsAvailable(userData.profilDonneur.disponible !== false);
+    }
+  }, [userData]);
+
+  const handleToggleAvailability = async (value: boolean) => {
+    if (!userId || togglingAvailability) return;
+    setTogglingAvailability(true);
+    setIsAvailable(value);
+    try {
+      await updateDonorProfile(userId, { disponible: value });
+    } catch (e) {
+      setIsAvailable(!value); // revert on error
+      console.error("Error toggling availability:", e);
+    } finally {
+      setTogglingAvailability(false);
+    }
+  };
+
   const handleLogout = () => {
     Alert.alert(t("profile.logout"), t("profile.logoutConfirm"), [
       { text: t("common.cancel"), style: "cancel" },
@@ -66,8 +90,6 @@ export default function Profile() {
         text: t("profile.logout"),
         style: "destructive",
         onPress: async () => {
-          // signOut supprime token/user ET met isAuth=false
-          // La redirection vers Splash est automatique via _layout.tsx
           await signOut();
         },
       },
@@ -157,6 +179,23 @@ export default function Profile() {
           </View>
         </View>
 
+        {/* Availability Toggle */}
+        <View style={styles.availabilityCard}>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.availabilityTitle}>{t("profile.availability")}</Text>
+            <Text style={styles.availabilitySubtitle}>
+              {isAvailable ? t("profile.availableStatus") : t("profile.unavailableStatus")}
+            </Text>
+          </View>
+          <Switch
+            value={isAvailable}
+            onValueChange={handleToggleAvailability}
+            trackColor={{ false: "#ccc", true: color.success }}
+            thumbColor="white"
+            disabled={togglingAvailability}
+          />
+        </View>
+
         <Text style={styles.sectionTitle}>{t("profile.menu")}</Text>
         <View style={styles.menuContainer}>
           <ProfileItem
@@ -173,6 +212,11 @@ export default function Profile() {
             icon="calendar"
             label={t("profile.appointments")}
             onPress={() => router.push("/rendezvous")}
+          />
+          <ProfileItem
+            icon="envelope"
+            label={t("profile.messages")}
+            onPress={() => router.push("/messages")}
           />
           <ProfileItem
             icon="hospital-o"
@@ -306,6 +350,26 @@ const styles = StyleSheet.create({
   dividerVertical: {
     width: 1,
     backgroundColor: color.border,
+  },
+  availabilityCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: color.surface,
+    borderRadius: 14,
+    padding: 16,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: color.border,
+  },
+  availabilityTitle: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: color.textMain,
+  },
+  availabilitySubtitle: {
+    fontSize: 12,
+    color: color.textSecondary,
+    marginTop: 2,
   },
   sectionTitle: {
     fontSize: 12,
