@@ -25,6 +25,12 @@ jest.mock('../../models', () => ({
     query: jest.fn().mockResolvedValue([[], {}]),
     literal: jest.fn((val) => val),
   },
+  Sequelize: {
+    Op: {
+      ne: Symbol('ne'),
+      eq: Symbol('eq'),
+    },
+  },
 }));
 
 describe('Rendez-vous Controller - Integration Tests', () => {

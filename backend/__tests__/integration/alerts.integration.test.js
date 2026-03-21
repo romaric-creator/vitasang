@@ -28,10 +28,10 @@ describe('Alert Endpoints Integration Tests', () => {
     await db.sequelize.close();
   });
 
-  describe('POST /api/alertes/create', () => {
+  describe('POST /api/alerts/create', () => {
     it('should create a new alert with valid data', async () => {
       const response = await request(app)
-        .post('/api/alertes/create')
+        .post('/api/alerts/create')
         .set('Authorization', `Bearer ${authToken}`)
         .send({
           groupe_sanguin: 'O+',
@@ -46,12 +46,12 @@ describe('Alert Endpoints Integration Tests', () => {
       expect(response.status).toBe(201);
       expect(response.body.message).toBeDefined();
       expect(response.body.alerte).toBeDefined();
-      testAlertId = response.body.alerte.id;
+      testAlertId = response.body.alerte.id_alerte;
     });
 
     it('should reject alert creation with invalid blood type', async () => {
       const response = await request(app)
-        .post('/api/alertes/create')
+        .post('/api/alerts/create')
         .set('Authorization', `Bearer ${authToken}`)
         .send({
           groupe_sanguin: 'INVALID',
@@ -67,7 +67,7 @@ describe('Alert Endpoints Integration Tests', () => {
 
     it('should reject alert creation with invalid urgency level', async () => {
       const response = await request(app)
-        .post('/api/alertes/create')
+        .post('/api/alerts/create')
         .set('Authorization', `Bearer ${authToken}`)
         .send({
           groupe_sanguin: 'O+',
@@ -83,7 +83,7 @@ describe('Alert Endpoints Integration Tests', () => {
 
     it('should reject alert creation with invalid coordinates', async () => {
       const response = await request(app)
-        .post('/api/alertes/create')
+        .post('/api/alerts/create')
         .set('Authorization', `Bearer ${authToken}`)
         .send({
           groupe_sanguin: 'O+',
@@ -99,7 +99,7 @@ describe('Alert Endpoints Integration Tests', () => {
 
     it('should reject alert creation with negative quantity', async () => {
       const response = await request(app)
-        .post('/api/alertes/create')
+        .post('/api/alerts/create')
         .set('Authorization', `Bearer ${authToken}`)
         .send({
           groupe_sanguin: 'O+',
@@ -115,7 +115,7 @@ describe('Alert Endpoints Integration Tests', () => {
 
     it('should reject alert creation without token', async () => {
       const response = await request(app)
-        .post('/api/alertes/create')
+        .post('/api/alerts/create')
         .send({
           groupe_sanguin: 'O+',
           urgence: 'URGENT',
@@ -125,12 +125,12 @@ describe('Alert Endpoints Integration Tests', () => {
           quantite_requise: 5
         });
 
-      expect(response.status).toBe(403);
+      expect(response.status).toBe(401);
     });
 
     it('should reject alert creation with missing required fields', async () => {
       const response = await request(app)
-        .post('/api/alertes/create')
+        .post('/api/alerts/create')
         .set('Authorization', `Bearer ${authToken}`)
         .send({
           groupe_sanguin: 'O+'
@@ -140,10 +140,10 @@ describe('Alert Endpoints Integration Tests', () => {
     });
   });
 
-  describe('GET /api/alertes/nearby', () => {
+  describe('GET /api/alerts/nearby', () => {
     it('should get nearby alerts with valid coordinates', async () => {
       const response = await request(app)
-        .get('/api/alertes/nearby')
+        .get('/api/alerts/nearby')
         .query({
           lat: 33.5731,
           lng: -7.5898,
@@ -157,7 +157,7 @@ describe('Alert Endpoints Integration Tests', () => {
 
     it('should reject nearby with invalid latitude', async () => {
       const response = await request(app)
-        .get('/api/alertes/nearby')
+        .get('/api/alerts/nearby')
         .query({
           lat: 'invalid',
           lng: -7.5898,
@@ -169,7 +169,7 @@ describe('Alert Endpoints Integration Tests', () => {
 
     it('should reject nearby with invalid radius', async () => {
       const response = await request(app)
-        .get('/api/alertes/nearby')
+        .get('/api/alerts/nearby')
         .query({
           lat: 33.5731,
           lng: -7.5898,
@@ -181,7 +181,7 @@ describe('Alert Endpoints Integration Tests', () => {
 
     it('should return empty array when no alerts found', async () => {
       const response = await request(app)
-        .get('/api/alertes/nearby')
+        .get('/api/alerts/nearby')
         .query({
           lat: 90,
           lng: 180,
@@ -193,10 +193,10 @@ describe('Alert Endpoints Integration Tests', () => {
     });
   });
 
-  describe('GET /api/alertes/search', () => {
+  describe('GET /api/alerts/search', () => {
     it('should search alerts by blood type', async () => {
       const response = await request(app)
-        .get('/api/alertes/search')
+        .get('/api/alerts/search')
         .query({
           groupe_sanguin: 'O+'
         });
@@ -208,7 +208,7 @@ describe('Alert Endpoints Integration Tests', () => {
 
     it('should reject search with invalid blood type', async () => {
       const response = await request(app)
-        .get('/api/alertes/search')
+        .get('/api/alerts/search')
         .query({
           groupe_sanguin: 'INVALID'
         });
@@ -218,7 +218,7 @@ describe('Alert Endpoints Integration Tests', () => {
 
     it('should search alerts by urgency', async () => {
       const response = await request(app)
-        .get('/api/alertes/search')
+        .get('/api/alerts/search')
         .query({
           urgence: 'URGENT'
         });
@@ -228,10 +228,10 @@ describe('Alert Endpoints Integration Tests', () => {
     });
   });
 
-  describe('PUT /api/alertes/:id', () => {
+  describe('PUT /api/alerts/:id', () => {
     it('should update alert with valid data', async () => {
       const response = await request(app)
-        .put(`/api/alertes/${testAlertId}`)
+        .put(`/api/alerts/${testAlertId}`)
         .set('Authorization', `Bearer ${authToken}`)
         .send({
           urgence: 'TRES_URGENT',
@@ -243,7 +243,7 @@ describe('Alert Endpoints Integration Tests', () => {
 
     it('should reject update with invalid urgency', async () => {
       const response = await request(app)
-        .put(`/api/alertes/${testAlertId}`)
+        .put(`/api/alerts/${testAlertId}`)
         .set('Authorization', `Bearer ${authToken}`)
         .send({
           urgence: 'INVALID'
@@ -254,20 +254,20 @@ describe('Alert Endpoints Integration Tests', () => {
 
     it('should reject update without token', async () => {
       const response = await request(app)
-        .put(`/api/alertes/${testAlertId}`)
+        .put(`/api/alerts/${testAlertId}`)
         .send({
           urgence: 'URGENT'
         });
 
-      expect(response.status).toBe(403);
+      expect(response.status).toBe(401);
     });
   });
 
-  describe('DELETE /api/alertes/:id', () => {
+  describe('DELETE /api/alerts/:id', () => {
     it('should delete alert with valid token', async () => {
       // First create an alert to delete
       const createResponse = await request(app)
-        .post('/api/alertes/create')
+        .post('/api/alerts/create')
         .set('Authorization', `Bearer ${authToken}`)
         .send({
           groupe_sanguin: 'B+',
@@ -278,10 +278,10 @@ describe('Alert Endpoints Integration Tests', () => {
           quantite_requise: 3
         });
 
-      const alertIdToDelete = createResponse.body.alerte.id;
+      const alertIdToDelete = createResponse.body.alerte.id_alerte;
 
       const deleteResponse = await request(app)
-        .delete(`/api/alertes/${alertIdToDelete}`)
+        .delete(`/api/alerts/${alertIdToDelete}`)
         .set('Authorization', `Bearer ${authToken}`);
 
       expect(deleteResponse.status).toBe(200);
@@ -289,9 +289,9 @@ describe('Alert Endpoints Integration Tests', () => {
 
     it('should reject delete without token', async () => {
       const response = await request(app)
-        .delete(`/api/alertes/${testAlertId}`);
+        .delete(`/api/alerts/${testAlertId}`);
 
-      expect(response.status).toBe(403);
+      expect(response.status).toBe(401);
     });
   });
 });

@@ -162,15 +162,14 @@ describe('User Endpoints Integration Tests', () => {
   describe('POST /api/users/search-donors', () => {
     it('should search for donors with valid parameters', async () => {
       const response = await request(app)
-        .post('/api/users/search-donors')
-        .send({
-          coordinates: {
-            lat: 33.5731,
-            lng: -7.5898
-          },
+        .get('/api/users/search')
+        .query({
+          latitude: 33.5731,
+          longitude: -7.5898,
           radius: 5,
           groupe_sanguin: 'O+'
-        });
+        })
+        .set('Authorization', `Bearer ${authToken}`);
 
       expect(response.status).toBe(200);
       expect(response.body.donors).toBeDefined();
@@ -179,28 +178,26 @@ describe('User Endpoints Integration Tests', () => {
 
     it('should reject search with invalid coordinates', async () => {
       const response = await request(app)
-        .post('/api/users/search-donors')
-        .send({
-          coordinates: {
-            lat: 'invalid',
-            lng: -7.5898
-          },
+        .get('/api/users/search')
+        .query({
+          latitude: 'invalid',
+          longitude: -7.5898,
           radius: 5
-        });
+        })
+        .set('Authorization', `Bearer ${authToken}`);
 
       expect(response.status).toBe(400);
     });
 
     it('should reject search with invalid radius', async () => {
       const response = await request(app)
-        .post('/api/users/search-donors')
-        .send({
-          coordinates: {
-            lat: 33.5731,
-            lng: -7.5898
-          },
+        .get('/api/users/search')
+        .query({
+          latitude: 33.5731,
+          longitude: -7.5898,
           radius: -5
-        });
+        })
+        .set('Authorization', `Bearer ${authToken}`);
 
       expect(response.status).toBe(400);
     });
@@ -208,7 +205,7 @@ describe('User Endpoints Integration Tests', () => {
 
   describe('POST /api/users/update-location', () => {
     it('should update user location with valid token', async () => {
-      // First login to get token
+      // First login to get token and id
       const loginResponse = await request(app)
         .post('/api/users/login')
         .send({
@@ -217,9 +214,10 @@ describe('User Endpoints Integration Tests', () => {
         });
 
       const token = loginResponse.body.token;
+      const id = loginResponse.body.user.id_utilisateur;
 
       const response = await request(app)
-        .post('/api/users/update-location')
+        .put(`/api/users/${id}`)
         .set('Authorization', `Bearer ${token}`)
         .send({
           latitude: 33.5731,
@@ -231,13 +229,13 @@ describe('User Endpoints Integration Tests', () => {
 
     it('should reject location update without token', async () => {
       const response = await request(app)
-        .post('/api/users/update-location')
+        .put('/api/users/1')
         .send({
           latitude: 33.5731,
           longitude: -7.5898
         });
 
-      expect(response.status).toBe(403);
+      expect(response.status).toBe(401); // verifyToken returns 401, not 403
     });
 
     it('should reject location update with invalid coordinates', async () => {
@@ -249,9 +247,10 @@ describe('User Endpoints Integration Tests', () => {
         });
 
       const token = loginResponse.body.token;
+      const id = loginResponse.body.user.id_utilisateur;
 
       const response = await request(app)
-        .post('/api/users/update-location')
+        .put(`/api/users/${id}`)
         .set('Authorization', `Bearer ${token}`)
         .send({
           latitude: 'invalid',
@@ -272,12 +271,13 @@ describe('User Endpoints Integration Tests', () => {
         });
 
       const token = loginResponse.body.token;
+      const id = loginResponse.body.user.id_utilisateur;
 
       const response = await request(app)
-        .post('/api/users/push-token')
+        .put(`/api/users/${id}/push-token`)
         .set('Authorization', `Bearer ${token}`)
         .send({
-          token: 'ExponentPushToken[' + 'a'.repeat(64) + ']'
+          token: 'ExponentPushToken[' + 'a'.repeat(22) + ']'
         });
 
       expect(response.status).toBe(200);
@@ -292,9 +292,10 @@ describe('User Endpoints Integration Tests', () => {
         });
 
       const token = loginResponse.body.token;
+      const id = loginResponse.body.user.id_utilisateur;
 
       const response = await request(app)
-        .post('/api/users/push-token')
+        .put(`/api/users/${id}/push-token`)
         .set('Authorization', `Bearer ${token}`)
         .send({
           token: 'invalid-token'
