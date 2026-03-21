@@ -1,13 +1,14 @@
 import React, { useEffect, useRef } from "react";
-import { View, StyleSheet, Animated, Text, ViewStyle } from "react-native";
+import { View, StyleSheet, Animated, Text, ViewStyle, Easing } from "react-native";
 import { color } from "@/constant/color";
+import { TabBarIcon } from "./TabBarIcon";
 
 interface ModernSpinnerProps {
   size?: "small" | "medium" | "large";
   color?: string;
   message?: string;
   style?: ViewStyle;
-  pose?: "waving" | "jumping" | "superhero" | "bouncing";
+  pose?: "spinning" | "bouncing" | "heart-pulse";
 }
 
 export const ModernSpinner: React.FC<ModernSpinnerProps> = ({
@@ -15,99 +16,77 @@ export const ModernSpinner: React.FC<ModernSpinnerProps> = ({
   color: spinnerColor = color.primary,
   message,
   style,
-  pose = "waving",
+  pose = "spinning",
 }) => {
-  const spinValue = useRef(new Animated.Value(0)).current;
-  const pulseValue = useRef(new Animated.Value(1)).current;
-  const translateY = useRef(new Animated.Value(0)).current;
-  const scaleValue = useRef(new Animated.Value(1)).current;
+  const rotation = useRef(new Animated.Value(0)).current;
+  const pulse = useRef(new Animated.Value(1)).current;
+  const bounce = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    // Rotation animation - smooth spinning
-    const spinAnim = Animated.loop(
-      Animated.timing(spinValue, {
+    // Rotation Loop (Standard)
+    const rotateAnim = Animated.loop(
+      Animated.timing(rotation, {
         toValue: 1,
-        duration: 2000,
+        duration: 1200,
+        easing: Easing.linear,
         useNativeDriver: true,
-      }),
+      })
     );
 
-    // Pulse animation - fade in/out
+    // Heart Pulse Loop
     const pulseAnim = Animated.loop(
       Animated.sequence([
-        Animated.timing(pulseValue, {
-          toValue: 0.7,
-          duration: 1000,
-          useNativeDriver: true,
-        }),
-        Animated.timing(pulseValue, {
-          toValue: 1,
-          duration: 1000,
-          useNativeDriver: true,
-        }),
-      ]),
-    );
-
-    // Bouncing animation
-    const bouncingAnim = Animated.loop(
-      Animated.sequence([
-        Animated.timing(translateY, {
-          toValue: -15,
-          duration: 500,
-          useNativeDriver: true,
-        }),
-        Animated.timing(translateY, {
-          toValue: 0,
-          duration: 500,
-          useNativeDriver: true,
-        }),
-      ]),
-    );
-
-    // Scale pulse animation
-    const scaleAnim = Animated.loop(
-      Animated.sequence([
-        Animated.timing(scaleValue, {
+        Animated.timing(pulse, {
           toValue: 1.2,
-          duration: 800,
+          duration: 400,
           useNativeDriver: true,
         }),
-        Animated.timing(scaleValue, {
+        Animated.timing(pulse, {
           toValue: 1,
-          duration: 800,
+          duration: 400,
           useNativeDriver: true,
         }),
-      ]),
+      ])
     );
 
-    spinAnim.start();
-    pulseAnim.start();
+    // Bounce Loop
+    const bounceAnim = Animated.loop(
+      Animated.sequence([
+        Animated.timing(bounce, {
+          toValue: -10,
+          duration: 400,
+          easing: Easing.out(Easing.quad),
+          useNativeDriver: true,
+        }),
+        Animated.timing(bounce, {
+          toValue: 0,
+          duration: 400,
+          easing: Easing.in(Easing.quad),
+          useNativeDriver: true,
+        }),
+      ])
+    );
 
-    if (pose === "bouncing") {
-      bouncingAnim.start();
-    } else if (pose === "jumping") {
-      scaleAnim.start();
-    }
+    rotateAnim.start();
+    if (pose === "heart-pulse") pulseAnim.start();
+    if (pose === "bouncing") bounceAnim.start();
 
     return () => {
-      spinAnim.stop();
+      rotateAnim.stop();
       pulseAnim.stop();
-      bouncingAnim.stop();
-      scaleAnim.stop();
+      bounceAnim.stop();
     };
-  }, [spinValue, pulseValue, translateY, scaleValue, pose]);
+  }, [rotation, pulse, bounce, pose]);
 
-  const spin = spinValue.interpolate({
+  const spin = rotation.interpolate({
     inputRange: [0, 1],
     outputRange: ["0deg", "360deg"],
   });
 
-  const sizeMap: Record<string, number> = { small: 48, medium: 64, large: 80 };
-  const spinnerSize = sizeMap[size];
+  const spinnerSize = size === "small" ? 24 : size === "medium" ? 48 : 80;
 
   return (
     <View style={[styles.container, style]}>
-      {/* Enhanced rotating spinner with gradient effect */}
       <Animated.View
         style={[
           styles.spinner,
@@ -115,55 +94,30 @@ export const ModernSpinner: React.FC<ModernSpinnerProps> = ({
             width: spinnerSize,
             height: spinnerSize,
             transform: [
-              { rotate: spin },
-              { translateY },
-              { scale: scaleValue },
+              { rotate: pose === "heart-pulse" ? "0deg" : spin },
+              { translateY: pose === "bouncing" ? bounce : 0 },
+              { scale: pose === "heart-pulse" ? pulse : 1 },
             ],
-            opacity: pulseValue,
           },
         ]}
       >
-        {/* Outer ring */}
-        <View
-          style={[
-            styles.spinnerRing,
-            {
-              borderColor: spinnerColor,
-              width: spinnerSize,
-              height: spinnerSize,
-            },
-          ]}
-        />
-        {/* Inner ring for depth */}
-        <View
-          style={[
-            styles.innerRing,
-            {
-              borderColor: spinnerColor,
-              width: spinnerSize * 0.6,
-              height: spinnerSize * 0.6,
-            },
-          ]}
-        />
-      </Animated.View>
-
-      {/* Pulsing dots under spinner */}
-      <View style={styles.dotsContainer}>
-        {[0, 1, 2].map((i) => (
-          <Animated.View
-            key={i}
+        {pose === "heart-pulse" ? (
+          <TabBarIcon name="heart" size={spinnerSize * 0.8} color={spinnerColor} />
+        ) : (
+          <View
             style={[
-              styles.dot,
+              styles.spinnerRing,
               {
-                backgroundColor: spinnerColor,
-                opacity: Animated.add(pulseValue, i * 0.2),
+                borderColor: spinnerColor,
+                width: spinnerSize,
+                height: spinnerSize,
+                borderTopColor: "transparent",
               },
             ]}
           />
-        ))}
-      </View>
+        )}
+      </Animated.View>
 
-      {/* Message optionnel */}
       {message ? (
         <Text style={[styles.message, { color: spinnerColor }]}>{message}</Text>
       ) : null}
@@ -173,50 +127,21 @@ export const ModernSpinner: React.FC<ModernSpinnerProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    justifyContent: "center",
     alignItems: "center",
-    gap: 12,
+    justifyContent: "center",
   },
-
   spinner: {
-    justifyContent: "center",
     alignItems: "center",
+    justifyContent: "center",
   },
-
   spinnerRing: {
     borderWidth: 3,
-    borderRadius: 999,
-    borderTopColor: "transparent",
-    borderRightColor: "transparent",
-    borderBottomColor: "transparent",
-    position: "absolute",
+    borderRadius: 50,
   },
-
-  innerRing: {
-    borderWidth: 2,
-    borderRadius: 999,
-    borderTopColor: "transparent",
-    borderLeftColor: "transparent",
-    opacity: 0.5,
-  },
-
-  dotsContainer: {
-    flexDirection: "row",
-    gap: 8,
-    marginTop: 8,
-  },
-
-  dot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-  },
-
   message: {
-    fontSize: 13,
+    marginTop: 12,
+    fontSize: 14,
     fontWeight: "600",
     textAlign: "center",
-    letterSpacing: 0.3,
-    marginTop: 8,
   },
 });

@@ -26,6 +26,7 @@ export default {
       yes: "OUI",
       no: "NON",
     },
+    compatible: "Compatible",
   },
   tabs: {
     home: "Accueil",
@@ -106,7 +107,8 @@ export default {
     logoutConfirm: "Êtes-vous sûr de vouloir vous déconnecter ?",
     defaultUser: "Utilisateur",
     donations: "Dons",
-    alerts: "Alertes",
+    alerts: "Mes demandes",
+    donationsSubtitle: "Dons effectués",
     rating: "Note",
     menu: "Menu",
   },
@@ -117,6 +119,7 @@ export default {
     typeMessage: "Écrire un message...",
     send: "Envoyer",
     unread: "non lu(s)",
+    chatUnavailable: "La messagerie de ce donneur n'est pas encore activée.",
   },
   centers: {
     title: "Centres de Santé",
@@ -182,6 +185,11 @@ export default {
       firstName: "Ex: Jean",
       phone: "Ex: 6XXXXXXXX",
       city: "Douala",
+    },
+    image: {
+      pick: "Changer la photo",
+      error: "Erreur lors de l'envoi de l'image",
+      success: "Photo mise à jour",
     },
   },
   notifications: {
@@ -269,6 +277,10 @@ export default {
     locationError: "Permission de localisation refusée ou non disponible",
     idError: "Erreur : ID alerte non reçu",
     genericError: "Une erreur est survenue lors de la diffusion.",
+    itineraryUnavailable: "Coordonnées indisponibles",
+    sending: "Envoi en cours...",
+    authRequired: "Connexion requise",
+    authMessage: "Créez un compte pour suivre votre alerte et recevoir des notifications.",
     fields: {
       location: "Lieu",
       quantity: "Quantité requise (poches)",
@@ -297,13 +309,10 @@ export default {
       success: "Merci ! Le demandeur a été notifié.",
       contactInfo: "Coordonnées du demandeur",
       chatInitiator: "Discuter avec le demandeur",
+      initiator: "Demandeur",
       eligibility: {
         title: "Auto-Éligibilité",
         subtitle: "Répondez honnêtement pour votre propre sécurité.",
-        q1: "Avez-vous eu de la fièvre ou une infection au cours des 2 dernières semaines ?",
-        q2: "Avez-vous pris des antibiotiques au cours des 7 derniers jours ?",
-        q3: "Avez-vous mangé un repas consistant au cours des 4 dernières heures ?",
-        q4: "Êtes-vous enceinte ou allaitez-vous ? (Si applicable)",
         warning: "Si vous répondez OUI à l'une de ces questions, il est préférable de ne pas donner aujourd'hui.",
         confirmBtn: "JE CONFIRME MON ÉLIGIBILITÉ",
         testTitle: "Test d'éligibilité",
@@ -330,9 +339,11 @@ export default {
       myResponses: "Mes Interventions",
     },
     status: {
-      en_attente_validation: "En attente",
+      en_attente: "En attente",
+      en_attente_validation: "En attente de validation",
       en_cours: "En cours",
       resolu: "Résolu",
+      satisfaite: "Satisfaite",
       annule: "Annulé",
     },
     tracking: {
@@ -355,6 +366,7 @@ export default {
       call: "Appeler",
       close: "Fermer",
       share: "Partager",
+      itinerary: "Itinéraire",
     },
     empty: {
       sent: "Aucune alerte lancée",
@@ -369,6 +381,13 @@ export default {
       info: "Vous serez redirigé vers le suivi de votre alerte dans quelques secondes.",
     },
     shareMessage: "🚨 *URGENCE VITALE — APPEL À LA SOLIDARITÉ* 🩸\n\nBesoin urgent de sang groupe *{{group}}* pour sauver une vie.\n\n📍 *Lieu* : {{location}}\n🗺️ *Itinéraire* : https://www.google.com/maps/search/?api=1&query={{latitude}},{{longitude}}\n⚠️ *Urgence* : {{urgency}}\n📦 *Besoin* : {{quantity}} poche(s)\n📞 *Contact* : {{phone}}\n\nC'est pour un don bénévole et gratuit. Si vous pouvez aider ou connaissez quelqu'un, cliquez ici :\n🔗 https://vitasang.cm/alerte/{{id}}\n\n_Partagez au maximum dans vos groupes. Chaque partage peut sauver une vie. Que le Seigneur nous garde._ 🙏🇨🇲\n#VitaSang #Cameroun #DonDeSangBénévole",
+    fatigue: {
+      noAlerts: "Vous n'avez pas reçu d'alertes aujourd'hui",
+      isFatigued: "Vous recevez beaucoup d'alertes. Prenez une pause !",
+      highEngagement: "Merci pour votre engagement ! 🎉",
+      regularParticipation: "Vous participez régulièrement. C'est super !",
+      explore: "Explorez nos alertes disponibles",
+    },
   },
   helpAndAdvice: {
     headerTitle: "Aide & Sensibilisation",

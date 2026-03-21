@@ -8,6 +8,7 @@ import { ANALYTICS_EVENT, AnalyticsEvent } from '@/services/analyticsService';
 
 interface AuthContextType {
   isAuth: boolean | null;
+  user: any | null;
   isLoading: boolean;
   signIn: (telephone: string, mot_de_passe: string) => Promise<void>;
   signOut: () => Promise<void>;
@@ -17,6 +18,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [isAuth, setIsAuth] = useState<boolean | null>(null);
+  const [user, setUser] = useState<any | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const posthog = usePostHog();
 
@@ -27,6 +29,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       await removeData('token');
       await removeData('user');
       posthog?.reset();
+      setUser(null);
       setIsAuth(false);
     });
 
@@ -49,6 +52,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             prenom: user.prenom,
             role: user.role
           });
+          setUser(user);
         }
         setIsAuth(!!token); // true if token exists, false otherwise
       } catch (error) {
@@ -86,6 +90,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         prenom: userToStore.prenom,
         role: userToStore.role
       });
+      setUser(userToStore);
 
       // TRAITER L'ALERTE EN ATTENTE (Guest flow)
       try {
@@ -118,6 +123,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       await removeData('token');
       await removeData('user');
       posthog?.reset(); // Réinitialiser PostHog
+      setUser(null);
       setIsAuth(false);
     } catch (error) {
       console.error("Sign out failed:", error);
@@ -127,7 +133,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ isAuth, isLoading, signIn, signOut }}>
+    <AuthContext.Provider value={{ isAuth, user, isLoading, signIn, signOut }}>
       {children}
     </AuthContext.Provider>
   );

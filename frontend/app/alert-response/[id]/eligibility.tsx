@@ -18,18 +18,20 @@ export default function EligibilityScreen() {
     const { id } = useLocalSearchParams();
     const router = useRouter();
 
-    const [answers, setAnswers] = useState({
+    const [answers, setAnswers] = useState<Record<string, boolean>>({
         q1: false,
         q2: false,
         q3: false,
         q4: false,
+        q5: false,
+        q6: false,
     });
 
-    const toggleAnswer = (key: keyof typeof answers) => {
+    const toggleAnswer = (key: string) => {
         setAnswers((prev) => ({ ...prev, [key]: !prev[key] }));
     };
 
-    const isEligible = !answers.q1 && !answers.q2 && !answers.q3 && !answers.q4;
+    const isEligible = !answers.q4 && !answers.q5 && !answers.q6 && answers.q1 && answers.q2 && answers.q3;
 
     const handleConfirm = () => {
         if (isEligible) {
@@ -54,18 +56,34 @@ export default function EligibilityScreen() {
                 <Text style={styles.subtitle}>{t("alert.response.eligibility.subtitle")}</Text>
 
                 <View style={styles.questionsContainer}>
-                    {[1, 2, 3, 4].map((num) => {
-                        const key = `q${num}` as keyof typeof answers;
+                    {[1, 2, 3, 4, 5, 6].map((num) => {
+                        const key = `q${num}`;
+                        const isNegativeQuestion = num >= 4; // q4, q5, q6 are negative (should be false)
                         return (
                             <TouchableOpacity
                                 key={num}
-                                style={[styles.questionCard, answers[key] && styles.questionCardActive]}
+                                style={[
+                                    styles.questionCard,
+                                    isNegativeQuestion
+                                        ? (answers[key] && styles.questionCardActive)
+                                        : (!answers[key] && styles.questionCardActive)
+                                ]}
                                 onPress={() => toggleAnswer(key)}
                             >
-                                <Text style={[styles.questionText, answers[key] && styles.questionTextActive]}>
-                                    {t(`alert.response.eligibility.q${num}`)}
+                                <Text style={[
+                                    styles.questionText,
+                                    isNegativeQuestion
+                                        ? (answers[key] && styles.questionTextActive)
+                                        : (!answers[key] && styles.questionTextActive)
+                                ]}>
+                                    {t(`alert.response.eligibility.questions.q${num}.text`)}
                                 </Text>
-                                <View style={[styles.checkbox, answers[key] && styles.checkboxActive]}>
+                                <View style={[
+                                    styles.checkbox,
+                                    isNegativeQuestion
+                                        ? (answers[key] && styles.checkboxActive)
+                                        : (answers[key] && styles.checkboxActive)
+                                ]}>
                                     {answers[key] && <TabBarIcon name="check" size={14} color="white" />}
                                 </View>
                             </TouchableOpacity>

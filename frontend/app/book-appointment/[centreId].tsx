@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   ScrollView,
   Alert,
+  Platform,
 } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { PageHeader } from "@/components/PageHeader";
@@ -22,6 +23,7 @@ import { analyticsService } from "@/services/analyticsService";
 import { LoadingOverlay } from "@/components/LoadingOverlay";
 
 import { useTranslation } from "react-i18next";
+import DateTimePicker from "@react-native-community/datetimepicker";
 
 const BookingSchema = Yup.object().shape({
   date: Yup.string().required("La date est requise"),
@@ -38,6 +40,8 @@ export default function BookAppointmentScreen() {
   const [centre, setCentre] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [showTimePicker, setShowTimePicker] = useState(false);
 
   useEffect(() => {
     const loadCentre = async () => {
@@ -130,26 +134,60 @@ export default function BookAppointmentScreen() {
             handleSubmit,
           }) => (
             <View style={styles.form}>
-              <FormField
-                label={t("booking.dateLabel")}
-                value={values.date}
-                onChangeText={handleChange("date")}
-                onBlur={handleBlur("date")}
-                placeholder={t("booking.datePlaceholder")}
-                error={errors.date}
-                touched={touched.date}
-              // In a real app, you would replace this with a proper DatePicker component
-              />
-              <FormField
-                label={t("booking.timeLabel")}
-                value={values.time}
-                onChangeText={handleChange("time")}
-                onBlur={handleBlur("time")}
-                placeholder={t("booking.timePlaceholder")}
-                error={errors.time}
-                touched={touched.time}
-              // In a real app, you would replace this with a proper TimePicker component
-              />
+              <TouchableOpacity onPress={() => setShowDatePicker(true)}>
+                <View pointerEvents="none">
+                  <FormField
+                    label={t("booking.dateLabel")}
+                    value={values.date}
+                    placeholder={t("booking.datePlaceholder")}
+                    error={errors.date}
+                    touched={touched.date}
+                  />
+                </View>
+              </TouchableOpacity>
+
+              {showDatePicker && (
+                <DateTimePicker
+                  value={values.date ? new Date(values.date) : new Date()}
+                  mode="date"
+                  display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                  minimumDate={new Date()}
+                  onChange={(event, date) => {
+                    setShowDatePicker(false);
+                    if (date) {
+                      handleChange("date")(date.toISOString().split('T')[0]);
+                    }
+                  }}
+                />
+              )}
+
+              <TouchableOpacity onPress={() => setShowTimePicker(true)}>
+                <View pointerEvents="none">
+                  <FormField
+                    label={t("booking.timeLabel")}
+                    value={values.time}
+                    placeholder={t("booking.timePlaceholder")}
+                    error={errors.time}
+                    touched={touched.time}
+                  />
+                </View>
+              </TouchableOpacity>
+
+              {showTimePicker && (
+                <DateTimePicker
+                  value={new Date()}
+                  mode="time"
+                  display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                  is24Hour={true}
+                  onChange={(event, date) => {
+                    setShowTimePicker(false);
+                    if (date) {
+                      const time = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                      handleChange("time")(time);
+                    }
+                  }}
+                />
+              )}
               <PrimaryButton
                 title={t("booking.submit")}
                 onPress={() => handleSubmit()}

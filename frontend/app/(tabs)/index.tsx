@@ -27,6 +27,7 @@ import { AlertFatigueInsights } from "@/components/AlertFatigueInsights";
 import Constants from "expo-constants";
 import { isCompatible } from "@/utils/bloodCompatibility";
 import { usePostHog } from "posthog-react-native";
+import { getProfileImageSource } from "@/utils/imageUtils";
 
 const { width } = Dimensions.get("window");
 
@@ -34,6 +35,7 @@ export default function Home() {
   const { t } = useTranslation();
   const router = useRouter();
   const [userId, setUserId] = useState<number | null>(null);
+  const [toggleLoading, setToggleLoading] = useState(false);
   const posthog = usePostHog();
 
   useEffect(() => {
@@ -64,16 +66,7 @@ export default function Home() {
     ? `${userData.prenom || ""} ${userData.nom || ""}`.trim()
     : t("profile.defaultUser");
 
-  const profileImage = userData?.photo_profil
-    ? {
-      uri: userData.photo_profil.startsWith("http")
-        ? userData.photo_profil
-        : (
-          Constants.expoConfig?.extra?.env?.EXPO_PUBLIC_API_BASE_URL ||
-          "https://vitasang-api.onrender.com/"
-        ).replace("/api", "") + userData.photo_profil,
-    }
-    : null;
+  const profileImage = getProfileImageSource(userData?.photo_profil);
 
   return (
     <ThemedView style={styles.container}>
@@ -142,19 +135,26 @@ export default function Home() {
                 />
                 <Switch
                   value={userData?.profilDonneur?.disponible !== false}
+                  disabled={toggleLoading}
                   onValueChange={async (val: boolean) => {
                     if (userId) {
+                      setToggleLoading(true);
                       try {
                         await updateDonorProfile(userId, { disponible: val });
-                        profileQuery.refetch();
+                        await profileQuery.refetch();
                       } catch (e) {
                         console.error("Error toggling availability:", e);
+                      } finally {
+                        setToggleLoading(false);
                       }
                     }
                   }}
                   trackColor={{ false: "#ccc", true: color.success }}
                   thumbColor="white"
-                  style={{ transform: [{ scaleX: 0.8 }, { scaleY: 0.8 }] }}
+                  style={{
+                    transform: [{ scaleX: 0.8 }, { scaleY: 0.8 }],
+                    opacity: toggleLoading ? 0.5 : 1
+                  }}
                 />
               </View>
               <Text style={styles.statusLabel}>{t("profile.availability")}</Text>
@@ -170,6 +170,7 @@ export default function Home() {
         <TouchableOpacity
           style={styles.mainActionBtn}
           onPress={() => router.push("/create-alert")}
+          testID="main-sos-button"
         >
           <View style={styles.mainActionGradient}>
             <TabBarIcon name="bolt" size={24} color="white" />
@@ -189,7 +190,7 @@ export default function Home() {
             <FlatList
               horizontal
               showsHorizontalScrollIndicator={false}
-              snapToInterval={width * 0.75 + 16}
+              snapToInterval={width * 0.71 + 16}
               decelerationRate="fast"
               data={activeAlerts}
               keyExtractor={(item, index) => item.id?.toString() || index.toString()}
@@ -200,7 +201,12 @@ export default function Home() {
                   onPress={() =>
                     router.push({
                       pathname: "/alert-response/[id]",
-                      params: { id: item.id },
+                      params: {
+                        id: item.id,
+                        groupe: item.groupe,
+                        lieu: item.lieu,
+                        urgence: item.urgence,
+                      },
                     })
                   }
                 >
@@ -217,7 +223,7 @@ export default function Home() {
                       {userData?.groupe_sanguin && isCompatible(userData.groupe_sanguin, item.groupe) && (
                         <View style={styles.compatibilityBadge}>
                           <TabBarIcon name="check" size={10} color="white" />
-                          <Text style={styles.compatibilityText}>{t("common.compatible") || "Compatible"}</Text>
+                          <Text style={styles.compatibilityText}>{t("common.compatible")}</Text>
                         </View>
                       )}
                     </View>
@@ -476,7 +482,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   urgentCard: {
-    width: width * 0.75,
+    width: width * 0.71,
     backgroundColor: color.surface,
     borderRadius: 24,
     padding: 20,

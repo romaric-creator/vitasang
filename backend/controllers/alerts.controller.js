@@ -64,6 +64,7 @@ exports.createAlert = async (req, res, next) => {
     quantite_requise,
     lieu,
     description,
+    telephone_contact,
   } = req.body;
   const id_initiateur = req.user.id;
 
@@ -82,6 +83,7 @@ exports.createAlert = async (req, res, next) => {
       longitude,
       lieu,
       description,
+      telephone_contact: telephone_contact || req.user.telephone,
       quantite_requise: quantite_requise || 1,
       statut: "en_attente_validation", // New default status
     });
@@ -232,7 +234,7 @@ exports.getLiveAlerts = async (req, res, next) => {
         {
           model: Utilisateur,
           as: "initiateur",
-          attributes: ["nom", "prenom", "telephone"],
+          attributes: ["id_utilisateur", "nom", "prenom", "telephone"],
         },
       ],
       order: [["createdAt", "DESC"]],
@@ -287,7 +289,7 @@ exports.getAlertStatus = async (req, res, next) => {
         {
           model: Utilisateur,
           as: "initiateur",
-          attributes: ["nom", "prenom", "telephone"],
+          attributes: ["id_utilisateur", "nom", "prenom", "telephone"],
         },
       ],
     });
@@ -336,6 +338,7 @@ exports.getAlertStatus = async (req, res, next) => {
         description: alerte.description,
         createdAt: alerte.createdAt,
         initiateur: alerte.initiateur ? {
+          id_utilisateur: alerte.initiateur.id_utilisateur,
           nom: alerte.initiateur.nom,
           prenom: alerte.initiateur.prenom,
           telephone: alerte.initiateur.telephone,

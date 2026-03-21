@@ -34,7 +34,7 @@ import {
 export default function CreateAlertScreen() {
   const { t } = useTranslation();
   const router = useRouter();
-  const { isAuth } = useAuth();
+  const { isAuth, user } = useAuth();
   const [location, setLocation] = useState<Location.LocationObject | null>(
     null,
   );
@@ -42,7 +42,6 @@ export default function CreateAlertScreen() {
   const [loading, setLoading] = useState(false);
   const [isLocating, setIsLocating] = useState(true);
   const [donorCount, setDonorCount] = useState<number | null>(null);
-  const [isModalVisible, setModalVisible] = useState(false);
   const [pendingAlertData, setPendingAlertData] = useState<any>(null);
 
   useEffect(() => {
@@ -89,7 +88,7 @@ export default function CreateAlertScreen() {
         router.push("/register");
       } catch (e) {
         console.error("Failed to save pending alert:", e);
-        setErrorMsg(t("alert.error") || "Impossible de sauvegarder l'alerte. Veuillez réessayer.");
+        setErrorMsg(t("alert.error"));
       }
     }
   };
@@ -101,7 +100,7 @@ export default function CreateAlertScreen() {
         router.push("/login");
       } catch (e) {
         console.error("Failed to save pending alert:", e);
-        setErrorMsg(t("alert.error") || "Impossible de sauvegarder l'alerte. Veuillez réessayer.");
+        setErrorMsg(t("alert.error"));
       }
     }
   };
@@ -130,12 +129,12 @@ export default function CreateAlertScreen() {
       quantite_requise: parseInt(values.quantite_requise),
       lieu: values.lieu,
       description: values.description,
+      telephone_contact: values.telephone_contact,
     };
 
     // SI L'UTILISATEUR N'EST PAS CONNECTÉ
     if (!isAuth) {
       setPendingAlertData(alertData);
-      setModalVisible(true);
       return;
     }
 
@@ -195,6 +194,7 @@ export default function CreateAlertScreen() {
               lieu: "",
               quantite_requise: "",
               description: "",
+              telephone_contact: user?.telephone || "",
               latitude: location?.coords.latitude || 0,
               longitude: location?.coords.longitude || 0,
             }}
@@ -257,23 +257,30 @@ export default function CreateAlertScreen() {
                     <Text style={{ color: color.error }}>*</Text>
                   </Text>
                   <View style={styles.urgencyGrid}>
-                    {["NORMAL", "URGENT", "TRES_URGENT"].map((level) => (
+                    {[
+                      { id: "NORMAL", color: color.success },
+                      { id: "URGENT", color: color.warning },
+                      { id: "TRES_URGENT", color: color.error },
+                    ].map((level) => (
                       <TouchableOpacity
-                        key={level}
+                        key={level.id}
                         style={[
                           styles.urgencyOption,
-                          values.urgence === level && styles.urgencySelected,
+                          values.urgence === level.id && {
+                            backgroundColor: level.color,
+                            borderColor: level.color,
+                          },
                         ]}
-                        onPress={() => handleChange("urgence")(level)}
+                        onPress={() => handleChange("urgence")(level.id)}
                         activeOpacity={0.7}
                       >
                         <Text
                           style={[
                             styles.urgencyLabel,
-                            values.urgence === level && styles.textWhite,
+                            values.urgence === level.id && styles.textWhite,
                           ]}
                         >
-                          {t(`alert.urgencyLevels.${level}`)}
+                          {t(`alert.urgencyLevels.${level.id}`)}
                         </Text>
                       </TouchableOpacity>
                     ))}
@@ -283,14 +290,20 @@ export default function CreateAlertScreen() {
                   )}
                 </View>
 
+                error={errors.description}
+                touched={touched.description}
+                />
+
                 <FormField
-                  label={t("alert.fields.description")}
-                  value={values.description}
-                  onChangeText={handleChange("description")}
-                  onBlur={handleBlur("description")}
-                  placeholder={t("alert.placeholders.description")}
-                  error={errors.description}
-                  touched={touched.description}
+                  label={t("guestAlert.contactPhone")}
+                  value={values.telephone_contact}
+                  onChangeText={handleChange("telephone_contact")}
+                  onBlur={handleBlur("telephone_contact")}
+                  placeholder={t("guestAlert.placeholders.contactPhone")}
+                  error={errors.telephone_contact}
+                  touched={touched.telephone_contact}
+                  keyboardType="phone-pad"
+                  required
                 />
 
                 <View style={styles.warningBox}>
@@ -319,16 +332,15 @@ export default function CreateAlertScreen() {
                 {!isAuth ? (
                   <View style={styles.authSection}>
                     <Text style={styles.authTitle}>
-                      {t("alert.authRequired") || "Connexion requise"}
+                      {t("alert.authRequired")}
                     </Text>
                     <Text style={styles.authSubtitle}>
-                      {t("alert.authMessage") ||
-                        "Créez un compte pour suivre votre alerte et recevoir des notifications."}
+                      {t("alert.authMessage")}
                     </Text>
 
                     <View style={styles.buttonContainer}>
                       <PrimaryButton
-                        title={t("alert.register") || "S'inscrire"}
+                        title={t("alert.register")}
                         onPress={() => {
                           setPendingAlertData(values);
                           handleRedirectToRegister();
@@ -343,7 +355,7 @@ export default function CreateAlertScreen() {
                         }}
                       >
                         <Text style={styles.secondaryButtonText}>
-                          {t("alert.login") || "Se connecter"}
+                          {t("alert.login")}
                         </Text>
                       </TouchableOpacity>
                     </View>

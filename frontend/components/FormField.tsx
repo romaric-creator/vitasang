@@ -7,7 +7,7 @@ import { color } from '@/constant/color';
 interface FormFieldProps {
   label: string;
   value: string;
-  onChangeText: (text: string) => void;
+  onChangeText?: (text: string) => void;
   onBlur?: (e?: any) => void;
   placeholder?: string;
   error?: string;

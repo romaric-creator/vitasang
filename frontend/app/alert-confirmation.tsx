@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { StyleSheet, Text, View, ActivityIndicator } from "react-native";
+import { StyleSheet, Text, View, ActivityIndicator, TouchableOpacity } from "react-native";
 import { color } from "@/constant/color";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import ThemedView from "@/components/ThemedView";
@@ -47,9 +47,21 @@ export default function AlertConfirmationScreen() {
         {/* Loading Spinner */}
         <View style={styles.spinnerContainer}>
           <ActivityIndicator size="large" color={color.primary} />
-          <Text style={styles.loadingText}>
-            {t("alert.confirmation.loading")}
-          </Text>
+          <TouchableOpacity
+            style={styles.bypassButton}
+            onPress={() => {
+              if (alertId) {
+                router.replace({
+                  pathname: "/alert-tracking/[id]",
+                  params: { id: alertId },
+                });
+              }
+            }}
+          >
+            <Text style={styles.bypassText}>
+              {t("alert.confirmation.bypass") || "Passer l'attente"}
+            </Text>
+          </TouchableOpacity>
         </View>
 
         {/* Info Box */}
@@ -98,12 +110,18 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 32,
   },
-  loadingText: {
-    marginTop: 12,
-    fontSize: 12,
-    color: color.textSecondary,
-    fontWeight: "600",
-    fontStyle: "italic",
+  bypassButton: {
+    marginTop: 16,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    backgroundColor: "rgba(231, 76, 60, 0.1)",
+  },
+  bypassText: {
+    color: color.primary,
+    fontSize: 14,
+    fontWeight: "700",
+    textDecorationLine: "underline",
   },
   infoBox: {
     backgroundColor: "#FFF5F5",

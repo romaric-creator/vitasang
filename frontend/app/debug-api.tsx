@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useRouter } from "expo-router";
 import {
   View,
   Text,
@@ -11,7 +12,14 @@ import { color } from "@/constant/color";
 import axios from "axios";
 
 const DebugApiScreen = () => {
-  // Only render in development mode
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!__DEV__) {
+      router.replace("/");
+    }
+  }, []);
+
   if (!__DEV__) {
     return null;
   }
@@ -167,7 +175,11 @@ const DebugApiScreen = () => {
         </View>
       </View>
 
-      <TouchableOpacity style={styles.testButton} onPress={checkApi}>
+      <TouchableOpacity
+        style={styles.testButton}
+        onPress={checkApi}
+        testID="debug-test-api-button"
+      >
         <Text style={styles.testButtonText}>🔄 Test Again</Text>
       </TouchableOpacity>
 

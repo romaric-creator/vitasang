@@ -3,6 +3,7 @@ import { View, Text, StyleSheet } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { color } from "@/constant/color";
 import { alertFatigueManager } from "@/services/alertFatigueService";
+import { useTranslation } from "react-i18next";
 
 interface AlertFatigueInsightsProps {
   visible?: boolean;
@@ -11,6 +12,7 @@ interface AlertFatigueInsightsProps {
 export const AlertFatigueInsights: React.FC<AlertFatigueInsightsProps> = ({
   visible = true,
 }) => {
+  const { t } = useTranslation();
   const [message, setMessage] = useState<string>("");
   const [icon, setIcon] = useState<string>("heart");
   const [bgColor, setBgColor] = useState<string>("#FFF0F0");
@@ -25,23 +27,23 @@ export const AlertFatigueInsights: React.FC<AlertFatigueInsightsProps> = ({
 
       // Messages clairs et simples basés sur l'engagement
       if (stats.totalAlertsToday === 0) {
-        setMessage("Vous n'avez pas reçu d'alertes aujourd'hui");
+        setMessage(t("alert.fatigue.noAlerts"));
         setIcon("bell-off");
         setBgColor("#F0F9FF");
       } else if (stats.isFatigued) {
-        setMessage("Vous recevez beaucoup d'alertes. Prenez une pause !");
+        setMessage(t("alert.fatigue.isFatigued"));
         setIcon("alert");
         setBgColor("#FEF2F2");
       } else if (stats.acceptanceRate > 70) {
-        setMessage("Merci pour votre engagement ! 🎉");
+        setMessage(t("alert.fatigue.highEngagement"));
         setIcon("heart");
         setBgColor("#F0FDF4");
       } else if (stats.acceptanceRate > 30) {
-        setMessage("Vous participez régulièrement. C'est super !");
+        setMessage(t("alert.fatigue.regularParticipation"));
         setIcon("star");
         setBgColor("#FFFBEB");
       } else {
-        setMessage("Explorez nos alertes disponibles");
+        setMessage(t("alert.fatigue.explore"));
         setIcon("help-circle");
         setBgColor("#F5F3FF");
       }

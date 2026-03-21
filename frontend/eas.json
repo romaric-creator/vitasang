@@ -6,16 +6,14 @@
   "build": {
     "development": {
       "developmentClient": true,
-      "distribution": "internal",
-      "envFile": ".env.development"
+      "distribution": "internal"
     },
     "preview": {
       "distribution": "internal",
-      "envFile": ".env.preview"
+      "android": {
+        "buildType": "apk"
+      }
     },
-    "production": {}
-  },
-  "submit": {
     "production": {}
   }
 }

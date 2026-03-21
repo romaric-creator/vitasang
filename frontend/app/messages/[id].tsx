@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useCallback, useRef } from "react";
+import { useFocusEffect } from "expo-router";
 import {
     StyleSheet,
     View,
@@ -8,6 +9,7 @@ import {
     FlatList,
     KeyboardAvoidingView,
     Platform,
+    AppState,
 } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useTranslation } from "react-i18next";
@@ -50,12 +52,18 @@ export default function ConversationScreen() {
         }
     }, [id]);
 
-    useEffect(() => {
-        fetchMessages();
-        // Refresh every 10s
-        const interval = setInterval(fetchMessages, 10000);
-        return () => clearInterval(interval);
-    }, [fetchMessages]);
+    useFocusEffect(
+        useCallback(() => {
+            fetchMessages();
+            const interval = setInterval(() => {
+                if (AppState.currentState === "active") {
+                    fetchMessages();
+                }
+            }, 5000); // Polling plus rapide (5s) mais seulement si focalisé
+
+            return () => clearInterval(interval);
+        }, [fetchMessages])
+    );
 
     const handleSend = async () => {
         if (!text.trim() || sending) return;
@@ -71,6 +79,14 @@ export default function ConversationScreen() {
             setSending(false);
         }
     };
+
+    if (isNaN(Number(id))) {
+        return (
+            <View style={styles.center}>
+                <Text style={{ color: color.textSecondary }}>{t("common.errors.unexpected")}</Text>
+            </View>
+        );
+    }
 
     if (loading) return <LoadingOverlay visible fullScreen />;
 
@@ -105,7 +121,7 @@ export default function ConversationScreen() {
 
             <KeyboardAvoidingView
                 style={{ flex: 1 }}
-                behavior={Platform.OS === "ios" ? "padding" : undefined}
+                behavior={Platform.OS === "ios" ? "padding" : "height"}
                 keyboardVerticalOffset={0}
             >
                 {messages.length === 0 ? (
@@ -139,6 +155,7 @@ export default function ConversationScreen() {
                         style={[styles.sendBtn, !text.trim() && { opacity: 0.4 }]}
                         onPress={handleSend}
                         disabled={!text.trim() || sending}
+                        testID="send-message-button"
                     >
                         <TabBarIcon name="send" size={18} color="white" />
                     </TouchableOpacity>
@@ -228,4 +245,5 @@ const styles = StyleSheet.create({
         gap: 16,
     },
     emptyText: { fontSize: 14, color: color.textLight, fontWeight: "600" },
+    center: { flex: 1, justifyContent: "center", alignItems: "center" },
 });

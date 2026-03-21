@@ -20,6 +20,141 @@ import { isCompatible } from "@/utils/bloodCompatibility";
 import { useTranslation } from "react-i18next";
 import { SkeletonListLoader } from "@/components/SkeletonLoader";
 
+
+interface AlertCardProps {
+  item: any;
+  onCardPress: (id: number) => void;
+  handleCall: (phone: string) => void;
+  handleShareWhatsApp: (item: any) => void;
+  userData: any;
+  activeTab: "sent" | "accepted";
+  t: any;
+  router: any;
+}
+
+const AlertCard = memo(({
+  item,
+  onCardPress,
+  handleCall,
+  handleShareWhatsApp,
+  userData,
+  activeTab,
+  t,
+  router
+}: AlertCardProps) => {
+  const getStatutColor = (statut: string) => {
+    switch (statut) {
+      case "en_cours": return "#F39C12";
+      case "resolu":
+      case "satisfaite": return "#2ECC71";
+      case "annule": return "#E74C3C";
+      default: return "#BDC3C7";
+    }
+  };
+
+  return (
+    <TouchableOpacity
+      style={styles.alertCard}
+      onPress={() => onCardPress(item.id)}
+      disabled={activeTab === "accepted"}
+    >
+      <View style={styles.bloodContainer}>
+        <View style={[styles.bloodCircle]}>
+          <Text style={styles.bloodText}>{item.groupe}</Text>
+        </View>
+        {userData?.groupe_sanguin && isCompatible(userData.groupe_sanguin, item.groupe) && (
+          <View style={styles.compatibilityBadge}>
+            <TabBarIcon name="check" size={8} color="white" />
+            <Text style={styles.compatibilityText}>{t("common.compatible")}</Text>
+          </View>
+        )}
+      </View>
+      <View style={{ flex: 1 }}>
+        <Text style={styles.alertDate}>
+          {new Date(item.date).toLocaleDateString(undefined, {
+            day: "numeric",
+            month: "short",
+            hour: "2-digit",
+            minute: "2-digit",
+          })}
+        </Text>
+        {activeTab === "sent" ? (
+          <View style={styles.statsRow}>
+            <TabBarIcon name="bell" size={12} color={color.textSecondary} />
+            <Text style={styles.alertStat}>
+              {item.notifiedCount} {t("profile.alerts")}
+            </Text>
+            <View
+              style={[
+                styles.statutBadgeMini,
+                { backgroundColor: getStatutColor(item.statut) },
+              ]}
+            >
+              <Text style={styles.statutTextMini}>
+                {t(`alert.status.${item.statut}`) !== `alert.status.${item.statut}`
+                  ? t(`alert.status.${item.statut}`)
+                  : item.statut.charAt(0).toUpperCase() + item.statut.slice(1)}
+              </Text>
+            </View>
+            <TouchableOpacity
+              style={styles.shareIconBtn}
+              onPress={() => handleShareWhatsApp(item)}
+            >
+              <TabBarIcon name="whatsapp" size={16} color="#25D366" />
+            </TouchableOpacity>
+          </View>
+        ) : (
+          <View>
+            <Text style={styles.initiateurName}>{item.initiateur}</Text>
+            <View style={styles.actionRow}>
+              <TouchableOpacity
+                style={styles.callBtn}
+                onPress={() => handleCall(item.telephone_initiateur)}
+              >
+                <TabBarIcon name="phone" size={12} color="white" />
+                <Text style={styles.callBtnText}>
+                  {t("alert.actions.call")}
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.chatBtn}
+                onPress={() => {
+                  if (item.id_initiateur || item.id_demandeur) {
+                    router.push({
+                      pathname: "/messages/[id]",
+                      params: {
+                        id: item.id_initiateur || item.id_demandeur,
+                        name: item.initiateur || item.nom_demandeur || t("messages.title"),
+                      },
+                    });
+                  }
+                }}
+              >
+                <TabBarIcon name="envelope" size={12} color="white" />
+                <Text style={styles.callBtnText}>{t("profile.messages")}</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
+      </View>
+      {activeTab === "accepted" && (
+        <View
+          style={[
+            styles.statutBadge,
+            { backgroundColor: getStatutColor(item.statut) },
+          ]}
+        >
+          <Text style={styles.statutText}>
+            {t(`alert.status.${item.statut}`) !== `alert.status.${item.statut}`
+              ? t(`alert.status.${item.statut}`)
+              : item.statut.charAt(0).toUpperCase() + item.statut.slice(1)}
+          </Text>
+        </View>
+      )}
+    </TouchableOpacity>
+  );
+});
+
 export default function AlertesScreen() {
   const { t } = useTranslation();
   const router = useRouter();
@@ -76,130 +211,32 @@ export default function AlertesScreen() {
     });
   }, [t]);
 
-  const onCardPress = useCallback((id: number) => {
+  const onCardPress = useCallback((item: any) => {
     if (activeTab === "sent") {
-      router.push(`/alert-tracking/${id}`);
+      router.push({
+        pathname: `/alert-tracking/${item.id}`,
+        params: {
+          id: item.id,
+          groupe: item.groupe,
+          lieu: item.lieu,
+          urgence: item.urgence,
+        },
+      });
     }
   }, [activeTab, router]);
 
-  // Composant d'item mémorisé pour éviter les re-rendus inutiles
-  const AlertCard = memo(({ item }: { item: any }) => {
-    const getStatutColor = (statut: string) => {
-      switch (statut) {
-        case "en_cours": return "#F39C12";
-        case "resolu":
-        case "satisfaite": return "#2ECC71";
-        case "annule": return "#E74C3C";
-        default: return "#BDC3C7";
-      }
-    };
-
-    return (
-      <TouchableOpacity
-        style={styles.alertCard}
-        onPress={() => onCardPress(item.id)}
-        disabled={activeTab === "accepted"}
-      >
-        <View style={styles.bloodContainer}>
-          <View style={[styles.bloodCircle]}>
-            <Text style={styles.bloodText}>{item.groupe}</Text>
-          </View>
-          {userData?.groupe_sanguin && isCompatible(userData.groupe_sanguin, item.groupe) && (
-            <View style={styles.compatibilityBadge}>
-              <TabBarIcon name="check" size={8} color="white" />
-              <Text style={styles.compatibilityText}>{t("common.compatible") || "OK"}</Text>
-            </View>
-          )}
-        </View>
-        <View style={{ flex: 1 }}>
-          <Text style={styles.alertDate}>
-            {new Date(item.date).toLocaleDateString(undefined, {
-              day: "numeric",
-              month: "short",
-              hour: "2-digit",
-              minute: "2-digit",
-            })}
-          </Text>
-          {activeTab === "sent" ? (
-            <View style={styles.statsRow}>
-              <TabBarIcon name="bell" size={12} color={color.textSecondary} />
-              <Text style={styles.alertStat}>
-                {item.notifiedCount} {t("profile.alerts")}
-              </Text>
-              <View
-                style={[
-                  styles.statutBadgeMini,
-                  { backgroundColor: getStatutColor(item.statut) },
-                ]}
-              >
-                <Text style={styles.statutTextMini}>
-                  {t(`alert.status.${item.statut}`) !== `alert.status.${item.statut}`
-                    ? t(`alert.status.${item.statut}`)
-                    : item.statut.charAt(0).toUpperCase() + item.statut.slice(1)}
-                </Text>
-              </View>
-              <TouchableOpacity
-                style={styles.shareIconBtn}
-                onPress={() => handleShareWhatsApp(item)}
-              >
-                <TabBarIcon name="whatsapp" size={16} color="#25D366" />
-              </TouchableOpacity>
-            </View>
-          ) : (
-            <View>
-              <Text style={styles.initiateurName}>{item.initiateur}</Text>
-              <View style={styles.actionRow}>
-                <TouchableOpacity
-                  style={styles.callBtn}
-                  onPress={() => handleCall(item.telephone_initiateur)}
-                >
-                  <TabBarIcon name="phone" size={12} color="white" />
-                  <Text style={styles.callBtnText}>
-                    {t("alert.actions.call")}
-                  </Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.chatBtn}
-                  onPress={() => {
-                    if (item.id_initiateur || item.id_demandeur) {
-                      router.push({
-                        pathname: "/messages/[id]",
-                        params: {
-                          id: item.id_initiateur || item.id_demandeur,
-                          name: item.initiateur || item.nom_demandeur || t("messages.title"),
-                        },
-                      });
-                    }
-                  }}
-                >
-                  <TabBarIcon name="envelope" size={12} color="white" />
-                  <Text style={styles.callBtnText}>{t("profile.messages")}</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-          )}
-        </View>
-        {activeTab === "accepted" && (
-          <View
-            style={[
-              styles.statutBadge,
-              { backgroundColor: getStatutColor(item.statut) },
-            ]}
-          >
-            <Text style={styles.statutText}>
-              {t(`alert.status.${item.statut}`) !== `alert.status.${item.statut}`
-                ? t(`alert.status.${item.statut}`)
-                : item.statut.charAt(0).toUpperCase() + item.statut.slice(1)}
-            </Text>
-          </View>
-        )}
-      </TouchableOpacity>
-    );
-  });
-
   const renderItem = useCallback(({ item }: { item: any }) => (
-    <AlertCard item={item} />
-  ), [AlertCard]);
+    <AlertCard
+      item={item}
+      onCardPress={onCardPress}
+      handleCall={handleCall}
+      handleShareWhatsApp={handleShareWhatsApp}
+      userData={userData}
+      activeTab={activeTab}
+      t={t}
+      router={router}
+    />
+  ), [onCardPress, handleCall, handleShareWhatsApp, userData, activeTab, t, router]);
 
   return (
     <ThemedView style={styles.container}>

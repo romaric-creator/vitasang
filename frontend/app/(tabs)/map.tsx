@@ -10,6 +10,7 @@ import {
   Dimensions,
   Platform,
   Modal,
+  ScrollView,
 } from "react-native";
 import MapView, { Marker, PROVIDER_GOOGLE, Callout } from "react-native-maps";
 import { useRouter } from "expo-router";
@@ -36,6 +37,7 @@ export default function MapScreen() {
     longitude: number;
   } | null>(null);
   const [selectedCentre, setSelectedCentre] = useState<any | null>(null);
+  const [radius, setRadius] = useState<number>(10); // Default 10km
 
   const doualaRegion = {
     latitude: 4.0511,
@@ -44,15 +46,49 @@ export default function MapScreen() {
     longitudeDelta: 0.1,
   };
 
+  const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
+    if (isNaN(lat1) || isNaN(lon1) || isNaN(lat2) || isNaN(lon2)) return 9999;
+    const R = 6371; // Radius of the earth in km
+    const dLat = deg2rad(lat2 - lat1);
+    const dLon = deg2rad(lon2 - lon1);
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) *
+      Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    const d = R * c; // Distance in km
+    return d;
+  };
+
+  const deg2rad = (deg: number) => deg * (Math.PI / 180);
+
   const centres = useMemo(() => {
     if (!centresData) return [];
-    if (searchQuery.trim() === "") return centresData;
-    return centresData.filter(
+
+    let filtered = centresData;
+
+    // Filter by radius if userLocation is available
+    if (userLocation) {
+      filtered = filtered.filter((c: any) => {
+        if (!c.latitude || !c.longitude) return false;
+        const dist = calculateDistance(
+          userLocation.latitude,
+          userLocation.longitude,
+          Number(c.latitude),
+          Number(c.longitude)
+        );
+        return dist <= radius;
+      });
+    }
+
+    if (searchQuery.trim() === "") return filtered;
+
+    return filtered.filter(
       (c: any) =>
         c.nom.toLowerCase().includes(searchQuery.toLowerCase()) ||
         c.ville.toLowerCase().includes(searchQuery.toLowerCase()),
     );
-  }, [centresData, searchQuery]);
+  }, [centresData, searchQuery, userLocation, radius]);
 
   const loading = centresLoading || (centresData === undefined);
 
@@ -183,6 +219,23 @@ export default function MapScreen() {
             color="white"
           />
         </TouchableOpacity>
+      </View>
+
+      {/* Radius Selector */}
+      <View style={styles.radiusLayer}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.radiusScroll}>
+          {[5, 10, 25, 50, 100].map((r) => (
+            <TouchableOpacity
+              key={r}
+              style={[styles.radiusBtn, radius === r && styles.radiusBtnActive]}
+              onPress={() => setRadius(r)}
+            >
+              <Text style={[styles.radiusText, radius === r && styles.radiusTextActive]}>
+                {r} km
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
       </View>
 
       <View style={[styles.mapContainer, viewMode !== "map" && { display: 'none' }]}>
@@ -316,6 +369,42 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     paddingHorizontal: 20,
     gap: 12,
+  },
+  radiusLayer: {
+    position: "absolute",
+    top: 110,
+    left: 0,
+    right: 0,
+    zIndex: 10,
+  },
+  radiusScroll: {
+    paddingHorizontal: 20,
+    gap: 8,
+  },
+  radiusBtn: {
+    backgroundColor: "white",
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: color.border,
+    elevation: 2,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+  },
+  radiusBtnActive: {
+    backgroundColor: color.primary,
+    borderColor: color.primary,
+  },
+  radiusText: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: color.textSecondary,
+  },
+  radiusTextActive: {
+    color: "white",
   },
   searchBar: {
     flex: 1,

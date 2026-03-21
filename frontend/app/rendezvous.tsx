@@ -11,8 +11,8 @@ import { useRouter } from "expo-router";
 import { PageHeader } from "@/components/PageHeader";
 import { DataCard, DataCardRow } from "@/components/DataCard";
 import ThemedView from "@/components/ThemedView";
+import { SkeletonListLoader } from "@/components/SkeletonLoader";
 import { color } from "@/constant/color";
-import { LoadingOverlay } from "@/components/LoadingOverlay";
 import { getUserIdFromStorage } from "@/utils/storage";
 import { getMyAppointments, cancelAppointment } from "@/services/user.service";
 import { useNotification } from "@/context/NotificationContext";
@@ -150,10 +150,10 @@ export default function RendezVousList() {
     const actionButton =
       item.status !== "CANCELLED" && item.status !== "COMPLETED"
         ? {
-            text: t("appointments.cancel"),
-            onPress: () => handleCancel(item.id),
-            color: "#e74c3c",
-          }
+          text: t("appointments.cancel"),
+          onPress: () => handleCancel(item.id),
+          color: "#e74c3c",
+        }
         : undefined;
 
     return (
@@ -172,7 +172,7 @@ export default function RendezVousList() {
     return (
       <ThemedView style={styles.container}>
         <PageHeader title={t("appointments.title")} />
-        <LoadingOverlay visible={true} message={t("common.loading")} />
+        <SkeletonListLoader count={5} itemHeight={160} />
       </ThemedView>
     );
   }

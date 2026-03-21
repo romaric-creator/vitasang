@@ -329,6 +329,8 @@ export default function OnboardingCarousel() {
         horizontal
         showsHorizontalScrollIndicator={false}
         pagingEnabled
+        snapToInterval={viewportWidth}
+        decelerationRate="fast"
         bounces={false}
         onScroll={onScroll}
         scrollEventThrottle={16}

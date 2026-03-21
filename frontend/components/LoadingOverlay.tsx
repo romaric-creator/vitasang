@@ -25,7 +25,7 @@ export const LoadingOverlay: React.FC<LoadingOverlayProps> = ({
   spinnerColor = color.primary,
   style,
   fullScreen = false,
-  pose = 'waving',
+  pose = 'heart-pulse',
 }) => {
   if (!visible) return null;
 
@@ -36,7 +36,7 @@ export const LoadingOverlay: React.FC<LoadingOverlayProps> = ({
           size={spinnerSize}
           color={spinnerColor}
           message={message}
-          pose={pose}
+          pose={pose as any}
         />
       </View>
     </View>
@@ -58,7 +58,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "rgba(0, 0, 0, 0.3)",
+    backgroundColor: "rgba(255, 255, 255, 0.7)", // Plus clair et premium
     zIndex: 999,
   },
   content: {

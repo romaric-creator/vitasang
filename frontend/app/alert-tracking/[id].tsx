@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useRef, useCallback } from "react";
+import { useFocusEffect } from "expo-router";
 import {
   StyleSheet,
   View,
@@ -6,6 +7,7 @@ import {
   TouchableOpacity,
   ScrollView,
   Linking,
+  AppState,
 } from "react-native";
 import { LoadingOverlay } from "@/components/LoadingOverlay";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -25,7 +27,19 @@ export default function AlertTracking() {
   const params = useLocalSearchParams();
   const { id, notifiedDonors: notifiedDonorsParam } = params;
   const router = useRouter();
-  const [loading, setLoading] = useState(true);
+  const [alertInitialData, setAlertInitialData] = useState<any>(() => {
+    if (params.id && params.groupe) {
+      return {
+        id_alerte: Number(params.id),
+        groupe_requis: params.groupe,
+        lieu: params.lieu,
+        statut: "en_cours",
+        createdAt: new Date().toISOString(),
+      };
+    }
+    return null;
+  });
+  const [loading, setLoading] = useState(!params.groupe);
   const [data, setData] = useState<any>(null);
   const [notifiedDonors, setNotifiedDonors] = useState<NotifiedDonor[]>([]);
   const isMountedRef = useRef(true);
@@ -47,6 +61,19 @@ export default function AlertTracking() {
     }
   };
 
+  useFocusEffect(
+    useCallback(() => {
+      fetchStatus();
+      const interval = setInterval(() => {
+        if (AppState.currentState === "active") {
+          fetchStatus();
+        }
+      }, 5000);
+
+      return () => clearInterval(interval);
+    }, [id])
+  );
+
   useEffect(() => {
     isMountedRef.current = true;
 
@@ -61,14 +88,21 @@ export default function AlertTracking() {
       }
     }
 
-    fetchStatus();
-    const interval = setInterval(fetchStatus, 5000); // Polling toutes les 5s
-
     return () => {
       isMountedRef.current = false;
-      clearInterval(interval);
     };
-  }, [id, notifiedDonorsParam]);
+  }, [notifiedDonorsParam]);
+
+  const handleItinerary = () => {
+    const alerte = data?.alerte || alertInitialData;
+    if (alerte?.latitude && alerte?.longitude) {
+      const url = `https://www.google.com/maps/dir/?api=1&destination=${alerte.latitude},${alerte.longitude}`;
+      Linking.openURL(url);
+    } else {
+      // Si on n'a pas les coordonnées, on ne peut pas afficher l'itinéraire
+      console.warn("Itinerary: Missing coordinates");
+    }
+  };
 
   const handleShareWhatsApp = useCallback(() => {
     const alerte = data?.alerte;
@@ -95,11 +129,35 @@ export default function AlertTracking() {
     });
   }, [data, t, id]);
 
-  if (loading || !data) {
+  if (isNaN(Number(id))) {
+    return (
+      <View style={styles.center}>
+        <Text>{t("common.errors.unexpected")}</Text>
+        <TouchableOpacity onPress={() => router.back()}>
+          <Text style={{ color: color.primary, marginTop: 10 }}>{t("editProfile.back")}</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
+  if (loading && !alertInitialData) {
     return <LoadingOverlay visible={true} fullScreen />;
   }
 
-  const { stats, alerte, details } = data;
+  const alerte = data?.alerte || alertInitialData;
+
+  if (!alerte) {
+    return (
+      <View style={styles.center}>
+        <Text>{t("alert.unknownStatus")}</Text>
+        <TouchableOpacity onPress={() => router.back()}>
+          <Text style={{ color: color.primary, marginTop: 10 }}>{t("editProfile.back")}</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+  const stats = data?.stats || { total: 0, lu: 0, accepte: 0 };
+  const details = data?.details || [];
 
   return (
     <View style={styles.container}>
@@ -109,10 +167,15 @@ export default function AlertTracking() {
         </TouchableOpacity>
         <Text style={styles.headerTitle}>{t('alert.tracking.title')}</Text>
         <View style={{ flexDirection: 'row', gap: 15 }}>
-          <TouchableOpacity onPress={handleShareWhatsApp}>
+          {((data?.alerte && data.alerte.latitude) || (alertInitialData && alertInitialData.latitude)) && (
+            <TouchableOpacity onPress={handleItinerary} testID="itinerary-button">
+              <TabBarIcon name="map" size={20} color={color.info} />
+            </TouchableOpacity>
+          )}
+          <TouchableOpacity onPress={handleShareWhatsApp} testID="whatsapp-share-button">
             <TabBarIcon name="whatsapp" size={20} color="#25D366" family="fontawesome" />
           </TouchableOpacity>
-          <TouchableOpacity onPress={fetchStatus}>
+          <TouchableOpacity onPress={fetchStatus} testID="refresh-status-button">
             <TabBarIcon name="refresh" size={20} color={color.primary} />
           </TouchableOpacity>
         </View>
@@ -120,17 +183,19 @@ export default function AlertTracking() {
 
       <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.mainCard}>
-          <Text style={styles.bloodType}>{alerte.groupe}</Text>
-          {alerte.statut !== "en_attente" && alerte.statut !== "en_attente_validation" && alerte.statut !== "status" && (
-            <Text style={styles.statusBadge}>
-              {alerte.statut.toUpperCase()}
-            </Text>
-          )}
-          {alerte.statut === "status" && (
-            <Text style={styles.statusBadge}>{t('alert.tracking.unknownStatus')}</Text>
+          <View style={styles.bloodCircleLarge}>
+            <Text style={styles.bloodType}>{alerte.groupe || alerte.groupe_requis}</Text>
+          </View>
+          {alerte.statut && alerte.statut !== "status" && (
+            <View style={[styles.statusBadgeContainer, { backgroundColor: getStatutColor(alerte.statut) + '20' }]}>
+              <View style={[styles.statusDot, { backgroundColor: getStatutColor(alerte.statut) }]} />
+              <Text style={[styles.statusBadge, { color: getStatutColor(alerte.statut), backgroundColor: 'transparent' }]}>
+                {t(`alert.status.${alerte.statut}`).toUpperCase()}
+              </Text>
+            </View>
           )}
           <Text style={styles.date}>
-            {t('alert.tracking.launchedOn', { date: new Date(alerte.createdAt).toLocaleTimeString() })}
+            {t('alert.tracking.launchedOn', { date: new Date(alerte.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) })}
           </Text>
         </View>
 
@@ -177,7 +242,9 @@ export default function AlertTracking() {
                 { backgroundColor: getStatutColor(item.statut) },
               ]}
             >
-              <Text style={styles.statutText}>{item.statut.toUpperCase()}</Text>
+              <Text style={styles.statutText}>
+                {t(`alert.status.${item.statut}`).toUpperCase()}
+              </Text>
             </View>
           </View>
         ))}
@@ -233,36 +300,64 @@ const styles = StyleSheet.create({
   },
   mainCard: {
     backgroundColor: "white",
-    borderRadius: 20,
-    padding: 25,
+    borderRadius: 24,
+    padding: 30,
     alignItems: "center",
-    elevation: 4,
-    marginBottom: 20,
+    elevation: 8,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    marginBottom: 24,
   },
-  bloodType: { fontSize: 48, fontWeight: "900", color: color.primary },
-  statusBadge: {
-    backgroundColor: color.infoLight,
-    color: color.primary,
+  bloodCircleLarge: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: color.dangerLight,
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 16,
+    borderWidth: 2,
+    borderColor: color.primary + '20',
+  },
+  bloodType: { fontSize: 42, fontWeight: "900", color: color.primary },
+  statusBadgeContainer: {
+    flexDirection: "row",
+    alignItems: "center",
     paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: 10,
-    fontSize: 12,
-    fontWeight: "bold",
-    marginTop: 10,
+    paddingVertical: 6,
+    borderRadius: 20,
+    marginTop: 8,
+    gap: 8,
+    flexWrap: "wrap", // Allow wrapping
+    maxWidth: "100%", // Don't overflow
   },
-  date: { fontSize: 12, color: color.textLight, marginTop: 10 },
+  statusDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+  },
+  statusBadge: {
+    fontSize: 10, // Smaller font
+    fontWeight: "800",
+    letterSpacing: 0.5,
+  },
+  date: { fontSize: 13, color: color.textSecondary, marginTop: 12 },
   statsGrid: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginBottom: 30,
+    marginBottom: 24,
+    gap: 12,
   },
   statBox: {
     backgroundColor: "white",
-    width: "30%",
-    padding: 15,
-    borderRadius: 15,
-    borderWidth: 2,
+    flex: 1,
+    padding: 16,
+    borderRadius: 16,
+    borderWidth: 1.5,
     alignItems: "center",
+    elevation: 2,
   },
   statValue: { fontSize: 20, fontWeight: "800" },
   statLabel: { fontSize: 11, color: color.textSecondary, marginTop: 5 },

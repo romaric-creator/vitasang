@@ -7,6 +7,7 @@ import {
   Alert,
   Switch,
 } from "react-native";
+import ThemedView from "@/components/ThemedView";
 import React, { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
@@ -20,9 +21,8 @@ import { useUserProfile } from "@/hooks/useAuth";
 import { useRouter } from "expo-router";
 import { Image } from "react-native";
 import { useAuth } from "@/context/AuthContext";
-import Constants from "expo-constants";
-import ThemedView from "@/components/ThemedView";
 import { TabBarIcon } from "@/components/TabBarIcon";
+import { getProfileImageSource } from "@/utils/imageUtils";
 
 const ProfileItem = ({
   icon,
@@ -120,16 +120,7 @@ export default function Profile() {
   const bloodType = userData?.groupe_sanguin || "—";
   const donsCount = userData?.donsCount ?? 0;
   const alertesCount = userData?.alertesCount ?? 0;
-  const profileImage = userData?.photo_profil
-    ? {
-      uri: userData.photo_profil.startsWith("http")
-        ? userData.photo_profil
-        : (
-          Constants.expoConfig?.extra?.env?.EXPO_PUBLIC_API_BASE_URL ||
-          ""
-        ).replace("/api", "") + userData.photo_profil,
-    }
-    : null;
+  const profileImage = getProfileImageSource(userData?.photo_profil);
 
   return (
     <ThemedView style={styles.container}>
@@ -164,18 +155,16 @@ export default function Profile() {
           <View style={styles.statItem}>
             <Text style={styles.statValue}>{donsCount}</Text>
             <Text style={styles.statLabel}>
-              {t("home.livesSaved")}
+              {t("profile.donations")}
+            </Text>
+            <Text style={styles.statLabelSmall}>
+              {t("profile.donationsSubtitle")}
             </Text>
           </View>
           <View style={styles.dividerVertical} />
           <View style={styles.statItem}>
             <Text style={styles.statValue}>{alertesCount}</Text>
             <Text style={styles.statLabel}>{t("profile.alerts")}</Text>
-          </View>
-          <View style={styles.dividerVertical} />
-          <View style={styles.statItem}>
-            <Text style={styles.statValue}>4.8</Text>
-            <Text style={styles.statLabel}>{t("profile.rating")}</Text>
           </View>
         </View>
 
@@ -235,7 +224,11 @@ export default function Profile() {
           />
         </View>
 
-        <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
+        <TouchableOpacity
+          style={styles.logoutBtn}
+          onPress={handleLogout}
+          testID="logout-button"
+        >
           <TabBarIcon name="sign-out" size={18} color={color.primary} />
           <Text style={styles.logoutText}>{t("profile.logout")}</Text>
         </TouchableOpacity>
@@ -345,7 +338,12 @@ const styles = StyleSheet.create({
   statLabel: {
     fontSize: 11,
     color: color.textSecondary,
-    fontWeight: "600",
+    fontWeight: "700",
+  },
+  statLabelSmall: {
+    fontSize: 9,
+    color: color.textLight,
+    fontWeight: "500",
   },
   dividerVertical: {
     width: 1,

@@ -13,6 +13,7 @@ import {
   Easing,
   TouchableOpacity,
 } from "react-native";
+import { TabBarIcon } from "@/components/TabBarIcon";
 import { color } from "@/constant/color";
 
 export type NotificationType =
@@ -208,7 +209,7 @@ const NotificationCard: React.FC<{
 }> = ({ notification, index, onDismiss }) => {
   const [fadeAnim] = React.useState(new Animated.Value(0));
   const [scaleAnim] = React.useState(new Animated.Value(0.85));
-  const [slideAnim] = React.useState(new Animated.Value(-80));
+  const [slideAnim] = React.useState(new Animated.Value(-100));
   const [progressAnim] = React.useState(new Animated.Value(0));
 
   React.useEffect(() => {
@@ -262,43 +263,48 @@ const NotificationCard: React.FC<{
     switch (type) {
       case "success":
         return {
-          bg: "#F0FFF4",
-          border: color.success,
-          light: "#DCFCE7",
-          icon: "✓",
-          iconBg: "#BBFBEE",
+          bg: "rgba(232, 255, 243, 0.95)",
+          border: "#10B981",
+          light: "#D1FAE5",
+          icon: "check-circle",
+          iconColor: "#059669",
+          iconBg: "rgba(16, 185, 129, 0.15)",
         };
       case "error":
         return {
-          bg: "#FFF5F5",
-          border: color.error,
-          light: "#FEE2E2",
-          icon: "✕",
-          iconBg: "#FECACA",
+          bg: "rgba(255, 241, 242, 0.95)",
+          border: "#F43F5E",
+          light: "#FFE4E6",
+          icon: "exclamation-circle",
+          iconColor: "#E11D48",
+          iconBg: "rgba(244, 63, 94, 0.15)",
         };
       case "warning":
         return {
-          bg: "#FFFBEB",
-          border: color.warning,
-          light: "#FEF08A",
-          icon: "⚠",
-          iconBg: "#FCD34D",
+          bg: "rgba(255, 251, 235, 0.95)",
+          border: "#F59E0B",
+          light: "#FEF3C7",
+          icon: "exclamation-triangle",
+          iconColor: "#D97706",
+          iconBg: "rgba(245, 158, 11, 0.15)",
         };
       case "alert":
         return {
-          bg: "#FFF0F0",
+          bg: "rgba(255, 241, 241, 0.95)",
           border: color.primary,
           light: "#FFE4E6",
-          icon: "🔔",
-          iconBg: "#FB7185",
+          icon: "bell",
+          iconColor: color.primary,
+          iconBg: "rgba(231, 76, 60, 0.15)",
         };
       default:
         return {
-          bg: "#EFF6FF",
-          border: color.info,
+          bg: "rgba(239, 246, 255, 0.95)",
+          border: "#3B82F6",
           light: "#DBEAFE",
-          icon: "ℹ",
-          iconBg: "#A5F3FC",
+          icon: "info-circle",
+          iconColor: "#2563EB",
+          iconBg: "rgba(59, 130, 246, 0.15)",
         };
     }
   };
@@ -325,9 +331,8 @@ const NotificationCard: React.FC<{
           { backgroundColor: colors.bg, borderColor: colors.border },
         ]}
       >
-        {/* Icon moderne avec fond arrondi */}
         <View style={[styles.iconBox, { backgroundColor: colors.iconBg }]}>
-          <Text style={styles.icon}>{colors.icon}</Text>
+          <TabBarIcon name={colors.icon as any} size={20} color={colors.iconColor} />
         </View>
 
         <View style={styles.textBox}>
@@ -379,55 +384,53 @@ const NotificationCard: React.FC<{
 const styles = StyleSheet.create({
   stack: {
     position: "absolute",
-    top: 50,
-    left: 16,
-    right: 16,
-    zIndex: 1000,
+    top: 60,
+    left: 20,
+    right: 20,
+    zIndex: 9999,
   },
   notification: {
     width: "100%",
   },
   notificationContent: {
     flexDirection: "row",
-    alignItems: "flex-start",
-    paddingVertical: 14,
+    alignItems: "center",
+    paddingVertical: 12,
     paddingHorizontal: 14,
-    borderRadius: 16,
-    borderLeftWidth: 4,
+    borderRadius: 20,
+    borderWidth: 1,
     gap: 12,
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
+    shadowRadius: 20,
+    elevation: 10,
   },
   iconBox: {
-    width: 40,
-    height: 40,
+    width: 36,
+    height: 36,
     justifyContent: "center",
     alignItems: "center",
     flexShrink: 0,
     borderRadius: 12,
   },
-  icon: {
-    fontSize: 20,
-    fontWeight: "600",
-  },
   textBox: {
     flex: 1,
     justifyContent: "center",
+    paddingVertical: 2,
   },
   title: {
-    fontSize: 13,
-    fontWeight: "700",
+    fontSize: 14,
+    fontWeight: "800",
     color: color.textMain,
-    marginBottom: 3,
+    marginBottom: 2,
+    letterSpacing: -0.2,
   },
   message: {
-    fontSize: 12,
-    fontWeight: "500",
-    color: color.textSecondary,
-    lineHeight: 16,
+    fontSize: 13,
+    fontWeight: "600",
+    color: "#475569",
+    lineHeight: 18,
   },
   actionButton: {
     paddingHorizontal: 12,

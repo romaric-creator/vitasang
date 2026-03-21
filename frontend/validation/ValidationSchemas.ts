@@ -48,8 +48,8 @@ export const registerValidationSchema = yup.object().shape({
     .oneOf([yup.ref('mot_de_passe')], 'Les mots de passe ne correspondent pas'),
   groupe_sanguin: yup
     .string()
-    .transform((v) => (v === "" ? null : v))
-    .oneOf(['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'], 'Groupe sanguin invalide')
+    .transform((v) => (v === "" ? "INCONNU" : v))
+    .oneOf(['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-', 'INCONNU'], 'Groupe sanguin invalide')
     .nullable(),
 });
 
@@ -79,7 +79,14 @@ export const createAlertValidationSchema = yup.object().shape({
     .max(100, 'Maximum 100 poches'),
   description: yup
     .string()
-    .max(500, 'Maximum 500 caractères')
+    .max(500, 'Maximum 500 caractères'),
+  telephone_contact: yup
+    .string()
+    .required('Le numéro de contact est requis')
+    .matches(
+      /^(\+237[26]\d{8}|[26]\d{8})$/,
+      'Format: +237 6XXXXXXXX ou 2XXXXXXXX (9 chiffres)'
+    ),
 });
 
 export const searchDonorsValidationSchema = yup.object().shape({

@@ -155,6 +155,7 @@ function RootLayoutNav() {
       <Stack.Screen name="language-settings" />
       <Stack.Screen name="eligibility-test" />
       <Stack.Screen name="aide-et-conseil" />
+      {__DEV__ && <Stack.Screen name="debug-api" />}
     </Stack>
   );
 }

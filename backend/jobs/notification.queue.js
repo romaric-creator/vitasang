@@ -11,9 +11,32 @@ if (process.env.NODE_ENV !== "test") {
 
     const connection = new IORedis(process.env.REDIS_URL || "redis://localhost:6379", {
         maxRetriesPerRequest: null,
+        retryStrategy(times) {
+            const delay = Math.min(times * 50, 2000);
+            return delay;
+        },
+        reconnectOnError(err) {
+            const targetError = "READONLY";
+            if (err.message.includes(targetError)) {
+                return true;
+            }
+            return false;
+        }
     });
 
-    notificationQueue = new Queue("notifications", { connection });
+    connection.on("error", (err) => {
+        logger.error("Redis Connection Error:", err.message);
+    });
+
+    notificationQueue = new Queue("notifications", {
+        connection,
+        defaultJobOptions: {
+            removeOnComplete: true,
+            removeOnFail: 1000,
+            attempts: 3,
+            backoff: { type: 'exponential', delay: 1000 }
+        }
+    });
 
     // Simulation des canaux WhatsApp et SMS (Guide Section 4.1)
     const sendWhatsAppMessage = async (phone, message) => {

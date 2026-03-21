@@ -12,7 +12,7 @@ interface BloodGroupSelectorProps {
 }
 
 const BLOOD_GROUPS = ["A+", "A-", "AB+", "AB-", "B+", "B-", "O+", "O-"];
-const UNKNOWN_VALUE = "";
+const UNKNOWN_VALUE = "INCONNU";
 
 import { useTranslation } from "react-i18next";
 
@@ -56,7 +56,7 @@ export const BloodGroupSelector: React.FC<BloodGroupSelectorProps> = ({
                 <TouchableOpacity
                     style={[
                         styles.unknownOption,
-                        (value === UNKNOWN_VALUE || !value) && styles.selectedUnknownOption,
+                        (value === UNKNOWN_VALUE || value === "" || !value) && styles.selectedUnknownOption,
                     ]}
                     onPress={() => onSelect(UNKNOWN_VALUE)}
                     activeOpacity={0.7}
