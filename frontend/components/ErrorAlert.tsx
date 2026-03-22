@@ -52,7 +52,7 @@ export const ErrorAlert = ({
   }[type];
 
   return (
-    <View style={styles.outerContainer}>
+    <View style={styles.outerContainer} testID="error-alert-container">
       <View style={[styles.container, { backgroundColor: colors.bg }]}>
         <View style={[styles.accentBar, { backgroundColor: colors.accent }]} />
 

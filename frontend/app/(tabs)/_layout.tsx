@@ -18,41 +18,56 @@ export default function TabLayout() {
   const router = useRouter();
   useEffect(() => {
     const setupNotifications = async () => {
-      // Les notifications Push (FCM) ne sont plus supportées dans Expo Go (SDK 53+).
-      // On évite d'appeler register pour ne pas polluer les logs.
-      if (Constants.appOwnership === 'expo') {
-        console.log("[Notifications] Skipped in Expo Go (Non supporté)");
-        return;
-      }
-
       const userId = await getUserIdFromStorage();
       if (!userId) return;
 
       try {
+        // Tente de récupérer le token (fonctionnera sur device physique, retournera undefined sur simulateur)
         const token = await registerForPushNotificationsAsync();
+        
         if (token) {
+          console.log("[Notifications] Token obtenu, mise à jour backend...");
           await updatePushToken(userId, token);
+        } else {
+          console.log("[Notifications] Pas de token push disponible (Simulateur ou refus)");
         }
       } catch (error) {
-        console.error("[Notifications] Setup error:", error);
+        console.error("[Notifications] Erreur setup:", error);
       }
     };
 
-    // On n'active l'écouteur que si on n'est pas sous Expo Go
-    let subscription: { remove: () => void } | undefined;
-    if (Constants.appOwnership !== 'expo') {
+    // Configuration des écouteurs de notifications
+    let responseSubscription: { remove: () => void } | undefined;
+    let receivedSubscription: { remove: () => void } | undefined;
+
+    try {
       const Notifications = require('expo-notifications');
-      subscription = Notifications.addNotificationResponseReceivedListener((response: any) => {
+      
+      // Gestion du clic sur notification (App en background/tuée)
+      responseSubscription = Notifications.addNotificationResponseReceivedListener((response: any) => {
         const data = response.notification.request.content.data;
-        if (data?.alertId && !isNaN(Number(data.alertId))) {
+        console.log("[Notifications] Clic détecté:", data);
+        if (data?.alertId) {
           router.push(`/alert-response/${data.alertId}?distance=${data.distance || ''}`);
         }
       });
+
+      // Gestion de la réception (App au premier plan)
+      receivedSubscription = Notifications.addNotificationReceivedListener((notification: any) => {
+        console.log("[Notifications] Reçue au premier plan:", notification);
+        // Ici on pourrait afficher un Toast ou une alerte in-app personnalisée
+      });
+      
+    } catch (e) {
+      console.log("[Notifications] Module non disponible ou erreur init écouteurs");
     }
 
     setupNotifications();
 
-    return () => subscription?.remove();
+    return () => {
+      responseSubscription?.remove();
+      receivedSubscription?.remove();
+    };
   }, []);
 
   return (

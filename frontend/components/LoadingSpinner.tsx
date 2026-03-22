@@ -19,7 +19,7 @@ export const LoadingSpinner = ({
   }
 
   return (
-    <View style={styles.container}>
+    <View style={styles.container} testID="loading-spinner-container">
       <View style={styles.spinnerContainer}>
         <ModernSpinner
           size={size === "small" ? "small" : "medium"}

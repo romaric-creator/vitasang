@@ -88,6 +88,7 @@ export const ModernSpinner: React.FC<ModernSpinnerProps> = ({
   return (
     <View style={[styles.container, style]}>
       <Animated.View
+        testID="activity-indicator"
         style={[
           styles.spinner,
           {

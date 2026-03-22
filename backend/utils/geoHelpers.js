@@ -29,6 +29,26 @@ function calculateDistance(lat1, lon1, lat2, lon2) {
 }
 
 /**
+ * Calcule un rectangle (Bounding Box) autour d'un point GPS pour un pré-filtrage rapide en SQL.
+ * C'est beaucoup plus rapide qu'un calcul trigonométrique sur chaque ligne.
+ * @param {number} lat Latitude du centre
+ * @param {number} lon Longitude du centre
+ * @param {number} radiusKm Rayon de recherche en kilomètres
+ */
+function getBoundingBox(lat, lon, radiusKm) {
+  const R = 6371; // Rayon de la Terre
+  const dLat = (radiusKm / R) * (180 / Math.PI);
+  const dLon = (radiusKm / (R * Math.cos((Math.PI * lat) / 180))) * (180 / Math.PI);
+
+  return {
+    minLat: lat - dLat,
+    maxLat: lat + dLat,
+    minLon: lon - dLon,
+    maxLon: lon + dLon,
+  };
+}
+
+/**
  * Retourne la clause SQL Haversine pour calculer la distance dans une requête.
  * @param {number} lat Latitude cible
  * @param {number} lng Longitude cible
@@ -40,9 +60,11 @@ function haversineSQL(lat, lng, tableAlias = "", latCol = "latitude", lngCol = "
   const prefix = tableAlias ? `\`${tableAlias}\`.` : "";
   return `(
     6371 * acos(
-      cos(radians(${lat})) * cos(radians(${prefix}\`${latCol}\`)) *
-      cos(radians(${prefix}\`${lngCol}\`) - radians(${lng})) +
-      sin(radians(${lat})) * sin(radians(${prefix}\`${latCol}\`))
+      LEAST(1.0, GREATEST(-1.0, 
+        cos(radians(${lat})) * cos(radians(${prefix}\`${latCol}\`)) *
+        cos(radians(${prefix}\`${lngCol}\`) - radians(${lng})) +
+        sin(radians(${lat})) * sin(radians(${prefix}\`${latCol}\`))
+      ))
     )
   )`;
 }
@@ -50,4 +72,5 @@ function haversineSQL(lat, lng, tableAlias = "", latCol = "latitude", lngCol = "
 module.exports = {
   calculateDistance,
   haversineSQL,
+  getBoundingBox
 };

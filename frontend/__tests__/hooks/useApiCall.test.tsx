@@ -1,6 +1,9 @@
 import { renderHook, act, waitFor } from '@testing-library/react-native';
 import { useApiCall } from '../../hooks/useApiCall';
 
+// Augmenter le timeout pour les tests async
+jest.setTimeout(10000);
+
 describe('useApiCall Hook Tests', () => {
   let mockService: Record<string, jest.Mock>;
 
@@ -14,30 +17,31 @@ describe('useApiCall Hook Tests', () => {
       intermittentFailure: jest.fn()
         .mockRejectedValueOnce(new Error('Attempt 1 failed'))
         .mockRejectedValueOnce(new Error('Attempt 2 failed'))
-        .mockResolvedValueOnce({ data: 'success on 3rd attempt' })
+        .mockResolvedValue({ data: 'success on 3rd attempt' })
     };
 
     jest.useFakeTimers();
   });
 
   afterEach(() => {
-    jest.clearAllTimers();
+    jest.runOnlyPendingTimers();
     jest.useRealTimers();
   });
 
   describe('Basic Hook Functionality', () => {
     it('should initialize with correct default state', () => {
-      const { result } = (renderHook as any)(() => useApiCall(mockService.success, {}));
+      const { result } = renderHook(() => useApiCall(mockService.success, {}));
 
       expect(result.current.loading).toBe(false);
       expect(result.current.error).toBeNull();
     });
 
     it('should execute API call successfully', async () => {
-      const { result } = (renderHook as any)(() => useApiCall(mockService.success, {}));
+      const { result } = renderHook(() => useApiCall(mockService.success, {}));
 
       await act(async () => {
-        await result.current.execute();
+        const promise = result.current.execute();
+        await promise;
       });
 
       expect(result.current.loading).toBe(false);
@@ -46,69 +50,84 @@ describe('useApiCall Hook Tests', () => {
     });
 
     it('should set loading state during execution', async () => {
-      const { result } = (renderHook as any)(() => useApiCall(mockService.slowResponse, {}));
+      const { result } = renderHook(() => useApiCall(mockService.slowResponse, {}));
 
-      let loadingWasSeen = false;
-
-      act(() => {
-        result.current.execute();
-        if (result.current.loading) {
-          loadingWasSeen = true;
-        }
+      let executionPromise: Promise<any>;
+      
+      await act(async () => {
+        executionPromise = result.current.execute();
       });
 
-      jest.advanceTimersByTime(100);
+      // Vérifier loading immédiat
+      expect(result.current.loading).toBe(true);
 
-      await waitFor(() => {
-        expect(loadingWasSeen || !result.current.loading).toBeTruthy();
+      // Avancer le temps pour résoudre la promesse
+      await act(async () => {
+        jest.advanceTimersByTime(100);
+        await executionPromise;
       });
+
+      expect(result.current.loading).toBe(false);
     });
   });
 
   describe('Error Handling', () => {
     it('should handle API errors', async () => {
-      const { result } = (renderHook as any)(() => useApiCall(mockService.failure, {}));
+      const { result } = renderHook(() => useApiCall(mockService.failure, {}));
 
-      try {
-        await act(async () => {
-          await result.current.execute().catch(() => {});
-        });
-      } catch (e) {
-        // Expected
-      }
+      await act(async () => {
+        try {
+          await result.current.execute();
+        } catch (e) {
+          // Expected
+        }
+      });
 
       expect(result.current.error).not.toBeNull();
     });
 
     it('should retry on failure', async () => {
-      const { result } = (renderHook as any)(() => useApiCall(mockService.intermittentFailure, { maxRetries: 3 }));
+      // Note: On mock le logger pour éviter de polluer la console pendant ce test
+      const consoleSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
+      
+      const { result } = renderHook(() => useApiCall(mockService.intermittentFailure, { maxRetries: 3 }));
 
-      try {
-        await act(async () => {
-          await result.current.execute().catch(() => {});
-        });
-      } catch (e) {
-        // Expected
-      }
-
-      // Advance timers through retry backoff (1s, 2s)
-      jest.advanceTimersByTime(3000);
-
-      await waitFor(() => {
-        expect(mockService.intermittentFailure.mock.calls.length).toBeGreaterThan(1);
+      let promise: Promise<any>;
+      await act(async () => {
+        promise = result.current.execute();
       });
+
+      // Tentative 1 échoue -> Attente 1000ms
+      await act(async () => {
+        jest.advanceTimersByTime(1000); 
+      });
+
+      // Tentative 2 échoue -> Attente 2000ms
+      await act(async () => {
+        jest.advanceTimersByTime(2000); 
+      });
+      
+      // Tentative 3 réussit
+      await act(async () => {
+        try {
+          await promise;
+        } catch (e) {
+          // Should not throw eventually
+        }
+      });
+
+      expect(mockService.intermittentFailure).toHaveBeenCalledTimes(3);
+      consoleSpy.mockRestore();
     });
 
     it('should reset error state', async () => {
-      const { result } = (renderHook as any)(() => useApiCall(mockService.failure, {}));
+      const { result } = renderHook(() => useApiCall(mockService.failure, {}));
 
-      try {
-        await act(async () => {
-          await result.current.execute().catch(() => {});
-        });
-      } catch (e) {
-        // Expected
-      }
+      await act(async () => {
+        try {
+          await result.current.execute();
+        } catch (e) {}
+      });
 
       expect(result.current.error).not.toBeNull();
 
@@ -123,7 +142,7 @@ describe('useApiCall Hook Tests', () => {
   describe('Callback Handling', () => {
     it('should call onSuccess callback', async () => {
       const onSuccess = jest.fn();
-      const { result } = (renderHook as any)(() => useApiCall(mockService.success, { onSuccess }));
+      const { result } = renderHook(() => useApiCall(mockService.success, { onSuccess }));
 
       await act(async () => {
         await result.current.execute();
@@ -134,15 +153,13 @@ describe('useApiCall Hook Tests', () => {
 
     it('should call onError callback', async () => {
       const onError = jest.fn();
-      const { result } = (renderHook as any)(() => useApiCall(mockService.failure, { onError }));
+      const { result } = renderHook(() => useApiCall(mockService.failure, { onError }));
 
-      try {
-        await act(async () => {
-          await result.current.execute().catch(() => {});
-        });
-      } catch (e) {
-        // Expected
-      }
+      await act(async () => {
+        try {
+          await result.current.execute();
+        } catch (e) {}
+      });
 
       expect(onError).toHaveBeenCalled();
     });
@@ -150,24 +167,25 @@ describe('useApiCall Hook Tests', () => {
 
   describe('Timeout Handling', () => {
     it('should timeout after configured time', async () => {
-      const neverResolves = (): Promise<any> => new Promise<any>(() => {
-        // Never resolves
+      // Une promesse qui ne se résout jamais (simulée)
+      const neverResolves = jest.fn().mockImplementation(() => new Promise(() => {}));
+      
+      const { result } = renderHook(() => useApiCall(neverResolves, { timeout: 1000 }));
+
+      const promise = act(async () => {
+        try {
+           const exec = result.current.execute();
+           jest.advanceTimersByTime(1000); // Déclenche le timeout
+           await exec;
+        } catch (e) {
+          // Expected timeout error
+        }
       });
-      const { result } = (renderHook as any)(() => useApiCall(neverResolves, { timeout: 1000 }));
+      
+      await promise;
 
-      jest.advanceTimersByTime(1000);
-
-      try {
-        await act(async () => {
-          await result.current.execute().catch(() => {});
-        });
-      } catch (e) {
-        // Expected
-      }
-
-      await waitFor(() => {
-        expect(result.current.error).not.toBeNull();
-      });
+      expect(result.current.error).not.toBeNull();
+      // Le message d'erreur peut varier selon l'implémentation, on vérifie juste qu'il y a une erreur
     });
   });
 });

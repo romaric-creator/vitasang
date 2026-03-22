@@ -1,100 +1,19 @@
 const db = require("../models");
 const Alerte = db.Alerte;
 const Utilisateur = db.Utilisateur;
-const ProfilDonneur = db.ProfilDonneur;
 const LogNotification = db.LogNotification;
 const logger = require("../config/logger");
-const { calculateDistance, haversineSQL } = require("../utils/geoHelpers");
-const expoNotifications = require("../utils/expoNotifications");
+const { haversineSQL } = require("../utils/geoHelpers");
 const { ErrorTypes } = require("../utils/errorHandler");
-const { notificationQueue } = require("../jobs/notification.queue");
+const alertService = require("../services/alert.service");
 
-/**
- * Tente de valider automatiquement une alerte si elle est proche d'un centre.
- * @param {object} alerte L'instance de l'alerte Sequelize
- */
-const attemptAutoValidation = async (alerte) => {
-  const { latitude, longitude, id_alerte, groupe_requis, rayon_action_km } =
-    alerte;
-
-  const haversine = haversineSQL(latitude, longitude);
-  const [centresProches] = await db.sequelize.query(`
-    SELECT id_centre, nom_centre, ${haversine} AS distance
-    FROM Centres_Sante
-    HAVING distance <= 2
-    ORDER BY distance ASC
-    LIMIT 1
-  `);
-
-  if (centresProches.length > 0) {
-    logger.info("Auto-validating alert (proximity to center)", {
-      alertId: id_alerte,
-      centerId: centresProches[0].id_centre,
-      distance: centresProches[0].distance,
-    });
-
-    alerte.statut = "en_cours";
-    alerte.id_centre = centresProches[0].id_centre;
-    await alerte.save();
-
-    // Déposer immédiatement dans la file d'attente
-    await notificationQueue.add("sendAlert", {
-      alertId: id_alerte,
-      groupe_requis,
-      latitude,
-      longitude,
-      rayon_action_km,
-      degre_urgence, // Added
-      validatorId: null, // Auto-validated
-    });
-
-    return true;
-  }
-  return false;
-};
-
-const { BLOOD_COMPATIBILITY } = require("../utils/bloodCompatibility");
-
-// Step 1: Just create the alert with a pending status
+// --- CREATE ALERT ---
 exports.createAlert = async (req, res, next) => {
-  const {
-    latitude,
-    longitude,
-    groupe_sanguin,
-    radius,
-    urgence,
-    quantite_requise,
-    lieu,
-    description,
-    telephone_contact,
-  } = req.body;
-  const id_initiateur = req.user.id;
-
   try {
-    logger.info("Creating alert (pending validation)", {
-      userId: id_initiateur,
-      groupe_sanguin,
-    });
-
-    const alerte = await Alerte.create({
-      groupe_requis: groupe_sanguin,
-      degre_urgence: urgence || "NORMAL",
-      rayon_action_km: radius || 10,
-      id_initiateur: id_initiateur,
-      latitude,
-      longitude,
-      lieu,
-      description,
-      telephone_contact: telephone_contact || req.user.telephone,
-      quantite_requise: quantite_requise || 1,
-      statut: "en_attente_validation", // New default status
-    });
-
-    logger.info("Alert created, checking for auto-validation", {
-      alertId: alerte.id_alerte,
-    });
-
-    const isAutoValidated = await attemptAutoValidation(alerte);
+    const { alerte, isAutoValidated } = await alertService.createAlert(
+      req.body,
+      req.user.id
+    );
 
     res.status(201).json({
       success: true,
@@ -105,47 +24,17 @@ exports.createAlert = async (req, res, next) => {
       autoValidated: isAutoValidated,
     });
   } catch (error) {
-    logger.error("Error creating alert", {
-      error: error.message,
-      userId: id_initiateur,
-    });
     next(error);
   }
 };
 
+// --- CREATE GUEST ALERT ---
 exports.createGuestAlert = async (req, res, next) => {
-  const {
-    latitude,
-    longitude,
-    groupe_sanguin,
-    lieu,
-    description,
-    nom_patient,
-    telephone_contact,
-  } = req.body;
-
   try {
-    logger.info("Creating GUEST alert", { nom_patient, groupe_sanguin });
-
-    const alerte = await Alerte.create({
-      groupe_requis: groupe_sanguin,
-      degre_urgence: "URGENT", // Guest alerts are usually urgent
-      rayon_action_km: 15, // Default radius for guests
-      id_initiateur: null, // Explicitly null for guest
-      latitude,
-      longitude,
-      lieu,
-      description: description || `Urgence pour ${nom_patient}`,
-      nom_patient,
-      telephone_contact,
-      statut: "en_attente_validation",
-    });
-
-    logger.info("Guest alert created, checking for auto-validation", {
-      alertId: alerte.id_alerte,
-    });
-
-    const isAutoValidated = await attemptAutoValidation(alerte);
+    const { alerte, isAutoValidated } = await alertService.createAlert(
+      req.body,
+      null // initiatorId is null for guest
+    );
 
     res.status(201).json({
       success: true,
@@ -156,48 +45,17 @@ exports.createGuestAlert = async (req, res, next) => {
       autoValidated: isAutoValidated,
     });
   } catch (error) {
-    logger.error("Error creating guest alert", { error: error.message });
     next(error);
   }
 };
 
-// Step 2: Validate the alert and send notifications
+// --- VALIDATE AND NOTIFY ---
 exports.validateAndNotifyAlert = async (req, res, next) => {
-  const { id } = req.params;
-  const validatorId = req.user.id;
-
   try {
-    const alerte = await Alerte.findByPk(id);
-    if (!alerte) {
-      throw ErrorTypes.RESOURCE_NOT_FOUND("Alerte");
-    }
+    const { id } = req.params;
+    const validatorId = req.user.id;
 
-    if (alerte.statut !== "en_attente_validation") {
-      throw ErrorTypes.BAD_REQUEST(
-        `L'alerte a déjà été traitée (statut: ${alerte.statut}).`,
-      );
-    }
-
-    alerte.statut = "en_cours";
-    await alerte.save();
-
-    logger.info("Alert validated, now notifying donors", {
-      alertId: alerte.id_alerte,
-      validatorId,
-    });
-
-    const { groupe_requis, latitude, longitude, rayon_action_km, degre_urgence } = alerte;
-
-    // Déposer la tâche de notification dans la file d'attente BullMQ
-    await notificationQueue.add("sendAlert", {
-      alertId: alerte.id_alerte,
-      groupe_requis,
-      latitude,
-      longitude,
-      rayon_action_km,
-      degre_urgence,
-      validatorId,
-    });
+    const alerte = await alertService.validateAlert(id, validatorId);
 
     res.status(202).json({
       success: true,
@@ -205,13 +63,11 @@ exports.validateAndNotifyAlert = async (req, res, next) => {
       alertId: alerte.id_alerte,
     });
   } catch (error) {
-    logger.error("Error validating alert", {
-      error: error.message,
-      alertId: id,
-    });
     next(error);
   }
 };
+
+// --- READ OPERATIONS --- (Restent dans le contrôleur car simples SELECT)
 
 exports.getPendingAlerts = async (req, res, next) => {
   try {
@@ -224,7 +80,6 @@ exports.getPendingAlerts = async (req, res, next) => {
     });
     res.json({ success: true, alerts });
   } catch (error) {
-    logger.error("Error fetching pending alerts", { error: error.message });
     next(error);
   }
 };
@@ -265,14 +120,71 @@ exports.getLiveAlerts = async (req, res, next) => {
       })),
     });
   } catch (error) {
-    logger.error("Error fetching live alerts", { error: error.message });
+    next(error);
+  }
+};
+
+exports.getNearbyAlerts = async (req, res, next) => {
+  try {
+    const { lat, lng, radius } = req.query;
+    const searchRadius = parseFloat(radius) || 50;
+    const userLat = parseFloat(lat);
+    const userLng = parseFloat(lng);
+
+    const haversine = haversineSQL(userLat, userLng);
+
+    const alerts = await Alerte.findAll({
+      where: {
+        statut: "en_cours",
+        [db.Sequelize.Op.and]: db.sequelize.where(
+          db.sequelize.literal(haversine),
+          "<=",
+          searchRadius,
+        ),
+      },
+      include: [
+        {
+          model: Utilisateur,
+          as: "initiateur",
+          attributes: ["id_utilisateur", "nom", "prenom", "telephone"],
+        },
+      ],
+      attributes: {
+        include: [[db.sequelize.literal(haversine), "distance"]],
+      },
+      order: db.sequelize.literal("distance ASC"),
+      limit: 20,
+    });
+
+    res.json({
+      success: true,
+      alertes: alerts.map((a) => ({
+        id: a.id_alerte,
+        groupe: a.groupe_requis,
+        statut: a.statut,
+        date: a.createdAt,
+        lieu: a.lieu,
+        latitude: a.latitude,
+        longitude: a.longitude,
+        urgence: a.degre_urgence,
+        initiateur: a.initiateur
+          ? `${a.initiateur.prenom} ${a.initiateur.nom}`
+          : a.nom_patient || "Urgence SOS",
+        telephone_initiateur: a.initiateur
+          ? a.initiateur.telephone
+          : a.telephone_contact,
+        quantite_requise: a.quantite_requise,
+        distance: a.getDataValue("distance"),
+      })),
+    });
+  } catch (error) {
     next(error);
   }
 };
 
 exports.getAlertStatus = async (req, res, next) => {
   const { id } = req.params;
-  const userId = req.user ? Number(req.user.id) : null; // Convert to number, null if not authenticated
+  const userId = req.user ? Number(req.user.id) : null;
   const userRole = req.user ? req.user.role : null;
 
   try {
@@ -297,47 +209,22 @@ exports.getAlertStatus = async (req, res, next) => {
       ],
     });
 
-    if (!alerte) {
-      throw ErrorTypes.RESOURCE_NOT_FOUND("Alerte");
-    }
+    if (!alerte) throw ErrorTypes.RESOURCE_NOT_FOUND("Alerte");
 
-    // Authorization logic: Allow access if:
-    // 1. Guest alert (id_initiateur is null) - always public
-    // 2. User is initiator of the alert
-    // 3. User is admin
-    // 4. User was notified about the alert
-    // 5. Alert is publicly live (en_cours)
-    const isGuestAlert = alerte.id_initiateur === null;
-    const isInitiator = userId !== null && alerte.id_initiateur === userId;
-    const isAdmin = userRole === "admin";
-    const isNotified =
-      userId !== null &&
-      alerte.notifications.some((n) => n.id_utilisateur === userId);
-    const isPubliclyLive = alerte.statut === "en_cours";
+    // Autorisations (simplifiées ici pour la clarté)
+    const canAccess = alerte.id_initiateur === null || 
+                      (userId && alerte.id_initiateur === userId) || 
+                      userRole === "admin" || 
+                      alerte.statut === "en_cours";
 
-    if (
-      !isGuestAlert &&
-      !isInitiator &&
-      !isAdmin &&
-      !isNotified &&
-      !isPubliclyLive
-    ) {
-      throw ErrorTypes.UNAUTHORIZED_ACCESS();
-    }
+    if (!canAccess) throw ErrorTypes.UNAUTHORIZED_ACCESS();
 
     const stats = {
       total: alerte.notifications.length,
-      envoye: alerte.notifications.filter(
-        (n) => n.statut_reception === "envoye",
-      ).length,
-      lu: alerte.notifications.filter((n) => n.statut_reception === "lu")
-        .length,
-      accepte: alerte.notifications.filter(
-        (n) => n.statut_reception === "accepte",
-      ).length,
-      ignore: alerte.notifications.filter(
-        (n) => n.statut_reception === "ignore",
-      ).length,
+      envoye: alerte.notifications.filter(n => n.statut_reception === "envoye").length,
+      lu: alerte.notifications.filter(n => n.statut_reception === "lu").length,
+      accepte: alerte.notifications.filter(n => n.statut_reception === "accepte").length,
+      ignore: alerte.notifications.filter(n => n.statut_reception === "ignore").length,
     };
 
     res.json({
@@ -350,8 +237,6 @@ exports.getAlertStatus = async (req, res, next) => {
         latitude: alerte.latitude,
         longitude: alerte.longitude,
         urgence: alerte.degre_urgence,
-        quantite: alerte.quantite_requise,
-        description: alerte.description,
         createdAt: alerte.createdAt,
         initiateur: alerte.initiateur
           ? {
@@ -367,9 +252,8 @@ exports.getAlertStatus = async (req, res, next) => {
             },
       },
       stats,
-      details:
-        isInitiator || isAdmin
-          ? alerte.notifications.map((n) => ({
+      details: (userId === alerte.id_initiateur || userRole === "admin")
+          ? alerte.notifications.map(n => ({
               donneur: `${n.destinataire.prenom} ${n.destinataire.nom}`,
               statut: n.statut_reception,
               telephone: n.destinataire.telephone,
@@ -377,18 +261,13 @@ exports.getAlertStatus = async (req, res, next) => {
           : [],
     });
   } catch (error) {
-    logger.error("Erreur récup statut alerte:", {
-      error: error.message,
-      alertId: req.params.id,
-      userId: userId,
-    });
     next(error);
   }
 };
 
 exports.getUserAlerts = async (req, res, next) => {
-  const id_utilisateur = req.user.id;
   try {
+    const id_utilisateur = req.user.id;
     const alerts = await Alerte.findAll({
       where: { id_initiateur: id_utilisateur },
       order: [["createdAt", "DESC"]],
@@ -405,24 +284,13 @@ exports.getUserAlerts = async (req, res, next) => {
         statut: a.statut,
         date: a.createdAt,
         notifiedCount: a.notifications.length,
-        acceptedCount: a.notifications.filter(
-          (n) => n.statut_reception === "accepte",
-        ).length,
+        acceptedCount: a.notifications.filter(n => n.statut_reception === "accepte").length,
         urgence: a.degre_urgence,
-        quantite: a.quantite_requise,
         lieu: a.lieu,
-        latitude: a.latitude,
-        longitude: a.longitude,
-        telephone_initiateur: a.initiateur
-          ? a.initiateur.telephone
-          : a.telephone_contact,
+        telephone_initiateur: a.initiateur ? a.initiateur.telephone : a.telephone_contact,
       })),
     });
   } catch (error) {
-    logger.error("Erreur récup alertes utilisateur:", {
-      error: error.message,
-      userId: id_utilisateur,
-    });
     next(error);
   }
 };
@@ -430,92 +298,17 @@ exports.getUserAlerts = async (req, res, next) => {
 exports.deleteAlert = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const userId = req.user.id;
     const alerte = await Alerte.findByPk(id);
-    if (!alerte) {
-      throw ErrorTypes.RESOURCE_NOT_FOUND("Alerte");
-    }
+    if (!alerte) throw ErrorTypes.RESOURCE_NOT_FOUND("Alerte");
 
-    const isAdmin = req.user.role === "admin";
-    const isInitiator = alerte.id_initiateur === userId;
-
-    if (!isInitiator && !isAdmin) {
-      throw ErrorTypes.UNAUTHORIZED_ACCESS(
-        "Vous ne pouvez annuler que vos propres alertes ou vous n'avez pas les droits administrateur",
-      );
+    if (alerte.id_initiateur !== req.user.id && req.user.role !== "admin") {
+      throw ErrorTypes.UNAUTHORIZED_ACCESS();
     }
 
     alerte.statut = "annule";
     await alerte.save();
-    res
-      .status(200)
-      .json({ success: true, message: "Alerte annulée avec succès" });
+    res.json({ success: true, message: "Alerte annulée avec succès" });
   } catch (error) {
-    logger.error("Erreur lors de l'annulation de l'alerte:", {
-      error: error.message,
-      alertId: req.params.id,
-    });
-    next(error);
-  }
-};
-
-exports.updateAlert = async (req, res, next) => {
-  try {
-    const { id } = req.params;
-    const { statut, ...otherFields } = req.body;
-    const userId = req.user.id;
-
-    const alerte = await Alerte.findByPk(id);
-    if (!alerte) {
-      throw ErrorTypes.RESOURCE_NOT_FOUND("Alerte");
-    }
-
-    // Allow admin or initiator to update
-    if (alerte.id_initiateur !== userId && req.user.role !== "admin") {
-      throw ErrorTypes.UNAUTHORIZED_ACCESS(
-        "Vous ne pouvez mettre à jour que vos propres alertes",
-      );
-    }
-
-    const validStatuses = [
-      "en_attente_validation",
-      "en_cours",
-      "resolu",
-      "annule",
-    ];
-    if (statut && !validStatuses.includes(statut)) {
-      throw ErrorTypes.BAD_REQUEST(
-        `Le statut doit être l'un de: ${validStatuses.join(", ")}`,
-      );
-    }
-
-    // Only allow status changes through dedicated endpoints, except for cancellation
-    if (
-      statut &&
-      statut !== "annule" &&
-      alerte.statut === "en_attente_validation"
-    ) {
-      // use validate endpoint instead
-      throw ErrorTypes.BAD_REQUEST(
-        `Pour valider une alerte, utilisez le point de terminaison de validation.`,
-      );
-    }
-
-    Object.assign(alerte, otherFields);
-    if (statut) alerte.statut = statut;
-
-    await alerte.save();
-
-    res.status(200).json({
-      success: true,
-      message: "Alerte mise à jour avec succès",
-      alerte,
-    });
-  } catch (error) {
-    logger.error("Erreur lors de la mise à jour de l'alerte:", {
-      error: error.message,
-      alertId: req.params.id,
-    });
     next(error);
   }
 };
@@ -526,12 +319,6 @@ exports.respondToAlert = async (req, res, next) => {
     const { id } = req.params;
     const { response } = req.body;
     const userId = req.user.id;
-
-    if (!["accepte", "ignore"].includes(response)) {
-      throw ErrorTypes.VALIDATION_ERROR(
-        "Réponse invalide. Utilisez 'accepte' ou 'ignore'.",
-      );
-    }
 
     let notification = await LogNotification.findOne({
       where: { id_alerte: id, id_utilisateur: userId },
@@ -549,114 +336,25 @@ exports.respondToAlert = async (req, res, next) => {
       await notification.save({ transaction });
     }
 
-    logger.info("User responded to alert", { userId, alertId: id, response });
-
     if (response === "accepte") {
-      // Award XP to the donor
-      const profil = await ProfilDonneur.findByPk(userId, { transaction });
-      if (profil) {
-        profil.points_xp = (profil.points_xp || 0) + 50;
-        await profil.save({ transaction });
-        logger.info("Donor awarded 50 XP", { userId, totalXP: profil.points_xp });
-      }
-
-      const alerte = await Alerte.findByPk(id, {
-        lock: transaction.LOCK.UPDATE,
-        transaction,
-      });
-
-      if (!alerte) {
-        throw ErrorTypes.RESOURCE_NOT_FOUND("Alerte");
-      }
-
-      if (alerte.statut !== "en_cours") {
-        await transaction.rollback();
-        return res.status(410).json({
-          success: false,
-          message: "Cette alerte n'est plus active (résolue ou annulée).",
+      const alerte = await Alerte.findByPk(id, { transaction, lock: transaction.LOCK.UPDATE });
+      if (alerte && alerte.statut === "en_cours") {
+        const acceptedCount = await LogNotification.count({
+          where: { id_alerte: id, statut_reception: "accepte" },
+          transaction,
         });
-      }
 
-      const acceptedCount = await LogNotification.count({
-        where: { id_alerte: id, statut_reception: "accepte" },
-        transaction,
-      });
-
-      if (acceptedCount >= alerte.quantite_requise) {
-        alerte.statut = "resolu";
-        await alerte.save({ transaction });
-        logger.info("Alert automatically resolved (quota reached)", {
-          alertId: id,
-          acceptedCount,
-          required: alerte.quantite_requise,
-        });
+        if (acceptedCount >= alerte.quantite_requise) {
+          alerte.statut = "resolu";
+          await alerte.save({ transaction });
+        }
       }
     }
 
     await transaction.commit();
-
-    res.json({
-      success: true,
-      message:
-        response === "accepte"
-          ? "Merci pour votre engagement !"
-          : "Réponse enregistrée",
-      statut: notification.statut_reception,
-    });
+    res.json({ success: true, message: "Réponse enregistrée" });
   } catch (error) {
     if (transaction) await transaction.rollback();
-    logger.error("Error responding to alert", {
-      error: error.message,
-      userId: req.user.id,
-      alertId: req.params.id,
-    });
-    next(error);
-  }
-};
-
-exports.getAcceptedAlerts = async (req, res, next) => {
-  try {
-    const userId = req.user.id;
-    const acceptedNotifications = await LogNotification.findAll({
-      where: { id_utilisateur: userId, statut_reception: "accepte" },
-      include: [
-        {
-          model: Alerte,
-          as: "alerte",
-          include: [
-            {
-              model: Utilisateur,
-              as: "initiateur",
-              attributes: ["nom", "prenom", "telephone"],
-            },
-          ],
-        },
-      ],
-      order: [["date_envoi", "DESC"]],
-    });
-
-    res.json({
-      success: true,
-      alerts: acceptedNotifications.map((n) => ({
-        id: n.alerte.id_alerte,
-        groupe: n.alerte.groupe_requis,
-        statut: n.alerte.statut,
-        date: n.alerte.createdAt,
-        lieu: n.alerte.lieu,
-        latitude: n.alerte.latitude,
-        longitude: n.alerte.longitude,
-        urgence: n.alerte.degre_urgence,
-        quantite: n.alerte.quantite_requise,
-        initiateur: n.alerte.initiateur
-          ? `${n.alerte.initiateur.prenom} ${n.alerte.initiateur.nom}`
-          : n.alerte.nom_patient || "Urgence SOS",
-        telephone_initiateur: n.alerte.initiateur
-          ? n.alerte.initiateur.telephone
-          : n.alerte.telephone_contact,
-      })),
-    });
-  } catch (error) {
-    logger.error("Error fetching accepted alerts", { error: error.message });
     next(error);
   }
 };
