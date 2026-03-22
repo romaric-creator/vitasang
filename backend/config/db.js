@@ -29,9 +29,9 @@ module.exports = {
     },
   },
   pool: {
-    max: 20,
-    min: 2,
-    acquire: 60000,
+    max: 5, // Réduit pour éviter "Too many connections" sur Render (Free/Starter)
+    min: 0, // Permet de fermer toutes les connexions si inactives (économie ressources)
+    acquire: 30000,
     idle: 10000,
   },
 };

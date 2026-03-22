@@ -1,18 +1,17 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   StyleSheet,
   Text,
   View,
   TouchableOpacity,
   ScrollView,
+  Alert,
 } from "react-native";
 import { Formik } from "formik";
 import { TabBarIcon } from "@/components/TabBarIcon";
 import { color } from "@/constant/color";
 import { useRouter } from "expo-router";
 import ThemedView from "@/components/ThemedView";
-import { ModernSpinner } from "@/components/ModernSpinner";
-import { LoadingOverlay } from "@/components/LoadingOverlay";
 import * as Location from "expo-location";
 import { searchDonors, sendAlert } from "@/services/user.service";
 import { analyticsService } from "@/services/analyticsService";
@@ -31,43 +30,88 @@ import {
   SkeletonListLoader,
 } from "@/components/SkeletonLoader";
 
+// Coordonnées par défaut (Yaoundé, Cameroun) pour éviter les crashs si GPS HS
+const DEFAULT_LOCATION = {
+  latitude: 3.8480,
+  longitude: 11.5021,
+};
+
 export default function CreateAlertScreen() {
   const { t } = useTranslation();
   const router = useRouter();
   const { isAuth, user } = useAuth();
-  const [location, setLocation] = useState<Location.LocationObject | null>(
-    null,
-  );
-  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  
+  const [location, setLocation] = useState<Location.LocationObject | null>(null);
+  const [locationError, setLocationError] = useState<string | null>(null);
+  
   const [loading, setLoading] = useState(false);
   const [isLocating, setIsLocating] = useState(true);
+  const [isManualLocation, setIsManualLocation] = useState(false);
+  
   const [donorCount, setDonorCount] = useState<number | null>(null);
   const [pendingAlertData, setPendingAlertData] = useState<any>(null);
 
+  // Timeout ref pour éviter les boucles infinies de localisation
+  const locationTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
   useEffect(() => {
-    (async () => {
-      setIsLocating(true);
+    startLocationProcess();
+    return () => {
+      if (locationTimeoutRef.current) clearTimeout(locationTimeoutRef.current);
+    };
+  }, []);
+
+  const startLocationProcess = async () => {
+    setIsLocating(true);
+    setLocationError(null);
+
+    // Timeout de sécurité : si pas de GPS après 5s, on active le mode manuel
+    locationTimeoutRef.current = setTimeout(() => {
+      if (isLocating) {
+        console.warn("Location timeout - falling back to manual");
+        setIsLocating(false);
+        setIsManualLocation(true);
+        Alert.alert(
+          "GPS lent ou inactif", 
+          "Nous n'arrivons pas à vous localiser automatiquement. Veuillez préciser le lieu exact (Hôpital, Quartier...).",
+          [{ text: "Compris" }]
+        );
+      }
+    }, 5000);
+
+    try {
       let { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== "granted") {
-        setErrorMsg(t("alert.locationError"));
-        console.error("Location permission denied");
-        setIsLocating(false);
-        return;
+        throw new Error("Permission refusée");
       }
 
-      let location = await Location.getCurrentPositionAsync({});
-      console.log("Location fetched:", location);
-      setLocation(location);
+      // On tente une localisation rapide (précision "balanced" suffisante pour une alerte)
+      let loc = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.Balanced,
+      });
+
+      console.log("Location fetched:", loc);
+      setLocation(loc);
       setIsLocating(false);
-    })();
-  }, []);
+      setIsManualLocation(false);
+      if (locationTimeoutRef.current) clearTimeout(locationTimeoutRef.current);
+
+    } catch (error) {
+      console.warn("Location error:", error);
+      setLocationError(t("alert.locationError"));
+      setIsLocating(false);
+      setIsManualLocation(true); // Fallback manuel
+      if (locationTimeoutRef.current) clearTimeout(locationTimeoutRef.current);
+    }
+  };
 
   const handleSearch = async (
     groupeSanguin: string,
     latitude: number,
     longitude: number,
   ) => {
-    if (!latitude || !longitude) return;
+    // Si on est en mode manuel sans coordonnées, on ne cherche pas les donneurs par distance
+    if (!latitude || !longitude || isManualLocation) return;
 
     setLoading(true);
     try {
@@ -81,55 +125,44 @@ export default function CreateAlertScreen() {
     }
   };
 
-  const handleRedirectToRegister = async () => {
-    if (pendingAlertData) {
-      try {
-        await storeData("pending_alert", pendingAlertData);
-        router.push("/register");
-      } catch (e) {
-        console.error("Failed to save pending alert:", e);
-        setErrorMsg(t("alert.error"));
-      }
-    }
-  };
-
-  const handleRedirectToLogin = async () => {
-    if (pendingAlertData) {
-      try {
-        await storeData("pending_alert", pendingAlertData);
-        router.push("/login");
-      } catch (e) {
-        console.error("Failed to save pending alert:", e);
-        setErrorMsg(t("alert.error"));
-      }
+  const savePendingAndRedirect = async (path: "/login" | "/register", data: any) => {
+    try {
+      await storeData("pending_alert", data);
+      router.push(path);
+    } catch (e) {
+      console.error("Failed to save pending alert:", e);
+      Alert.alert("Erreur", t("alert.error"));
     }
   };
 
   const handleSubmit = async (values: any) => {
-    console.log("handleSubmit called with values:", values);
+    // Si on n'a pas de localisation GPS, on utilise les coordonnées par défaut ou 0,0
+    // L'essentiel est que le champ "Lieu" (texte) soit rempli.
+    const finalLat = location?.coords.latitude || DEFAULT_LOCATION.latitude;
+    const finalLng = location?.coords.longitude || DEFAULT_LOCATION.longitude;
 
-    if (!location) {
-      setErrorMsg(t("alert.locationError"));
-      console.error("No location");
+    if (!location && !isManualLocation) {
+      Alert.alert("Localisation requise", "Veuillez activer votre GPS ou décrire le lieu.");
       return;
     }
 
     analyticsService.trackEvent(analyticsService.events.ALERT_CREATION_STARTED, {
       groupe: values.groupe_sanguin,
       urgence: values.urgence,
+      mode: isManualLocation ? "manual" : "gps"
     });
 
-
     const alertData = {
-      latitude: location.coords.latitude,
-      longitude: location.coords.longitude,
+      latitude: finalLat,
+      longitude: finalLng,
       groupe_sanguin: values.groupe_sanguin,
       radius: 10,
       urgence: values.urgence,
       quantite_requise: parseInt(values.quantite_requise),
-      lieu: values.lieu,
+      lieu: values.lieu, // C'est le plus important si GPS HS
       description: values.description,
       telephone_contact: values.telephone_contact,
+      is_manual_location: isManualLocation // Flag utile pour le backend/backoffice
     };
 
     // SI L'UTILISATEUR N'EST PAS CONNECTÉ
@@ -150,16 +183,13 @@ export default function CreateAlertScreen() {
           params: { id: result.alertId },
         });
       } else {
-        setErrorMsg(t("alert.idError"));
-        analyticsService.trackEvent(analyticsService.events.ALERT_FAILED, {
-          error: "No alertId returned",
-        });
+        throw new Error("No alertId returned");
       }
     } catch (error: any) {
       analyticsService.trackEvent(analyticsService.events.ALERT_FAILED, {
         error: error.message,
       });
-      setErrorMsg(error.message || t("alert.genericError"));
+      Alert.alert("Erreur", error.message || t("alert.genericError"));
     } finally {
       setLoading(false);
     }
@@ -168,25 +198,29 @@ export default function CreateAlertScreen() {
   return (
     <ThemedView style={styles.container}>
       <PageHeader title={t("alert.title")} />
+      
       {isLocating ? (
-        <View
-          style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
-        >
-          <SkeletonLoader
-            width={120}
-            height={120}
-            borderRadius={60}
-            style={{ marginBottom: 16 }}
-          />
-          <SkeletonLoader width="60%" height={20} style={{ marginBottom: 8 }} />
-          <SkeletonLoader width="40%" height={16} />
-          <SkeletonListLoader count={3} itemHeight={40} />
+        <View style={styles.loadingContainer}>
+          <SkeletonLoader width={120} height={120} borderRadius={60} style={{ marginBottom: 16 }} />
+          <Text style={styles.loadingText}>Localisation en cours...</Text>
+          <TouchableOpacity onPress={() => {
+            setIsLocating(false);
+            setIsManualLocation(true);
+          }}>
+            <Text style={styles.skipText}>Passer (Saisie manuelle)</Text>
+          </TouchableOpacity>
         </View>
       ) : (
-        <ScrollView
-          contentContainerStyle={{ padding: 16 }}
-          showsVerticalScrollIndicator={false}
-        >
+        <ScrollView contentContainerStyle={{ padding: 16 }} showsVerticalScrollIndicator={false}>
+          {isManualLocation && (
+            <View style={styles.manualWarning}>
+              <TabBarIcon name="exclamation-circle" size={16} color="#B45309" />
+              <Text style={styles.manualWarningText}>
+                GPS indisponible. Décrivez le lieu avec précision.
+              </Text>
+            </View>
+          )}
+
           <Formik
             initialValues={{
               groupe_sanguin: "O+",
@@ -195,21 +229,11 @@ export default function CreateAlertScreen() {
               quantite_requise: "",
               description: "",
               telephone_contact: user?.telephone || "",
-              latitude: location?.coords.latitude || 0,
-              longitude: location?.coords.longitude || 0,
             }}
             validationSchema={createAlertValidationSchema}
             onSubmit={handleSubmit}
-            enableReinitialize={true}
           >
-            {({
-              values,
-              errors,
-              touched,
-              handleChange,
-              handleBlur,
-              handleSubmit,
-            }) => (
+            {({ values, errors, touched, handleChange, handleBlur, handleSubmit }) => (
               <View>
                 <BloodGroupSelector
                   isAlert
@@ -217,11 +241,7 @@ export default function CreateAlertScreen() {
                   onSelect={(group) => {
                     handleChange("groupe_sanguin")(group);
                     if (location) {
-                      handleSearch(
-                        group,
-                        location.coords.latitude,
-                        location.coords.longitude,
-                      );
+                      handleSearch(group, location.coords.latitude, location.coords.longitude);
                     }
                   }}
                   error={errors.groupe_sanguin}
@@ -233,7 +253,7 @@ export default function CreateAlertScreen() {
                   value={values.lieu}
                   onChangeText={handleChange("lieu")}
                   onBlur={handleBlur("lieu")}
-                  placeholder={t("alert.placeholders.location")}
+                  placeholder={isManualLocation ? "Ex: Hôpital Laquintinie, Urgences" : t("alert.placeholders.location")}
                   error={errors.lieu}
                   touched={touched.lieu}
                   required
@@ -244,7 +264,7 @@ export default function CreateAlertScreen() {
                   value={values.quantite_requise}
                   onChangeText={handleChange("quantite_requise")}
                   onBlur={handleBlur("quantite_requise")}
-                  placeholder={t("alert.placeholders.quantity")}
+                  placeholder="Nombre de poches"
                   error={errors.quantite_requise}
                   touched={touched.quantite_requise}
                   keyboardType="numeric"
@@ -253,120 +273,95 @@ export default function CreateAlertScreen() {
 
                 <View style={formStyles.field}>
                   <Text style={formStyles.label}>
-                    {t("alert.fields.urgency")}{" "}
-                    <Text style={{ color: color.error }}>*</Text>
+                    {t("alert.fields.urgency")} <Text style={{ color: color.error }}>*</Text>
                   </Text>
                   <View style={styles.urgencyGrid}>
                     {[
-                      { id: "NORMAL", color: color.success },
-                      { id: "URGENT", color: color.warning },
-                      { id: "TRES_URGENT", color: color.error },
+                      { id: "NORMAL", color: color.success, label: "Normal (24h)" },
+                      { id: "URGENT", color: color.warning, label: "Urgent (<4h)" },
+                      { id: "TRES_URGENT", color: color.error, label: "Vital (<1h)" },
                     ].map((level) => (
                       <TouchableOpacity
                         key={level.id}
                         style={[
                           styles.urgencyOption,
-                          values.urgence === level.id && {
-                            backgroundColor: level.color,
-                            borderColor: level.color,
-                          },
+                          values.urgence === level.id && { backgroundColor: level.color, borderColor: level.color },
                         ]}
                         onPress={() => handleChange("urgence")(level.id)}
                         activeOpacity={0.7}
                       >
-                        <Text
-                          style={[
-                            styles.urgencyLabel,
-                            values.urgence === level.id && styles.textWhite,
-                          ]}
-                        >
-                          {t(`alert.urgencyLevels.${level.id}`)}
+                        <Text style={[styles.urgencyLabel, values.urgence === level.id && styles.textWhite]}>
+                          {level.label}
                         </Text>
                       </TouchableOpacity>
                     ))}
                   </View>
-                  {errors.urgence && touched.urgence && (
-                    <Text style={formStyles.errorText}>{errors.urgence}</Text>
-                  )}
                 </View>
-
-                error={errors.description}
-                touched={touched.description}
-                />
 
                 <FormField
                   label={t("guestAlert.contactPhone")}
                   value={values.telephone_contact}
-                  onChangeText={handleChange("telephone_contact")}
+                  onChangeText={(text) => handleChange("telephone_contact")(text.replace(/\s/g, ''))} // Auto-clean space
                   onBlur={handleBlur("telephone_contact")}
-                  placeholder={t("guestAlert.placeholders.contactPhone")}
+                  placeholder="Ex: 699000000"
                   error={errors.telephone_contact}
                   touched={touched.telephone_contact}
                   keyboardType="phone-pad"
                   required
                 />
 
-                <View style={styles.warningBox}>
-                  <TabBarIcon
-                    name="info-circle"
-                    size={16}
-                    color={color.primary}
-                  />
-                  {loading ? (
-                    <Text style={styles.warningText}>{t("alert.sending")}</Text>
-                  ) : (
-                    <Text style={styles.warningText}>
-                      {donorCount !== null
-                        ? t("alert.donorFound", {
-                          count: donorCount,
-                          group: values.groupe_sanguin,
-                        })
-                        : t("alert.searchingDonors")}
+                {/* Info Recherche Donneur (Seulement si GPS OK) */}
+                {!isManualLocation && (
+                  <View style={styles.infoBox}>
+                    <TabBarIcon name="search" size={14} color={color.primary} />
+                    <Text style={styles.infoText}>
+                      {loading 
+                        ? "Estimation des donneurs..." 
+                        : donorCount !== null 
+                          ? `${donorCount} donneurs potentiels dans la zone.` 
+                          : "Nous chercherons des donneurs proches."}
                     </Text>
-                  )}
-                </View>
+                  </View>
+                )}
 
-                {errorMsg && <Text style={styles.errorText}>{errorMsg}</Text>}
-
-                {/* SI L'UTILISATEUR N'EST PAS CONNECTÉ */}
+                {/* Auth Section ou Submit */}
                 {!isAuth ? (
                   <View style={styles.authSection}>
-                    <Text style={styles.authTitle}>
-                      {t("alert.authRequired")}
-                    </Text>
+                    <Text style={styles.authTitle}>Connexion requise</Text>
                     <Text style={styles.authSubtitle}>
-                      {t("alert.authMessage")}
+                      Pour éviter les fausses alertes, vous devez être identifié.
                     </Text>
 
-                    <View style={styles.buttonContainer}>
-                      <PrimaryButton
-                        title={t("alert.register")}
-                        onPress={() => {
-                          setPendingAlertData(values);
-                          handleRedirectToRegister();
-                        }}
-                        style={{ marginBottom: 12 }}
-                      />
-                      <TouchableOpacity
-                        style={styles.secondaryButton}
-                        onPress={() => {
-                          setPendingAlertData(values);
-                          handleRedirectToLogin();
-                        }}
-                      >
-                        <Text style={styles.secondaryButtonText}>
-                          {t("alert.login")}
-                        </Text>
-                      </TouchableOpacity>
-                    </View>
+                    <PrimaryButton
+                      title="Créer un compte et publier"
+                      onPress={() => {
+                        setPendingAlertData({ ...values, 
+                          latitude: location?.coords.latitude || DEFAULT_LOCATION.latitude, 
+                          longitude: location?.coords.longitude || DEFAULT_LOCATION.longitude 
+                        });
+                        savePendingAndRedirect("/register", null);
+                      }}
+                      style={{ marginBottom: 12 }}
+                    />
+                    <TouchableOpacity
+                      style={styles.secondaryButton}
+                      onPress={() => {
+                        setPendingAlertData({ ...values, 
+                          latitude: location?.coords.latitude || DEFAULT_LOCATION.latitude, 
+                          longitude: location?.coords.longitude || DEFAULT_LOCATION.longitude 
+                        });
+                        savePendingAndRedirect("/login", null);
+                      }}
+                    >
+                      <Text style={styles.secondaryButtonText}>J'ai déjà un compte</Text>
+                    </TouchableOpacity>
                   </View>
                 ) : (
                   <PrimaryButton
-                    title={t("alert.submit")}
+                    title="LANCER L'ALERTE"
                     onPress={() => handleSubmit()}
                     loading={loading}
-                    disabled={!location || loading}
-                    style={{ marginTop: 20 }}
+                    style={{ marginTop: 24, backgroundColor: color.error }}
                   />
                 )}
               </View>
@@ -380,104 +375,58 @@ export default function CreateAlertScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: color.screenBackground },
-  center: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    padding: 20,
-  },
-  locatingText: {
-    marginTop: 10,
-    color: color.textSecondary,
-    fontWeight: "600",
-  },
-  textWhite: { color: "white" },
-  urgencyGrid: {
+  loadingContainer: { flex: 1, justifyContent: "center", alignItems: "center" },
+  loadingText: { marginTop: 16, color: color.textSecondary, fontWeight: "600" },
+  skipText: { marginTop: 20, color: color.primary, fontWeight: "700", textDecorationLine: "underline" },
+  
+  manualWarning: {
     flexDirection: "row",
-    justifyContent: "space-between",
-    gap: 8,
+    alignItems: "center",
+    backgroundColor: "#FFFBEB",
+    padding: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#FCD34D",
+    marginBottom: 20,
+    gap: 10,
   },
+  manualWarningText: { color: "#92400E", fontSize: 12, fontWeight: "600", flex: 1 },
+
+  urgencyGrid: { flexDirection: "row", justifyContent: "space-between", gap: 8 },
   urgencyOption: {
     flex: 1,
-    paddingVertical: 10,
-    borderRadius: 10,
+    paddingVertical: 12,
+    borderRadius: 8,
     borderWidth: 1,
     borderColor: color.border,
     alignItems: "center",
     backgroundColor: "white",
   },
-  urgencySelected: {
-    backgroundColor: color.primary,
-    borderColor: color.primary,
-  },
-  urgencyLabel: {
-    fontSize: 10,
-    fontWeight: "700",
-    color: color.textMain,
-    textAlign: "center",
-  },
-  warningBox: {
+  urgencyLabel: { fontSize: 11, fontWeight: "700", color: color.textMain, textAlign: "center" },
+  textWhite: { color: "white" },
+
+  infoBox: {
     flexDirection: "row",
-    gap: 10,
-    backgroundColor: "#FFF5F5",
+    gap: 8,
+    backgroundColor: "#EFF6FF",
     padding: 12,
-    borderRadius: 10,
+    borderRadius: 8,
     marginTop: 12,
-    marginBottom: 12,
     alignItems: "center",
-    borderWidth: 1,
-    borderColor: "#FFE4E6",
   },
-  warningText: {
-    flex: 1,
-    fontSize: 11,
-    color: color.primary,
-    lineHeight: 16,
-    fontWeight: "600",
-  },
-  errorText: {
-    color: color.error,
-    fontSize: 12,
-    marginBottom: 16,
-    textAlign: "center",
-    fontWeight: "600",
-  },
-  authSection: {
-    marginTop: 24,
-    paddingTop: 20,
-    borderTopWidth: 1,
-    borderTopColor: color.border,
-  },
-  authTitle: {
-    fontSize: 16,
-    fontWeight: "700",
-    color: color.primary,
-    marginBottom: 8,
-    textAlign: "center",
-  },
-  authSubtitle: {
-    fontSize: 12,
-    color: color.textSecondary,
-    textAlign: "center",
-    lineHeight: 16,
-    marginBottom: 16,
-    fontWeight: "500",
-  },
-  buttonContainer: {
-    gap: 0,
-  },
+  infoText: { fontSize: 12, color: "#1E3A8A", flex: 1 },
+
+  authSection: { marginTop: 32, paddingTop: 20, borderTopWidth: 1, borderTopColor: color.border },
+  authTitle: { fontSize: 16, fontWeight: "700", color: color.textMain, marginBottom: 4, textAlign: "center" },
+  authSubtitle: { fontSize: 13, color: color.textSecondary, textAlign: "center", marginBottom: 20 },
+  
   secondaryButton: {
     paddingVertical: 14,
-    paddingHorizontal: 16,
-    borderRadius: 10,
-    borderWidth: 2,
-    borderColor: color.primary,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: color.border,
     alignItems: "center",
-    justifyContent: "center",
+    backgroundColor: "white",
   },
-  secondaryButtonText: {
-    color: color.primary,
-    fontSize: 16,
-    fontWeight: "700",
-  },
+  secondaryButtonText: { color: color.textMain, fontWeight: "600" },
 });

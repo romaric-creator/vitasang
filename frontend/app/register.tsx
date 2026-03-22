@@ -8,10 +8,8 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from "react-native";
-import { formStyles } from "@/styles/formStyles";
 import { useAuth } from "@/context/AuthContext";
 import { analyticsService } from "@/services/analyticsService";
-import { TabBarIcon } from "@/components/TabBarIcon";
 
 import { Formik } from "formik";
 import { color } from "@/constant/color";
@@ -22,7 +20,6 @@ import {
   sendAlert,
 } from "@/services/user.service";
 import { registerForPushNotificationsAsync } from "@/utils/pushNotifications";
-
 
 import { storeData, getData, removeData } from "@/utils/storage";
 import { registerValidationSchema } from "@/validation/ValidationSchemas";
@@ -35,20 +32,28 @@ export default function RegisterScreen() {
   const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
   const [generalError, setGeneralError] = useState("");
+  // Step 1: Info perso, Step 2: Info médicale (optionnelle)
   const [step, setStep] = useState(1);
 
   const handleRegister = async (values: any) => {
     setGeneralError("");
     setLoading(true);
-    analyticsService.trackEvent("register_started");
+    analyticsService.trackEvent("register_attempt");
 
     try {
+      // Nettoyage du numéro de téléphone (espaces)
+      const cleanPhone = values.telephone.replace(/\s/g, '');
+      // Gestion groupe sanguin null si vide ou "INCONNU"
+      const cleanBloodGroup = (values.groupe_sanguin === "" || values.groupe_sanguin === "INCONNU") 
+        ? null 
+        : values.groupe_sanguin;
+
       const data = await registerUser(
         values.nom,
         values.prenom,
-        values.telephone,
+        cleanPhone,
         values.mot_de_passe,
-        values.groupe_sanguin,
+        cleanBloodGroup,
         "donneur",
       );
 
@@ -56,28 +61,26 @@ export default function RegisterScreen() {
         ...data.user,
         id_utilisateur: data.user.id || data.user.id_utilisateur,
       };
+      
+      // Stockage sécurisé
       await storeData("user", userToStore);
       await storeData("token", data.token);
 
+      // Gestion Push Token (Silencieuse)
       try {
         const pushToken = await registerForPushNotificationsAsync();
         if (pushToken && userToStore.id_utilisateur) {
           await updatePushToken(userToStore.id_utilisateur, pushToken);
-          console.log("Push token envoyé au backend après inscription.");
         }
-      } catch (tokenError) {
-        console.error("Échec de l'envoi du push token au backend:", tokenError);
-      }
+      } catch (e) { /* Ignorer erreur push silencieuse */ }
 
-      // TRAITER L'ALERTE EN ATTENTE (Guest flow)
+      // Gestion Alerte Guest (Workflow spécifique)
       try {
         const pendingAlert = await getData("pending_alert");
         if (pendingAlert) {
-          console.log("Envoi de l'alerte en attente après inscription...");
           const result = await sendAlert(pendingAlert);
           if (result.alertId) {
             await removeData("pending_alert");
-            console.log("Alerte en attente envoyée avec succès.");
             router.replace({
               pathname: "/alert-confirmation",
               params: { alertId: result.alertId.toString() },
@@ -85,18 +88,19 @@ export default function RegisterScreen() {
             return;
           }
         }
-      } catch (e) {
-        console.error("Erreur lors de l'envoi de l'alerte en attente:", e);
-      }
+      } catch (e) { /* Ignorer erreur guest alert */ }
 
-      analyticsService.trackEvent(analyticsService.events.REGISTER_SUCCESS, {
-        groupe: values.groupe_sanguin,
-      });
-
+      analyticsService.trackEvent("register_success");
       router.replace("/(tabs)");
+
     } catch (err: any) {
       console.error("Registration error:", err.message);
-      setGeneralError(err.message || t("register.error"));
+      // Messages d'erreur conviviaux
+      let userMsg = t("register.error");
+      if (err.message.includes("Validation error")) userMsg = "Ce numéro est déjà utilisé.";
+      if (err.message.includes("Network")) userMsg = "Problème de connexion. Vérifiez votre réseau.";
+      
+      setGeneralError(userMsg);
     } finally {
       setLoading(false);
     }
@@ -108,21 +112,14 @@ export default function RegisterScreen() {
       prenom: true,
       telephone: true,
       mot_de_passe: true,
-      confirmPassword: true,
     };
     setTouched(step1Fields);
 
     validateForm(values).then((errors: any) => {
-      const step1Errors = [
-        "nom",
-        "prenom",
-        "telephone",
-        "mot_de_passe",
-        "confirmPassword",
-      ];
+      const step1Errors = ["nom", "prenom", "telephone", "mot_de_passe"];
       const hasErrors = step1Errors.some((field) => errors[field]);
+      
       if (!hasErrors) {
-        analyticsService.trackEvent("register_step1_completed");
         setStep(2);
       }
     });
@@ -141,14 +138,12 @@ export default function RegisterScreen() {
         <View style={styles.container}>
           <View style={styles.headerSection}>
             <Text style={styles.title}>
-              {step === 1
-                ? t("register.step1.title")
-                : t("register.step2.title")}
+              {step === 1 ? "Créer un compte" : "Dernière étape"}
             </Text>
             <Text style={styles.subtitle}>
-              {step === 1
-                ? t("register.subtitle")
-                : t("register.step2.subtitle")}
+              {step === 1 
+                ? "Rejoignez la communauté des héros." 
+                : "Connaissez-vous votre groupe sanguin ?"}
             </Text>
           </View>
 
@@ -158,12 +153,10 @@ export default function RegisterScreen() {
               prenom: "",
               telephone: "",
               mot_de_passe: "",
-              confirmPassword: "",
-              groupe_sanguin: "",
+              groupe_sanguin: "", // Vide par défaut
             }}
             validationSchema={registerValidationSchema}
             onSubmit={handleRegister}
-            validateOnMount
           >
             {({
               values,
@@ -174,100 +167,97 @@ export default function RegisterScreen() {
               handleSubmit,
               validateForm,
               setTouched,
+              setFieldValue,
               isValid,
             }) => (
               <View style={styles.formContainer}>
                 {step === 1 && (
                   <>
                     <View style={styles.row}>
-                      <View style={{ flex: 1 }}>
+                      <View style={{ flex: 1, marginRight: 8 }}>
                         <FormField
-                          label={t("register.fields.lastName")}
+                          label="Nom"
                           value={values.nom}
                           onChangeText={handleChange("nom")}
                           onBlur={handleBlur("nom")}
-                          placeholder={t("register.placeholders.lastName")}
+                          placeholder="Votre nom"
                           error={errors.nom}
                           touched={touched.nom}
-                          required
                         />
                       </View>
-                      <View style={{ width: 12 }} />
-                      <View style={{ flex: 1 }}>
+                      <View style={{ flex: 1, marginLeft: 8 }}>
                         <FormField
-                          label={t("register.fields.firstName")}
+                          label="Prénom"
                           value={values.prenom}
                           onChangeText={handleChange("prenom")}
                           onBlur={handleBlur("prenom")}
-                          placeholder={t("register.placeholders.firstName")}
+                          placeholder="Votre prénom"
                           error={errors.prenom}
                           touched={touched.prenom}
-                          required
                         />
                       </View>
                     </View>
 
                     <FormField
-                      label={t("register.fields.phone")}
+                      label="Téléphone"
                       value={values.telephone}
                       onChangeText={handleChange("telephone")}
                       onBlur={handleBlur("telephone")}
-                      placeholder={t("register.placeholders.phone")}
+                      placeholder="Ex: 6 99 99 99 99"
+                      keyboardType="phone-pad"
                       error={errors.telephone}
                       touched={touched.telephone}
-                      keyboardType="phone-pad"
-                      required
                     />
-                    <Text style={styles.hintText}>
-                      {t("register.hintPhone")}
-                    </Text>
-
+                    
                     <FormField
-                      label={t("register.fields.password")}
+                      label="Mot de passe"
                       value={values.mot_de_passe}
                       onChangeText={handleChange("mot_de_passe")}
                       onBlur={handleBlur("mot_de_passe")}
-                      placeholder={t("register.placeholders.password")}
+                      placeholder="6 caractères min."
+                      secureTextEntry
                       error={errors.mot_de_passe}
                       touched={touched.mot_de_passe}
-                      secureTextEntry
-                      required
                     />
 
-                    <FormField
-                      label={t("register.fields.confirmPassword")}
-                      value={values.confirmPassword}
-                      onChangeText={handleChange("confirmPassword")}
-                      onBlur={handleBlur("confirmPassword")}
-                      placeholder={t("register.placeholders.confirmPassword")}
-                      error={errors.confirmPassword}
-                      touched={touched.confirmPassword}
-                      secureTextEntry
-                      required
-                    />
                     <PrimaryButton
-                      title={t("register.next")}
-                      onPress={() =>
-                        handleNextStep(validateForm, values, setTouched)
-                      }
-                      style={{ marginTop: 20 }}
+                      title="Suivant"
+                      onPress={() => handleNextStep(validateForm, values, setTouched)}
+                      style={{ marginTop: 24 }}
                     />
                   </>
                 )}
 
                 {step === 2 && (
                   <>
+                    <Text style={styles.label}>Votre groupe sanguin (Optionnel)</Text>
                     <BloodGroupSelector
                       value={values.groupe_sanguin}
-                      onSelect={(group) =>
-                        handleChange("groupe_sanguin")(group)
-                      }
+                      onSelect={(group) => handleChange("groupe_sanguin")(group)}
                       error={errors.groupe_sanguin}
                       touched={touched.groupe_sanguin}
                     />
+                    
+                    {/* Option Explicite "Je ne sais pas" */}
+                    <TouchableOpacity 
+                      style={[
+                        styles.unknownButton, 
+                        (values.groupe_sanguin === "INCONNU" || values.groupe_sanguin === "") && styles.unknownButtonActive
+                      ]}
+                      onPress={() => setFieldValue("groupe_sanguin", "INCONNU")}
+                    >
+                      <Text style={[
+                        styles.unknownButtonText,
+                        (values.groupe_sanguin === "INCONNU" || values.groupe_sanguin === "") && styles.unknownButtonTextActive
+                      ]}>
+                        Je ne connais pas mon groupe sanguin
+                      </Text>
+                    </TouchableOpacity>
 
                     {generalError ? (
-                      <Text style={styles.errorText}>{generalError}</Text>
+                      <View style={styles.errorContainer}>
+                        <Text style={styles.errorText}>{generalError}</Text>
+                      </View>
                     ) : null}
 
                     <View style={styles.buttonRow}>
@@ -275,27 +265,25 @@ export default function RegisterScreen() {
                         style={styles.backButton}
                         onPress={() => setStep(1)}
                       >
-                        <Text style={styles.backButtonText}>
-                          {t("register.back")}
-                        </Text>
+                        <Text style={styles.backButtonText}>Retour</Text>
                       </TouchableOpacity>
+                      
                       <PrimaryButton
-                        title={t("register.submit")}
+                        title={loading ? "Création..." : "Terminer"}
                         onPress={() => handleSubmit()}
                         loading={loading}
-                        style={{ marginTop: 20, flex: 1 }}
-                        disabled={!isValid}
+                        style={{ flex: 1 }}
                       />
                     </View>
                   </>
                 )}
 
-                <TouchableOpacity onPress={() => router.replace("/login")}>
+                <TouchableOpacity 
+                  onPress={() => router.replace("/login")}
+                  style={{ marginTop: 24, padding: 10 }}
+                >
                   <Text style={styles.loginLinkText}>
-                    {t("register.alreadyRegistered")}{" "}
-                    <Text style={styles.loginLinkHighlight}>
-                      {t("register.loginLink")}
-                    </Text>
+                    Déjà un compte ? <Text style={styles.loginLinkHighlight}>Se connecter</Text>
                   </Text>
                 </TouchableOpacity>
               </View>
@@ -310,68 +298,89 @@ export default function RegisterScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingHorizontal: 16,
-    paddingTop: 40,
-    paddingBottom: 20,
+    paddingHorizontal: 20,
+    paddingTop: 60,
+    paddingBottom: 40,
   },
   headerSection: {
-    marginBottom: 24,
+    marginBottom: 32,
   },
   title: {
     color: color.primary,
     fontWeight: "800",
-    fontSize: 32,
-    letterSpacing: -0.8,
-    marginBottom: 4,
+    fontSize: 28,
+    marginBottom: 8,
   },
   subtitle: {
-    fontWeight: "600",
     color: color.textSecondary,
-    fontSize: 14,
+    fontSize: 16,
   },
   formContainer: {
     flex: 1,
   },
   row: {
     flexDirection: "row",
+    marginBottom: 16,
+  },
+  label: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: color.text,
+    marginBottom: 12,
+  },
+  unknownButton: {
+    padding: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: color.border,
+    alignItems: 'center',
+    marginTop: 16,
+    backgroundColor: color.background,
+  },
+  unknownButtonActive: {
+    backgroundColor: color.primary + '10', // 10% opacity
+    borderColor: color.primary,
+  },
+  unknownButtonText: {
+    color: color.textSecondary,
+    fontWeight: "600",
+  },
+  unknownButtonTextActive: {
+    color: color.primary,
   },
   loginLinkText: {
     color: color.textSecondary,
-    fontWeight: "500",
-    fontSize: 13,
     textAlign: "center",
-    marginTop: 16,
+    fontSize: 14,
   },
   loginLinkHighlight: {
     color: color.primary,
-    fontWeight: "800",
+    fontWeight: "700",
+  },
+  errorContainer: {
+    backgroundColor: '#FFE5E5',
+    padding: 12,
+    borderRadius: 8,
+    marginTop: 20,
   },
   errorText: {
-    color: color.error,
+    color: '#D32F2F',
     textAlign: "center",
-    marginTop: 12,
-    fontSize: 12,
-    fontWeight: "600",
-  },
-  hintText: {
-    color: color.textSecondary,
-    fontSize: 10,
-    marginTop: -10,
-    marginBottom: 12,
-    fontStyle: "italic",
+    fontSize: 14,
+    fontWeight: "500",
   },
   buttonRow: {
     flexDirection: "row",
     alignItems: "center",
-    marginTop: 20,
+    marginTop: 32,
+    gap: 16,
   },
   backButton: {
-    marginRight: 16,
-    padding: 10,
+    padding: 16,
   },
   backButtonText: {
-    color: color.primary,
-    fontWeight: "700",
+    color: color.textSecondary,
+    fontWeight: "600",
     fontSize: 16,
   },
 });

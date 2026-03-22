@@ -12,22 +12,35 @@ const Dashboard: React.FC = () => {
         totalStock: 0,
         bloodDetail: [] as any[]
     });
+    const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
         const fetchStats = async () => {
             if (!user?.centre?.id_centre) {
+                console.warn("Dashboard: User or Centre ID missing", user);
                 setLoading(false);
                 return;
             }
 
             try {
                 setLoading(true);
+                setError(null);
+                console.log(`Fetching stats for centre ID: ${user.centre.id_centre}`);
+                
                 const response = await api.get(`/centres/${user.centre.id_centre}/stats`);
+                
                 if (response.data.success) {
                     setStats(response.data.stats);
+                } else {
+                    console.warn("API responded with success: false or invalid format", response.data);
+                    // Check if response might be HTML (proxy/url issue)
+                    if (typeof response.data === 'string' && response.data.trim().startsWith('<')) {
+                         throw new Error("Received HTML instead of JSON. Check VITE_API_URL configuration.");
+                    }
                 }
-            } catch (error) {
-                console.error("Error fetching dashboard stats:", error);
+            } catch (err: any) {
+                console.error("Error fetching dashboard stats:", err);
+                setError(err.message || "Erreur de chargement des données.");
             } finally {
                 setLoading(false);
             }
@@ -42,6 +55,21 @@ const Dashboard: React.FC = () => {
 
     if (loading) {
         return <div className="text-center mt-24">Chargement du tableau de bord...</div>;
+    }
+
+    if (error) {
+        return (
+            <div className="text-center mt-24 p-6 bg-red-50 text-red-600 rounded-xl border border-red-200">
+                <h3 className="font-bold text-lg">Erreur</h3>
+                <p>{error}</p>
+                <button 
+                    onClick={() => window.location.reload()} 
+                    className="mt-4 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+                >
+                    Réessayer
+                </button>
+            </div>
+        );
     }
 
     return (

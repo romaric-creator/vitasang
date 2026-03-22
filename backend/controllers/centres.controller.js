@@ -80,8 +80,8 @@ exports.getCentreDetail = async (req, res, next) => {
 
     const centre = await Centre.findByPk(id, {
       attributes: [
-        ['id_centre', 'id_centre'],
-        ['nom_centre', 'nom_centre'],
+        ['id_centre', 'id'],
+        ['nom_centre', 'nom'],
         'adresse',
         'ville',
         ['contact_urgence', 'telephone'],

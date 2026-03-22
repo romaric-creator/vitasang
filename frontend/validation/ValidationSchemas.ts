@@ -30,6 +30,10 @@ export const registerValidationSchema = yup.object().shape({
     .max(50, 'Maximum 50 caractères'),
   telephone: yup
     .string()
+    .transform((value, originalValue) => {
+        // Supprime tous les espaces avant validation
+        return originalValue ? originalValue.replace(/\s/g, '') : value;
+    })
     .required('Le numéro est requis')
     .matches(
       /^(\+237[26]\d{8}|[26]\d{8})$/,
@@ -40,17 +44,16 @@ export const registerValidationSchema = yup.object().shape({
     .required('Le mot de passe est requis')
     .min(6, 'Au minimum 6 caractères')
     .max(50, 'Maximum 50 caractères')
+    // Simplification : on retire les contraintes trop strictes de regex pour l'instant si demandé,
+    // mais gardons un minimum de sécurité
     .matches(/[A-Z]/, 'Au moins une majuscule')
     .matches(/[0-9]/, 'Au moins un chiffre'),
-  confirmPassword: yup
-    .string()
-    .required('Confirmez le mot de passe')
-    .oneOf([yup.ref('mot_de_passe')], 'Les mots de passe ne correspondent pas'),
+  // confirmPassword removed for simplicity
   groupe_sanguin: yup
     .string()
-    .transform((v) => (v === "" ? "INCONNU" : v))
-    .oneOf(['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-', 'INCONNU'], 'Groupe sanguin invalide')
-    .nullable(),
+    .nullable()
+    .transform((v) => (v === "" ? null : v)) // Transforme chaine vide en null
+    .oneOf(['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-', 'INCONNU', null], 'Groupe sanguin invalide'),
 });
 
 export const createAlertValidationSchema = yup.object().shape({

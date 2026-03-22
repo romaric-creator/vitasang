@@ -21,6 +21,13 @@ exports.addUser = async (req, res, next) => {
         });
       }
 
+      // Nettoyage du groupe sanguin pour éviter les erreurs de validation Sequelize
+      // Si vide ou "INCONNU", on met null
+      const validBloodGroups = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
+      if (!validBloodGroups.includes(groupe_sanguin)) {
+        groupe_sanguin = null;
+      }
+
       const hashedPassword = await bcrypt.hash(mot_de_passe, 10);
 
       // Création de l'utilisateur et de son profil en une seule transaction
@@ -31,6 +38,8 @@ exports.addUser = async (req, res, next) => {
             prenom,
             mot_de_passe: hashedPassword,
             telephone,
+            // Force email à null si non fourni pour passer la validation Sequelize (isEmail: true sur allowNull: true)
+            email: null,
             role: "donneur",
             profilDonneur: {
               groupe_sanguin,
@@ -176,7 +185,7 @@ exports.addUser = async (req, res, next) => {
 
 exports.login = async (req, res, next) => {
   try {
-    const { telephone, mot_de_passe } = req.body;
+    let { telephone, mot_de_passe } = req.body;
 
     if (!telephone || !mot_de_passe) {
       return res.status(400).json({
@@ -184,9 +193,12 @@ exports.login = async (req, res, next) => {
       });
     }
 
+    // NETTOYAGE : Supprimer les espaces du numéro de téléphone
+    const cleanPhone = telephone.replace(/\s/g, '');
+
     // On cherche l'utilisateur et on inclut ses données associées
     const user = await Utilisateur.findOne({
-      where: { telephone, est_actif: true },
+      where: { telephone: cleanPhone, est_actif: true },
       include: [
         {
           model: ProfilDonneur,
@@ -234,7 +246,16 @@ exports.login = async (req, res, next) => {
       (user.role === "personnel" || user.role === "admin") &&
       user.Centre
     ) {
-      userResponse.centre = user.Centre;
+      // Harmonisation des noms de champs pour le frontend
+      userResponse.centre = {
+        id: user.Centre.id_centre,
+        nom: user.Centre.nom_centre,
+        adresse: user.Centre.adresse,
+        ville: user.Centre.ville,
+        telephone: user.Centre.contact_urgence,
+        latitude: user.Centre.latitude,
+        longitude: user.Centre.longitude
+      };
     }
 
     // RENVOI DE LA RÉPONSE
@@ -512,7 +533,10 @@ exports.updateUser = async (req, res, next) => {
     // Update user fields
     if (req.body.nom) user.nom = req.body.nom;
     if (req.body.prenom) user.prenom = req.body.prenom;
-    if (req.body.telephone) user.telephone = req.body.telephone;
+    if (req.body.telephone) {
+        // NETTOYAGE : Supprimer les espaces lors de la mise à jour
+        user.telephone = req.body.telephone.replace(/\s/g, '');
+    }
     if (req.body.ville !== undefined) user.region = req.body.ville; // Map ville to region
 
     // Update profil donneur if it exists or if blood/location fields are provided
@@ -525,8 +549,13 @@ exports.updateUser = async (req, res, next) => {
       ) {
         const profil = await ProfilDonneur.findByPk(user.id_utilisateur, { transaction: t });
         if (profil) {
-          if (req.body.groupe_sanguin)
-            profil.groupe_sanguin = req.body.groupe_sanguin;
+          if (req.body.groupe_sanguin) {
+              // SANITISATION : Vérification de la validité de l'ENUM
+              const validGroups = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
+              profil.groupe_sanguin = validGroups.includes(req.body.groupe_sanguin) 
+                ? req.body.groupe_sanguin 
+                : null;
+          }
           if (req.body.latitude !== undefined)
             profil.lat_actuelle = req.body.latitude;
           if (req.body.longitude !== undefined)

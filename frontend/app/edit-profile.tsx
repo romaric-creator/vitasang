@@ -47,23 +47,36 @@ export default function EditProfileScreen() {
 
   const loadProfile = async () => {
     try {
+      setLoading(true);
       const id = await getUserIdFromStorage();
-      if (id) {
-        setUserId(Number(id));
-        const res = await getUserProfile(Number(id));
-        if (res.success) {
-          setUserData(res.user);
-          if (res.user.photo_profil) {
-            const photoUrl = res.user.photo_profil.startsWith("http")
-              ? res.user.photo_profil
-              : Constants.expoConfig?.extra?.env?.EXPO_PUBLIC_API_BASE_URL?.replace(
+      if (!id) {
+        show("error", "Session expirée. Veuillez vous reconnecter.");
+        router.replace("/login");
+        return;
+      }
+
+      setUserId(Number(id));
+      const res = await getUserProfile(Number(id));
+      
+      if (res && res.success) {
+        setUserData(res.user);
+        if (res.user.photo_profil) {
+          const photoUrl = res.user.photo_profil.startsWith("http")
+            ? res.user.photo_profil
+            : Constants.expoConfig?.extra?.env?.EXPO_PUBLIC_API_BASE_URL?.replace(
                 "/api",
                 "",
               ) + res.user.photo_profil;
-            setCurrentImage(photoUrl);
-          }
+          setCurrentImage(photoUrl);
+        }
+      } else {
+        // Fallback sur les données du cache local si l'API échoue
+        const cachedUser = await getData("user");
+        if (cachedUser) {
+          setUserData(cachedUser);
+          show("info", "Affichage des données hors-ligne.");
         } else {
-          show("error", res.message || t("editProfile.loadError"));
+          show("error", t("editProfile.loadError"));
         }
       }
     } catch (error) {
@@ -75,15 +88,19 @@ export default function EditProfileScreen() {
   };
 
   const pickImage = async () => {
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ["images"],
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 0.7,
-    });
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ["images"],
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.5, // Réduit pour économiser la data au Cameroun
+      });
 
-    if (!result.canceled) {
-      setSelectedImage(result.assets[0].uri);
+      if (!result.canceled) {
+        setSelectedImage(result.assets[0].uri);
+      }
+    } catch (e) {
+      show("error", "Impossible d'accéder à la galerie.");
     }
   };
 

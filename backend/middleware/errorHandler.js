@@ -30,11 +30,15 @@ const errorHandler = (err, req, res, next) => {
       field: e.path,
       message: e.message,
     }));
+    
+    // Créer un message plus explicite pour l'utilisateur
+    const fieldNames = errors.map(e => e.field).join(", ");
+    
     return res.status(400).json({
       success: false,
       error: {
         code: "VALIDATION_ERROR",
-        message: "Erreur de validation",
+        message: `Erreur de validation sur : ${fieldNames}`,
         statusCode: 400,
         details: errors,
       },

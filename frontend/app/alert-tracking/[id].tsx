@@ -64,11 +64,12 @@ export default function AlertTracking() {
   useFocusEffect(
     useCallback(() => {
       fetchStatus();
+      // Polling optimisé pour l'économie de data (15s au lieu de 5s)
       const interval = setInterval(() => {
         if (AppState.currentState === "active") {
           fetchStatus();
         }
-      }, 5000);
+      }, 15000);
 
       return () => clearInterval(interval);
     }, [id])
@@ -97,37 +98,38 @@ export default function AlertTracking() {
     const alerte = data?.alerte || alertInitialData;
     if (alerte?.latitude && alerte?.longitude) {
       const url = `https://www.google.com/maps/dir/?api=1&destination=${alerte.latitude},${alerte.longitude}`;
-      Linking.openURL(url);
+      Linking.openURL(url).catch(err => console.error("Failed to open maps", err));
     } else {
-      // Si on n'a pas les coordonnées, on ne peut pas afficher l'itinéraire
       console.warn("Itinerary: Missing coordinates");
     }
   };
 
-  const handleShareWhatsApp = useCallback(() => {
-    const alerte = data?.alerte;
+  const handleShareWhatsApp = useCallback(async () => {
+    const alerte = data?.alerte || alertInitialData;
     if (!alerte) return;
-    const urgencyLabel = t(`alert.urgencyLevels.${alerte.urgence || "NORMAL"}`);
-    const message = t("alert.shareMessage", {
-      group: alerte.groupe,
-      location: alerte.lieu || t("centers.address"),
-      latitude: alerte.latitude || "0",
-      longitude: alerte.longitude || "0",
-      urgency: urgencyLabel,
-      quantity: alerte.quantite || "1",
-      phone: alerte.initiateur?.telephone || alerte.telephone_contact || "",
-      id: id || alerte.id || "0000",
-    });
-    const url = `whatsapp://send?text=${encodeURIComponent(message)}`;
+    
+    try {
+        const urgencyLabel = t(`alert.urgencyLevels.${alerte.urgence || "NORMAL"}`);
+        const message = t("alert.shareMessage", {
+          group: alerte.groupe || alerte.groupe_requis,
+          location: alerte.lieu || t("centers.address"),
+          urgency: urgencyLabel,
+          phone: alerte.initiateur?.telephone || alerte.telephone_contact || "",
+        });
+        
+        const url = `whatsapp://send?text=${encodeURIComponent(message)}`;
+        const supported = await Linking.canOpenURL(url);
 
-    Linking.canOpenURL(url).then((supported) => {
-      if (supported) {
-        Linking.openURL(url);
-      } else {
-        Linking.openURL(`https://wa.me/?text=${encodeURIComponent(message)}`);
-      }
-    });
-  }, [data, t, id]);
+        if (supported) {
+            await Linking.openURL(url);
+        } else {
+            // Fallback web si l'app n'est pas installée
+            await Linking.openURL(`https://wa.me/?text=${encodeURIComponent(message)}`);
+        }
+    } catch (error) {
+        console.error("Error sharing to WhatsApp", error);
+    }
+  }, [data, alertInitialData, t, id]);
 
   if (isNaN(Number(id))) {
     return (

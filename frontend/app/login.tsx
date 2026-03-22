@@ -36,11 +36,20 @@ export default function LoginScreen() {
 
     try {
       // signIn gère tout : appel API, stockage token/user, et mise à jour de isAuth
-      // La redirection vers (tabs) est automatique via le _layout.tsx
       await signIn(values.telephone, values.mot_de_passe);
     } catch (err: any) {
-      console.error("Login error:", err.message);
-      setGeneralError(err.message || t("login.error"));
+      console.error("Login error:", err);
+      // Messages d'erreur améliorés pour le contexte local
+      const msg = err.message || "";
+      if (msg.includes("Network") || msg.includes("connexion")) {
+        setGeneralError("Problème de connexion internet.");
+      } else if (msg.includes("timeout") || msg.includes("délai")) {
+        setGeneralError("Le serveur est lent. Réessayez.");
+      } else if (msg.includes("401") || msg.includes("identifiants")) {
+        setGeneralError("Numéro ou mot de passe incorrect.");
+      } else {
+        setGeneralError(t("login.error") || "Erreur inconnue.");
+      }
     } finally {
       setLoading(false);
     }
@@ -124,7 +133,7 @@ export default function LoginScreen() {
                 ) : null}
 
                 {/* Forgot Password Link */}
-                <TouchableOpacity style={styles.forgotBtn}>
+                <TouchableOpacity style={styles.forgotBtn} onPress={() => router.push("/aide-et-conseil")}>
                   <Text style={styles.forgotText}>
                     {t("login.forgotPassword")}
                   </Text>
