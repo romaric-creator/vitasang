@@ -14,7 +14,8 @@ const { notificationQueue } = require("../jobs/notification.queue");
  * @param {object} alerte L'instance de l'alerte Sequelize
  */
 const attemptAutoValidation = async (alerte) => {
-  const { latitude, longitude, id_alerte, groupe_requis, rayon_action_km } = alerte;
+  const { latitude, longitude, id_alerte, groupe_requis, rayon_action_km } =
+    alerte;
 
   const haversine = haversineSQL(latitude, longitude);
   const [centresProches] = await db.sequelize.query(`
@@ -29,7 +30,7 @@ const attemptAutoValidation = async (alerte) => {
     logger.info("Auto-validating alert (proximity to center)", {
       alertId: id_alerte,
       centerId: centresProches[0].id_centre,
-      distance: centresProches[0].distance
+      distance: centresProches[0].distance,
     });
 
     alerte.statut = "en_cours";
@@ -43,7 +44,8 @@ const attemptAutoValidation = async (alerte) => {
       latitude,
       longitude,
       rayon_action_km,
-      validatorId: null // Auto-validated
+      degre_urgence, // Added
+      validatorId: null, // Auto-validated
     });
 
     return true;
@@ -100,7 +102,7 @@ exports.createAlert = async (req, res, next) => {
         ? "Alerte validée automatiquement grâce à votre proximité avec un hôpital !"
         : "Alerte créée et en attente de validation.",
       alerte,
-      autoValidated: isAutoValidated
+      autoValidated: isAutoValidated,
     });
   } catch (error) {
     logger.error("Error creating alert", {
@@ -128,8 +130,8 @@ exports.createGuestAlert = async (req, res, next) => {
     const alerte = await Alerte.create({
       groupe_requis: groupe_sanguin,
       degre_urgence: "URGENT", // Guest alerts are usually urgent
-      rayon_action_km: 15,    // Default radius for guests
-      id_initiateur: null,    // Explicitly null for guest
+      rayon_action_km: 15, // Default radius for guests
+      id_initiateur: null, // Explicitly null for guest
       latitude,
       longitude,
       lieu,
@@ -151,7 +153,7 @@ exports.createGuestAlert = async (req, res, next) => {
         ? "Urgence SOS validée automatiquement ! Les donneurs sont en cours de notification."
         : "Alerte d'urgence créée ! Un agent va la valider très rapidement.",
       alertId: alerte.id_alerte,
-      autoValidated: isAutoValidated
+      autoValidated: isAutoValidated,
     });
   } catch (error) {
     logger.error("Error creating guest alert", { error: error.message });
@@ -184,7 +186,7 @@ exports.validateAndNotifyAlert = async (req, res, next) => {
       validatorId,
     });
 
-    const { groupe_requis, latitude, longitude, rayon_action_km } = alerte;
+    const { groupe_requis, latitude, longitude, rayon_action_km, degre_urgence } = alerte;
 
     // Déposer la tâche de notification dans la file d'attente BullMQ
     await notificationQueue.add("sendAlert", {
@@ -193,7 +195,8 @@ exports.validateAndNotifyAlert = async (req, res, next) => {
       latitude,
       longitude,
       rayon_action_km,
-      validatorId
+      degre_urgence,
+      validatorId,
     });
 
     res.status(202).json({
@@ -269,8 +272,8 @@ exports.getLiveAlerts = async (req, res, next) => {
 
 exports.getAlertStatus = async (req, res, next) => {
   const { id } = req.params;
-  const userId = req.user.id;
-  const userRole = req.user.role;
+  const userId = req.user ? Number(req.user.id) : null; // Convert to number, null if not authenticated
+  const userRole = req.user ? req.user.role : null;
 
   try {
     const alerte = await Alerte.findByPk(id, {
@@ -298,14 +301,27 @@ exports.getAlertStatus = async (req, res, next) => {
       throw ErrorTypes.RESOURCE_NOT_FOUND("Alerte");
     }
 
-    const isInitiator = alerte.id_initiateur === userId;
+    // Authorization logic: Allow access if:
+    // 1. Guest alert (id_initiateur is null) - always public
+    // 2. User is initiator of the alert
+    // 3. User is admin
+    // 4. User was notified about the alert
+    // 5. Alert is publicly live (en_cours)
+    const isGuestAlert = alerte.id_initiateur === null;
+    const isInitiator = userId !== null && alerte.id_initiateur === userId;
     const isAdmin = userRole === "admin";
-    const isNotified = alerte.notifications.some(
-      (n) => n.id_utilisateur === userId,
-    );
+    const isNotified =
+      userId !== null &&
+      alerte.notifications.some((n) => n.id_utilisateur === userId);
     const isPubliclyLive = alerte.statut === "en_cours";
 
-    if (!isInitiator && !isAdmin && !isNotified && !isPubliclyLive) {
+    if (
+      !isGuestAlert &&
+      !isInitiator &&
+      !isAdmin &&
+      !isNotified &&
+      !isPubliclyLive
+    ) {
       throw ErrorTypes.UNAUTHORIZED_ACCESS();
     }
 
@@ -337,31 +353,34 @@ exports.getAlertStatus = async (req, res, next) => {
         quantite: alerte.quantite_requise,
         description: alerte.description,
         createdAt: alerte.createdAt,
-        initiateur: alerte.initiateur ? {
-          id_utilisateur: alerte.initiateur.id_utilisateur,
-          nom: alerte.initiateur.nom,
-          prenom: alerte.initiateur.prenom,
-          telephone: alerte.initiateur.telephone,
-        } : {
-          nom: alerte.nom_patient || "Patient",
-          prenom: "Urgence",
-          telephone: alerte.telephone_contact,
-        },
+        initiateur: alerte.initiateur
+          ? {
+              id_utilisateur: alerte.initiateur.id_utilisateur,
+              nom: alerte.initiateur.nom,
+              prenom: alerte.initiateur.prenom,
+              telephone: alerte.initiateur.telephone,
+            }
+          : {
+              nom: alerte.nom_patient || "Patient",
+              prenom: "Urgence",
+              telephone: alerte.telephone_contact,
+            },
       },
       stats,
       details:
         isInitiator || isAdmin
           ? alerte.notifications.map((n) => ({
-            donneur: `${n.destinataire.prenom} ${n.destinataire.nom}`,
-            statut: n.statut_reception,
-            telephone: n.destinataire.telephone,
-          }))
+              donneur: `${n.destinataire.prenom} ${n.destinataire.nom}`,
+              statut: n.statut_reception,
+              telephone: n.destinataire.telephone,
+            }))
           : [],
     });
   } catch (error) {
     logger.error("Erreur récup statut alerte:", {
       error: error.message,
       alertId: req.params.id,
+      userId: userId,
     });
     next(error);
   }
@@ -375,7 +394,7 @@ exports.getUserAlerts = async (req, res, next) => {
       order: [["createdAt", "DESC"]],
       include: [
         { model: LogNotification, as: "notifications" },
-        { model: Utilisateur, as: "initiateur", attributes: ["telephone"] }
+        { model: Utilisateur, as: "initiateur", attributes: ["telephone"] },
       ],
     });
     res.json({
@@ -394,7 +413,9 @@ exports.getUserAlerts = async (req, res, next) => {
         lieu: a.lieu,
         latitude: a.latitude,
         longitude: a.longitude,
-        telephone_initiateur: a.initiateur ? a.initiateur.telephone : a.telephone_contact,
+        telephone_initiateur: a.initiateur
+          ? a.initiateur.telephone
+          : a.telephone_contact,
       })),
     });
   } catch (error) {
@@ -500,6 +521,7 @@ exports.updateAlert = async (req, res, next) => {
 };
 
 exports.respondToAlert = async (req, res, next) => {
+  const transaction = await db.sequelize.transaction();
   try {
     const { id } = req.params;
     const { response } = req.body;
@@ -513,41 +535,65 @@ exports.respondToAlert = async (req, res, next) => {
 
     let notification = await LogNotification.findOne({
       where: { id_alerte: id, id_utilisateur: userId },
+      transaction,
     });
 
     if (!notification) {
-      // Create notification entry if it doesn't exist (e.g. user found it via public feed)
       notification = await LogNotification.create({
         id_alerte: id,
         id_utilisateur: userId,
         statut_reception: response,
-      });
+      }, { transaction });
     } else {
       notification.statut_reception = response;
-      await notification.save();
+      await notification.save({ transaction });
     }
 
     logger.info("User responded to alert", { userId, alertId: id, response });
 
-    // Auto-resolve check if response is 'accepte'
     if (response === "accepte") {
-      const alerte = await Alerte.findByPk(id);
-      if (alerte && alerte.statut === "en_cours") {
-        const acceptedCount = await LogNotification.count({
-          where: { id_alerte: id, statut_reception: "accepte" },
-        });
+      // Award XP to the donor
+      const profil = await ProfilDonneur.findByPk(userId, { transaction });
+      if (profil) {
+        profil.points_xp = (profil.points_xp || 0) + 50;
+        await profil.save({ transaction });
+        logger.info("Donor awarded 50 XP", { userId, totalXP: profil.points_xp });
+      }
 
-        if (acceptedCount >= alerte.quantite_requise) {
-          alerte.statut = "resolu";
-          await alerte.save();
-          logger.info("Alert automatically resolved (quota reached)", {
-            alertId: id,
-            acceptedCount,
-            required: alerte.quantite_requise,
-          });
-        }
+      const alerte = await Alerte.findByPk(id, {
+        lock: transaction.LOCK.UPDATE,
+        transaction,
+      });
+
+      if (!alerte) {
+        throw ErrorTypes.RESOURCE_NOT_FOUND("Alerte");
+      }
+
+      if (alerte.statut !== "en_cours") {
+        await transaction.rollback();
+        return res.status(410).json({
+          success: false,
+          message: "Cette alerte n'est plus active (résolue ou annulée).",
+        });
+      }
+
+      const acceptedCount = await LogNotification.count({
+        where: { id_alerte: id, statut_reception: "accepte" },
+        transaction,
+      });
+
+      if (acceptedCount >= alerte.quantite_requise) {
+        alerte.statut = "resolu";
+        await alerte.save({ transaction });
+        logger.info("Alert automatically resolved (quota reached)", {
+          alertId: id,
+          acceptedCount,
+          required: alerte.quantite_requise,
+        });
       }
     }
+
+    await transaction.commit();
 
     res.json({
       success: true,
@@ -558,6 +604,7 @@ exports.respondToAlert = async (req, res, next) => {
       statut: notification.statut_reception,
     });
   } catch (error) {
+    if (transaction) await transaction.rollback();
     logger.error("Error responding to alert", {
       error: error.message,
       userId: req.user.id,

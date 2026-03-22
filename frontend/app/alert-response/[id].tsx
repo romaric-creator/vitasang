@@ -41,6 +41,10 @@ export default function AlertResponse() {
 
   useEffect(() => {
     const fetchAlert = async () => {
+      if (!id || isNaN(Number(id))) {
+        console.warn("AlertResponse: Invalid ID, skipping fetchAlert", { id });
+        return;
+      }
       try {
         const data = await getAlertStatus(Number(id));
         setAlertData(data.alerte);
@@ -50,18 +54,22 @@ export default function AlertResponse() {
         setLoading(false);
       }
     };
-    if (id) fetchAlert();
+    fetchAlert();
   }, [id]);
 
   // Auto-respond when returning from eligibility screen
   useEffect(() => {
-    if (params.confirmedEligibility === "true" && alertData && !hasAccepted && !isResponding) {
+    if (params.confirmedEligibility === "true" && alertData && !hasAccepted && !isResponding && id && !isNaN(Number(id))) {
       handleResponse("accepte");
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [params.confirmedEligibility, alertData]);
+  }, [params.confirmedEligibility, alertData, id]);
 
   const handleResponse = async (response: "accepte" | "ignore") => {
+    if (!id || isNaN(Number(id))) {
+      show("error", t("common.errors.unexpected"));
+      return;
+    }
     try {
       setIsResponding(true);
       await respondToAlert(Number(id), response);

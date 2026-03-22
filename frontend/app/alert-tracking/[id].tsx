@@ -45,14 +45,20 @@ export default function AlertTracking() {
   const isMountedRef = useRef(true);
 
   const fetchStatus = async () => {
+    if (!id || isNaN(Number(id))) {
+      console.warn("AlertTracking: Invalid ID, skipping fetchStatus", { id });
+      return;
+    }
     try {
       const res = await getAlertStatus(Number(id));
       if (isMountedRef.current) {
         setData(res);
       }
-    } catch (error) {
+    } catch (error: any) {
       if (isMountedRef.current) {
-        console.error(error);
+        console.error("AlertTracking: Error fetching status:", error);
+        // Don't setLoading(false) here if we have initial data from params
+        // This allows showing cached data while retrying
       }
     } finally {
       if (isMountedRef.current) {
@@ -72,7 +78,7 @@ export default function AlertTracking() {
       }, 15000);
 
       return () => clearInterval(interval);
-    }, [id])
+    }, [id]),
   );
 
   useEffect(() => {
@@ -98,7 +104,9 @@ export default function AlertTracking() {
     const alerte = data?.alerte || alertInitialData;
     if (alerte?.latitude && alerte?.longitude) {
       const url = `https://www.google.com/maps/dir/?api=1&destination=${alerte.latitude},${alerte.longitude}`;
-      Linking.openURL(url).catch(err => console.error("Failed to open maps", err));
+      Linking.openURL(url).catch((err) =>
+        console.error("Failed to open maps", err),
+      );
     } else {
       console.warn("Itinerary: Missing coordinates");
     }
@@ -107,36 +115,58 @@ export default function AlertTracking() {
   const handleShareWhatsApp = useCallback(async () => {
     const alerte = data?.alerte || alertInitialData;
     if (!alerte) return;
-    
-    try {
-        const urgencyLabel = t(`alert.urgencyLevels.${alerte.urgence || "NORMAL"}`);
-        const message = t("alert.shareMessage", {
-          group: alerte.groupe || alerte.groupe_requis,
-          location: alerte.lieu || t("centers.address"),
-          urgency: urgencyLabel,
-          phone: alerte.initiateur?.telephone || alerte.telephone_contact || "",
-        });
-        
-        const url = `whatsapp://send?text=${encodeURIComponent(message)}`;
-        const supported = await Linking.canOpenURL(url);
 
-        if (supported) {
-            await Linking.openURL(url);
-        } else {
-            // Fallback web si l'app n'est pas installée
-            await Linking.openURL(`https://wa.me/?text=${encodeURIComponent(message)}`);
-        }
+    try {
+      const urgencyLabel = t(
+        `alert.urgencyLevels.${alerte.urgence || "NORMAL"}`,
+      );
+      const message = t("alert.shareMessage", {
+        group: alerte.groupe || alerte.groupe_requis,
+        location: alerte.lieu || t("centers.address"),
+        urgency: urgencyLabel,
+        phone: alerte.initiateur?.telephone || alerte.telephone_contact || "",
+      });
+
+      const url = `whatsapp://send?text=${encodeURIComponent(message)}`;
+      const supported = await Linking.canOpenURL(url);
+
+      if (supported) {
+        await Linking.openURL(url);
+      } else {
+        // Fallback web si l'app n'est pas installée
+        await Linking.openURL(
+          `https://wa.me/?text=${encodeURIComponent(message)}`,
+        );
+      }
     } catch (error) {
-        console.error("Error sharing to WhatsApp", error);
+      console.error("Error sharing to WhatsApp", error);
     }
   }, [data, alertInitialData, t, id]);
 
   if (isNaN(Number(id))) {
     return (
       <View style={styles.center}>
-        <Text>{t("common.errors.unexpected")}</Text>
-        <TouchableOpacity onPress={() => router.back()}>
-          <Text style={{ color: color.primary, marginTop: 10 }}>{t("editProfile.back")}</Text>
+        <TabBarIcon name="alert-circle" size={48} color={color.error} />
+        <Text
+          style={{
+            fontSize: 16,
+            marginTop: 16,
+            color: color.error,
+            textAlign: "center",
+            paddingHorizontal: 20,
+          }}
+        >
+          {t("common.errors.unexpected")}
+        </Text>
+        <TouchableOpacity
+          onPress={() => router.back()}
+          style={{ marginTop: 20 }}
+        >
+          <Text
+            style={{ color: color.primary, marginTop: 10, fontWeight: "600" }}
+          >
+            {t("editProfile.back")}
+          </Text>
         </TouchableOpacity>
       </View>
     );
@@ -153,7 +183,9 @@ export default function AlertTracking() {
       <View style={styles.center}>
         <Text>{t("alert.unknownStatus")}</Text>
         <TouchableOpacity onPress={() => router.back()}>
-          <Text style={{ color: color.primary, marginTop: 10 }}>{t("editProfile.back")}</Text>
+          <Text style={{ color: color.primary, marginTop: 10 }}>
+            {t("editProfile.back")}
+          </Text>
         </TouchableOpacity>
       </View>
     );
@@ -167,17 +199,32 @@ export default function AlertTracking() {
         <TouchableOpacity onPress={() => router.back()}>
           <TabBarIcon name="arrow-left" size={24} color="black" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>{t('alert.tracking.title')}</Text>
-        <View style={{ flexDirection: 'row', gap: 15 }}>
-          {((data?.alerte && data.alerte.latitude) || (alertInitialData && alertInitialData.latitude)) && (
-            <TouchableOpacity onPress={handleItinerary} testID="itinerary-button">
+        <Text style={styles.headerTitle}>{t("alert.tracking.title")}</Text>
+        <View style={{ flexDirection: "row", gap: 15 }}>
+          {((data?.alerte && data.alerte.latitude) ||
+            (alertInitialData && alertInitialData.latitude)) && (
+            <TouchableOpacity
+              onPress={handleItinerary}
+              testID="itinerary-button"
+            >
               <TabBarIcon name="map" size={20} color={color.info} />
             </TouchableOpacity>
           )}
-          <TouchableOpacity onPress={handleShareWhatsApp} testID="whatsapp-share-button">
-            <TabBarIcon name="whatsapp" size={20} color="#25D366" family="fontawesome" />
+          <TouchableOpacity
+            onPress={handleShareWhatsApp}
+            testID="whatsapp-share-button"
+          >
+            <TabBarIcon
+              name="whatsapp"
+              size={20}
+              color="#25D366"
+              family="fontawesome"
+            />
           </TouchableOpacity>
-          <TouchableOpacity onPress={fetchStatus} testID="refresh-status-button">
+          <TouchableOpacity
+            onPress={fetchStatus}
+            testID="refresh-status-button"
+          >
             <TabBarIcon name="refresh" size={20} color={color.primary} />
           </TouchableOpacity>
         </View>
@@ -186,30 +233,59 @@ export default function AlertTracking() {
       <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.mainCard}>
           <View style={styles.bloodCircleLarge}>
-            <Text style={styles.bloodType}>{alerte.groupe || alerte.groupe_requis}</Text>
+            <Text style={styles.bloodType}>
+              {alerte.groupe || alerte.groupe_requis}
+            </Text>
           </View>
           {alerte.statut && alerte.statut !== "status" && (
-            <View style={[styles.statusBadgeContainer, { backgroundColor: getStatutColor(alerte.statut) + '20' }]}>
-              <View style={[styles.statusDot, { backgroundColor: getStatutColor(alerte.statut) }]} />
-              <Text style={[styles.statusBadge, { color: getStatutColor(alerte.statut), backgroundColor: 'transparent' }]}>
+            <View
+              style={[
+                styles.statusBadgeContainer,
+                { backgroundColor: getStatutColor(alerte.statut) + "20" },
+              ]}
+            >
+              <View
+                style={[
+                  styles.statusDot,
+                  { backgroundColor: getStatutColor(alerte.statut) },
+                ]}
+              />
+              <Text
+                style={[
+                  styles.statusBadge,
+                  {
+                    color: getStatutColor(alerte.statut),
+                    backgroundColor: "transparent",
+                  },
+                ]}
+              >
                 {t(`alert.status.${alerte.statut}`).toUpperCase()}
               </Text>
             </View>
           )}
           <Text style={styles.date}>
-            {t('alert.tracking.launchedOn', { date: new Date(alerte.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) })}
+            {t("alert.tracking.launchedOn", {
+              date: new Date(alerte.createdAt).toLocaleTimeString([], {
+                hour: "2-digit",
+                minute: "2-digit",
+              }),
+            })}
           </Text>
         </View>
 
         <View style={styles.statsGrid}>
           <StatBox
-            label={t('alert.tracking.stats.notified')}
+            label={t("alert.tracking.stats.notified")}
             value={stats.total}
             color={color.info}
           />
-          <StatBox label={t('alert.tracking.stats.read')} value={stats.lu} color={color.warning} />
           <StatBox
-            label={t('alert.tracking.stats.accepted')}
+            label={t("alert.tracking.stats.read")}
+            value={stats.lu}
+            color={color.warning}
+          />
+          <StatBox
+            label={t("alert.tracking.stats.accepted")}
             value={stats.accepte}
             color={color.success}
           />
@@ -218,11 +294,13 @@ export default function AlertTracking() {
         {notifiedDonors.length > 0 && (
           <>
             <Text style={[styles.sectionTitle, { marginTop: 20 }]}>
-              {t('alert.tracking.notifiedDonors')} ({notifiedDonors.length})
+              {t("alert.tracking.notifiedDonors")} ({notifiedDonors.length})
             </Text>
             {notifiedDonors.map((donor, index) => (
               <View key={donor.id} style={styles.donorRow}>
-                <Text style={styles.donorName}>{t('alert.tracking.donorIndex', { index: index + 1 })}</Text>
+                <Text style={styles.donorName}>
+                  {t("alert.tracking.donorIndex", { index: index + 1 })}
+                </Text>
                 <Text style={styles.donorPhone}>{donor.distance} km</Text>
               </View>
             ))}
@@ -230,7 +308,7 @@ export default function AlertTracking() {
         )}
 
         <Text style={styles.sectionTitle}>
-          {t('alert.tracking.notificationDetails')} ({details.length})
+          {t("alert.tracking.notificationDetails")} ({details.length})
         </Text>
         {details.map((item: any, index: number) => (
           <View key={index} style={styles.donorRow}>
@@ -256,7 +334,7 @@ export default function AlertTracking() {
         style={styles.footerBtn}
         onPress={() => router.replace("/(tabs)")}
       >
-        <Text style={styles.footerBtnText}>{t('alert.tracking.backHome')}</Text>
+        <Text style={styles.footerBtnText}>{t("alert.tracking.backHome")}</Text>
       </TouchableOpacity>
     </View>
   );
@@ -321,7 +399,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 16,
     borderWidth: 2,
-    borderColor: color.primary + '20',
+    borderColor: color.primary + "20",
   },
   bloodType: { fontSize: 42, fontWeight: "900", color: color.primary },
   statusBadgeContainer: {

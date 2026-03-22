@@ -96,6 +96,9 @@ export const sendAlert = async (alertData: {
 };
 
 export const getAlertStatus = async (alertId: number) => {
+  if (!alertId || isNaN(alertId)) {
+    throw new Error("Identifiant d'alerte invalide");
+  }
   try {
     const response = await apiClient.get(`alerts/${alertId}/status`);
     return response.data;
@@ -299,6 +302,9 @@ export const respondToAlert = async (
   alertId: number,
   response: "accepte" | "ignore",
 ) => {
+  if (!alertId || isNaN(alertId)) {
+    throw new Error("Identifiant d'alerte invalide");
+  }
   try {
     const res = await apiClient.post(`alerts/${alertId}/respond`, {
       response,

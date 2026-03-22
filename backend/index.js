@@ -22,6 +22,7 @@ require("./jobs/notification.queue");
 
 const app = express();
 
+// Trust proxy est essentiel sur Render pour que le rate limiter voit la vraie IP du client
 app.set("trust proxy", 1);
 app.use(helmet());
 
@@ -30,29 +31,34 @@ const allowedOrigins = [
   "http://localhost:3000",
   "http://localhost:8081",
   "http://localhost:5173",
+  "http://localhost:19006",
+  "http://localhost:8082",
   process.env.FRONTEND_URL,
 ].filter(Boolean);
 
 app.use(
   cors({
     origin: (origin, callback) => {
-      // Autoriser les requêtes sans origin (mobile, curl, Postman)
-      if (!origin) return callback(null, true);
+      // TRÈS IMPORTANT : Toujours autoriser les requêtes sans origin (Mobile Native APK)
+      if (!origin || origin === "null") return callback(null, true);
 
-      // Vérifier la whitelist (qui contient déjà les localhost autorisés)
+      // Autoriser explicitement la whitelist
       if (allowedOrigins.includes(origin)) {
         return callback(null, true);
       }
 
-      // ✅ Ne pas throw une Error → sinon errorHandler répond sans header CORS
-      // On retourne false : le navigateur verra un refus propre
-      logger.warn(`CORS bloqué pour : ${origin}`);
+      // Autoriser les sous-domaines Vercel et Render
+      if (origin.endsWith(".vercel.app") || origin.endsWith(".onrender.com")) {
+        return callback(null, true);
+      }
+
+      logger.warn(`CORS bloqué pour l'origine : ${origin}`);
       return callback(null, false);
     },
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
-  }),
+    allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "Accept"],
+  })
 );
 
 app.use(require("compression")());

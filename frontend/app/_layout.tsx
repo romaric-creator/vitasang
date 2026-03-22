@@ -119,6 +119,8 @@ function RootLayoutNav() {
       currentSegment === "register" ||
       currentSegment === "splash" ||
       currentSegment === "onboardingcarousel" ||
+      currentSegment === "guest-alert" ||
+      currentSegment === "alert-confirmation" ||
       currentSegment === "Splash";
 
     if (isAuth && inAuthFlow) {
@@ -142,6 +144,8 @@ function RootLayoutNav() {
       <Stack.Screen name="index" />
       <Stack.Screen name="login" />
       <Stack.Screen name="register" />
+      <Stack.Screen name="guest-alert" />
+      <Stack.Screen name="alert-confirmation" />
       <Stack.Screen name="Splash" />
       <Stack.Screen name="OnboardingCarousel" />
       <Stack.Screen name="create-alert" options={{ presentation: "modal" }} />

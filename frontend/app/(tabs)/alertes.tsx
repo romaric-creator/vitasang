@@ -212,7 +212,7 @@ export default function AlertesScreen() {
   }, [t]);
 
   const onCardPress = useCallback((item: any) => {
-    if (activeTab === "sent") {
+    if (activeTab === "sent" && item.id && !isNaN(Number(item.id))) {
       router.push({
         pathname: `/alert-tracking/${item.id}`,
         params: {

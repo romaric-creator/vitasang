@@ -352,14 +352,6 @@ export default function OnboardingCarousel() {
       </View>
 
       <View style={styles.footer}>
-        <TouchableOpacity
-          style={styles.alertButton}
-          onPress={() => router.push('/guest-alert')}
-        >
-          <TabBarIcon name="exclamation-triangle" size={18} color="white" />
-          <Text style={styles.alertButtonText}>{t('onboarding.actions.emergency')}</Text>
-        </TouchableOpacity>
-
         <TouchableOpacity style={styles.nextButton} onPress={handleNext}>
           <Text style={styles.nextButtonText}>
             {activeSlide === slides.length - 1 ? t('common.actions.start') : t('common.actions.next')}
@@ -374,101 +366,80 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: color.primary,
-    justifyContent: 'center',
-    alignItems: 'center',
   },
   skipButton: {
     position: 'absolute',
     top: 60,
     right: 20,
-    zIndex: 1,
+    zIndex: 10,
     padding: 10,
   },
   skipButtonText: {
     color: color.background,
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   slide: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: color.primary,
-    paddingHorizontal: 20,
+    paddingHorizontal: 30,
+    width: viewportWidth,
   },
   mascotContainer: {
-    marginBottom: 30,
+    height: 300,
     alignItems: 'center',
     justifyContent: 'center',
   },
   title: {
-    fontSize: 28,
-    fontWeight: 'bold',
+    fontSize: 26,
+    fontWeight: '900',
     color: color.background,
     textAlign: 'center',
-    marginBottom: 15,
+    marginTop: 20,
+    marginBottom: 12,
+    letterSpacing: -0.5,
   },
   description: {
     fontSize: 16,
     color: color.background,
     textAlign: 'center',
-    paddingHorizontal: 20,
-    opacity: 0.9,
+    lineHeight: 24,
+    opacity: 0.85,
   },
   paginationContainer: {
     flexDirection: 'row',
-    paddingVertical: 16,
+    height: 60,
     justifyContent: 'center',
     alignItems: 'center',
   },
   paginationDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    marginHorizontal: 8,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    marginHorizontal: 4,
     backgroundColor: color.background,
   },
   nextButton: {
     backgroundColor: color.background,
-    paddingVertical: 15,
-    paddingHorizontal: 40,
-    borderRadius: 30,
+    width: '100%',
+    paddingVertical: 18,
+    borderRadius: 16,
+    alignItems: 'center',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 5,
-    elevation: 8,
-    minWidth: 150,
-    alignItems: 'center',
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    elevation: 5,
   },
   nextButtonText: {
     color: color.primary,
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: '800',
   },
   footer: {
     width: '100%',
-    alignItems: 'center',
-    gap: 15,
-    paddingBottom: 40,
-    paddingHorizontal: 20,
-  },
-  alertButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    borderRadius: 25,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.5)',
-    width: '100%',
-    justifyContent: 'center',
-  },
-  alertButtonText: {
-    color: 'white',
-    fontSize: 14,
-    fontWeight: '700',
+    paddingHorizontal: 30,
+    paddingBottom: 50,
   },
 });

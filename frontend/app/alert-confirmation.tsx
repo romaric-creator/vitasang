@@ -12,17 +12,21 @@ export default function AlertConfirmationScreen() {
   const { alertId } = useLocalSearchParams<{ alertId: string }>();
 
   useEffect(() => {
-    if (!alertId) {
+    if (!alertId || isNaN(Number(alertId))) {
+      console.warn("AlertConfirmation: Invalid alertId found in params, redirecting to home", { alertId });
       router.replace("/(tabs)");
       return;
     }
 
     // Auto-redirect après 2.5 secondes
     const timer = setTimeout(() => {
-      router.replace({
-        pathname: "/alert-tracking/[id]",
-        params: { id: alertId },
-      });
+      console.log(`AlertConfirmation: Redirecting to tracking for ID ${alertId}`);
+      if (alertId && !isNaN(Number(alertId))) {
+        router.replace({
+          pathname: "/alert-tracking/[id]",
+          params: { id: alertId },
+        });
+      }
     }, 2500);
 
     return () => clearTimeout(timer);
@@ -50,7 +54,7 @@ export default function AlertConfirmationScreen() {
           <TouchableOpacity
             style={styles.bypassButton}
             onPress={() => {
-              if (alertId) {
+              if (alertId && !isNaN(Number(alertId))) {
                 router.replace({
                   pathname: "/alert-tracking/[id]",
                   params: { id: alertId },

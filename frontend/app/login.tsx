@@ -73,17 +73,16 @@ export default function LoginScreen() {
             />
             <Text style={styles.title}>{t("login.title")}</Text>
             <Text style={styles.subtitle}>{t("login.subtitle")}</Text>
-
-            <TouchableOpacity
-              style={styles.sosBtn}
-              onPress={() => router.push("/guest-alert")}
-            >
-              <View style={styles.sosContent}>
-                <TabBarIcon name="bolt" size={18} color="white" />
-                <Text style={styles.sosText}>{t("guestAlert.title")}</Text>
-              </View>
-            </TouchableOpacity>
           </View>
+
+          {/* SOS Floating/Highlight Button - Redesigned to be less redundant but useful */}
+          <TouchableOpacity
+            style={styles.sosBtn}
+            onPress={() => router.push("/guest-alert")}
+          >
+            <TabBarIcon name="bolt" size={16} color="white" />
+            <Text style={styles.sosText}>BESOIN DE SANG EN URGENCE ?</Text>
+          </TouchableOpacity>
 
           {/* Form Section with Formik */}
           <Formik
@@ -166,92 +165,94 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingHorizontal: 16,
-    paddingTop: 40,
+    paddingHorizontal: 24,
+    paddingTop: 60,
     paddingBottom: 20,
   },
   headerSection: {
-    marginBottom: 24,
+    marginBottom: 20,
     alignItems: "center",
   },
   logo: {
-    width: 100,
-    height: 100,
+    width: 80,
+    height: 80,
     resizeMode: "contain",
-    marginBottom: 16,
+    marginBottom: 12,
   },
-
   title: {
     color: color.primary,
-    fontWeight: "800",
-    fontSize: 32,
-    letterSpacing: -0.8,
-    marginBottom: 8,
+    fontWeight: "900",
+    fontSize: 28,
+    letterSpacing: -1,
+    marginBottom: 4,
   },
   subtitle: {
     color: color.textSecondary,
-    fontSize: 14,
+    fontSize: 15,
+    textAlign: "center",
+    opacity: 0.8,
   },
   sosBtn: {
-    marginTop: 20,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
     backgroundColor: color.primary,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
     borderRadius: 12,
-    overflow: "hidden",
-    elevation: 4,
+    marginBottom: 30,
+    gap: 8,
     shadowColor: color.primary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
     shadowRadius: 8,
-  },
-  sosContent: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    paddingVertical: 12,
-    gap: 10,
+    elevation: 4,
   },
   sosText: {
     color: "white",
-    fontSize: 14,
-    fontWeight: "900",
-    letterSpacing: 0.5,
+    fontSize: 12,
+    fontWeight: "800",
+    letterSpacing: 1,
   },
   formContainer: {
     flex: 1,
-    justifyContent: "flex-start",
   },
   forgotBtn: {
     alignSelf: "flex-end",
-    marginTop: 12,
+    marginTop: 10,
+    padding: 5,
   },
   forgotText: {
     color: color.primary,
     fontWeight: "700",
-    fontSize: 12,
+    fontSize: 13,
   },
   errorText: {
     color: color.error,
     textAlign: "center",
     marginTop: 16,
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: "600",
+    backgroundColor: color.error + "10",
+    padding: 10,
+    borderRadius: 8,
   },
   footer: {
     flexDirection: "row",
     justifyContent: "center",
     alignItems: "center",
-    marginTop: "auto",
-    paddingTop: 30,
+    marginTop: 40,
     paddingBottom: 20,
   },
   footerText: {
     color: color.textSecondary,
     fontWeight: "500",
-    fontSize: 14,
+    fontSize: 15,
   },
   registerLink: {
     color: color.primary,
     fontWeight: "800",
-    fontSize: 13,
+    fontSize: 15,
+    marginLeft: 5,
   },
 });

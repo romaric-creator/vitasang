@@ -42,11 +42,12 @@ export default function RegisterScreen() {
 
     try {
       // Nettoyage du numéro de téléphone (espaces)
-      const cleanPhone = values.telephone.replace(/\s/g, '');
+      const cleanPhone = values.telephone.replace(/\s/g, "");
       // Gestion groupe sanguin null si vide ou "INCONNU"
-      const cleanBloodGroup = (values.groupe_sanguin === "" || values.groupe_sanguin === "INCONNU") 
-        ? null 
-        : values.groupe_sanguin;
+      const cleanBloodGroup =
+        values.groupe_sanguin === "" || values.groupe_sanguin === "INCONNU"
+          ? null
+          : values.groupe_sanguin;
 
       const data = await registerUser(
         values.nom,
@@ -61,7 +62,7 @@ export default function RegisterScreen() {
         ...data.user,
         id_utilisateur: data.user.id || data.user.id_utilisateur,
       };
-      
+
       // Stockage sécurisé
       await storeData("user", userToStore);
       await storeData("token", data.token);
@@ -72,34 +73,49 @@ export default function RegisterScreen() {
         if (pushToken && userToStore.id_utilisateur) {
           await updatePushToken(userToStore.id_utilisateur, pushToken);
         }
-      } catch (e) { /* Ignorer erreur push silencieuse */ }
+      } catch (e) {
+        /* Ignorer erreur push silencieuse */
+      }
 
-      // Gestion Alerte Guest (Workflow spécifique)
+      // Gestion Alerte en attente (Workflow spécifique)
       try {
         const pendingAlert = await getData("pending_alert");
         if (pendingAlert) {
-          const result = await sendAlert(pendingAlert);
-          if (result.alertId) {
-            await removeData("pending_alert");
-            router.replace({
-              pathname: "/alert-confirmation",
-              params: { alertId: result.alertId.toString() },
-            });
-            return;
+          try {
+            const result = await sendAlert(pendingAlert);
+            if (result.alertId && !isNaN(Number(result.alertId))) {
+              await removeData("pending_alert");
+              analyticsService.trackEvent("pending_alert_sent", {
+                alertId: result.alertId,
+              });
+              router.replace({
+                pathname: "/alert-confirmation",
+                params: { alertId: result.alertId.toString() },
+              });
+              return;
+            }
+          } catch (alertError) {
+            console.warn(
+              "Failed to send pending alert after registration",
+              alertError,
+            );
           }
         }
-      } catch (e) { /* Ignorer erreur guest alert */ }
+      } catch (e) {
+        console.warn("Error checking pending alert", e);
+      }
 
       analyticsService.trackEvent("register_success");
       router.replace("/(tabs)");
-
     } catch (err: any) {
       console.error("Registration error:", err.message);
       // Messages d'erreur conviviaux
       let userMsg = t("register.error");
-      if (err.message.includes("Validation error")) userMsg = "Ce numéro est déjà utilisé.";
-      if (err.message.includes("Network")) userMsg = "Problème de connexion. Vérifiez votre réseau.";
-      
+      if (err.message.includes("Validation error"))
+        userMsg = "Ce numéro est déjà utilisé.";
+      if (err.message.includes("Network"))
+        userMsg = "Problème de connexion. Vérifiez votre réseau.";
+
       setGeneralError(userMsg);
     } finally {
       setLoading(false);
@@ -118,7 +134,7 @@ export default function RegisterScreen() {
     validateForm(values).then((errors: any) => {
       const step1Errors = ["nom", "prenom", "telephone", "mot_de_passe"];
       const hasErrors = step1Errors.some((field) => errors[field]);
-      
+
       if (!hasErrors) {
         setStep(2);
       }
@@ -141,8 +157,8 @@ export default function RegisterScreen() {
               {step === 1 ? "Créer un compte" : "Dernière étape"}
             </Text>
             <Text style={styles.subtitle}>
-              {step === 1 
-                ? "Rejoignez la communauté des héros." 
+              {step === 1
+                ? "Rejoignez la communauté des héros."
                 : "Connaissez-vous votre groupe sanguin ?"}
             </Text>
           </View>
@@ -208,7 +224,7 @@ export default function RegisterScreen() {
                       error={errors.telephone}
                       touched={touched.telephone}
                     />
-                    
+
                     <FormField
                       label="Mot de passe"
                       value={values.mot_de_passe}
@@ -222,7 +238,9 @@ export default function RegisterScreen() {
 
                     <PrimaryButton
                       title="Suivant"
-                      onPress={() => handleNextStep(validateForm, values, setTouched)}
+                      onPress={() =>
+                        handleNextStep(validateForm, values, setTouched)
+                      }
                       style={{ marginTop: 24 }}
                     />
                   </>
@@ -230,26 +248,36 @@ export default function RegisterScreen() {
 
                 {step === 2 && (
                   <>
-                    <Text style={styles.label}>Votre groupe sanguin (Optionnel)</Text>
+                    <Text style={styles.label}>
+                      Votre groupe sanguin (Optionnel)
+                    </Text>
                     <BloodGroupSelector
                       value={values.groupe_sanguin}
-                      onSelect={(group) => handleChange("groupe_sanguin")(group)}
+                      onSelect={(group) =>
+                        handleChange("groupe_sanguin")(group)
+                      }
                       error={errors.groupe_sanguin}
                       touched={touched.groupe_sanguin}
                     />
-                    
+
                     {/* Option Explicite "Je ne sais pas" */}
-                    <TouchableOpacity 
+                    <TouchableOpacity
                       style={[
-                        styles.unknownButton, 
-                        (values.groupe_sanguin === "INCONNU" || values.groupe_sanguin === "") && styles.unknownButtonActive
+                        styles.unknownButton,
+                        (values.groupe_sanguin === "INCONNU" ||
+                          values.groupe_sanguin === "") &&
+                          styles.unknownButtonActive,
                       ]}
                       onPress={() => setFieldValue("groupe_sanguin", "INCONNU")}
                     >
-                      <Text style={[
-                        styles.unknownButtonText,
-                        (values.groupe_sanguin === "INCONNU" || values.groupe_sanguin === "") && styles.unknownButtonTextActive
-                      ]}>
+                      <Text
+                        style={[
+                          styles.unknownButtonText,
+                          (values.groupe_sanguin === "INCONNU" ||
+                            values.groupe_sanguin === "") &&
+                            styles.unknownButtonTextActive,
+                        ]}
+                      >
                         Je ne connais pas mon groupe sanguin
                       </Text>
                     </TouchableOpacity>
@@ -267,7 +295,7 @@ export default function RegisterScreen() {
                       >
                         <Text style={styles.backButtonText}>Retour</Text>
                       </TouchableOpacity>
-                      
+
                       <PrimaryButton
                         title={loading ? "Création..." : "Terminer"}
                         onPress={() => handleSubmit()}
@@ -278,12 +306,13 @@ export default function RegisterScreen() {
                   </>
                 )}
 
-                <TouchableOpacity 
+                <TouchableOpacity
                   onPress={() => router.replace("/login")}
                   style={{ marginTop: 24, padding: 10 }}
                 >
                   <Text style={styles.loginLinkText}>
-                    Déjà un compte ? <Text style={styles.loginLinkHighlight}>Se connecter</Text>
+                    Déjà un compte ?{" "}
+                    <Text style={styles.loginLinkHighlight}>Se connecter</Text>
                   </Text>
                 </TouchableOpacity>
               </View>
@@ -298,22 +327,27 @@ export default function RegisterScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingHorizontal: 20,
+    paddingHorizontal: 24,
     paddingTop: 60,
     paddingBottom: 40,
   },
   headerSection: {
-    marginBottom: 32,
+    marginBottom: 30,
+    alignItems: "center",
   },
   title: {
     color: color.primary,
-    fontWeight: "800",
+    fontWeight: "900",
     fontSize: 28,
-    marginBottom: 8,
+    letterSpacing: -1,
+    marginBottom: 6,
+    textAlign: "center",
   },
   subtitle: {
     color: color.textSecondary,
     fontSize: 16,
+    textAlign: "center",
+    opacity: 0.8,
   },
   formContainer: {
     flex: 1,
@@ -333,12 +367,12 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     borderWidth: 1,
     borderColor: color.border,
-    alignItems: 'center',
+    alignItems: "center",
     marginTop: 16,
     backgroundColor: color.background,
   },
   unknownButtonActive: {
-    backgroundColor: color.primary + '10', // 10% opacity
+    backgroundColor: color.primary + "10", // 10% opacity
     borderColor: color.primary,
   },
   unknownButtonText: {
@@ -358,13 +392,13 @@ const styles = StyleSheet.create({
     fontWeight: "700",
   },
   errorContainer: {
-    backgroundColor: '#FFE5E5',
+    backgroundColor: "#FFE5E5",
     padding: 12,
     borderRadius: 8,
     marginTop: 20,
   },
   errorText: {
-    color: '#D32F2F',
+    color: "#D32F2F",
     textAlign: "center",
     fontSize: 14,
     fontWeight: "500",

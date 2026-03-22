@@ -64,7 +64,7 @@
           "FIREBASE_STORAGE_BUCKET": "vitasang.firebasestorage.app",
           "FIREBASE_MESSAGING_SENDER_ID": "948719960671",
           "FIREBASE_APP_ID": "1:948719960671:android:830116b479356b90b6d1ea",
-          "EXPO_PUBLIC_API_BASE_URL": "https://vitasang-api.onrender.com/api"
+          "EXPO_PUBLIC_API_BASE_URL": "https://vitasang.onrender.com/api"
         }
       },
       "owner": "hidari_dev"

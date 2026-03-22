@@ -1,7 +1,11 @@
 const express = require("express");
 const router = express.Router();
 const alertsController = require("../controllers/alerts.controller");
-const { verifyToken, isAdmin, isAdminOrPersonnel } = require("../utils/auth.middleware");
+const {
+  verifyToken,
+  isAdmin,
+  isAdminOrPersonnel,
+} = require("../utils/auth.middleware");
 const { validateRequest } = require("../middleware/validation");
 const { cacheMiddleware } = require("../middleware/cache");
 const schemas = require("../validation/schemas");
@@ -20,6 +24,12 @@ router.post(
   validateRequest(schemas.createGuestAlert),
   alertsController.createGuestAlert,
 );
+
+/**
+ * PUBLIC ROUTE - Get a specific alert's status and details (for guest alerts & public live alerts)
+ * No authentication required - guests can track their alerts
+ */
+router.get("/:id/status", alertsController.getAlertStatus);
 
 // --- PROTECTED ROUTES (Requires Token) ---
 router.use(verifyToken);
@@ -114,21 +124,6 @@ router.get("/my-alerts", alertsController.getUserAlerts);
  *       200: { description: "List of accepted alerts" }
  */
 router.get("/accepted", alertsController.getAcceptedAlerts);
-
-/**
- * @swagger
- * /api/alerts/{id}/status:
- *   get:
- *     tags: [Alerts]
- *     summary: Get a specific alert's status and details
- *     security: [{"bearerAuth": []}]
- *     parameters:
- *       - { name: "id", in: "path", required: true, schema: { type: "integer" } }
- *     responses:
- *       200: { description: "Alert details" }
- *       404: { description: "Alert not found" }
- */
-router.get("/:id/status", alertsController.getAlertStatus);
 
 /**
  * @swagger

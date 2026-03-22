@@ -12,7 +12,7 @@ import {
   type ApiError,
 } from "@/services/errorService";
 
-const API_BASE_URL = (Constants.expoConfig?.extra?.env?.EXPO_PUBLIC_API_BASE_URL || "https://vitasang-api.onrender.com/api").replace(/\/$/, "") + "/";
+const API_BASE_URL = (Constants.expoConfig?.extra?.env?.EXPO_PUBLIC_API_BASE_URL || "https://vitasang.onrender.com/api").replace(/\/$/, "") + "/";
 const REQUEST_TIMEOUT = 60000; // 60s pour gérer les réseaux 2G/3G et cold starts Render
 const MAX_RETRIES = 2;
 

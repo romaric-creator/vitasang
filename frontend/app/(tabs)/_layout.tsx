@@ -44,7 +44,7 @@ export default function TabLayout() {
       const Notifications = require('expo-notifications');
       subscription = Notifications.addNotificationResponseReceivedListener((response: any) => {
         const data = response.notification.request.content.data;
-        if (data?.alertId) {
+        if (data?.alertId && !isNaN(Number(data.alertId))) {
           router.push(`/alert-response/${data.alertId}?distance=${data.distance || ''}`);
         }
       });
