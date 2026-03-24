@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: vitasang-api
+    name: vitasang
     runtime: docker
     dockerContext: backend
     dockerfilePath: Dockerfile
