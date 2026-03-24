@@ -8,6 +8,8 @@ import {
   KeyboardAvoidingView,
   Platform,
   Image,
+  Dimensions,
+  StatusBar
 } from "react-native";
 import { Formik } from "formik";
 import { router } from "expo-router";
@@ -15,11 +17,12 @@ import { color } from "@/constant/color";
 import { loginValidationSchema } from "@/validation/ValidationSchemas";
 import FormField from "@/components/FormField";
 import { PrimaryButton } from "@/components/PrimaryButton";
-import { formStyles } from "@/styles/formStyles";
 import { useAuth } from "@/context/AuthContext";
 import { TabBarIcon } from "@/components/TabBarIcon";
-
+import { ErrorAlert } from "@/components/ErrorAlert";
 import { useTranslation } from "react-i18next";
+
+const { height } = Dimensions.get("window");
 
 export default function LoginScreen() {
   const { t } = useTranslation();
@@ -35,20 +38,16 @@ export default function LoginScreen() {
     setLoading(true);
 
     try {
-      // signIn gère tout : appel API, stockage token/user, et mise à jour de isAuth
       await signIn(values.telephone, values.mot_de_passe);
     } catch (err: any) {
       console.error("Login error:", err);
-      // Messages d'erreur améliorés pour le contexte local
       const msg = err.message || "";
       if (msg.includes("Network") || msg.includes("connexion")) {
-        setGeneralError("Problème de connexion internet.");
-      } else if (msg.includes("timeout") || msg.includes("délai")) {
-        setGeneralError("Le serveur est lent. Réessayez.");
+        setGeneralError("Vérifiez votre connexion internet.");
       } else if (msg.includes("401") || msg.includes("identifiants")) {
         setGeneralError("Numéro ou mot de passe incorrect.");
       } else {
-        setGeneralError(t("login.error") || "Erreur inconnue.");
+        setGeneralError(t("login.error") || "Erreur de connexion.");
       }
     } finally {
       setLoading(false);
@@ -56,203 +55,224 @@ export default function LoginScreen() {
   };
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-      style={{ flex: 1 }}
-    >
-      <ScrollView
-        contentContainerStyle={{ flexGrow: 1 }}
-        style={{ backgroundColor: color.surface }}
+    <ThemedView style={{ flex: 1 }}>
+      <StatusBar barStyle="dark-content" />
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        style={{ flex: 1 }}
       >
-        <View style={styles.container}>
-          {/* Header Section */}
-          <View style={styles.headerSection}>
-            <Image
-              source={require("@/assets/images/logo.png")}
-              style={styles.logo}
-            />
-            <Text style={styles.title}>{t("login.title")}</Text>
-            <Text style={styles.subtitle}>{t("login.subtitle")}</Text>
-          </View>
-
-          {/* SOS Floating/Highlight Button - Redesigned to be less redundant but useful */}
-          <TouchableOpacity
-            style={styles.sosBtn}
-            onPress={() => router.push("/guest-alert")}
-          >
-            <TabBarIcon name="bolt" size={16} color="white" />
-            <Text style={styles.sosText}>BESOIN DE SANG EN URGENCE ?</Text>
-          </TouchableOpacity>
-
-          {/* Form Section with Formik */}
-          <Formik
-            initialValues={{
-              telephone: "",
-              mot_de_passe: "",
-            }}
-            validationSchema={loginValidationSchema}
-            onSubmit={handleLogin}
-          >
-            {({
-              values,
-              errors,
-              touched,
-              handleChange,
-              handleBlur,
-              handleSubmit,
-            }) => (
-              <View style={styles.formContainer}>
-                <FormField
-                  label={t("login.fields.phone")}
-                  value={values.telephone}
-                  onChangeText={handleChange("telephone")}
-                  onBlur={handleBlur("telephone")}
-                  placeholder={t("login.placeholders.phone")}
-                  error={errors.telephone}
-                  touched={touched.telephone}
-                  keyboardType="phone-pad"
-                  required
-                />
-
-                <FormField
-                  label={t("login.fields.password")}
-                  value={values.mot_de_passe}
-                  onChangeText={handleChange("mot_de_passe")}
-                  onBlur={handleBlur("mot_de_passe")}
-                  placeholder={t("login.placeholders.password")}
-                  error={errors.mot_de_passe}
-                  touched={touched.mot_de_passe}
-                  secureTextEntry
-                  required
-                />
-
-                {/* Display general error message */}
-                {generalError ? (
-                  <Text style={styles.errorText}>{generalError}</Text>
-                ) : null}
-
-                {/* Forgot Password Link */}
-                <TouchableOpacity style={styles.forgotBtn} onPress={() => router.push("/aide-et-conseil")}>
-                  <Text style={styles.forgotText}>
-                    {t("login.forgotPassword")}
-                  </Text>
-                </TouchableOpacity>
-
-                {/* Login Button */}
-                <PrimaryButton
-                  title={t("login.submit")}
-                  onPress={() => handleSubmit()}
-                  loading={loading}
-                  style={{ marginTop: 24 }}
+        <ScrollView
+          contentContainerStyle={{ flexGrow: 1 }}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
+          <View style={styles.container}>
+            {/* Header / Brand */}
+            <View style={styles.header}>
+              <View style={styles.logoBox}>
+                <Image
+                  source={require("@/assets/images/logo.png")}
+                  style={styles.logo}
                 />
               </View>
-            )}
-          </Formik>
+              <Text style={styles.brandName}>VitaSang</Text>
+              <Text style={styles.tagline}>Le don de sang qui sauve des vies.</Text>
+            </View>
 
-          {/* Footer - Switch to Register */}
-          <View style={styles.footer}>
-            <Text style={styles.footerText}>{t("login.noAccount")} </Text>
-            <TouchableOpacity onPress={() => router.replace("/register")}>
-              <Text style={styles.registerLink}>{t("login.registerLink")}</Text>
+            {/* Login Card */}
+            <View style={styles.card}>
+              <Text style={styles.cardTitle}>{t("login.title", "Connexion")}</Text>
+              
+              <Formik
+                initialValues={{ telephone: "", mot_de_passe: "" }}
+                validationSchema={loginValidationSchema}
+                onSubmit={handleLogin}
+              >
+                {({ values, errors, touched, handleChange, handleBlur, handleSubmit }) => (
+                  <View style={styles.form}>
+                    <FormField
+                      label="Numéro de téléphone"
+                      value={values.telephone}
+                      onChangeText={handleChange("telephone")}
+                      onBlur={handleBlur("telephone")}
+                      placeholder="6XXXXXXXX"
+                      error={errors.telephone}
+                      touched={touched.telephone}
+                      keyboardType="phone-pad"
+                      required
+                      inputStyle={styles.inputPremium}
+                      icon="phone"
+                    />
+
+                    <View style={{ marginTop: 10 }}>
+                      <FormField
+                        label="Mot de passe"
+                        value={values.mot_de_passe}
+                        onChangeText={handleChange("mot_de_passe")}
+                        onBlur={handleBlur("mot_de_passe")}
+                        placeholder="••••••"
+                        error={errors.mot_de_passe}
+                        touched={touched.mot_de_passe}
+                        secureTextEntry
+                        required
+                        inputStyle={styles.inputPremium}
+                        icon="lock"
+                      />
+                      <TouchableOpacity style={styles.forgotBtn} onPress={() => router.push("/aide-et-conseil")}>
+                        <Text style={styles.forgotText}>Oublié ?</Text>
+                      </TouchableOpacity>
+                    </View>
+
+                    {generalError ? (
+                      <View style={styles.errorBox}>
+                        <TabBarIcon name="exclamation-triangle" size={14} color="#DC2626" />
+                        <Text style={styles.errorText}>{generalError}</Text>
+                      </View>
+                    ) : null}
+
+                    <PrimaryButton
+                      title="SE CONNECTER"
+                      onPress={() => handleSubmit()}
+                      loading={loading}
+                      style={styles.loginBtn}
+                    />
+                  </View>
+                )}
+              </Formik>
+            </View>
+
+            {/* Emergency / SOS */}
+            <TouchableOpacity style={styles.sosAction} onPress={() => router.push("/guest-alert")}>
+              <View style={styles.sosIconCircle}>
+                <TabBarIcon name="bolt" size={20} color="white" />
+              </View>
+              <View>
+                <Text style={styles.sosTitle}>URGENCE SOS</Text>
+                <Text style={styles.sosSub}>Lancer une alerte sans compte</Text>
+              </View>
+              <TabBarIcon name="chevron-right" size={16} color="rgba(225, 29, 72, 0.5)" />
             </TouchableOpacity>
+
+            {/* Footer */}
+            <View style={styles.footer}>
+              <Text style={styles.noAccountText}>Pas encore de compte ?</Text>
+              <TouchableOpacity onPress={() => router.replace("/register")}>
+                <Text style={styles.registerLink}>Créer un compte</Text>
+              </TouchableOpacity>
+            </View>
           </View>
-        </View>
-      </ScrollView>
-    </KeyboardAvoidingView>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </ThemedView>
   );
 }
+
+import ThemedView from "@/components/ThemedView";
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     paddingHorizontal: 24,
     paddingTop: 60,
-    paddingBottom: 20,
+    paddingBottom: 40,
+    backgroundColor: "#F8FAFC",
   },
-  headerSection: {
-    marginBottom: 20,
+  header: {
     alignItems: "center",
+    marginBottom: 40,
   },
-  logo: {
+  logoBox: {
     width: 80,
     height: 80,
-    resizeMode: "contain",
-    marginBottom: 12,
+    borderRadius: 24,
+    backgroundColor: "white",
+    justifyContent: "center",
+    alignItems: "center",
+    elevation: 4,
+    shadowColor: "#000",
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    marginBottom: 16,
   },
-  title: {
-    color: color.primary,
-    fontWeight: "900",
-    fontSize: 28,
-    letterSpacing: -1,
-    marginBottom: 4,
+  logo: { width: 50, height: 50, resizeMode: "contain" },
+  brandName: { fontSize: 28, fontWeight: "900", color: "#1E293B", letterSpacing: -1 },
+  tagline: { fontSize: 14, color: "#64748B", marginTop: 4, fontWeight: "500" },
+
+  card: {
+    backgroundColor: "white",
+    borderRadius: 32,
+    padding: 24,
+    shadowColor: "#000",
+    shadowOpacity: 0.05,
+    shadowRadius: 20,
+    elevation: 2,
+    marginBottom: 24,
+    borderWidth: 1,
+    borderColor: "#F1F5F9",
   },
-  subtitle: {
-    color: color.textSecondary,
-    fontSize: 15,
-    textAlign: "center",
-    opacity: 0.8,
+  cardTitle: { fontSize: 20, fontWeight: "800", color: "#1E293B", marginBottom: 24 },
+  form: { gap: 16 },
+  inputPremium: {
+    height: 56,
+    borderRadius: 16,
+    backgroundColor: "#F8FAFC",
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
   },
-  sosBtn: {
+  forgotBtn: { alignSelf: "flex-end", paddingVertical: 8 },
+  forgotText: { color: color.primary, fontWeight: "700", fontSize: 13 },
+
+  errorBox: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: color.primary,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 12,
-    marginBottom: 30,
     gap: 8,
-    shadowColor: color.primary,
-    shadowOffset: { width: 0, height: 4 },
+    backgroundColor: "#FEF2F2",
+    padding: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#FECACA",
+  },
+  errorText: { color: "#991B1B", fontSize: 13, fontWeight: "600" },
+
+  loginBtn: {
+    height: 60,
+    borderRadius: 18,
+    backgroundColor: "#0F172A",
+    marginTop: 10,
+    shadowColor: "#000",
     shadowOpacity: 0.2,
-    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 4 },
     elevation: 4,
   },
-  sosText: {
-    color: "white",
-    fontSize: 12,
-    fontWeight: "800",
-    letterSpacing: 1,
+
+  sosAction: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#FFF1F2",
+    padding: 16,
+    borderRadius: 24,
+    gap: 16,
+    borderWidth: 1,
+    borderColor: "#FFE4E6",
+    marginBottom: 32,
   },
-  formContainer: {
-    flex: 1,
+  sosIconCircle: {
+    width: 44,
+    height: 44,
+    borderRadius: 14,
+    backgroundColor: "#E11D48",
+    justifyContent: "center",
+    alignItems: "center",
   },
-  forgotBtn: {
-    alignSelf: "flex-end",
-    marginTop: 10,
-    padding: 5,
-  },
-  forgotText: {
-    color: color.primary,
-    fontWeight: "700",
-    fontSize: 13,
-  },
-  errorText: {
-    color: color.error,
-    textAlign: "center",
-    marginTop: 16,
-    fontSize: 14,
-    fontWeight: "600",
-    backgroundColor: color.error + "10",
-    padding: 10,
-    borderRadius: 8,
-  },
+  sosTitle: { fontSize: 14, fontWeight: "900", color: "#E11D48", letterSpacing: 1 },
+  sosSub: { fontSize: 12, color: "#9F1239", fontWeight: "500" },
+
   footer: {
     flexDirection: "row",
     justifyContent: "center",
     alignItems: "center",
-    marginTop: 40,
-    paddingBottom: 20,
+    gap: 8,
   },
-  footerText: {
-    color: color.textSecondary,
-    fontWeight: "500",
-    fontSize: 15,
-  },
-  registerLink: {
-    color: color.primary,
-    fontWeight: "800",
-    fontSize: 15,
-    marginLeft: 5,
-  },
+  noAccountText: { fontSize: 15, color: "#64748B", fontWeight: "500" },
+  registerLink: { fontSize: 15, color: color.primary, fontWeight: "800", textDecorationLine: "underline" },
 });

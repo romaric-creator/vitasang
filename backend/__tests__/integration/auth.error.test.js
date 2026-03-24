@@ -2,8 +2,13 @@
 
 const request = require("supertest");
 const app = require("../../index");
+const db = require("../../models");
 
 describe("Authentication Error Cases", () => {
+  beforeAll(async () => {
+    await db.sequelize.sync({ force: true });
+  });
+  
   describe("POST /api/users/register - Error Handling", () => {
     it("should return 400 for missing required fields", async () => {
       const res = await request(app).post("/api/users/register").send({
@@ -22,7 +27,7 @@ describe("Authentication Error Cases", () => {
         nom: "Test",
         prenom: "User",
         telephone: "123456", // Invalid format
-        mot_de_passe: "Pass123",
+        mot_de_passe: "Pass1234",
         groupe_sanguin: "O+",
       });
 
@@ -34,7 +39,7 @@ describe("Authentication Error Cases", () => {
       const res = await request(app).post("/api/users/register").send({
         nom: "Test",
         prenom: "User",
-        telephone: "6512345678",
+        telephone: "651234567",
         mot_de_passe: "123", // Too short
         groupe_sanguin: "O+",
       });
@@ -47,8 +52,8 @@ describe("Authentication Error Cases", () => {
       const res = await request(app).post("/api/users/register").send({
         nom: "Test",
         prenom: "User",
-        telephone: "6512345678",
-        mot_de_passe: "Pass123",
+        telephone: "651234567",
+        mot_de_passe: "Pass1234",
         groupe_sanguin: "XYZ", // Invalid
       });
 
@@ -61,8 +66,8 @@ describe("Authentication Error Cases", () => {
       await request(app).post("/api/users/register").send({
         nom: "Test",
         prenom: "User",
-        telephone: "6599999999",
-        mot_de_passe: "Pass123",
+        telephone: "659999999",
+        mot_de_passe: "Pass1234",
         groupe_sanguin: "O+",
       });
 
@@ -70,8 +75,8 @@ describe("Authentication Error Cases", () => {
       const res = await request(app).post("/api/users/register").send({
         nom: "Test2",
         prenom: "User2",
-        telephone: "6599999999", // Same phone
-        mot_de_passe: "Pass456",
+        telephone: "659999999", // Same phone
+        mot_de_passe: "Pass45678", // 8+ chars
         groupe_sanguin: "B+",
       });
 
@@ -86,7 +91,7 @@ describe("Authentication Error Cases", () => {
       await request(app).post("/api/users/register").send({
         nom: "Test",
         prenom: "User",
-        telephone: "6588888888",
+        telephone: "658888888",
         mot_de_passe: "TestPass123",
         groupe_sanguin: "O+",
       });
@@ -94,7 +99,7 @@ describe("Authentication Error Cases", () => {
 
     it("should return 400 for missing credentials", async () => {
       const res = await request(app).post("/api/users/login").send({
-        telephone: "6588888888",
+        telephone: "658888888",
         // Missing password
       });
 
@@ -104,27 +109,27 @@ describe("Authentication Error Cases", () => {
 
     it("should return 404 for non-existent user", async () => {
       const res = await request(app).post("/api/users/login").send({
-        telephone: "6511111111",
+        telephone: "651111111",
         mot_de_passe: "TestPass123",
       });
 
       expect(res.status).toBe(404);
-      expect(res.body.message).toContain("trouvé");
+      expect(res.body.message).toContain("incorrects");
     });
 
     it("should return 401 for wrong password", async () => {
       const res = await request(app).post("/api/users/login").send({
-        telephone: "6588888888",
+        telephone: "658888888",
         mot_de_passe: "WrongPass123",
       });
 
       expect(res.status).toBe(401);
-      expect(res.body.message).toContain("non autorisé");
+      expect(res.body.message).toContain("incorrects");
     });
 
     it("should return 200 and token for valid credentials", async () => {
       const res = await request(app).post("/api/users/login").send({
-        telephone: "6588888888",
+        telephone: "658888888",
         mot_de_passe: "TestPass123",
       });
 
@@ -142,7 +147,7 @@ describe("Authentication Error Cases", () => {
       const registerRes = await request(app).post("/api/users/register").send({
         nom: "Test",
         prenom: "User",
-        telephone: "6577777777",
+        telephone: "657777777",
         mot_de_passe: "TestPass123",
         groupe_sanguin: "O+",
       });
@@ -208,8 +213,8 @@ describe("Authentication Error Cases", () => {
       // Make requests until rate limit is hit
       for (let i = 0; i < 101; i++) {
         res = await request(app).post("/api/users/login").send({
-          telephone: "6500000000",
-          mot_de_passe: "Pass123",
+          telephone: "650000000",
+          mot_de_passe: "Pass1234",
         });
 
         if (res.status === 429) {

@@ -16,14 +16,8 @@ import { queryClient } from "@/config/queryClient";
 import { getUserIdFromStorage } from "@/utils/storage";
 
 
-// Imports différés pour accélérer le démarrage (Cold Start)
-// Les bibliothèques lourdes sont chargées uniquement au besoin via require()
-
-
-// Initialisation i18n
 import "../i18n";
 
-// Ce composant gère la logique de navigation basée sur l'authentification
 function RootLayoutNav() {
   const { isAuth, isLoading } = useAuth();
   const segments = useSegments();
@@ -33,7 +27,6 @@ function RootLayoutNav() {
 
   const { show: showAlert } = require("@/context/NotificationContext").useNotification();
 
-  // Tâches de fond non-bloquantes lancées une seule fois
   useEffect(() => {
     if (isLoading) return;
 
@@ -102,7 +95,6 @@ function RootLayoutNav() {
   useEffect(() => {
     if (segments && segments.length > 0) {
       const screenName = segments.join("/");
-      // @ts-ignore - On ignore car PostHog est chargé dynamiquement ailleurs
       posthog?.screen(screenName);
     }
   }, [segments, posthog]);
@@ -181,6 +173,7 @@ export default function RootLayout() {
         options={{
           host: "https://us.i.posthog.com",
           enableSessionReplay: true,
+          persistence: "memory", // Use memory persistence to avoid FileSystemDirectory issues on Android
         }}
       >
         <AuthProvider>

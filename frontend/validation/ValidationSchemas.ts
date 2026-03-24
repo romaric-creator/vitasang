@@ -7,8 +7,8 @@ export const loginValidationSchema = yup.object().shape({
     .string()
     .required('Le numéro est requis')
     .matches(
-      /^(\+237[26]\d{8}|[26]\d{8})$/,
-      'Format: +237 6XXXXXXXX ou 2XXXXXXXX (9 chiffres)'
+      /^(\+2376\d{8}|6\d{8})$/,
+      'Format: +237 6XXXXXXXX ou 6XXXXXXXX (Mobile uniquement)'
     ),
   mot_de_passe: yup
     .string()
@@ -36,8 +36,8 @@ export const registerValidationSchema = yup.object().shape({
     })
     .required('Le numéro est requis')
     .matches(
-      /^(\+237[26]\d{8}|[26]\d{8})$/,
-      'Format: +237 6XXXXXXXX ou 2XXXXXXXX (9 chiffres)'
+      /^(\+2376\d{8}|6\d{8})$/,
+      'Format: +237 6XXXXXXXX ou 6XXXXXXXX (Mobile uniquement)'
     ),
   mot_de_passe: yup
     .string()
@@ -87,8 +87,8 @@ export const createAlertValidationSchema = yup.object().shape({
     .string()
     .required('Le numéro de contact est requis')
     .matches(
-      /^(\+237[26]\d{8}|[26]\d{8})$/,
-      'Format: +237 6XXXXXXXX ou 2XXXXXXXX (9 chiffres)'
+      /^(\+2376\d{8}|6\d{8})$/,
+      'Format: +237 6XXXXXXXX ou 6XXXXXXXX (Mobile uniquement)'
     ),
 });
 
@@ -141,8 +141,8 @@ export const editProfileValidationSchema = yup.object().shape({
     .string()
     .required('Le numéro est requis')
     .matches(
-      /^(\+237[26]\d{8}|[26]\d{8})$/,
-      'Format: +237 6XXXXXXXX ou 2XXXXXXXX (9 chiffres)'
+      /^(\+2376\d{8}|6\d{8})$/,
+      'Format: +237 6XXXXXXXX ou 6XXXXXXXX (Mobile uniquement)'
     ),
   groupe_sanguin: yup
     .string()

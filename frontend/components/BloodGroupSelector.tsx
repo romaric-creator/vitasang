@@ -64,7 +64,7 @@ export const BloodGroupSelector: React.FC<BloodGroupSelectorProps> = ({
             ]}
           >
             {isAlert
-              ? "🆘 Je ne connais pas mon groupe"
+              ? "Je ne connais pas mon groupe"
               : t("register.bloodGroupUnknown") ||
                 "Je ne connais pas mon groupe"}
           </Text>

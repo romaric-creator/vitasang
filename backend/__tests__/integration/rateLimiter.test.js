@@ -17,11 +17,11 @@ describe('Rate Limiting Tests', () => {
 
       for (let i = 0; i < 3; i++) {
         const response = await request(app)
-          .post('/api/auth/register')
+          .post('/api/users/register')
           .send({
             nom: `Donor${i}`,
             prenom: `Test`,
-            telephone: `+21269000${String(i).padStart(4, '0')}`,
+            telephone: `69000${String(i).padStart(4, '0')}`,
             mot_de_passe: 'TestPass123',
             groupe_sanguin: 'O+',
             ville: 'Test City'
@@ -47,9 +47,9 @@ describe('Rate Limiting Tests', () => {
       // Try 6 login attempts with wrong password
       for (let i = 0; i < 6; i++) {
         const response = await request(app)
-          .post('/api/auth/login')
+          .post('/api/users/login')
           .send({
-            telephone: '+212666666666',
+            telephone: '666666666',
             mot_de_passe: 'WrongPassword'
           });
 
@@ -66,9 +66,9 @@ describe('Rate Limiting Tests', () => {
 
     it('should have rate limiter headers', async () => {
       const response = await request(app)
-        .post('/api/auth/login')
+        .post('/api/users/login')
         .send({
-          telephone: '+212666666666',
+          telephone: '666666666',
           mot_de_passe: 'TestPass'
         });
 
@@ -85,9 +85,9 @@ describe('Rate Limiting Tests', () => {
       for (let i = 0; i < 7; i++) {
         requests.push(
           request(app)
-            .post('/api/auth/login')
+            .post('/api/users/login')
             .send({
-              telephone: '+212777777777',
+              telephone: '677777777',
               mot_de_passe: 'Test'
             })
         );
@@ -106,9 +106,9 @@ describe('Rate Limiting Tests', () => {
 
       for (let i = 0; i < 8; i++) {
         const response = await request(app)
-          .post('/api/auth/login')
+          .post('/api/users/login')
           .send({
-            telephone: '+212888888888',
+            telephone: '688888888',
             mot_de_passe: 'Test'
           });
 

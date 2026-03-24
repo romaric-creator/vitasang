@@ -4,10 +4,18 @@ const StockSang = db.StockSang;
 const RendezVous = db.RendezVous;
 const logger = require("../config/logger");
 const { haversineSQL } = require("../utils/geoHelpers");
+const cacheService = require("../services/cache.service");
 
 // Récupérer tous les centres
 exports.getAllCentres = async (req, res, next) => {
   try {
+    const cacheKey = "centres:all";
+    const cachedData = await cacheService.get(cacheKey);
+
+    if (cachedData) {
+      return res.status(200).json(cachedData);
+    }
+
     const centres = await Centre.findAll({
       attributes: [
         ['id_centre', 'id'],
@@ -21,13 +29,17 @@ exports.getAllCentres = async (req, res, next) => {
       ]
     });
 
-    logger.info('Fetched all centres', { count: centres.length });
-
-    res.status(200).json({
+    const response = {
       success: true,
       centres,
       total: centres.length
-    });
+    };
+
+    // Cache pour 1 heure car la liste des centres change rarement
+    await cacheService.set(cacheKey, response, 3600);
+
+    logger.info('Fetched all centres', { count: centres.length });
+    res.status(200).json(response);
   } catch (error) {
     logger.error('Error fetching centres', { error: error.message });
     next(error);
@@ -177,6 +189,13 @@ exports.getCentreStats = async (req, res, next) => {
   try {
     const { id } = req.params;
     const centerId = parseInt(id);
+    const cacheKey = `centre:${centerId}:stats`;
+    
+    // Tentative de lecture du cache
+    const cachedStats = await cacheService.get(cacheKey);
+    if (cachedStats) {
+      return res.status(200).json(cachedStats);
+    }
 
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -206,10 +225,15 @@ exports.getCentreStats = async (req, res, next) => {
 
     const totalStock = stockStats.reduce((sum, item) => sum + item.quantite_poches, 0);
 
-    res.status(200).json({
+    const response = {
       success: true,
       stats: { totalStock, appointmentsToday, activeAlerts, donationsThisMonth, bloodDetail: stockStats }
-    });
+    };
+
+    // Cache pour 5 minutes (300s) pour éviter de recalculer à chaque refresh du Dashboard
+    await cacheService.set(cacheKey, response, 300);
+
+    res.status(200).json(response);
   } catch (error) {
     logger.error('Error fetching centre stats', { error: error.message, centreId: req.params.id });
     next(error);

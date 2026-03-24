@@ -1,62 +1,82 @@
+const request = require("supertest");
+const express = require("express");
+const jwt = require("jsonwebtoken");
+const bcrypt = require("bcryptjs");
+
+// Mock dependencies
 jest.mock("../../models", () => ({
   Utilisateur: {
-    create: jest.fn().mockResolvedValue({
-      id_utilisateur: 1,
-      nom: "Dupont",
-      prenom: "Jean",
-      telephone: "6512345678",
-      mot_de_passe: "$2a$10$hashedpassword",
-      groupe_sanguin: "O+",
-      role: "donneur",
-    }),
-    findOne: jest.fn().mockResolvedValue({
-      id_utilisateur: 1,
-      nom: "Dupont",
-      prenom: "Jean",
-      telephone: "6512345678",
-      mot_de_passe: "$2a$10$hashedpassword",
-      groupe_sanguin: "O+",
-      role: "donneur",
-    }),
+    create: jest.fn(),
+    findOne: jest.fn(),
   },
   ProfilDonneur: {
-    create: jest.fn().mockResolvedValue({ id_profil: 1, groupe_sanguin: "O+" }),
+    create: jest.fn(),
+  },
+  Centre: {
+    findByPk: jest.fn(),
+    create: jest.fn(),
+  },
+  sequelize: {
+    transaction: jest.fn((callback) => callback()),
+  },
+  Sequelize: {
+    Op: { and: Symbol("and") },
   },
 }));
 
 jest.mock("bcryptjs", () => ({
-  hash: jest.fn().mockResolvedValue("$2a$10$hashedpassword"),
-  compare: jest.fn().mockResolvedValue(true),
+  hash: jest.fn(),
+  compare: jest.fn(),
 }));
 
 jest.mock("jsonwebtoken", () => ({
-  sign: jest.fn().mockReturnValue("mock-jwt-token"),
+  sign: jest.fn(),
 }));
 
-const request = require("supertest");
-const express = require("express");
+jest.mock("../../config/logger", () => ({
+  error: jest.fn(),
+  info: jest.fn(),
+  warn: jest.fn(),
+}));
+
+const db = require("../../models");
 const controller = require("../../controllers/users.controller");
-const { loginUser, registerUser } = {
-  loginUser: controller.login,
-  registerUser: controller.addUser,
-};
 
 describe("Users Controller - Integration Tests", () => {
   let app;
 
   beforeEach(() => {
+    jest.clearAllMocks();
     app = express();
     app.use(express.json());
-    app.post("/api/users/register", registerUser);
-    app.post("/api/users/login", loginUser);
+    // Attach controller methods to routes
+    app.post("/api/users/register", controller.addUser);
+    app.post("/api/users/login", controller.login);
+
+    // Basic error handler
+    app.use((err, req, res, next) => {
+      console.error("Test Error Handler:", err);
+      res.status(500).json({ message: err.message });
+    });
   });
 
   describe("POST /api/users/register", () => {
-    it("should register a new donor user", async () => {
+    it("should register a new donor user successfully", async () => {
+      // Mock successful creation
+      db.Utilisateur.create.mockResolvedValue({
+        id_utilisateur: 1,
+        nom: "Dupont",
+        prenom: "Jean",
+        telephone: "651234567",
+        role: "donneur",
+      });
+      bcrypt.hash.mockResolvedValue("hashed_password");
+      jwt.sign.mockReturnValue("mock_token");
+
       const userData = {
         nom: "Dupont",
         prenom: "Jean",
-        telephone: "6512345678",
+        telephone: "651234567",
         mot_de_passe: "Password123",
         groupe_sanguin: "O+",
         role: "donneur",
@@ -67,17 +87,16 @@ describe("Users Controller - Integration Tests", () => {
         .send(userData);
 
       expect(response.status).toBe(201);
-      expect(response.body).toHaveProperty("token");
-      expect(response.body).toHaveProperty("user");
+      expect(response.body).toHaveProperty("token", "mock_token");
+      expect(response.body.user).toHaveProperty("id_utilisateur", 1);
     });
 
-    it("should return 400 if missing required fields", async () => {
+    it("should return 400 if manual validation fails (missing nom)", async () => {
       const userData = {
-        nom: "Dupont",
-        // prenom missing
-        telephone: "6512345678",
+        // nom missing
+        prenom: "Jean",
+        telephone: "651234567",
         mot_de_passe: "Password123",
-        groupe_sanguin: "O+",
         role: "donneur",
       };
 
@@ -85,15 +104,72 @@ describe("Users Controller - Integration Tests", () => {
         .post("/api/users/register")
         .send(userData);
 
-      // Peut retourner 400 ou 500 selon la validation
-      expect([400, 500]).toContain(response.status);
+      expect(response.status).toBe(400);
+      expect(response.body.message).toContain("nom");
+    });
+
+    it("should return 409 if user already exists (SequelizeUniqueConstraintError)", async () => {
+      // Mock SequelizeUniqueConstraintError
+      const uniqueError = new Error("Validation error");
+      uniqueError.name = "SequelizeUniqueConstraintError";
+      db.Utilisateur.create.mockRejectedValue(uniqueError);
+
+      bcrypt.hash.mockResolvedValue("hashed_password");
+
+      const userData = {
+        nom: "Dupont",
+        prenom: "Jean",
+        telephone: "651234567",
+        mot_de_passe: "Password123",
+        role: "donneur",
+      };
+
+      const response = await request(app)
+        .post("/api/users/register")
+        .send(userData);
+
+      expect(response.status).toBe(409);
+      expect(response.body.message).toContain("existe déjà");
+    });
+
+    it("should return 500 for other database errors", async () => {
+      // Mock generic database error
+      db.Utilisateur.create.mockRejectedValue(new Error("DB Connection Failed"));
+      bcrypt.hash.mockResolvedValue("hashed_password");
+
+      const userData = {
+        nom: "Dupont",
+        prenom: "Jean",
+        telephone: "651234567",
+        mot_de_passe: "Password123",
+        role: "donneur",
+      };
+
+      const response = await request(app)
+        .post("/api/users/register")
+        .send(userData);
+
+      expect(response.status).toBe(500);
     });
   });
 
   describe("POST /api/users/login", () => {
     it("should login with valid credentials", async () => {
+      const mockUser = {
+        id_utilisateur: 1,
+        nom: "Dupont",
+        telephone: "651234567",
+        mot_de_passe: "hashed_password",
+        role: "donneur",
+        profilDonneur: { groupe_sanguin: "O+" },
+      };
+
+      db.Utilisateur.findOne.mockResolvedValue(mockUser);
+      bcrypt.compare.mockResolvedValue(true);
+      jwt.sign.mockReturnValue("mock_token");
+
       const credentials = {
-        telephone: "6512345678",
+        telephone: "651234567",
         mot_de_passe: "Password123",
       };
 
@@ -101,13 +177,22 @@ describe("Users Controller - Integration Tests", () => {
         .post("/api/users/login")
         .send(credentials);
 
-      // Peut retourner 200 ou 401 selon le mock
-      expect([200, 401]).toContain(response.status);
+      expect(response.status).toBe(200);
+      expect(response.body.token).toBe("mock_token");
     });
 
     it("should return 401 with invalid password", async () => {
+      const mockUser = {
+        id_utilisateur: 1,
+        telephone: "651234567",
+        mot_de_passe: "hashed_password",
+      };
+
+      db.Utilisateur.findOne.mockResolvedValue(mockUser);
+      bcrypt.compare.mockResolvedValue(false);
+
       const credentials = {
-        telephone: "6512345678",
+        telephone: "651234567",
         mot_de_passe: "WrongPassword",
       };
 
@@ -116,6 +201,21 @@ describe("Users Controller - Integration Tests", () => {
         .send(credentials);
 
       expect(response.status).toBe(401);
+    });
+
+    it("should return 404 if user not found", async () => {
+      db.Utilisateur.findOne.mockResolvedValue(null);
+
+      const credentials = {
+        telephone: "699999999",
+        mot_de_passe: "Password123",
+      };
+
+      const response = await request(app)
+        .post("/api/users/login")
+        .send(credentials);
+
+      expect(response.status).toBe(404);
     });
   });
 });

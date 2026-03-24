@@ -34,12 +34,11 @@ module.exports = (sequelize, DataTypes) => {
       quantite_requise: { type: DataTypes.INTEGER, defaultValue: 1 },
       statut: {
         type: DataTypes.ENUM(
-          "en_attente_validation",
           "en_cours",
           "resolu",
           "annule",
         ),
-        defaultValue: "en_attente_validation",
+        defaultValue: "en_cours",
       },
     },
     {

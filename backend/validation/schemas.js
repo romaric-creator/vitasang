@@ -19,10 +19,16 @@ const schemas = {
         "string.pattern.base":
           "Format valide: 6XXXXXXXX (9 chiffres commençant par 6)",
       }),
-    mot_de_passe: Joi.string().required().min(6).max(255).messages({
-      "string.empty": "Le mot de passe est requis",
-      "string.min": "Le mot de passe doit avoir au moins 6 caractères",
-    }),
+    mot_de_passe: Joi.string()
+      .required()
+      .min(8)
+      .max(255)
+      .pattern(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/)
+      .messages({
+        "string.empty": "Le mot de passe est requis",
+        "string.min": "Le mot de passe doit avoir au moins 8 caractères",
+        "string.pattern.base": "Le mot de passe doit contenir au moins une majuscule et un chiffre",
+      }),
     groupe_sanguin: Joi.string()
       .valid("A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-")
       .allow(null, "")
@@ -31,10 +37,10 @@ const schemas = {
           "Le groupe sanguin doit être: A+, A-, B+, B-, AB+, AB-, O+, O-",
       }),
     role: Joi.string()
-      .valid("donneur")
+      .valid("donneur", "personnel", "admin")
       .default("donneur")
       .messages({
-        "any.only": "Le rôle doit être: donneur",
+        "any.only": "Le rôle doit être: donneur, personnel ou admin",
       }),
     id_centre: Joi.number().integer().allow(null).messages({
       "number.base": "L'id_centre doit être un nombre",
@@ -54,9 +60,9 @@ const schemas = {
         "string.pattern.base":
           "Format invalide. Utilisez 6XXXXXXXX (9 chiffres commençant par 6)",
       }),
-    mot_de_passe: Joi.string().required().min(6).messages({
+    mot_de_passe: Joi.string().required().min(8).messages({
       "string.empty": "Le mot de passe est requis",
-      "string.min": "Le mot de passe doit avoir au moins 6 caractères",
+      "string.min": "Le mot de passe doit avoir au moins 8 caractères",
     }),
   }),
 
@@ -133,9 +139,12 @@ const schemas = {
     heure_debut: Joi.string().required(),
   }),
 
-  // Update alert status
+  // Update alert status and details
   updateAlert: Joi.object({
-    statut: Joi.string().valid("en_attente_validation", "en_cours", "resolu", "annule").required(),
+    statut: Joi.string().valid("en_attente_validation", "en_cours", "resolu", "annule"),
+    urgence: Joi.string().valid("NORMAL", "URGENT", "TRES_URGENT"),
+    quantite_requise: Joi.number().integer().min(1),
+    description: Joi.string().allow(""),
   }),
 
   // Guest alert validation
@@ -162,6 +171,22 @@ const schemas = {
     latitude: Joi.number().required(),
     longitude: Joi.number().required(),
     description: Joi.string().allow(""),
+  }),
+
+  // Nearby alerts validation
+  nearbyAlerts: Joi.object({
+    lat: Joi.number().required().min(-90).max(90),
+    lng: Joi.number().required().min(-180).max(180),
+    radius: Joi.number().integer().min(1).max(100).default(50),
+  }),
+
+  // Search alerts validation
+  searchAlerts: Joi.object({
+    groupe_sanguin: Joi.string().valid("A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"),
+    urgence: Joi.string().valid("NORMAL", "URGENT", "TRES_URGENT"),
+    radius: Joi.number().integer().min(1).max(100),
+    latitude: Joi.number().min(-90).max(90),
+    longitude: Joi.number().min(-180).max(180),
   }),
 };
 

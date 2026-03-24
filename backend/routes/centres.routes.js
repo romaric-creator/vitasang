@@ -130,7 +130,6 @@ router.get("/:id/availability", controller.getCentreAvailability);
  *         description: Dashboard statistics
  */
 router.get("/:id/stats", verifyToken, controller.getCentreStats);
-router.get("/centres", verifyToken, cacheMiddleware(15 * 60), controller.getAllCentres);
 // Blood Stock Routes
 router.get("/:id/stock", verifyToken, controller.getCentreBloodStock);
 router.put("/:id/stock", verifyToken, controller.updateBloodStock);

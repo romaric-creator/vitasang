@@ -91,7 +91,9 @@ export const sendAlert = async (alertData: {
     const response = await apiClient.post(`alerts`, alertData);
     return response.data;
   } catch (error: any) {
-    throw new Error(error.userMessage || error.message || "Erreur lors de l'envoi de l'alerte");
+    console.error("Send Alert API Error:", error.response?.data || error.message);
+    const apiMessage = error.response?.data?.message || error.response?.data?.error;
+    throw new Error(apiMessage || error.message || "Erreur lors de l'envoi de l'alerte");
   }
 };
 
@@ -313,6 +315,20 @@ export const respondToAlert = async (
   } catch (error: any) {
     throw new Error(
       error.response?.data?.message || "Erreur lors de la réponse à l'alerte",
+    );
+  }
+};
+
+export const confirmDonation = async (alertId: number) => {
+  if (!alertId || isNaN(alertId)) {
+    throw new Error("Identifiant d'alerte invalide");
+  }
+  try {
+    const res = await apiClient.post(`alerts/${alertId}/confirm`);
+    return res.data;
+  } catch (error: any) {
+    throw new Error(
+      error.response?.data?.message || "Erreur lors de la confirmation du don",
     );
   }
 };

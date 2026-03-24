@@ -43,10 +43,10 @@ export async function registerForPushNotificationsAsync() {
 
       if (!projectId) {
         console.warn(
-          "⚠️ Aucun Project ID EAS trouvé. Les notifications push ne fonctionneront pas sans configuration EAS.",
+          "Aucun Project ID EAS trouvé. Les notifications push ne fonctionneront pas sans configuration EAS.",
         );
         console.warn(
-          '👉 Exécutez "npx eas project:init" pour lier ce projet à votre compte Expo.',
+          'Exécutez "npx eas project:init" pour lier ce projet à votre compte Expo.',
         );
         return;
       }

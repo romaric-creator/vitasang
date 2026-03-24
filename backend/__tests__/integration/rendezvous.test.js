@@ -10,6 +10,7 @@ jest.mock('../../models', () => ({
     findAll: jest.fn(),
     findByPk: jest.fn(),
     destroy: jest.fn(),
+    count: jest.fn().mockResolvedValue(0),
   },
   Utilisateur: {
     findByPk: jest.fn(),
@@ -73,6 +74,7 @@ describe('Rendez-vous Controller - Integration Tests', () => {
     });
 
     RendezVous.findAll.mockResolvedValue([]);
+    RendezVous.count.mockResolvedValue(0);
 
     Utilisateur.findByPk.mockResolvedValue({
       id_utilisateur: userId,
@@ -113,7 +115,7 @@ describe('Rendez-vous Controller - Integration Tests', () => {
       // CORRECTION: Le schéma attend 'date_rdv', pas 'date_rendezvous'
       const rdvData = {
         id_centre: 1,
-        date_rdv: '2026-03-15',
+        date_rdv: '2026-03-30',
         heure_debut: '09:00',
       };
 
@@ -144,7 +146,7 @@ describe('Rendez-vous Controller - Integration Tests', () => {
     it('should reject request without required id_centre', async () => {
       const rdvData = {
         // missing id_centre
-        date_rdv: '2026-03-15',
+        date_rdv: '2026-03-30',
         heure_debut: '09:00',
       };
 

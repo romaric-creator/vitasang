@@ -48,6 +48,7 @@ jest.mock("../../utils/geoHelpers", () => ({
     // Mock Haversine distance
     return 10; // 10 km for testing
   }),
+  haversineSQL: jest.fn().mockReturnValue('mock_haversine_sql')
 }));
 
 describe("Centres Controller - Integration Tests", () => {

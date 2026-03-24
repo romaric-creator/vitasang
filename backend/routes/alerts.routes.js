@@ -12,7 +12,6 @@ const schemas = require("../validation/schemas");
 
 /**
  * PUBLIC ROUTE - Get all live (en_cours) blood donation alerts
- * No authentication required - anyone can see active alerts
  */
 router.get("/public", cacheMiddleware(5 * 60), alertsController.getLiveAlerts);
 
@@ -26,8 +25,7 @@ router.post(
 );
 
 /**
- * PUBLIC ROUTE - Get a specific alert's status and details (for guest alerts & public live alerts)
- * No authentication required - guests can track their alerts
+ * PUBLIC ROUTE - Get a specific alert's status and details
  */
 router.get("/:id/status", alertsController.getAlertStatus);
 
@@ -35,21 +33,7 @@ router.get("/:id/status", alertsController.getAlertStatus);
 router.use(verifyToken);
 
 /**
- * @swagger
- * /api/alerts:
- *   post:
- *     tags: [Alerts]
- *     summary: Create a new blood donation alert (pending validation)
- *     security: [{"bearerAuth": []}]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             $ref: '#/components/schemas/CreateAlert'
- *     responses:
- *       201: { description: "Alert created and awaiting validation" }
- *       400: { description: "Validation error" }
+ * Create a new blood donation alert
  */
 router.post(
   "/",
@@ -58,18 +42,7 @@ router.post(
 );
 
 /**
- * @swagger
- * /api/alerts/{id}/validate:
- *   post:
- *     tags: [Alerts]
- *     summary: Validate a pending alert and notify donors
- *     security: [{"bearerAuth": []}]
- *     parameters:
- *       - { name: "id", in: "path", required: true, schema: { type: "integer" } }
- *     responses:
- *       200: { description: "Alert validated and notifications sent" }
- *       403: { description: "Forbidden - Admins only" }
- *       404: { description: "Alert not found" }
+ * Validate a pending alert and notify donors
  */
 router.post(
   "/:id/validate",
@@ -78,107 +51,37 @@ router.post(
 );
 
 /**
- * @swagger
- * /api/alerts/pending:
- *   get:
- *     tags: [Alerts]
- *     summary: Get all alerts pending validation
- *     security: [{"bearerAuth": []}]
- *     responses:
- *       200: { description: "List of pending alerts" }
+ * Get all alerts pending validation (Admin only)
  */
 router.get("/pending", isAdmin, alertsController.getPendingAlerts);
 
 /**
- * @swagger
- * /api/alerts/live:
- *   get:
- *     tags: [Alerts]
- *     summary: Get all live (en_cours) blood donation alerts
- *     security: [{"bearerAuth": []}]
- *     responses:
- *       200: { description: "List of live alerts" }
- */
-// Public version available at /public
-
-/**
- * @swagger
- * /api/alerts/my-alerts:
- *   get:
- *     tags: [Alerts]
- *     summary: Get current user's created alerts
- *     security: [{"bearerAuth": []}]
- *     responses:
- *       200: { description: "User's alerts" }
+ * Get current user's created alerts
  */
 router.get("/my-alerts", alertsController.getUserAlerts);
 
 /**
- * @swagger
- * /api/alerts/accepted:
- *   get:
- *     tags: [Alerts]
- *     summary: Get alerts accepted by the current user
- *     security: [{"bearerAuth": []}]
- *     responses:
- *       200: { description: "List of accepted alerts" }
+ * Find alerts near a location
  */
-router.get("/accepted", alertsController.getAcceptedAlerts);
+router.get(
+  "/nearby",
+  validateRequest(schemas.nearbyAlerts),
+  alertsController.getNearbyAlerts,
+);
 
 /**
- * @swagger
- * /api/alerts/{id}/respond:
- *   post:
- *     tags: [Alerts]
- *     summary: Respond to an alert (as a donor)
- *     security: [{"bearerAuth": []}]
- *     parameters:
- *       - { name: "id", in: "path", required: true, schema: { type: "integer" } }
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties: { response: { type: "string", enum: [accepte, ignore] } }
- *     responses:
- *       200: { description: "Response registered" }
+ * Respond to an alert (as a donor)
  */
 router.post("/:id/respond", alertsController.respondToAlert);
 
 /**
- * @swagger
- * /api/alerts/{id}:
- *   put:
- *     tags: [Alerts]
- *     summary: Update an alert (e.g., description, quantity)
- *     security: [{"bearerAuth": []}]
- *     parameters:
- *       - { name: "id", in: "path", required: true, schema: { type: "integer" } }
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             $ref: '#/components/schemas/UpdateAlert'
- *     responses:
- *       200: { description: "Alert updated successfully" }
- *       404: { description: "Alert not found" }
- *   delete:
- *     tags: [Alerts]
- *     summary: Cancel or delete an alert
- *     security: [{"bearerAuth": []}]
- *     parameters:
- *       - { name: "id", in: "path", required: true, schema: { type: "integer" } }
- *     responses:
- *       200: { description: "Alert cancelled successfully" }
- *       404: { description: "Alert not found" }
+ * Confirm donation completed (by the donor)
  */
-router.put(
-  "/:id",
-  validateRequest(schemas.updateAlert),
-  alertsController.updateAlert,
-);
+router.post("/:id/confirm", alertsController.confirmDonation);
+
+/**
+ * Cancel or delete an alert
+ */
 router.delete("/:id", alertsController.deleteAlert);
 
 module.exports = router;

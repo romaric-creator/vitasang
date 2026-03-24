@@ -1,8 +1,3 @@
-/**
- * Aide et Conseil - Page Principale
- * Écran complet de sensibilisation sur le don de sang
- */
-
 import React, { useState } from "react";
 import {
   ScrollView,
@@ -18,20 +13,17 @@ import { TabBarIcon } from "@/components/TabBarIcon";
 import { color } from "@/constant/color";
 import { useTranslation } from "react-i18next";
 
-interface Section {
-  id: number;
-  title: string;
-  icon: string;
-  color: string;
-  items: string[];
-}
+// Extracted Components
+import { HelpStatCard } from "@/components/help/HelpStatCard";
+import { HelpSectionCard } from "@/components/help/HelpSectionCard";
+import { HelpFaqItem } from "@/components/help/HelpFaqItem";
 
 export default function AideEtConseilScreen() {
   const { t } = useTranslation();
   const router = useRouter();
   const [expandedSection, setExpandedSection] = useState<number | null>(null);
 
-  const sections: Section[] = [
+  const sections = [
     {
       id: 1,
       title: t("helpAndAdvice.sectionAdvantagesTitle"),
@@ -90,7 +82,6 @@ export default function AideEtConseilScreen() {
     <ThemedView style={styles.container}>
       <StatusBar barStyle="dark-content" />
 
-      {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()}>
           <TabBarIcon name="arrow-left" size={24} color={color.textMain} />
@@ -103,7 +94,6 @@ export default function AideEtConseilScreen() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
-        {/* Hero Section */}
         <View style={styles.heroSection}>
           <View style={styles.heroIcon}>
             <TabBarIcon name="heart" size={48} color={color.primary} />
@@ -112,17 +102,15 @@ export default function AideEtConseilScreen() {
           <Text style={styles.heroText}>{t("helpAndAdvice.heroText")}</Text>
         </View>
 
-        {/* Statistics */}
         <View style={styles.statsContainer}>
-          <StatCard value="42" label={t("helpAndAdvice.statDays")} />
-          <StatCard value="450" label={t("helpAndAdvice.statMl")} />
-          <StatCard value="3" label={t("helpAndAdvice.statLivesSaved")} />
+          <HelpStatCard value="42" label={t("helpAndAdvice.statDays")} />
+          <HelpStatCard value="450" label={t("helpAndAdvice.statMl")} />
+          <HelpStatCard value="3" label={t("helpAndAdvice.statLivesSaved")} />
         </View>
 
-        {/* Sections Expandables */}
         <View style={styles.sectionsContainer}>
           {sections.map((section) => (
-            <SectionCard
+            <HelpSectionCard
               key={section.id}
               section={section}
               isExpanded={expandedSection === section.id}
@@ -135,29 +123,27 @@ export default function AideEtConseilScreen() {
           ))}
         </View>
 
-        {/* FAQ Section */}
         <View style={styles.faqSection}>
           <Text style={styles.faqTitle}>{t("helpAndAdvice.faqTitle")}</Text>
 
-          <FaqItem
+          <HelpFaqItem
             question={t("helpAndAdvice.faqQuestion1")}
             answer={t("helpAndAdvice.faqAnswer1")}
           />
-          <FaqItem
+          <HelpFaqItem
             question={t("helpAndAdvice.faqQuestion2")}
             answer={t("helpAndAdvice.faqAnswer2")}
           />
-          <FaqItem
+          <HelpFaqItem
             question={t("helpAndAdvice.faqQuestion3")}
             answer={t("helpAndAdvice.faqAnswer3")}
           />
-          <FaqItem
+          <HelpFaqItem
             question={t("helpAndAdvice.faqQuestion4")}
             answer={t("helpAndAdvice.faqAnswer4")}
           />
         </View>
 
-        {/* Call to Action */}
         <TouchableOpacity
           style={styles.ctaButton}
           onPress={() => router.push("/create-alert")}
@@ -166,7 +152,6 @@ export default function AideEtConseilScreen() {
           <Text style={styles.ctaText}>{t("home.launchAlert")}</Text>
         </TouchableOpacity>
 
-        {/* Info Banner */}
         <View style={styles.infoBanner}>
           <TabBarIcon name="info-circle" size={20} color={color.info} />
           <Text style={styles.infoText}>{t("helpAndAdvice.infoBanner")}</Text>
@@ -175,92 +160,6 @@ export default function AideEtConseilScreen() {
     </ThemedView>
   );
 }
-
-/**
- * Composant StatCard
- */
-const StatCard: React.FC<{ value: string; label: string }> = ({
-  value,
-  label,
-}) => (
-  <View style={styles.statCard}>
-    <Text style={styles.statValue}>{value}</Text>
-    <Text style={styles.statLabel}>{label}</Text>
-  </View>
-);
-
-/**
- * Composant SectionCard
- */
-const SectionCard: React.FC<{
-  section: Section;
-  isExpanded: boolean;
-  onPress: () => void;
-}> = ({ section, isExpanded, onPress }) => (
-  <TouchableOpacity style={styles.sectionCard} onPress={onPress}>
-    <View style={styles.sectionHeader}>
-      <View
-        style={[
-          styles.sectionIconBox,
-          { backgroundColor: `${section.color}15` },
-        ]}
-      >
-        <TabBarIcon
-          name={section.icon}
-          size={24}
-          color={section.color}
-          family="fontawesome"
-        />
-      </View>
-      <Text style={styles.sectionTitle}>{section.title}</Text>
-      <TabBarIcon
-        name={isExpanded ? "chevron-up" : "chevron-down"}
-        size={20}
-        color={color.textSecondary}
-        family="fontawesome"
-      />
-    </View>
-
-    {isExpanded && (
-      <View style={styles.sectionContent}>
-        {section.items.map((item, index) => (
-          <View key={index} style={styles.itemRow}>
-            <View style={styles.itemDot} />
-            <Text style={styles.itemText}>{item}</Text>
-          </View>
-        ))}
-      </View>
-    )}
-  </TouchableOpacity>
-);
-
-/**
- * Composant FaqItem
- */
-const FaqItem: React.FC<{ question: string; answer: string }> = ({
-  question,
-  answer,
-}) => {
-  const [expanded, setExpanded] = React.useState(false);
-
-  return (
-    <TouchableOpacity
-      style={styles.faqItem}
-      onPress={() => setExpanded(!expanded)}
-    >
-      <View style={styles.faqHeader}>
-        <Text style={styles.faqQuestion}>{question}</Text>
-        <TabBarIcon
-          name={expanded ? "chevron-up" : "chevron-down"}
-          size={18}
-          color={color.primary}
-          family="fontawesome"
-        />
-      </View>
-      {expanded && <Text style={styles.faqAnswer}>{answer}</Text>}
-    </TouchableOpacity>
-  );
-};
 
 const styles = StyleSheet.create({
   container: {
@@ -318,83 +217,9 @@ const styles = StyleSheet.create({
     gap: 12,
     marginBottom: 30,
   },
-  statCard: {
-    flex: 1,
-    backgroundColor: color.surface,
-    borderRadius: 16,
-    padding: 16,
-    alignItems: "center",
-    borderWidth: 1,
-    borderColor: color.border,
-  },
-  statValue: {
-    fontSize: 28,
-    fontWeight: "900",
-    color: color.primary,
-    marginBottom: 4,
-  },
-  statLabel: {
-    fontSize: 11,
-    fontWeight: "700",
-    color: color.textSecondary,
-    textAlign: "center",
-    lineHeight: 14,
-  },
   sectionsContainer: {
     gap: 12,
     marginBottom: 30,
-  },
-  sectionCard: {
-    backgroundColor: color.surface,
-    borderRadius: 16,
-    overflow: "hidden",
-    borderWidth: 1,
-    borderColor: color.border,
-  },
-  sectionHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    padding: 16,
-    gap: 12,
-  },
-  sectionIconBox: {
-    width: 48,
-    height: 48,
-    borderRadius: 14,
-    justifyContent: "center",
-    alignItems: "center",
-    flexShrink: 0,
-  },
-  sectionTitle: {
-    flex: 1,
-    fontSize: 15,
-    fontWeight: "800",
-    color: color.textMain,
-  },
-  sectionContent: {
-    paddingHorizontal: 16,
-    paddingBottom: 16,
-    backgroundColor: color.background,
-    gap: 10,
-  },
-  itemRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-  },
-  itemDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: color.primary,
-    flexShrink: 0,
-  },
-  itemText: {
-    flex: 1,
-    fontSize: 13,
-    color: color.textSecondary,
-    fontWeight: "600",
-    lineHeight: 18,
   },
   faqSection: {
     marginBottom: 30,
@@ -404,32 +229,6 @@ const styles = StyleSheet.create({
     fontWeight: "900",
     color: color.textMain,
     marginBottom: 16,
-  },
-  faqItem: {
-    backgroundColor: color.surface,
-    borderRadius: 14,
-    padding: 14,
-    marginBottom: 10,
-    borderWidth: 1,
-    borderColor: color.border,
-  },
-  faqHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  faqQuestion: {
-    flex: 1,
-    fontSize: 14,
-    fontWeight: "700",
-    color: color.textMain,
-  },
-  faqAnswer: {
-    fontSize: 13,
-    color: color.textSecondary,
-    marginTop: 12,
-    lineHeight: 18,
-    fontWeight: "500",
   },
   ctaButton: {
     backgroundColor: color.primary,

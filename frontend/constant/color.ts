@@ -31,9 +31,25 @@ export const color = {
   // États
   disabled: "#CBD5E1", // Slate 300
   error: "#F43F5E", // Rose 500
+  offline: "#64748B", // Slate 500 pour le mode hors ligne (Gardé pour compatibilité)
 
-  // Autres couleurs
+  // Autres couleurs (Restaurées pour compatibilité ancien design)
   lightGray: "#E2E8F0", // Slate 200
   danger: "#F43F5E", // Rose 500
   lightBackground: "#F8FAFC", // Slate 50
+
+  // Layout Constants (Gardés pour compatibilité avec le code récent non restauré)
+  radius: {
+    s: 8,
+    m: 12,
+    l: 16,
+    xl: 24,
+  },
+  spacing: {
+    xs: 4,
+    s: 8,
+    m: 16,
+    l: 24,
+    xl: 32,
+  },
 };

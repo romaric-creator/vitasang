@@ -9,7 +9,7 @@ describe('User Endpoints Integration Tests', () => {
 
   beforeAll(async () => {
     // Sync database for tests
-    await db.sequelize.sync({ force: false });
+    await db.sequelize.sync({ force: true });
   });
 
   afterAll(async () => {
@@ -23,7 +23,7 @@ describe('User Endpoints Integration Tests', () => {
         .send({
           nom: 'Test',
           prenom: 'User',
-          telephone: '+212612345678',
+          telephone: '651234567',
           mot_de_passe: 'TestPassword123',
           groupe_sanguin: 'O+',
           ville: 'Casablanca',
@@ -49,7 +49,7 @@ describe('User Endpoints Integration Tests', () => {
         });
 
       expect(response.status).toBe(400);
-      expect(response.body.error).toBeDefined();
+      expect(response.body.errors).toBeDefined();
     });
 
     it('should reject registration with weak password', async () => {
@@ -58,14 +58,14 @@ describe('User Endpoints Integration Tests', () => {
         .send({
           nom: 'Test',
           prenom: 'User',
-          telephone: '+212612345678',
+          telephone: '651234567',
           mot_de_passe: '123',
           groupe_sanguin: 'O+',
           ville: 'Casablanca'
         });
 
       expect(response.status).toBe(400);
-      expect(response.body.error).toBeDefined();
+      expect(response.body.errors).toBeDefined();
     });
 
     it('should reject registration with invalid blood type', async () => {
@@ -74,14 +74,14 @@ describe('User Endpoints Integration Tests', () => {
         .send({
           nom: 'Test',
           prenom: 'User',
-          telephone: '+212612345678',
+          telephone: '651234567',
           mot_de_passe: 'TestPassword123',
           groupe_sanguin: 'INVALID',
           ville: 'Casablanca'
         });
 
       expect(response.status).toBe(400);
-      expect(response.body.error).toBeDefined();
+      expect(response.body.errors).toBeDefined();
     });
 
     it('should reject registration with missing required fields', async () => {
@@ -92,7 +92,7 @@ describe('User Endpoints Integration Tests', () => {
         });
 
       expect(response.status).toBe(400);
-      expect(response.body.error).toBeDefined();
+      expect(response.body.errors).toBeDefined();
     });
   });
 
@@ -104,7 +104,7 @@ describe('User Endpoints Integration Tests', () => {
         .send({
           nom: 'Login',
           prenom: 'Test',
-          telephone: '+212698765432',
+          telephone: '659876543',
           mot_de_passe: 'LoginTest123',
           groupe_sanguin: 'AB+',
           ville: 'Marrakech'
@@ -115,7 +115,7 @@ describe('User Endpoints Integration Tests', () => {
       const response = await request(app)
         .post('/api/users/login')
         .send({
-          telephone: '+212698765432',
+          telephone: '659876543',
           mot_de_passe: 'LoginTest123'
         });
 
@@ -140,7 +140,7 @@ describe('User Endpoints Integration Tests', () => {
       const response = await request(app)
         .post('/api/users/login')
         .send({
-          telephone: '+212698765432',
+          telephone: '659876543',
           mot_de_passe: 'WrongPassword'
         });
 
@@ -151,11 +151,11 @@ describe('User Endpoints Integration Tests', () => {
       const response = await request(app)
         .post('/api/users/login')
         .send({
-          telephone: '+212699999999',
+          telephone: '659999999',
           mot_de_passe: 'AnyPassword'
         });
 
-      expect(response.status).toBe(401);
+      expect(response.status).toBe(404);
     });
   });
 
@@ -209,12 +209,12 @@ describe('User Endpoints Integration Tests', () => {
       const loginResponse = await request(app)
         .post('/api/users/login')
         .send({
-          telephone: '+212698765432',
+          telephone: '659876543',
           mot_de_passe: 'LoginTest123'
         });
 
       const token = loginResponse.body.token;
-      const id = loginResponse.body.user.id_utilisateur;
+      const id = loginResponse.body.user?.id_utilisateur || loginResponse.body.user?.id;
 
       const response = await request(app)
         .put(`/api/users/${id}`)
@@ -242,12 +242,12 @@ describe('User Endpoints Integration Tests', () => {
       const loginResponse = await request(app)
         .post('/api/users/login')
         .send({
-          telephone: '+212698765432',
+          telephone: '659876543',
           mot_de_passe: 'LoginTest123'
         });
 
       const token = loginResponse.body.token;
-      const id = loginResponse.body.user.id_utilisateur;
+      const id = loginResponse.body.user?.id_utilisateur || loginResponse.body.user?.id;
 
       const response = await request(app)
         .put(`/api/users/${id}`)
@@ -266,12 +266,12 @@ describe('User Endpoints Integration Tests', () => {
       const loginResponse = await request(app)
         .post('/api/users/login')
         .send({
-          telephone: '+212698765432',
+          telephone: '659876543',
           mot_de_passe: 'LoginTest123'
         });
 
       const token = loginResponse.body.token;
-      const id = loginResponse.body.user.id_utilisateur;
+      const id = loginResponse.body.user?.id_utilisateur || loginResponse.body.user?.id;
 
       const response = await request(app)
         .put(`/api/users/${id}/push-token`)
@@ -287,12 +287,12 @@ describe('User Endpoints Integration Tests', () => {
       const loginResponse = await request(app)
         .post('/api/users/login')
         .send({
-          telephone: '+212698765432',
+          telephone: '659876543',
           mot_de_passe: 'LoginTest123'
         });
 
       const token = loginResponse.body.token;
-      const id = loginResponse.body.user.id_utilisateur;
+      const id = loginResponse.body.user?.id_utilisateur || loginResponse.body.user?.id;
 
       const response = await request(app)
         .put(`/api/users/${id}/push-token`)

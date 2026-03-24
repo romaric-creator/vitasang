@@ -1,8 +1,4 @@
-/**
- * Blood compatibility rules
- * Key: Patient blood type
- * Value: Compatible donor blood types
- */
+
 const COMPATIBILITY_MAP: Record<string, string[]> = {
     "O-": ["O-"],
     "O+": ["O-", "O+"],

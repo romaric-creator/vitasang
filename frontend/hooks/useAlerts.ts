@@ -8,16 +8,7 @@ import { queryKeys } from "@/config/queryKeys";
 import * as userService from "@/services/user.service";
 import { apiClient } from "@/config/axiosConfig";
 
-// ╔════════════════════════════════════════════════════════════════╗
-// ║                         QUERIES                                ║
-// ╚════════════════════════════════════════════════════════════════╝
 
-/**
- * Get all active/live blood donation alerts
- * ✅ Cached for 5 minutes
- * ✅ Accessible without authentication
- * ✅ Auto-refetch when component mounts if data is stale
- */
 export const useActiveAlerts = () => {
   return useQuery({
     queryKey: queryKeys.alerts.active(),
@@ -28,11 +19,7 @@ export const useActiveAlerts = () => {
   });
 };
 
-/**
- * Get current user's created alerts
- * ✅ Only available when authenticated
- * ✅ Cached for 3 minutes (user data changes frequently)
- */
+
 export const useMyAlerts = (enabled: boolean = true) => {
   return useQuery({
     queryKey: queryKeys.alerts.myAlerts(),

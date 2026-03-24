@@ -8,9 +8,19 @@ export const getCurrentPositionAsync = async () => {
       return null;
     }
 
-    const location = await Location.getCurrentPositionAsync({
-      accuracy: Location.Accuracy.Balanced,
-    });
+    // Stratégie de localisation robuste avec timeout (15s)
+    // On tente la précision Haute en priorité, sinon on retombe sur Balanced
+    const location = await Promise.race([
+      Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.High,
+      }),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('GPS_TIMEOUT')), 15000))
+    ]).catch(async () => {
+      // Fallback sur une précision moindre si le fix GPS est trop long
+      return await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.Balanced,
+      });
+    }) as Location.LocationObject;
 
     return {
       latitude: location.coords.latitude,

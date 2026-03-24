@@ -1,67 +1,56 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
+import { useQuery } from '@tanstack/react-query';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 
 const Dashboard: React.FC = () => {
     const { user } = useAuth();
-    const [loading, setLoading] = useState(true);
-    const [stats, setStats] = useState({
+
+    const { data: stats, isLoading: loading, error } = useQuery({
+        queryKey: ['dashboardStats', user?.centre?.id_centre],
+        queryFn: async () => {
+            if (!user?.centre?.id_centre) throw new Error("Centre ID missing");
+            const response = await api.get(`/centres/${user.centre.id_centre}/stats`);
+            if (response.data.success) {
+                return response.data.stats;
+            }
+            throw new Error("Invalid response format");
+        },
+        enabled: !!user?.centre?.id_centre, // Ne lance la requête que si l'ID est dispo
+        staleTime: 5 * 60 * 1000, // Cache de 5 minutes
+    });
+
+    const defaultStats = {
         donationsThisMonth: 0,
         appointmentsToday: 0,
         activeAlerts: 0,
         totalStock: 0,
         bloodDetail: [] as any[]
-    });
-    const [error, setError] = useState<string | null>(null);
+    };
 
-    useEffect(() => {
-        const fetchStats = async () => {
-            if (!user?.centre?.id_centre) {
-                console.warn("Dashboard: User or Centre ID missing", user);
-                setLoading(false);
-                return;
-            }
-
-            try {
-                setLoading(true);
-                setError(null);
-                console.log(`Fetching stats for centre ID: ${user.centre.id_centre}`);
-                
-                const response = await api.get(`/centres/${user.centre.id_centre}/stats`);
-                
-                if (response.data.success) {
-                    setStats(response.data.stats);
-                } else {
-                    console.warn("API responded with success: false or invalid format", response.data);
-                    // Check if response might be HTML (proxy/url issue)
-                    if (typeof response.data === 'string' && response.data.trim().startsWith('<')) {
-                         throw new Error("Received HTML instead of JSON. Check VITE_API_URL configuration.");
-                    }
-                }
-            } catch (err: any) {
-                console.error("Error fetching dashboard stats:", err);
-                setError(err.message || "Erreur de chargement des données.");
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        fetchStats();
-    }, [user]);
-
-    const lowStockGroups = stats.bloodDetail
-        .filter(item => item.quantite_poches <= item.seuil_alerte_min)
-        .map(item => item.groupe_sanguin);
+    const currentStats = stats || defaultStats;
+    const lowStockGroups = currentStats.bloodDetail
+        .filter((item: any) => item.quantite_poches <= item.seuil_alerte_min)
+        .map((item: any) => item.groupe_sanguin);
 
     if (loading) {
-        return <div className="text-center mt-24">Chargement du tableau de bord...</div>;
+        return (
+            <div className="space-y-8 animate-pulse">
+                <div className="h-8 bg-gray-200 dark:bg-white/5 rounded w-1/4"></div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    {[1, 2, 3].map((i) => (
+                        <div key={i} className="h-40 bg-gray-200 dark:bg-white/5 rounded-xl"></div>
+                    ))}
+                </div>
+            </div>
+        );
     }
 
     if (error) {
         return (
             <div className="text-center mt-24 p-6 bg-red-50 text-red-600 rounded-xl border border-red-200">
                 <h3 className="font-bold text-lg">Erreur</h3>
-                <p>{error}</p>
+                <p>{(error as Error).message || "Erreur de chargement"}</p>
                 <button 
                     onClick={() => window.location.reload()} 
                     className="mt-4 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
@@ -84,7 +73,7 @@ const Dashboard: React.FC = () => {
                     <div className="flex items-start justify-between">
                         <div>
                             <p className="text-sm font-medium text-gray-500 dark:text-gray-400">SOS Actifs</p>
-                            <h3 className="text-3xl font-bold mt-2 text-gray-900 dark:text-white">{stats.activeAlerts}</h3>
+                            <h3 className="text-3xl font-bold mt-2 text-gray-900 dark:text-white">{currentStats.activeAlerts}</h3>
                             {/* Static data for trend */}
                             <div className="flex items-center gap-1 mt-2 text-red-500 font-semibold text-xs">
                                 <span className="material-symbols-outlined text-sm">trending_up</span>
@@ -104,7 +93,7 @@ const Dashboard: React.FC = () => {
                         <div>
                             <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Alertes Stock Bas</p>
                             <div className="flex items-center gap-2 mt-2">
-                                {lowStockGroups.length > 0 ? lowStockGroups.slice(0, 2).map(group => (
+                                {lowStockGroups.length > 0 ? lowStockGroups.slice(0, 2).map((group: string) => (
                                     <span key={group} className="px-2 py-1 bg-primary text-white rounded text-sm font-bold uppercase">{group}</span>
                                 )) : <span className="text-sm text-gray-500">Aucune</span>}
                             </div>
@@ -126,7 +115,7 @@ const Dashboard: React.FC = () => {
                     <div className="flex items-start justify-between">
                         <div>
                             <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Rendez-vous prévus</p>
-                            <h3 className="text-3xl font-bold mt-2 text-gray-900 dark:text-white">{stats.appointmentsToday}</h3>
+                            <h3 className="text-3xl font-bold mt-2 text-gray-900 dark:text-white">{currentStats.appointmentsToday}</h3>
                             {/* Static data for trend */}
                             <div className="flex items-center gap-1 mt-2 text-green-500 font-semibold text-xs">
                                 <span className="material-symbols-outlined text-sm">check_circle</span>
@@ -203,7 +192,7 @@ const Dashboard: React.FC = () => {
                         Aperçu du stock disponible (unités)
                     </h4>
                     <div className="space-y-4">
-                        {stats.bloodDetail.length > 0 ? stats.bloodDetail.slice(0, 3).map(item => {
+                        {currentStats.bloodDetail.length > 0 ? currentStats.bloodDetail.slice(0, 3).map((item: any) => {
                             const maxStock = 50; // Hypothetical max
                             const percentage = (item.quantite_poches / maxStock) * 100;
                             const isLow = item.quantite_poches <= item.seuil_alerte_min;

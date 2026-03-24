@@ -7,7 +7,7 @@ describe('Alert Endpoints Integration Tests', () => {
   let testAlertId;
 
   beforeAll(async () => {
-    await db.sequelize.sync({ force: false });
+    await db.sequelize.sync({ force: true });
 
     // Create a test user and get token
     const response = await request(app)
@@ -15,7 +15,7 @@ describe('Alert Endpoints Integration Tests', () => {
       .send({
         nom: 'Alert',
         prenom: 'Tester',
-        telephone: '+212633333333',
+        telephone: '653333333',
         mot_de_passe: 'AlertTest123',
         groupe_sanguin: 'AB-',
         ville: 'Fes'
@@ -31,7 +31,7 @@ describe('Alert Endpoints Integration Tests', () => {
   describe('POST /api/alerts/create', () => {
     it('should create a new alert with valid data', async () => {
       const response = await request(app)
-        .post('/api/alerts/create')
+        .post('/api/alerts')
         .set('Authorization', `Bearer ${authToken}`)
         .send({
           groupe_sanguin: 'O+',
@@ -51,7 +51,7 @@ describe('Alert Endpoints Integration Tests', () => {
 
     it('should reject alert creation with invalid blood type', async () => {
       const response = await request(app)
-        .post('/api/alerts/create')
+        .post('/api/alerts')
         .set('Authorization', `Bearer ${authToken}`)
         .send({
           groupe_sanguin: 'INVALID',
@@ -67,7 +67,7 @@ describe('Alert Endpoints Integration Tests', () => {
 
     it('should reject alert creation with invalid urgency level', async () => {
       const response = await request(app)
-        .post('/api/alerts/create')
+        .post('/api/alerts')
         .set('Authorization', `Bearer ${authToken}`)
         .send({
           groupe_sanguin: 'O+',
@@ -83,7 +83,7 @@ describe('Alert Endpoints Integration Tests', () => {
 
     it('should reject alert creation with invalid coordinates', async () => {
       const response = await request(app)
-        .post('/api/alerts/create')
+        .post('/api/alerts')
         .set('Authorization', `Bearer ${authToken}`)
         .send({
           groupe_sanguin: 'O+',
@@ -99,7 +99,7 @@ describe('Alert Endpoints Integration Tests', () => {
 
     it('should reject alert creation with negative quantity', async () => {
       const response = await request(app)
-        .post('/api/alerts/create')
+        .post('/api/alerts')
         .set('Authorization', `Bearer ${authToken}`)
         .send({
           groupe_sanguin: 'O+',
@@ -115,7 +115,7 @@ describe('Alert Endpoints Integration Tests', () => {
 
     it('should reject alert creation without token', async () => {
       const response = await request(app)
-        .post('/api/alerts/create')
+        .post('/api/alerts')
         .send({
           groupe_sanguin: 'O+',
           urgence: 'URGENT',
@@ -130,7 +130,7 @@ describe('Alert Endpoints Integration Tests', () => {
 
     it('should reject alert creation with missing required fields', async () => {
       const response = await request(app)
-        .post('/api/alerts/create')
+        .post('/api/alerts')
         .set('Authorization', `Bearer ${authToken}`)
         .send({
           groupe_sanguin: 'O+'
@@ -144,6 +144,7 @@ describe('Alert Endpoints Integration Tests', () => {
     it('should get nearby alerts with valid coordinates', async () => {
       const response = await request(app)
         .get('/api/alerts/nearby')
+        .set('Authorization', `Bearer ${authToken}`)
         .query({
           lat: 33.5731,
           lng: -7.5898,
@@ -158,6 +159,7 @@ describe('Alert Endpoints Integration Tests', () => {
     it('should reject nearby with invalid latitude', async () => {
       const response = await request(app)
         .get('/api/alerts/nearby')
+        .set('Authorization', `Bearer ${authToken}`)
         .query({
           lat: 'invalid',
           lng: -7.5898,
@@ -170,6 +172,7 @@ describe('Alert Endpoints Integration Tests', () => {
     it('should reject nearby with invalid radius', async () => {
       const response = await request(app)
         .get('/api/alerts/nearby')
+        .set('Authorization', `Bearer ${authToken}`)
         .query({
           lat: 33.5731,
           lng: -7.5898,
@@ -182,6 +185,7 @@ describe('Alert Endpoints Integration Tests', () => {
     it('should return empty array when no alerts found', async () => {
       const response = await request(app)
         .get('/api/alerts/nearby')
+        .set('Authorization', `Bearer ${authToken}`)
         .query({
           lat: 90,
           lng: 180,
@@ -197,6 +201,7 @@ describe('Alert Endpoints Integration Tests', () => {
     it('should search alerts by blood type', async () => {
       const response = await request(app)
         .get('/api/alerts/search')
+        .set('Authorization', `Bearer ${authToken}`)
         .query({
           groupe_sanguin: 'O+'
         });
@@ -209,6 +214,7 @@ describe('Alert Endpoints Integration Tests', () => {
     it('should reject search with invalid blood type', async () => {
       const response = await request(app)
         .get('/api/alerts/search')
+        .set('Authorization', `Bearer ${authToken}`)
         .query({
           groupe_sanguin: 'INVALID'
         });
@@ -219,6 +225,7 @@ describe('Alert Endpoints Integration Tests', () => {
     it('should search alerts by urgency', async () => {
       const response = await request(app)
         .get('/api/alerts/search')
+        .set('Authorization', `Bearer ${authToken}`)
         .query({
           urgence: 'URGENT'
         });
@@ -267,7 +274,7 @@ describe('Alert Endpoints Integration Tests', () => {
     it('should delete alert with valid token', async () => {
       // First create an alert to delete
       const createResponse = await request(app)
-        .post('/api/alerts/create')
+        .post('/api/alerts')
         .set('Authorization', `Bearer ${authToken}`)
         .send({
           groupe_sanguin: 'B+',

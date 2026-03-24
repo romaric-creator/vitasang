@@ -1,8 +1,3 @@
-/**
- * Centralized Query Keys for React Query
- * Ensures consistent cache invalidation and data organization
- * https://tanstack.com/query/latest/docs/react/guides/important-defaults
- */
 
 export const queryKeys = {
   // Authentication

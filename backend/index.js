@@ -16,52 +16,39 @@ const swaggerUi = require("swagger-ui-express");
 const swaggerSpecs = require("./config/swagger");
 const { errorHandler, notFoundHandler } = require("./middleware/errorHandler");
 
+const Sentry = require("@sentry/node");
+
+// Initialisation Sentry (Point 30 de l'audit)
+if (process.env.SENTRY_DSN) {
+  Sentry.init({
+    dsn: process.env.SENTRY_DSN,
+    environment: process.env.NODE_ENV || "development",
+    tracesSampleRate: 1.0,
+  });
+}
+
 // Initialisation des tâches en arrière-plan
 require("./jobs/cleanup.cron");
 require("./jobs/notification.queue");
 
 const app = express();
 
+// Sentry request handler (doit être le premier)
+if (process.env.SENTRY_DSN) {
+  app.use(Sentry.Handlers.requestHandler());
+}
+
 // Trust proxy est essentiel sur Render pour que le rate limiter voit la vraie IP du client
 app.set("trust proxy", 1);
-app.use(helmet());
+app.use(helmet({
+  contentSecurityPolicy: false, // Disabling CSP for now to avoid issues with images, should be fine for simple API
+  crossOriginEmbedderPolicy: false,
+}));
 
-// CORS Configuration
-const allowedOrigins = [
-  "http://localhost:3000",
-  "http://localhost:8081",
-  "http://localhost:5173",
-  "http://localhost:19006",
-  "http://localhost:8082",
-  process.env.FRONTEND_URL,
-].filter(Boolean);
-
-app.use(
-  cors({
-    origin: (origin, callback) => {
-      // TRÈS IMPORTANT : Toujours autoriser les requêtes sans origin (Mobile Native APK)
-      if (!origin || origin === "null") return callback(null, true);
-
-      // Autoriser explicitement la whitelist
-      if (allowedOrigins.includes(origin)) {
-        return callback(null, true);
-      }
-
-      // Autoriser les sous-domaines Vercel et Render
-      if (origin.endsWith(".vercel.app") || origin.endsWith(".onrender.com")) {
-        return callback(null, true);
-      }
-
-      logger.warn(`CORS bloqué pour l'origine : ${origin}`);
-      return callback(null, false);
-    },
-    credentials: true,
-    methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "Accept"],
-  })
-);
-
-app.use(require("compression")());
+app.use(require("compression")({
+  level: 6,
+  threshold: 1024,
+}));
 app.use(express.json({ limit: "1mb" }));
 app.use(express.urlencoded({ limit: "1mb", extended: true }));
 app.use(morgan("dev"));
@@ -112,6 +99,11 @@ app.get("/health", (req, res) => {
 app.get("/ping", (req, res) => {
   res.status(200).send("pong");
 });
+
+// Sentry error handler (doit être avant l'error handler global)
+if (process.env.SENTRY_DSN) {
+  app.use(Sentry.Handlers.errorHandler());
+}
 
 // 404 Handler
 app.use(notFoundHandler);

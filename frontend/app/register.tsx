@@ -27,6 +27,8 @@ import FormField from "@/components/FormField";
 import { PrimaryButton } from "@/components/PrimaryButton";
 import { BloodGroupSelector } from "@/components/BloodGroupSelector";
 import { useTranslation } from "react-i18next";
+import { ErrorAlert } from "@/components/ErrorAlert";
+import { LoadingSpinner } from "@/components/LoadingSpinner";
 
 export default function RegisterScreen() {
   const { t } = useTranslation();
@@ -111,7 +113,7 @@ export default function RegisterScreen() {
       console.error("Registration error:", err.message);
       // Messages d'erreur conviviaux
       let userMsg = t("register.error");
-      if (err.message.includes("Validation error"))
+      if (err.message.includes("Validation error") || err.message.includes("409"))
         userMsg = "Ce numéro est déjà utilisé.";
       if (err.message.includes("Network"))
         userMsg = "Problème de connexion. Vérifiez votre réseau.";
@@ -146,6 +148,7 @@ export default function RegisterScreen() {
       behavior={Platform.OS === "ios" ? "padding" : "height"}
       style={{ flex: 1 }}
     >
+      <LoadingSpinner visible={loading} />
       <ScrollView
         contentContainerStyle={{ flexGrow: 1 }}
         style={{ backgroundColor: color.surface }}
@@ -282,11 +285,11 @@ export default function RegisterScreen() {
                       </Text>
                     </TouchableOpacity>
 
-                    {generalError ? (
-                      <View style={styles.errorContainer}>
-                        <Text style={styles.errorText}>{generalError}</Text>
-                      </View>
-                    ) : null}
+                    <ErrorAlert
+                      visible={!!generalError}
+                      message={generalError}
+                      onDismiss={() => setGeneralError("")}
+                    />
 
                     <View style={styles.buttonRow}>
                       <TouchableOpacity
@@ -299,7 +302,7 @@ export default function RegisterScreen() {
                       <PrimaryButton
                         title={loading ? "Création..." : "Terminer"}
                         onPress={() => handleSubmit()}
-                        loading={loading}
+                        // loading prop removed
                         style={{ flex: 1 }}
                       />
                     </View>

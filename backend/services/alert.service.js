@@ -1,7 +1,7 @@
 const db = require("../models");
-const Alerte = db.Alerte;
+const { Alerte, Utilisateur, LogNotification } = db;
 const logger = require("../config/logger");
-const { haversineSQL } = require("../utils/geoHelpers");
+const { haversineSQL, calculateDistance } = require("../utils/geoHelpers");
 const { notificationQueue } = require("../jobs/notification.queue");
 const { ErrorTypes } = require("../utils/errorHandler");
 
@@ -10,12 +10,10 @@ const { ErrorTypes } = require("../utils/errorHandler");
  */
 class AlertService {
   /**
-   * @description Tente de valider automatiquement une alerte si elle est proche d'un centre.
-   * @param {object} alerte - L'instance de l'alerte Sequelize
-   * @returns {Promise<boolean>} - True si l'alerte a été auto-validée
+   * Tente de valider automatiquement une alerte si elle est proche d'un centre.
    */
   async attemptAutoValidation(alerte) {
-    const { latitude, longitude, id_alerte, groupe_requis, rayon_action_km, degre_urgence } = alerte;
+    const { latitude, longitude, id_alerte } = alerte;
 
     try {
       const haversine = haversineSQL(latitude, longitude);
@@ -38,7 +36,6 @@ class AlertService {
         alerte.id_centre = centresProches[0].id_centre;
         await alerte.save();
 
-        // Ajout immédiat à la file de notifications
         await this.enqueueNotification(alerte);
 
         return true;
@@ -54,9 +51,7 @@ class AlertService {
   }
 
   /**
-   * @description Ajoute une alerte à la file d'attente des notifications.
-   * @param {object} alerte - Instance Sequelize de l'alerte
-   * @param {number|null} validatorId - ID de l'utilisateur ayant validé
+   * Ajoute une alerte à la file d'attente des notifications.
    */
   async enqueueNotification(alerte, validatorId = null) {
     try {
@@ -80,10 +75,7 @@ class AlertService {
   }
 
   /**
-   * @description Crée une nouvelle alerte et tente de l'auto-valider.
-   * @param {object} alertData - Données de l'alerte
-   * @param {number|null} initiatorId - ID de l'utilisateur ou null pour guest
-   * @returns {Promise<object>} - L'alerte créée et le résultat de l'auto-validation
+   * Crée une nouvelle alerte et tente de l'auto-valider.
    */
   async createAlert(alertData, initiatorId) {
     try {
@@ -125,9 +117,7 @@ class AlertService {
   }
 
   /**
-   * @description Valide manuellement une alerte en attente.
-   * @param {number} alertId - ID de l'alerte à valider
-   * @param {number} validatorId - ID du personnel validant
+   * Valide manuellement une alerte en attente.
    */
   async validateAlert(alertId, validatorId) {
     const alerte = await Alerte.findByPk(alertId);
@@ -143,6 +133,105 @@ class AlertService {
     await this.enqueueNotification(alerte, validatorId);
 
     return alerte;
+  }
+
+  /**
+   * Récupère le statut complet d'une alerte avec stats et détails donneurs
+   */
+  async getAlertStatus(alertId) {
+    const alerte = await Alerte.findByPk(alertId, {
+      include: [
+        {
+          model: LogNotification,
+          as: "notifications",
+          include: [{ model: Utilisateur, as: "destinataire", attributes: ["nom", "prenom", "telephone", "latitude", "longitude"] }],
+        },
+        { model: Utilisateur, as: "initiateur", attributes: ["id_utilisateur", "nom", "prenom", "telephone"] },
+      ],
+    });
+
+    if (!alerte) throw ErrorTypes.RESOURCE_NOT_FOUND("Alerte");
+
+    const stats = {
+      total: alerte.notifications.length,
+      accepte: alerte.notifications.filter(n => n.statut_reception === "accepte" || n.statut_reception === "don_effectue").length,
+      lu: alerte.notifications.filter(n => n.statut_reception === "lu").length,
+    };
+
+    const details = alerte.notifications.map(n => {
+      let distance = null;
+      if (n.destinataire.latitude && n.destinataire.longitude && alerte.latitude && alerte.longitude) {
+        distance = calculateDistance(
+          parseFloat(alerte.latitude),
+          parseFloat(alerte.longitude),
+          parseFloat(n.destinataire.latitude),
+          parseFloat(n.destinataire.longitude)
+        );
+      }
+      return {
+        donneur: `${n.destinataire.prenom} ${n.destinataire.nom}`,
+        statut: n.statut_reception,
+        telephone: n.destinataire.telephone,
+        distance: distance !== null ? distance.toFixed(1) : null
+      };
+    });
+
+    details.sort((a, b) => {
+      if (a.distance === null) return 1;
+      if (b.distance === null) return -1;
+      return parseFloat(a.distance) - parseFloat(b.distance);
+    });
+
+    return {
+      alerte: { 
+        id: alerte.id_alerte, 
+        groupe: alerte.groupe_requis, 
+        statut: alerte.statut, 
+        createdAt: alerte.createdAt,
+        lieu: alerte.lieu,
+        latitude: alerte.latitude,
+        longitude: alerte.longitude,
+        urgence: alerte.degre_urgence
+      },
+      stats,
+      details,
+    };
+  }
+
+  /**
+   * Répond à une alerte (donneur)
+   */
+  async respondToAlert(alertId, userId, response) {
+    const transaction = await db.sequelize.transaction();
+    try {
+      let notification = await LogNotification.findOne({
+        where: { id_alerte: alertId, id_utilisateur: userId },
+        transaction,
+      });
+
+      if (!notification) {
+        notification = await LogNotification.create({ id_alerte: alertId, id_utilisateur: userId, statut_reception: response }, { transaction });
+      } else {
+        notification.statut_reception = response;
+        await notification.save({ transaction });
+      }
+
+      if (response === "accepte") {
+        const alerte = await Alerte.findByPk(alertId, { transaction });
+        if (alerte && alerte.statut === "en_cours") {
+          const count = await LogNotification.count({ where: { id_alerte: alertId, statut_reception: "accepte" }, transaction });
+          if (count >= alerte.quantite_requise) {
+            alerte.statut = "resolu";
+            await alerte.save({ transaction });
+          }
+        }
+      }
+
+      await transaction.commit();
+    } catch (error) {
+      if (transaction) await transaction.rollback();
+      throw error;
+    }
   }
 }
 
