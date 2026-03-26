@@ -367,7 +367,7 @@ const styles = StyleSheet.create({
   },
   unknownButton: {
     padding: 16,
-    borderRadius: 12,
+    borderRadius: 28,
     borderWidth: 1,
     borderColor: color.border,
     alignItems: "center",

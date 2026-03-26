@@ -96,7 +96,7 @@ export default function Home() {
 
         <UrgentAlertsSection activeAlerts={activeAlerts} t={t} />
 
-        <AlertFatigueInsights visible={true} />
+        {activeAlerts.length > 0 && <AlertFatigueInsights visible={true} />}
 
         <AideSensibilisationSection t={t} />
       </ScrollView>

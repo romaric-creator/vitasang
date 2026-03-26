@@ -280,6 +280,8 @@ export default {
     authRequired: "Login required",
     authMessage: "Create an account to track your alert and receive notifications.",
     fields: {
+      patientName: "Patient Name",
+      contactPhone: "Contact Phone",
       location: "Location",
       quantity: "Required quantity (units)",
       urgency: "Urgency level",

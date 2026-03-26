@@ -86,14 +86,16 @@ export const sendAlert = async (alertData: {
   quantite_requise: number;
   lieu: string;
   description?: string;
+  nom_patient?: string;
+  telephone_contact: string;
 }) => {
   try {
     const response = await apiClient.post(`alerts`, alertData);
     return response.data;
   } catch (error: any) {
     console.error("Send Alert API Error:", error.response?.data || error.message);
-    const apiMessage = error.response?.data?.message || error.response?.data?.error;
-    throw new Error(apiMessage || error.message || "Erreur lors de l'envoi de l'alerte");
+    const apiMessage = error.response?.data?.error?.message || error.response?.data?.message || error.message;
+    throw new Error(apiMessage || "Erreur lors de l'envoi de l'alerte");
   }
 };
 

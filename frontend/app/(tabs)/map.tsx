@@ -9,10 +9,11 @@ import {
   TextInput,
   Dimensions,
   Platform,
+  Alert,
 } from "react-native";
 import MapView, { Marker, PROVIDER_GOOGLE, Callout } from "react-native-maps";
 import { useRouter } from "expo-router";
-import ThemedView from "@/components/ThemedView";
+import * as Location from 'expo-location';
 import { TabBarIcon } from "@/components/TabBarIcon";
 import { color } from "@/constant/color";
 import { LoadingOverlay } from "@/components/LoadingOverlay";
@@ -20,10 +21,12 @@ import { getAllCentres } from "@/services/user.service";
 import { getCurrentPositionAsync } from "@/utils/location";
 import { useTranslation } from "react-i18next";
 import { DataCard, DataCardRow } from "@/components/DataCard";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function MapScreen() {
   const { t } = useTranslation();
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const mapRef = useRef<MapView>(null);
 
   const [centres, setCentres] = useState<any[]>([]);
@@ -32,6 +35,7 @@ export default function MapScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [viewMode, setViewMode] = useState<"map" | "list">("map");
+  const [permissionStatus, setPermissionStatus] = useState<Location.PermissionStatus | null>(null);
   const [userLocation, setUserLocation] = useState<{
     latitude: number;
     longitude: number;
@@ -45,8 +49,23 @@ export default function MapScreen() {
   };
 
   useEffect(() => {
-    loadData();
+    checkPermissionAndLoad();
   }, []);
+
+  const checkPermissionAndLoad = async () => {
+    try {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      setPermissionStatus(status);
+      if (status !== 'granted') {
+        setLoading(false);
+        return;
+      }
+      loadData();
+    } catch (e) {
+      console.error("Permission error:", e);
+      setLoading(false);
+    }
+  };
 
   const loadData = async () => {
     setLoading(true);
@@ -56,22 +75,26 @@ export default function MapScreen() {
 
   const fetchUserLocation = async () => {
     try {
+      console.log("[Map] Fetching user location...");
       const loc = await getCurrentPositionAsync();
+      console.log("[Map] User location result:", loc);
       if (loc) setUserLocation(loc);
     } catch (e) {
-      console.warn("Could not get location:", e);
+      console.warn("[Map] Could not get location:", e);
     }
   };
 
   const fetchCentres = async () => {
     try {
+      console.log("[Map] Fetching centres from API...");
       const res = await getAllCentres();
+      console.log("[Map] API Response success:", res.success, "Centres count:", res.centres?.length);
       if (res.success && res.centres) {
         setAllCentres(res.centres);
         setCentres(res.centres);
       }
     } catch (error) {
-      console.error("Error fetching centres:", error);
+      console.error("[Map] Error fetching centres:", error);
     }
   };
 
@@ -138,9 +161,11 @@ export default function MapScreen() {
       return uniqueCentres;
     }, []);
 
+  console.log("[Map] Rendering. Total centres:", centres?.length, "Mappable centres:", mappableCentres?.length);
+
   return (
-    <ThemedView style={styles.container}>
-      <View style={styles.headerLayer}>
+    <View style={styles.container}>
+      <View style={[styles.headerLayer, { top: insets.top + 10 }]}>
         <View style={styles.searchBar}>
           <TabBarIcon name="search" size={16} color={color.textLight} />
           <TextInput
@@ -175,54 +200,65 @@ export default function MapScreen() {
 
       {viewMode === "map" ? (
         <View style={styles.mapContainer}>
-          <MapView
-            provider={Platform.OS === "android" ? PROVIDER_GOOGLE : undefined}
-            ref={mapRef}
-            style={styles.map}
-            initialRegion={
-              userLocation
-                ? {
-                    ...userLocation,
-                    latitudeDelta: 5,
-                    longitudeDelta: 5,
-                  }
-                : {
-                    ...doualaRegion,
-                    latitudeDelta: 5,
-                    longitudeDelta: 5,
-                  }
-            }
-            showsUserLocation={true}
-          >
-            {mappableCentres.map((centre) => (
-              <Marker
-                key={centre.id_centre || centre.id}
-                coordinate={{
-                  latitude: Number(centre.latitude),
-                  longitude: Number(centre.longitude),
-                }}
-              >
-                <View style={styles.markerContainer}>
-                  <View style={styles.markerPin}>
-                    <TabBarIcon name="hospital-o" size={14} color="white" />
-                  </View>
-                  <View style={styles.markerArrow} />
-                </View>
-                <Callout
-                  tooltip
-                  onPress={() =>
-                    router.push(`/book-appointment/${centre.id_centre}`)
-                  }
+          {permissionStatus === 'denied' ? (
+            <View style={styles.center}>
+               <TabBarIcon name="map-marker" size={50} color={color.textLight} />
+               <Text style={styles.emptyText}>{t("alert.locationError")}</Text>
+               <TouchableOpacity style={styles.retryBtn} onPress={checkPermissionAndLoad}>
+                  <Text style={styles.retryText}>{t("common.errors.retry")}</Text>
+               </TouchableOpacity>
+            </View>
+          ) : (
+            <MapView
+              provider={Platform.OS === "android" ? PROVIDER_GOOGLE : undefined}
+              ref={mapRef}
+              style={styles.map}
+              initialRegion={
+                userLocation
+                  ? {
+                      ...userLocation,
+                      latitudeDelta: 0.1,
+                      longitudeDelta: 0.1,
+                    }
+                  : {
+                      ...doualaRegion,
+                      latitudeDelta: 0.1,
+                      longitudeDelta: 0.1,
+                    }
+              }
+              showsUserLocation={true}
+              showsMyLocationButton={true}
+            >
+              {mappableCentres.map((centre) => (
+                <Marker
+                  key={centre.id_centre || centre.id}
+                  coordinate={{
+                    latitude: Number(centre.latitude),
+                    longitude: Number(centre.longitude),
+                  }}
                 >
-                  <View style={styles.calloutContainer}>
-                    <Text style={styles.calloutTitle}>{centre.nom}</Text>
-                    <Text style={styles.calloutText}>{centre.adresse}</Text>
-                    <Text style={styles.calloutPhone}>{centre.telephone}</Text>
+                  <View style={styles.markerContainer}>
+                    <View style={styles.markerPin}>
+                      <TabBarIcon name="hospital-o" size={14} color="white" />
+                    </View>
+                    <View style={styles.markerArrow} />
                   </View>
-                </Callout>
-              </Marker>
-            ))}
-          </MapView>
+                  <Callout
+                    tooltip
+                    onPress={() =>
+                      router.push(`/book-appointment/${centre.id_centre}`)
+                    }
+                  >
+                    <View style={styles.calloutContainer}>
+                      <Text style={styles.calloutTitle}>{centre.nom}</Text>
+                      <Text style={styles.calloutText}>{centre.adresse}</Text>
+                      <Text style={styles.calloutPhone}>{centre.telephone}</Text>
+                    </View>
+                  </Callout>
+                </Marker>
+              ))}
+            </MapView>
+          )}
         </View>
       ) : (
         <FlatList
@@ -233,7 +269,7 @@ export default function MapScreen() {
               : `centre-${Math.random()}`
           }
           renderItem={renderCentreItem}
-          contentContainerStyle={styles.listContent}
+          contentContainerStyle={[styles.listContent, { paddingTop: insets.top + 70 }]}
           refreshControl={
             <RefreshControl
               refreshing={refreshing}
@@ -250,16 +286,16 @@ export default function MapScreen() {
         />
       )}
 
-      {loading && !refreshing && <LoadingOverlay visible={true} fullScreen />}
-    </ThemedView>
+      {loading && !refreshing && <LoadingOverlay visible={true} fullScreen={false} style={styles.loaderArea} />}
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: color.background },
+  center: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 },
   headerLayer: {
     position: "absolute",
-    top: 50,
     left: 0,
     right: 0,
     zIndex: 10,
@@ -298,7 +334,7 @@ const styles = StyleSheet.create({
   },
   mapContainer: { flex: 1 },
   map: { ...StyleSheet.absoluteFillObject },
-  listContent: { paddingTop: 120, paddingBottom: 100 },
+  listContent: { paddingBottom: 100 },
   markerContainer: { alignItems: "center" },
   markerPin: {
     width: 32,
@@ -340,11 +376,21 @@ const styles = StyleSheet.create({
   calloutText: { fontSize: 11, color: color.textSecondary, marginBottom: 4 },
   calloutPhone: { fontSize: 11, fontWeight: "700", color: color.primary },
   emptyContainer: { marginTop: 100, alignItems: "center" },
-  emptyText: { marginTop: 10, color: color.textSecondary, fontWeight: "600" },
-  loaderBg: {
+  emptyText: { marginTop: 10, color: color.textSecondary, fontWeight: "600", textAlign: 'center' },
+  loaderArea: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(255,255,255,0.5)",
-    justifyContent: "center",
-    alignItems: "center",
+    backgroundColor: 'rgba(255,255,255,0.8)',
+    zIndex: 20
   },
+  retryBtn: {
+    marginTop: 20,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    backgroundColor: color.primary,
+    borderRadius: 8,
+  },
+  retryText: {
+    color: 'white',
+    fontWeight: '700'
+  }
 });

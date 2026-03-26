@@ -78,7 +78,7 @@ const styles = StyleSheet.create({
   primaryButton: {
     backgroundColor: color.background,
     paddingHorizontal: 20,
-    borderRadius: 12,
+    borderRadius: 28,
     paddingVertical: 16,
     alignItems: "center",
     shadowColor: "#000",
@@ -97,7 +97,7 @@ const styles = StyleSheet.create({
   secondaryButton: {
     backgroundColor: "transparent",
     paddingHorizontal: 20,
-    borderRadius: 12,
+    borderRadius: 28,
     paddingVertical: 16,
     alignItems: "center",
     borderColor: color.background,

@@ -7,28 +7,25 @@ import {
   StyleSheet,
   KeyboardAvoidingView,
   Platform,
-  Image,
-  Dimensions,
-  StatusBar
+  StatusBar,
+  TextInput
 } from "react-native";
 import { Formik } from "formik";
 import { router } from "expo-router";
 import { color } from "@/constant/color";
 import { loginValidationSchema } from "@/validation/ValidationSchemas";
-import FormField from "@/components/FormField";
 import { PrimaryButton } from "@/components/PrimaryButton";
 import { useAuth } from "@/context/AuthContext";
 import { TabBarIcon } from "@/components/TabBarIcon";
-import { ErrorAlert } from "@/components/ErrorAlert";
 import { useTranslation } from "react-i18next";
-
-const { height } = Dimensions.get("window");
+import ThemedView from "@/components/ThemedView";
 
 export default function LoginScreen() {
   const { t } = useTranslation();
   const { signIn } = useAuth();
   const [loading, setLoading] = useState(false);
   const [generalError, setGeneralError] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleLogin = async (values: {
     telephone: string;
@@ -43,9 +40,9 @@ export default function LoginScreen() {
       console.error("Login error:", err);
       const msg = err.message || "";
       if (msg.includes("Network") || msg.includes("connexion")) {
-        setGeneralError("Vérifiez votre connexion internet.");
+        setGeneralError(t("error.network") || "Vérifiez votre connexion internet.");
       } else if (msg.includes("401") || msg.includes("identifiants")) {
-        setGeneralError("Numéro ou mot de passe incorrect.");
+        setGeneralError(t("error.invalidCredentials") || "Numéro ou mot de passe incorrect.");
       } else {
         setGeneralError(t("login.error") || "Erreur de connexion.");
       }
@@ -55,224 +52,248 @@ export default function LoginScreen() {
   };
 
   return (
-    <ThemedView style={{ flex: 1 }}>
-      <StatusBar barStyle="dark-content" />
+    <ThemedView style={{ flex: 1, backgroundColor: "white" }}>
+      <StatusBar barStyle="dark-content" backgroundColor="white" />
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={{ flex: 1 }}
       >
         <ScrollView
-          contentContainerStyle={{ flexGrow: 1 }}
+          contentContainerStyle={{ flexGrow: 1, padding: 24, justifyContent: 'center' }}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          <View style={styles.container}>
-            {/* Header / Brand */}
-            <View style={styles.header}>
-              <View style={styles.logoBox}>
-                <Image
-                  source={require("@/assets/images/logo.png")}
-                  style={styles.logo}
-                />
-              </View>
-              <Text style={styles.brandName}>VitaSang</Text>
-              <Text style={styles.tagline}>Le don de sang qui sauve des vies.</Text>
-            </View>
-
-            {/* Login Card */}
-            <View style={styles.card}>
-              <Text style={styles.cardTitle}>{t("login.title", "Connexion")}</Text>
-              
-              <Formik
-                initialValues={{ telephone: "", mot_de_passe: "" }}
-                validationSchema={loginValidationSchema}
-                onSubmit={handleLogin}
-              >
-                {({ values, errors, touched, handleChange, handleBlur, handleSubmit }) => (
-                  <View style={styles.form}>
-                    <FormField
-                      label="Numéro de téléphone"
-                      value={values.telephone}
-                      onChangeText={handleChange("telephone")}
-                      onBlur={handleBlur("telephone")}
-                      placeholder="6XXXXXXXX"
-                      error={errors.telephone}
-                      touched={touched.telephone}
-                      keyboardType="phone-pad"
-                      required
-                      inputStyle={styles.inputPremium}
-                      icon="phone"
-                    />
-
-                    <View style={{ marginTop: 10 }}>
-                      <FormField
-                        label="Mot de passe"
-                        value={values.mot_de_passe}
-                        onChangeText={handleChange("mot_de_passe")}
-                        onBlur={handleBlur("mot_de_passe")}
-                        placeholder="••••••"
-                        error={errors.mot_de_passe}
-                        touched={touched.mot_de_passe}
-                        secureTextEntry
-                        required
-                        inputStyle={styles.inputPremium}
-                        icon="lock"
-                      />
-                      <TouchableOpacity style={styles.forgotBtn} onPress={() => router.push("/aide-et-conseil")}>
-                        <Text style={styles.forgotText}>Oublié ?</Text>
-                      </TouchableOpacity>
-                    </View>
-
-                    {generalError ? (
-                      <View style={styles.errorBox}>
-                        <TabBarIcon name="exclamation-triangle" size={14} color="#DC2626" />
-                        <Text style={styles.errorText}>{generalError}</Text>
-                      </View>
-                    ) : null}
-
-                    <PrimaryButton
-                      title="SE CONNECTER"
-                      onPress={() => handleSubmit()}
-                      loading={loading}
-                      style={styles.loginBtn}
-                    />
-                  </View>
-                )}
-              </Formik>
-            </View>
-
-            {/* Emergency / SOS */}
-            <TouchableOpacity style={styles.sosAction} onPress={() => router.push("/guest-alert")}>
-              <View style={styles.sosIconCircle}>
-                <TabBarIcon name="bolt" size={20} color="white" />
-              </View>
-              <View>
-                <Text style={styles.sosTitle}>URGENCE SOS</Text>
-                <Text style={styles.sosSub}>Lancer une alerte sans compte</Text>
-              </View>
-              <TabBarIcon name="chevron-right" size={16} color="rgba(225, 29, 72, 0.5)" />
-            </TouchableOpacity>
-
-            {/* Footer */}
-            <View style={styles.footer}>
-              <Text style={styles.noAccountText}>Pas encore de compte ?</Text>
-              <TouchableOpacity onPress={() => router.replace("/register")}>
-                <Text style={styles.registerLink}>Créer un compte</Text>
-              </TouchableOpacity>
-            </View>
+          {/* Header */}
+          <View style={styles.header}>
+            <Text style={styles.brandName}>VitaSang</Text>
+            <Text style={styles.subTitle}>Connectez-vous à votre compte</Text>
           </View>
+
+          <Formik
+            initialValues={{ telephone: "", mot_de_passe: "" }}
+            validationSchema={loginValidationSchema}
+            onSubmit={handleLogin}
+          >
+            {({ values, errors, touched, handleChange, handleBlur, handleSubmit }) => (
+              <View style={styles.form}>
+                
+                {/* Telephone */}
+                <View style={styles.inputGroup}>
+                  <Text style={styles.label}>Téléphone<Text style={{color: color.primary}}>*</Text></Text>
+                  <TextInput
+                    style={[styles.input, (touched.telephone && errors.telephone) && styles.inputError]}
+                    value={values.telephone}
+                    onChangeText={handleChange("telephone")}
+                    onBlur={handleBlur("telephone")}
+                    placeholder="Ex: +2376XXXXXXXX"
+                    placeholderTextColor="#9CA3AF"
+                    keyboardType="phone-pad"
+                    autoComplete="tel"
+                    textContentType="telephoneNumber"
+                  />
+                  {touched.telephone && errors.telephone && (
+                    <Text style={styles.errorText}>{errors.telephone}</Text>
+                  )}
+                </View>
+
+                {/* Mot de passe */}
+                <View style={styles.inputGroup}>
+                  <Text style={styles.label}>Mot de passe<Text style={{color: color.primary}}>*</Text></Text>
+                  <View style={[styles.passwordContainer, (touched.mot_de_passe && errors.mot_de_passe) && styles.inputError]}>
+                    <TextInput
+                      style={styles.passwordInput}
+                      value={values.mot_de_passe}
+                      onChangeText={handleChange("mot_de_passe")}
+                      onBlur={handleBlur("mot_de_passe")}
+                      placeholder="Votre mot de passe"
+                      placeholderTextColor="#9CA3AF"
+                      secureTextEntry={!showPassword}
+                      autoComplete="password"
+                      textContentType="password"
+                    />
+                    <TouchableOpacity 
+                      onPress={() => setShowPassword(!showPassword)} 
+                      style={styles.eyeIcon}
+                      accessibilityLabel={showPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
+                      activeOpacity={0.6}
+                    >
+                      <TabBarIcon 
+                        name={showPassword ? "eye" : "eye-slash"} 
+                        size={20} 
+                        color={showPassword ? color.primary : "#9CA3AF"} 
+                      />
+                    </TouchableOpacity>
+                  </View>
+                  {touched.mot_de_passe && errors.mot_de_passe && (
+                    <Text style={styles.errorText}>{errors.mot_de_passe}</Text>
+                  )}
+                </View>
+
+                {/* Lien Oublié */}
+                <TouchableOpacity 
+                  style={styles.forgotBtn} 
+                  onPress={() => router.push("/aide-et-conseil")}
+                >
+                  <Text style={styles.forgotText}>Mot de passe oublié ?</Text>
+                </TouchableOpacity>
+
+                {/* Erreur Générale */}
+                {generalError ? (
+                  <View style={styles.errorBox}>
+                    <Text style={styles.generalErrorText}>{generalError}</Text>
+                  </View>
+                ) : null}
+
+                {/* Bouton Connexion */}
+                <TouchableOpacity
+                  style={styles.loginBtn}
+                  onPress={() => handleSubmit()}
+                  disabled={loading}
+                >
+                  {loading ? (
+                    <Text style={styles.loginBtnText}>CHARGEMENT...</Text>
+                  ) : (
+                    <Text style={styles.loginBtnText}>CONNEXION</Text>
+                  )}
+                </TouchableOpacity>
+
+                {/* Footer */}
+                <View style={styles.footer}>
+                  <Text style={styles.noAccountText}>Pas de compte ? </Text>
+                  <TouchableOpacity onPress={() => router.replace("/register")}>
+                    <Text style={styles.registerLink}>Inscrivez-vous ici</Text>
+                  </TouchableOpacity>
+                </View>
+
+              </View>
+            )}
+          </Formik>
         </ScrollView>
       </KeyboardAvoidingView>
     </ThemedView>
   );
 }
 
-import ThemedView from "@/components/ThemedView";
-
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    paddingHorizontal: 24,
-    paddingTop: 60,
-    paddingBottom: 40,
-    backgroundColor: "#F8FAFC",
-  },
   header: {
-    alignItems: "center",
     marginBottom: 40,
   },
-  logoBox: {
-    width: 80,
-    height: 80,
-    borderRadius: 24,
-    backgroundColor: "white",
-    justifyContent: "center",
-    alignItems: "center",
-    elevation: 4,
-    shadowColor: "#000",
-    shadowOpacity: 0.1,
-    shadowRadius: 10,
-    marginBottom: 16,
+  brandName: { 
+    fontSize: 32, 
+    fontWeight: "900", 
+    color: color.primary, 
+    marginBottom: 8,
   },
-  logo: { width: 50, height: 50, resizeMode: "contain" },
-  brandName: { fontSize: 28, fontWeight: "900", color: "#1E293B", letterSpacing: -1 },
-  tagline: { fontSize: 14, color: "#64748B", marginTop: 4, fontWeight: "500" },
-
-  card: {
-    backgroundColor: "white",
-    borderRadius: 32,
-    padding: 24,
-    shadowColor: "#000",
-    shadowOpacity: 0.05,
-    shadowRadius: 20,
-    elevation: 2,
-    marginBottom: 24,
+  subTitle: { 
+    fontSize: 16, 
+    color: "#4B5563", 
+    fontWeight: "600",
+  },
+  form: { 
+    gap: 20 
+  },
+  inputGroup: {
+    marginBottom: 4,
+  },
+  label: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: "#1F2937",
+    marginBottom: 8,
+  },
+  input: {
+    height: 52,
     borderWidth: 1,
-    borderColor: "#F1F5F9",
+    borderColor: "#E5E7EB",
+    borderRadius: 28,
+    paddingHorizontal: 20,
+    fontSize: 15,
+    color: "#1F2937",
+    backgroundColor: "white",
   },
-  cardTitle: { fontSize: 20, fontWeight: "800", color: "#1E293B", marginBottom: 24 },
-  form: { gap: 16 },
-  inputPremium: {
-    height: 56,
-    borderRadius: 16,
-    backgroundColor: "#F8FAFC",
-    borderWidth: 1,
-    borderColor: "#E2E8F0",
-  },
-  forgotBtn: { alignSelf: "flex-end", paddingVertical: 8 },
-  forgotText: { color: color.primary, fontWeight: "700", fontSize: 13 },
-
-  errorBox: {
+  passwordContainer: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
-    backgroundColor: "#FEF2F2",
-    padding: 12,
-    borderRadius: 12,
+    height: 52,
     borderWidth: 1,
-    borderColor: "#FECACA",
+    borderColor: "#E5E7EB",
+    borderRadius: 28,
+    paddingHorizontal: 20,
+    backgroundColor: "white",
   },
-  errorText: { color: "#991B1B", fontSize: 13, fontWeight: "600" },
-
+  passwordInput: {
+    flex: 1,
+    fontSize: 15,
+    color: "#1F2937",
+    height: '100%',
+  },
+  eyeIcon: {
+    padding: 4,
+  },
+  inputError: {
+    borderColor: color.error,
+  },
+  errorText: {
+    color: color.error,
+    fontSize: 12,
+    marginTop: 4,
+    paddingLeft: 12,
+  },
+  forgotBtn: { 
+    alignSelf: "flex-end", 
+    paddingRight: 10,
+  },
+  forgotText: { 
+    color: color.primary, 
+    fontWeight: "700", 
+    fontSize: 14,
+  },
   loginBtn: {
-    height: 60,
-    borderRadius: 18,
-    backgroundColor: "#0F172A",
-    marginTop: 10,
-    shadowColor: "#000",
-    shadowOpacity: 0.2,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 4,
-  },
-
-  sosAction: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#FFF1F2",
-    padding: 16,
-    borderRadius: 24,
-    gap: 16,
-    borderWidth: 1,
-    borderColor: "#FFE4E6",
-    marginBottom: 32,
-  },
-  sosIconCircle: {
-    width: 44,
-    height: 44,
-    borderRadius: 14,
-    backgroundColor: "#E11D48",
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: color.primary,
     justifyContent: "center",
     alignItems: "center",
+    marginTop: 10,
+    shadowColor: color.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 4,
   },
-  sosTitle: { fontSize: 14, fontWeight: "900", color: "#E11D48", letterSpacing: 1 },
-  sosSub: { fontSize: 12, color: "#9F1239", fontWeight: "500" },
-
+  loginBtnText: {
+    color: "white",
+    fontSize: 16,
+    fontWeight: "800",
+    letterSpacing: 0.5,
+  },
   footer: {
     flexDirection: "row",
     justifyContent: "center",
     alignItems: "center",
-    gap: 8,
+    marginTop: 24,
   },
-  noAccountText: { fontSize: 15, color: "#64748B", fontWeight: "500" },
-  registerLink: { fontSize: 15, color: color.primary, fontWeight: "800", textDecorationLine: "underline" },
+  noAccountText: { 
+    fontSize: 14, 
+    color: "#6B7280", 
+    fontWeight: "500",
+  },
+  registerLink: { 
+    fontSize: 14, 
+    color: color.primary, 
+    fontWeight: "800", 
+  },
+  errorBox: {
+    padding: 10,
+    backgroundColor: "#FEF2F2",
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#FECACA",
+  },
+  generalErrorText: {
+    color: "#991B1B",
+    fontSize: 13,
+    textAlign: "center",
+    fontWeight: "600",
+  },
 });

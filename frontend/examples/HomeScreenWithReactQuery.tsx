@@ -172,7 +172,7 @@ export function HomeScreenWithReactQuery() {
         <View style={styles.ctaSection}>
           <TouchableOpacity
             style={[styles.ctaButton, styles.primaryButton]}
-            onPress={() => router.push("/create-alert")}
+            onPress={() => router.push("/create-alert" as any)}
           >
             <TabBarIcon name="plus-circle" size={20} color="white" />
             <Text style={styles.ctaText}>{t("home.createAlert")}</Text>
@@ -180,7 +180,7 @@ export function HomeScreenWithReactQuery() {
 
           <TouchableOpacity
             style={[styles.ctaButton, styles.secondaryButton]}
-            onPress={() => router.push("/(tabs)/centres")}
+            onPress={() => router.push("/(tabs)/map" as any)}
           >
             <TabBarIcon name="hospital" size={20} color={color.primary} />
             <Text style={[styles.ctaText, { color: color.primary }]}>

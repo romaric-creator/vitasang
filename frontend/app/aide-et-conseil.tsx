@@ -146,7 +146,7 @@ export default function AideEtConseilScreen() {
 
         <TouchableOpacity
           style={styles.ctaButton}
-          onPress={() => router.push("/create-alert")}
+          onPress={() => router.push("/create-alert" as any)}
         >
           <TabBarIcon name="bolt" size={24} color="white" />
           <Text style={styles.ctaText}>{t("home.launchAlert")}</Text>

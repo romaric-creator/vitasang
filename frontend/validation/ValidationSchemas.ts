@@ -83,6 +83,10 @@ export const createAlertValidationSchema = yup.object().shape({
   description: yup
     .string()
     .max(500, 'Maximum 500 caractères'),
+  nom_patient: yup
+    .string()
+    .required('Le nom du patient est requis')
+    .min(2, 'Au minimum 2 caractères'),
   telephone_contact: yup
     .string()
     .required('Le numéro de contact est requis')

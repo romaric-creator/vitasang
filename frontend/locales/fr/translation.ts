@@ -232,6 +232,18 @@ export default {
       password: "Votre mot de passe",
     },
   },
+  booking: {
+    title: "Prise de rendez-vous",
+    loadError: "Impossible de charger les détails du centre",
+    notFound: "Centre introuvable",
+    dateLabel: "Date du rendez-vous",
+    datePlaceholder: "Sélectionner une date",
+    timeLabel: "Heure du rendez-vous",
+    timePlaceholder: "Sélectionner une heure",
+    submit: "CONFIRMER LE RENDEZ-VOUS",
+    submitError: "Erreur lors de la prise de rendez-vous",
+    success: "Rendez-vous confirmé avec succès !",
+  },
   register: {
     title: "VitaSang",
     subtitle: "Créez votre profil de donneur",
@@ -268,6 +280,7 @@ export default {
     },
   },
   alert: {
+    emergencySOS: "Urgence : Lancer une alerte",
     title: "Nouvelle Alerte",
     submit: "DIFFUSER L'ALERTE",
     sosGeneral: "SOS GÉNÉRAL (Inconnu)",
@@ -282,6 +295,8 @@ export default {
     authRequired: "Connexion requise",
     authMessage: "Créez un compte pour suivre votre alerte et recevoir des notifications.",
     fields: {
+      patientName: "Nom du Patient",
+      contactPhone: "Numéro de Contact",
       location: "Lieu",
       quantity: "Quantité requise (poches)",
       urgency: "Niveau d'urgence",

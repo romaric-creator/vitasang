@@ -10,6 +10,7 @@ const {
   globalLimiter,
   authLimiter,
   registerLimiter,
+  alertLimiter,
 } = require("./middleware/rateLimiter");
 const helmet = require("helmet");
 const swaggerUi = require("swagger-ui-express");
@@ -76,6 +77,7 @@ const messagesRoute = require("./routes/messages.routes");
 // Limiters spécifiques AVANT le global
 app.use("/api/users/register", registerLimiter);
 app.use("/api/users/login", authLimiter);
+app.use("/api/alerts", alertLimiter);
 
 // Global rate limiter
 app.use(globalLimiter);

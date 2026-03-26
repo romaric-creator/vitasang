@@ -126,8 +126,22 @@ const registerLimiter = rateLimit({
   },
 });
 
+// Alert rate limiter: 3 alerts per 30 minutes (to avoid SMS/Notif spam)
+const alertLimiter = rateLimit({
+  windowMs: 30 * 60 * 1000,
+  max: 3,
+  store: makeStore('rl:alert:', 30 * 60 * 1000),
+  handler: (req, res) => {
+    logger.warn('Alert rate limit exceeded', { ip: req.ip });
+    res.status(429).json({
+      message: "Trop d'alertes envoyées. Veuillez patienter 30 minutes avant de recommencer.",
+    });
+  },
+});
+
 module.exports = {
   globalLimiter,
   authLimiter,
   registerLimiter,
+  alertLimiter,
 };

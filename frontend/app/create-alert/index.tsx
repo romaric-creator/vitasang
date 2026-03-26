@@ -32,7 +32,7 @@ import {
 export default function CreateAlertScreen() {
   const { t } = useTranslation();
   const router = useRouter();
-  const { isAuth } = useAuth();
+  const { isAuth, user } = useAuth();
   const [location, setLocation] = useState<Location.LocationObject | null>(
     null,
   );
@@ -56,6 +56,7 @@ export default function CreateAlertScreen() {
         setLocation(location);
       } catch (e) {
         console.warn("Location error:", e);
+        setErrorMsg(t("alert.locationError") || "Impossible de récupérer votre position. Veuillez vérifier votre GPS.");
       }
       setIsLocating(false);
     })();
@@ -109,6 +110,8 @@ export default function CreateAlertScreen() {
       quantite_requise: parseInt(values.quantite_requise),
       lieu: values.lieu,
       description: values.description,
+      nom_patient: values.nom_patient,
+      telephone_contact: values.telephone_contact,
     };
 
     setLoading(true);
@@ -158,10 +161,12 @@ export default function CreateAlertScreen() {
         >
           <Formik
             initialValues={{
+              nom_patient: user ? `${user.prenom} ${user.nom}` : "",
+              telephone_contact: user?.telephone || "",
               groupe_sanguin: "O+",
               urgence: "URGENT",
               lieu: "",
-              quantite_requise: "",
+              quantite_requise: "1",
               description: "",
               latitude: location?.coords.latitude || 0,
               longitude: location?.coords.longitude || 0,
@@ -177,6 +182,7 @@ export default function CreateAlertScreen() {
               handleChange,
               handleBlur,
               handleSubmit,
+              setFieldValue,
             }) => (
               <View>
                 <BloodGroupSelector
@@ -193,6 +199,29 @@ export default function CreateAlertScreen() {
                   }}
                   error={errors.groupe_sanguin}
                   touched={touched.groupe_sanguin}
+                />
+
+                <FormField
+                  label={t("alert.fields.patientName") || "Nom du Patient"}
+                  value={values.nom_patient}
+                  onChangeText={handleChange("nom_patient")}
+                  onBlur={handleBlur("nom_patient")}
+                  placeholder="Jean Dupont"
+                  error={errors.nom_patient}
+                  touched={touched.nom_patient}
+                  required
+                />
+
+                <FormField
+                  label={t("alert.fields.contactPhone") || "Numéro de Contact"}
+                  value={values.telephone_contact}
+                  onChangeText={(text) => setFieldValue("telephone_contact", text.replace(/\s/g, ""))}
+                  onBlur={handleBlur("telephone_contact")}
+                  placeholder="6XXXXXXXX"
+                  error={errors.telephone_contact}
+                  touched={touched.telephone_contact}
+                  keyboardType="phone-pad"
+                  required
                 />
 
                 <FormField
@@ -315,11 +344,11 @@ const styles = StyleSheet.create({
   urgencyOption: {
     flex: 1,
     paddingVertical: 10,
-    borderRadius: 10,
-    borderWidth: 1,
+    borderRadius: 12,
+    borderWidth: 1.5,
     borderColor: color.border,
     alignItems: "center",
-    backgroundColor: "white",
+    backgroundColor: color.surface,
   },
   urgencySelected: {
     backgroundColor: color.primary,
@@ -327,35 +356,41 @@ const styles = StyleSheet.create({
   },
   urgencyLabel: {
     fontSize: 10,
-    fontWeight: "700",
-    color: color.textMain,
+    fontWeight: "800",
+    color: color.textSecondary,
     textAlign: "center",
+    textTransform: "uppercase",
   },
   warningBox: {
     flexDirection: "row",
-    gap: 10,
-    backgroundColor: "#FFF5F5",
-    padding: 12,
-    borderRadius: 10,
-    marginTop: 12,
-    marginBottom: 12,
+    gap: 12,
+    backgroundColor: color.dangerLight,
+    padding: 16,
+    borderRadius: 12,
+    marginTop: 16,
+    marginBottom: 16,
     alignItems: "center",
     borderWidth: 1,
-    borderColor: "#FFE4E6",
+    borderColor: "rgba(225, 29, 72, 0.1)", // Subtle primary border
   },
   warningText: {
     flex: 1,
-    fontSize: 11,
+    fontSize: 12,
     color: color.primary,
-    lineHeight: 16,
-    fontWeight: "600",
+    lineHeight: 18,
+    fontWeight: "700",
   },
   errorText: {
     color: color.error,
-    fontSize: 12,
+    fontSize: 13,
     marginBottom: 16,
     textAlign: "center",
-    fontWeight: "600",
+    fontWeight: "700",
+    backgroundColor: color.dangerLight,
+    padding: 10,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: color.error,
   },
   authSection: {
     marginTop: 24,

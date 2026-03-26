@@ -5,7 +5,6 @@ import {
   View,
   TouchableOpacity,
   ScrollView,
-  Alert,
   Platform,
 } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -21,7 +20,6 @@ import { TabBarIcon } from "@/components/TabBarIcon";
 import { getCentreDetails, createAppointment } from "@/services/user.service";
 import { analyticsService } from "@/services/analyticsService";
 import { LoadingOverlay } from "@/components/LoadingOverlay";
-
 import { useTranslation } from "react-i18next";
 import DateTimePicker from "@react-native-community/datetimepicker";
 
@@ -40,6 +38,8 @@ export default function BookAppointmentScreen() {
   const [centre, setCentre] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // États séparés pour les sélecteurs
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showTimePicker, setShowTimePicker] = useState(false);
 
@@ -48,7 +48,6 @@ export default function BookAppointmentScreen() {
       if (!centreId) return;
       setLoading(true);
       try {
-        // This will be replaced with a real service call
         const res = await getCentreDetails(centreId);
         if (res.success) {
           setCentre(res.centre);
@@ -71,9 +70,10 @@ export default function BookAppointmentScreen() {
         id_centre: centreId,
         date_rdv: values.date,
         heure_debut: values.time,
-        // In a real app, you'd add more fields like donation type
       };
+      
       const res = await createAppointment(appointmentData);
+      
       if (res.success) {
         analyticsService.trackEvent(analyticsService.events.APPOINTMENT_BOOKED, {
           centreId: centreId,
@@ -93,17 +93,14 @@ export default function BookAppointmentScreen() {
   };
 
   if (loading) {
-    return (
-      <View style={styles.centerContent}>
-        <LoadingOverlay visible={true} message={t("common.loading")} />
-      </View>
-    );
+    return <LoadingOverlay visible={true} message={t("common.loading")} />;
   }
 
   if (!centre) {
     return (
       <View style={styles.centerContent}>
-        <Text>{t("booking.notFound")}</Text>
+        <Text style={styles.notFoundText}>{t("booking.notFound")}</Text>
+        <PrimaryButton title={t("common.actions.backHome")} onPress={() => router.back()} />
       </View>
     );
   }
@@ -111,12 +108,19 @@ export default function BookAppointmentScreen() {
   return (
     <ThemedView style={styles.container}>
       <PageHeader title={t("booking.title")} />
-      <ScrollView>
-        <View style={styles.centreInfo}>
-          <TabBarIcon name="hospital-o" size={24} color={color.primary} />
-          <View>
+      
+      <ScrollView contentContainerStyle={{ paddingBottom: 40 }}>
+        {/* Info Centre */}
+        <View style={styles.centreCard}>
+          <View style={styles.iconBox}>
+            <TabBarIcon name="hospital-o" size={32} color={color.primary} />
+          </View>
+          <View style={{ flex: 1 }}>
             <Text style={styles.centreName}>{centre.nom_centre}</Text>
             <Text style={styles.centreAddress}>{centre.adresse}</Text>
+            {centre.telephone && (
+              <Text style={styles.centrePhone}>{centre.telephone}</Text>
+            )}
           </View>
         </View>
 
@@ -125,16 +129,11 @@ export default function BookAppointmentScreen() {
           validationSchema={BookingSchema}
           onSubmit={handleBooking}
         >
-          {({
-            values,
-            errors,
-            touched,
-            handleChange,
-            handleBlur,
-            handleSubmit,
-          }) => (
+          {({ values, errors, touched, handleSubmit, setFieldValue }) => (
             <View style={styles.form}>
-              <TouchableOpacity onPress={() => setShowDatePicker(true)}>
+              
+              {/* Date Picker */}
+              <TouchableOpacity onPress={() => setShowDatePicker(true)} activeOpacity={0.8}>
                 <View pointerEvents="none">
                   <FormField
                     label={t("booking.dateLabel")}
@@ -142,6 +141,8 @@ export default function BookAppointmentScreen() {
                     placeholder={t("booking.datePlaceholder")}
                     error={errors.date}
                     touched={touched.date}
+                    editable={false} 
+                    icon="calendar"
                   />
                 </View>
               </TouchableOpacity>
@@ -153,15 +154,28 @@ export default function BookAppointmentScreen() {
                   display={Platform.OS === 'ios' ? 'spinner' : 'default'}
                   minimumDate={new Date()}
                   onChange={(event, date) => {
-                    setShowDatePicker(false);
+                    setShowDatePicker(Platform.OS === 'ios'); // Keep open on iOS until confirmed
                     if (date) {
-                      handleChange("date")(date.toISOString().split('T')[0]);
+                      setFieldValue("date", date.toISOString().split('T')[0]);
+                      if (Platform.OS !== 'ios') setShowDatePicker(false);
+                    } else {
+                      setShowDatePicker(false);
                     }
                   }}
                 />
               )}
+              
+              {/* iOS Done Button for Date */}
+              {Platform.OS === 'ios' && showDatePicker && (
+                <View style={styles.iosPickerToolbar}>
+                  <TouchableOpacity onPress={() => setShowDatePicker(false)}>
+                    <Text style={styles.iosDoneText}>{t("common.actions.yes")}</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
 
-              <TouchableOpacity onPress={() => setShowTimePicker(true)}>
+              {/* Time Picker */}
+              <TouchableOpacity onPress={() => setShowTimePicker(true)} activeOpacity={0.8}>
                 <View pointerEvents="none">
                   <FormField
                     label={t("booking.timeLabel")}
@@ -169,6 +183,8 @@ export default function BookAppointmentScreen() {
                     placeholder={t("booking.timePlaceholder")}
                     error={errors.time}
                     touched={touched.time}
+                    editable={false}
+                    icon="clock-o"
                   />
                 </View>
               </TouchableOpacity>
@@ -180,19 +196,32 @@ export default function BookAppointmentScreen() {
                   display={Platform.OS === 'ios' ? 'spinner' : 'default'}
                   is24Hour={true}
                   onChange={(event, date) => {
-                    setShowTimePicker(false);
+                    setShowTimePicker(Platform.OS === 'ios');
                     if (date) {
-                      const time = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-                      handleChange("time")(time);
+                      const timeString = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
+                      setFieldValue("time", timeString);
+                      if (Platform.OS !== 'ios') setShowTimePicker(false);
+                    } else {
+                      setShowTimePicker(false);
                     }
                   }}
                 />
               )}
+
+              {/* iOS Done Button for Time */}
+              {Platform.OS === 'ios' && showTimePicker && (
+                <View style={styles.iosPickerToolbar}>
+                  <TouchableOpacity onPress={() => setShowTimePicker(false)}>
+                    <Text style={styles.iosDoneText}>{t("common.actions.yes")}</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+
               <PrimaryButton
                 title={t("booking.submit")}
                 onPress={() => handleSubmit()}
                 loading={isSubmitting}
-                style={{ marginTop: 20 }}
+                style={{ marginTop: 30 }}
               />
             </View>
           )}
@@ -211,27 +240,65 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
+    padding: 20,
   },
-  centreInfo: {
+  notFoundText: {
+    fontSize: 16, 
+    color: color.textSecondary,
+    marginBottom: 20,
+  },
+  centreCard: {
     flexDirection: "row",
     gap: 16,
-    padding: 16,
+    padding: 20,
     margin: 16,
-    backgroundColor: color.surface,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: color.border,
+    backgroundColor: "white",
+    borderRadius: 20,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.05,
+    shadowRadius: 10,
+    elevation: 2,
+    alignItems: "center",
+  },
+  iconBox: {
+    width: 60,
+    height: 60,
+    borderRadius: 16,
+    backgroundColor: "#EFF6FF", // blue-50
+    justifyContent: "center",
+    alignItems: "center",
   },
   centreName: {
-    fontSize: 16,
-    fontWeight: "700",
+    fontSize: 18,
+    fontWeight: "800",
     color: color.textMain,
+    marginBottom: 4,
   },
   centreAddress: {
     fontSize: 13,
     color: color.textSecondary,
+    marginBottom: 2,
+  },
+  centrePhone: {
+    fontSize: 13,
+    color: color.primary,
+    fontWeight: "600",
   },
   form: {
-    paddingHorizontal: 16,
+    paddingHorizontal: 20,
+    gap: 10,
+  },
+  iosPickerToolbar: {
+    backgroundColor: "#F2F2F2", 
+    padding: 10, 
+    alignItems: "flex-end",
+    marginBottom: 10,
+    borderRadius: 8,
+  },
+  iosDoneText: {
+    color: color.primary,
+    fontWeight: "700",
+    fontSize: 16,
   },
 });

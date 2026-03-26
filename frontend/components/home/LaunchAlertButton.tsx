@@ -14,7 +14,10 @@ export const LaunchAlertButton = ({ t }: LaunchAlertButtonProps) => {
   return (
     <TouchableOpacity
       style={styles.mainActionBtn}
-      onPress={() => router.push("/create-alert")}
+      onPress={() => {
+        console.log("[LaunchAlertButton] Redirecting to /create-alert");
+        router.push("/create-alert" as any);
+      }}
     >
       <View style={styles.mainActionGradient}>
         <TabBarIcon name="bolt" size={24} color="white" />

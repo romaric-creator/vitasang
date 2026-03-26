@@ -140,7 +140,7 @@ function RootLayoutNav() {
       <Stack.Screen name="alert-confirmation" />
       <Stack.Screen name="Splash" />
       <Stack.Screen name="OnboardingCarousel" />
-      <Stack.Screen name="create-alert" options={{ presentation: "modal" }} />
+      <Stack.Screen name="create-alert/index" options={{ presentation: "modal", title: "Lancer une alerte" }} />
       <Stack.Screen name="alert-tracking/[id]" />
       <Stack.Screen name="edit-profile" />
       <Stack.Screen name="alert-response/[id]" />
