@@ -176,33 +176,63 @@ exports.searchUsers = async (req, res, next) => {
 
 exports.getUserProfile = async (req, res, next) => {
   try {
-    const user = await Utilisateur.findByPk(req.params.id, {
+    const userId = req.params.id;
+    const user = await Utilisateur.findByPk(userId, {
       attributes: { exclude: ["mot_de_passe"] },
-      include: [{ model: ProfilDonneur, as: "profilDonneur" }],
+      include: [
+        { model: ProfilDonneur, as: "profilDonneur" },
+        { model: Centre }
+      ],
     });
 
     if (!user) {
       return res.status(404).json({ success: false, message: "Utilisateur non trouvé" });
     }
 
+    // Calcul des compteurs en parallèle pour la performance (Scaling)
+    const [donsCount, alertesCount, rendezvousCount] = await Promise.all([
+      db.HistoriqueDon.count({ where: { id_donneur: userId } }),
+      db.Alerte.count({ where: { id_initiateur: userId } }),
+      db.RendezVous.count({ where: { id_donneur: userId, statut_rdv: 'planifie' } })
+    ]);
+
+    const userResponse = {
+      id_utilisateur: user.id_utilisateur,
+      nom: user.nom,
+      prenom: user.prenom,
+      telephone: user.telephone,
+      email: user.email,
+      ville: user.region,
+      role: user.role,
+      photo_profil: user.photo_profil,
+      groupe_sanguin: user.profilDonneur?.groupe_sanguin || null,
+      disponible: user.profilDonneur?.disponible ?? true,
+      lat: user.profilDonneur?.lat_actuelle,
+      long: user.profilDonneur?.long_actuelle,
+      donsCount,
+      alertesCount,
+      rendezvousCount
+    };
+
+    // Si l'utilisateur est rattaché à un centre, on inclut les infos du centre
+    if ((user.role === "personnel" || user.role === "admin") && user.Centre) {
+      userResponse.centre = {
+        id_centre: user.Centre.id_centre,
+        nom: user.Centre.nom_centre,
+        adresse: user.Centre.adresse,
+        ville: user.Centre.ville,
+        telephone: user.Centre.contact_urgence,
+        latitude: user.Centre.latitude,
+        longitude: user.Centre.longitude
+      };
+    }
+
     res.json({
       success: true,
-      user: {
-        id_utilisateur: user.id_utilisateur,
-        nom: user.nom,
-        prenom: user.prenom,
-        telephone: user.telephone,
-        email: user.email,
-        ville: user.region,
-        role: user.role,
-        photo_profil: user.photo_profil,
-        groupe_sanguin: user.profilDonneur?.groupe_sanguin || null,
-        disponible: user.profilDonneur?.disponible ?? true,
-        lat: user.profilDonneur?.lat_actuelle,
-        long: user.profilDonneur?.long_actuelle,
-      },
+      user: userResponse,
     });
   } catch (error) {
+    logger.error(`Erreur dans getUserProfile pour l'id ${req.params.id}:`, error);
     next(error);
   }
 };

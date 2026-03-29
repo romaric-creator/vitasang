@@ -47,8 +47,8 @@ exports.sendPushNotifications = async (messages) => {
   const failed = [];
   const successful = [];
 
-  // Send notifications in chunks
-  for (const chunk of chunks) {
+  // Send notifications in chunks in parallel (Scaling improvement)
+  const chunkPromises = chunks.map(async (chunk) => {
     try {
       const ticketChunk = await expo.sendPushNotificationsAsync(chunk);
 
@@ -81,7 +81,9 @@ exports.sendPushNotifications = async (messages) => {
         });
       });
     }
-  }
+  });
+
+  await Promise.all(chunkPromises);
 
   return {
     successful,

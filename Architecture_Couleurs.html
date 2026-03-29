@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Architecture Backend - VitaSang</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f8fafc;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+
+        h1 {
+            color: #1e293b;
+            margin-bottom: 5px;
+        }
+
+        p {
+            color: #475569;
+            margin-bottom: 30px;
+        }
+
+        .mermaid-container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+            border: 1px solid #e2e8f0;
+            max-width: 100%;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Architecture Backend VitaSang</h1>
+    <p>Double-cliquez sur ce fichier pour l'ouvrir dans votre navigateur. Vous pourrez ensuite faire une capture d'écran
+        pour votre rapport ou l'imprimer en PDF.</p>
+
+    <div class="mermaid-container">
+        <div class="mermaid">
+            flowchart TD
+            %% Définition des couleurs élégantes pour rapport
+            classDef client fill:#3b82f6,stroke:#1d4ed8,stroke-width:2px,color:#fff,font-weight:bold
+            classDef gateway fill:#10b981,stroke:#047857,stroke-width:2px,color:#fff
+            classDef auth fill:#f59e0b,stroke:#b45309,stroke-width:2px,color:#fff
+            classDef controller fill:#8b5cf6,stroke:#5b21b6,stroke-width:2px,color:#fff
+            classDef service fill:#ec4899,stroke:#be185d,stroke-width:2px,color:#fff
+            classDef worker fill:#ef4444,stroke:#be123c,stroke-width:2px,color:#fff
+            classDef db fill:#f97316,stroke:#c2410c,stroke-width:2px,color:#fff
+            classDef thirdparty fill:#64748b,stroke:#334155,stroke-width:2px,color:#fff
+
+            Client_Mobile(("📱 App Mobile\n(React Native)")):::client
+            Client_Desktop(("💻 Dashboard Admin\n(React Vite)")):::client
+
+            subgraph SG1 ["🔒 Couche d'Entrée & Sécurité"]
+            LoadBalancer["🌐 Reverse Proxy\n(Plateforme Hébergement)"]:::gateway
+            RateLimiter["🛡️ Rate Limiter\n(DDoS Protection)"]:::auth
+            JWT_Auth["🔑 Auth Middleware\n(Valide Token JWT)"]:::auth
+            end
+
+            subgraph SG2 ["⚙️ Core Backend (Node.js & Express)"]
+            C_Users["👤 Users Controller"]:::controller
+            C_Centres["🏥 Centres Controller"]:::controller
+            C_Alerts["🚨 Alerts Controller"]:::controller
+            C_RendezVous["📅 Rendez-Vous Controller"]:::controller
+
+            S_User["User Service"]:::service
+            S_Alert["Alert Service"]:::service
+            S_Cache["Cache Service"]:::service
+
+            CronJob(("⏱️ Cron Jobs\n(Nettoyage)")):::worker
+            QueueWorker[["⚙️ Notification Worker"]]:::worker
+            end
+
+            subgraph SG3 ["💾 Couche de Données Interne"]
+            ORM["🔗 Sequelize (ORM)"]:::auth
+            DB[("🛢️ Base de Données\nMySQL")]:::db
+            Redis[("⚡ Redis\n(Cache & File d'attente)")]:::db
+            end
+
+            subgraph SG4 ["☁️ Services Cloud Tiers"]
+            ExpoPush(("📤 Expo Push\nNotifications")):::thirdparty
+            PostHog(("📊 Analytics\n(PostHog)")):::thirdparty
+            end
+
+            Client_Mobile -- "HTTPS / TLS" --> LoadBalancer
+            Client_Desktop -- "HTTPS / TLS" --> LoadBalancer
+
+            LoadBalancer --> RateLimiter
+            RateLimiter --> JWT_Auth
+
+            JWT_Auth --> C_Users & C_Centres & C_Alerts & C_RendezVous
+
+            C_Users --> S_User
+            C_Alerts --> S_Alert
+            C_Centres --> S_Cache
+
+            S_User & S_Alert & C_Centres & C_RendezVous --> ORM
+            ORM <--> DB
+                S_Cache <--> Redis
+
+                    S_Alert -. "Publie Tâche (Urgence)" .-> Redis
+                    Redis -. "Consomme Tâche Async" .-> QueueWorker
+                    QueueWorker --> ExpoPush
+                    C_Users -. "Logs Analytics" .-> PostHog
+        </div>
+    </div>
+
+    <script>
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'default',
+            flowchart: {
+                curve: 'basis',
+                nodeSpacing: 50,
+                rankSpacing: 60
+            }
+        });
+    </script>
+</body>
+
+</html>

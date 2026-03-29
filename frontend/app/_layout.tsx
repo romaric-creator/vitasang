@@ -169,7 +169,7 @@ export default function RootLayout() {
       persistOptions={{ persister: asyncStoragePersister }}
     >
       <PostHogProvider
-        apiKey="phc_RCtl1OvR1kNIFgIEy1jwOODKDO2qnhBCvNurxY1j4Il"
+        apiKey={process.env.EXPO_PUBLIC_POSTHOG_KEY as string}
         options={{
           host: "https://us.i.posthog.com",
           enableSessionReplay: true,

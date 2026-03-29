@@ -138,11 +138,15 @@ exports.getCentreAvailability = async (req, res, next) => {
     endDate.setDate(endDate.getDate() + 7);
     endDate.setHours(23, 59, 59, 999);
 
+    // Convertir dates de recherche en UTC, sachant que la logique métier est en UTC+1
+    const startUTC = new Date(startDate.getTime() - (60 * 60 * 1000));
+    const endUTC = new Date(endDate.getTime() - (60 * 60 * 1000));
+
     const existingRdvs = await RendezVous.findAll({
       where: {
         id_centre: parseInt(id),
         date_heure_rdv: {
-          [db.Sequelize.Op.between]: [startDate, endDate],
+          [db.Sequelize.Op.between]: [startUTC, endUTC],
         },
         statut_rdv: { [db.Sequelize.Op.ne]: "annule" },
       },
@@ -152,8 +156,10 @@ exports.getCentreAvailability = async (req, res, next) => {
     const bookedMap = {}; // { 'YYYY-MM-DD': { 'HH:mm': count } }
     existingRdvs.forEach((rdv) => {
       const dt = new Date(rdv.date_heure_rdv);
-      const dateStr = dt.toISOString().split("T")[0];
-      const timeStr = dt.toTimeString().slice(0, 5);
+      const cameroonDate = new Date(dt.getTime() + (60 * 60 * 1000)); // DB est en UTC, on recrée en UTC+1
+
+      const dateStr = cameroonDate.toISOString().split("T")[0];
+      const timeStr = cameroonDate.toISOString().split("T")[1].slice(0, 5);
 
       if (!bookedMap[dateStr]) bookedMap[dateStr] = {};
       bookedMap[dateStr][timeStr] = (bookedMap[dateStr][timeStr] || 0) + 1;
@@ -190,7 +196,7 @@ exports.getCentreStats = async (req, res, next) => {
     const { id } = req.params;
     const centerId = parseInt(id);
     const cacheKey = `centre:${centerId}:stats`;
-    
+
     // Tentative de lecture du cache
     const cachedStats = await cacheService.get(cacheKey);
     if (cachedStats) {

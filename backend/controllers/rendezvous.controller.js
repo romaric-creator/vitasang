@@ -13,7 +13,7 @@ exports.createRendezVous = async (req, res, next) => {
 
     logger.info('Creating rendez-vous', { userId: id_donneur, centreId: id_centre, date: date_rdv });
 
-    const dateTime = new Date(`${date_rdv}T${heure_debut}:00`);
+    const dateTime = new Date(`${date_rdv}T${heure_debut}:00+01:00`);
 
     // Anti-double-booking check
     const centre = await Centre.findByPk(id_centre);

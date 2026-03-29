@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Architecture Logicielle Complète - VitaSang</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f8fafc;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+
+        h1 {
+            color: #1e293b;
+            margin-bottom: 5px;
+        }
+
+        p {
+            color: #475569;
+            margin-bottom: 30px;
+            text-align: center;
+            max-width: 800px;
+        }
+
+        .mermaid-container {
+            background-color: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+            border: 1px solid #e2e8f0;
+            max-width: 100%;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Architecture Logicielle Complète (Global) - VitaSang</h1>
+    <p>Double-cliquez pour ouvrir dans votre navigateur. Ce schéma coloré représente le flux complet de la donnée
+        "End-to-End" (du client mobile jusqu'à la base MySQL en passant par l'API NodeJS et les services de
+        Notifications).</p>
+
+    <div class="mermaid-container">
+        <div class="mermaid">
+            flowchart LR
+            %% Couleurs professionnelles
+            classDef frontend fill:#3b82f6,stroke:#1d4ed8,stroke-width:2px,color:#fff,font-weight:bold
+            classDef proxy fill:#10b981,stroke:#047857,stroke-width:2px,color:#fff
+            classDef backend fill:#8b5cf6,stroke:#5b21b6,stroke-width:2px,color:#fff
+            classDef db fill:#f59e0b,stroke:#b45309,stroke-width:2px,color:#fff
+            classDef external fill:#64748b,stroke:#334155,stroke-width:2px,color:#fff
+
+            subgraph SG_FRONT ["📱 Frontend (Interfaces Utilisateurs)"]
+            direction TB
+            MobileApp(("Application Mobile\n(React Native / Expo)")):::frontend
+            DesktopApp(("Dashboard Admin\n(React.js / Vite)")):::frontend
+            end
+
+            subgraph SG_NET ["🔗 Réseau & Sécurité"]
+            direction TB
+            ReverseProxy["Plateforme Hébergement\n(Reverse Proxy HTTPS)"]:::proxy
+            AuthMiddle["Middleware Sécurité\n(Validation Token JWT)"]:::proxy
+            end
+
+            subgraph SG_BACK ["⚙️ Backend API (Node.js & Express)"]
+            direction TB
+            Controllers["Couche Contrôleurs\n(Endpoints /api/...)"]:::backend
+            Services["Couche Services\n(Logique Algorithmique)"]:::backend
+            ORM["Moteur ORM\n(Sequelize)"]:::backend
+            Workers[["File d'Attente & Tâches Async\n(Cron Jobs)"]]:::backend
+            end
+
+            subgraph SG_DATA ["💾 Couche de Persistance des Données"]
+            direction TB
+            MySQL[("Base de Données\nRelationnelle MySQL")]:::db
+            Redis[("Cache Temporaire\n(Sessions & Notifications)")]:::db
+            end
+
+            subgraph SG_EXT ["☁️ Services Externes (Third-Party)"]
+            direction TB
+            ExpoPush(("Serveurs Expo\n(Push Notifications)")):::external
+            PostHog(("PostHog\n(Analytique Utilisateurs)")):::external
+            end
+
+            %% Connexions logiques (Routage de la donnée)
+            SG_FRONT -- "Requêtes API REST (JSON)" --> ReverseProxy
+            ReverseProxy --> AuthMiddle
+
+            AuthMiddle -- "Accès Autorisé" --> Controllers
+            Controllers -- "Délègue la logique" --> Services
+
+            Services -- "Requêtes CRUD Structurées" --> ORM
+            ORM <--> MySQL
+
+                Services -. "Enregistre & Lit en direct" .-> Redis
+                Services -. "Pousse les tâches SOS" .-> Workers
+                Workers -. "Dépile & Déclenche" .-> ExpoPush
+
+                Controllers -. "Événements API (Erreurs / Succès)" .-> PostHog
+                MobileApp -. "Interactions Utilisateurs" .-> PostHog
+
+        </div>
+    </div>
+
+    <script>
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'default',
+            flowchart: {
+                curve: 'basis',
+                nodeSpacing: 60,
+                rankSpacing: 80
+            }
+        });
+    </script>
+</body>
+
+</html>
