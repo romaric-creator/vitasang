@@ -3,7 +3,7 @@ services:
     name: vitasang
     runtime: docker
     dockerContext: backend
-    dockerfilePath: Dockerfile
+    dockerfilePath: backend/Dockerfile
     plan: free
     envVars:
       - key: NODE_ENV
