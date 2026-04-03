@@ -189,7 +189,6 @@ router.get("/", verifyToken, requireRole("admin"), controller.getAllUsers);
  */
 router.get(
   "/search",
-  verifyToken,
   validateRequest(schemas.searchUsers),
   controller.searchUsers,
 );

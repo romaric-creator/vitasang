@@ -1,17 +1,14 @@
 import { Stack, useRouter, useSegments } from "expo-router";
 import { useEffect, useState } from "react";
 import Splash from "./Splash";
-import { View } from "react-native";
 
 import { PostHogProvider, usePostHog } from "posthog-react-native";
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
 import { createAsyncStoragePersister } from "@tanstack/query-async-storage-persister";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-import { LoadingOverlay } from "@/components/LoadingOverlay";
 import { AuthProvider, useAuth } from "@/context/AuthContext";
 import { NotificationProvider } from "@/context/NotificationContext";
-import { color } from "@/constant/color";
 import { queryClient } from "@/config/queryClient";
 import { getUserIdFromStorage } from "@/utils/storage";
 
@@ -195,20 +192,22 @@ export default function RootLayout() {
     </AuthProvider>
   );
 
-  <PersistQueryClientProvider
-    client={queryClient}
-    persistOptions={{ persister: asyncStoragePersister }}
-  >
-    <PostHogProvider
-      apiKey={posthogKey || "no-key"}
-      options={{
-        host: "https://us.i.posthog.com",
-        enableSessionReplay: true,
-        persistence: "memory",
-        disabled: !hasPostHog,
-      }}
+  return (
+    <PersistQueryClientProvider
+      client={queryClient}
+      persistOptions={{ persister: asyncStoragePersister }}
     >
-      {providers}
-    </PostHogProvider>
-  </PersistQueryClientProvider>
+      <PostHogProvider
+        apiKey={posthogKey || "no-key"}
+        options={{
+          host: "https://us.i.posthog.com",
+          enableSessionReplay: true,
+          persistence: "memory",
+          disabled: !hasPostHog,
+        }}
+      >
+        {providers}
+      </PostHogProvider>
+    </PersistQueryClientProvider>
+  );
 }
