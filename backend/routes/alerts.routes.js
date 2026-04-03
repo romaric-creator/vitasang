@@ -61,7 +61,7 @@ router.get("/pending", isAdmin, alertsController.getPendingAlerts);
 router.get("/my-alerts", alertsController.getUserAlerts);
 
 /**
- * Find alerts near a location
+ * Find alerts near a locations
  */
 router.get(
   "/nearby",
