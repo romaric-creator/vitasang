@@ -115,18 +115,20 @@ app.use(errorHandler);
 
 // Démarrage serveur (si lancé directement)
 if (require.main === module) {
-  db.sequelize
-    .authenticate()
-    .then(() => {
-      logger.info("MariaDB : Connexion réussie et tables synchronisées !");
-      const PORT = process.env.PORT || 3000;
-      app.listen(PORT, "0.0.0.0", () => {
-        logger.info(`Serveur VITASANG démarré sur : http://0.0.0.0:${PORT}`);
+  const PORT = process.env.PORT || 3000;
+  app.listen(PORT, "0.0.0.0", () => {
+    logger.info(`Serveur VITASANG démarré sur : http://0.0.0.0:${PORT}`);
+
+    // Tentative de connexion MariaDB en arrière-plan
+    db.sequelize
+      .authenticate()
+      .then(() => {
+        logger.info("MariaDB : Connexion réussie !");
+      })
+      .catch((err) => {
+        logger.error("Erreur de connexion MariaDB :", err);
       });
-    })
-    .catch((err) => {
-      logger.error("Erreur de connexion MariaDB :", err);
-    });
+  });
 }
 
 // Export pour Vercel
