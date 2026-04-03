@@ -1,72 +1,71 @@
-  {
-    "expo": {
-      "name": "VitaSang",
-      "slug": "VitaSang",
-      "version": "1.0.0",
-      "orientation": "portrait",
-      "icon": "./assets/images/logo.png",
-      "scheme": [
-        "vitasang"
-      ],
-      "userInterfaceStyle": "automatic",
-      "newArchEnabled": true,
-      "ios": {
-        "supportsTablet": true,
-        "bundleIdentifier": "com.hidari-dev.VitaSang"
-      },
-      "android": {
-        "edgeToEdgeEnabled": true,
-        "predictiveBackGestureEnabled": false,
-        "package": "com.hidari_dev.VitaSang",
-        "googleServicesFile": "./google-services.json",
-        "config": {
-          "googleMaps": {
-            "apiKey": "$EXPO_PUBLIC_GOOGLE_MAPS_API_KEY"
+{
+  "expo": {
+    "name": "VitaSang",
+    "slug": "VitaSang",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/logo.png",
+    "scheme": ["vitasang"],
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.hidari-dev.VitaSang"
+    },
+    "android": {
+      "edgeToEdgeEnabled": true,
+      "predictiveBackGestureEnabled": false,
+      "package": "com.hidari_dev.VitaSang",
+      "googleServicesFile": "./google-services.json",
+      "config": {
+        "googleMaps": {
+          "apiKey": "$EXPO_PUBLIC_GOOGLE_MAPS_API_KEY"
+        }
+      }
+    },
+    "web": {
+      "output": "static",
+      "favicon": "./assets/images/logo.png"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/images/logo.png",
+          "imageWidth": 200,
+          "resizeMode": "contain",
+          "backgroundColor": "#ffffff",
+          "dark": {
+            "backgroundColor": "#000000"
           }
         }
-      },
-      "web": {
-        "output": "static",
-        "favicon": "./assets/images/logo.png"
-      },
-      "plugins": [
-        "expo-router",
-        [
-          "expo-splash-screen",
-          {
-            "image": "./assets/images/logo.png",
-            "imageWidth": 200,
-            "resizeMode": "contain",
-            "backgroundColor": "#ffffff",
-            "dark": {
-              "backgroundColor": "#000000"
-            }
-          }
-        ],
-        "expo-localization",
-        "expo-notifications",
-        "expo-secure-store",
-        "@react-native-community/datetimepicker"
       ],
-      "experiments": {
-        "typedRoutes": false,
-        "reactCompiler": false
+      "expo-localization",
+      "expo-notifications",
+      "expo-secure-store",
+      "@react-native-community/datetimepicker"
+    ],
+    "experiments": {
+      "typedRoutes": false,
+      "reactCompiler": false
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "78a20355-02ca-4b7a-8225-d0dd4b60b197"
       },
-      "extra": {
-        "router": {},
-        "eas": {
-          "projectId": "78a20355-02ca-4b7a-8225-d0dd4b60b197"
-        },
-        "env": {
-          "FIREBASE_API_KEY": "process.env.EXPO_PUBLIC_FIREBASE_API_KEY",
-          "FIREBASE_AUTH_DOMAIN": "vitasang.firebaseapp.com",
-          "FIREBASE_PROJECT_ID": "vitasang",
-          "FIREBASE_STORAGE_BUCKET": "vitasang.firebasestorage.app",
-          "FIREBASE_MESSAGING_SENDER_ID": "948719960671",
-          "FIREBASE_APP_ID": "1:948719960671:android:830116b479356b90b6d1ea",
-          "EXPO_PUBLIC_API_BASE_URL": "https://vitasang.onrender.com/api"
-        }
-      },
-      "owner": "hidari_dev"
-    }
+      "env": {
+        "FIREBASE_API_KEY": "process.env.EXPO_PUBLIC_FIREBASE_API_KEY",
+        "FIREBASE_AUTH_DOMAIN": "vitasang.firebaseapp.com",
+        "FIREBASE_PROJECT_ID": "vitasang",
+        "FIREBASE_STORAGE_BUCKET": "vitasang.firebasestorage.app",
+        "FIREBASE_MESSAGING_SENDER_ID": "948719960671",
+        "FIREBASE_APP_ID": "1:948719960671:android:830116b479356b90b6d1ea",
+        "EXPO_PUBLIC_API_BASE_URL": "https://vitasang.onrender.com/api",
+        "EXPO_PUBLIC_POSTHOG_KEY": ""
+      }
+    },
+    "owner": "hidari_dev"
   }
+}

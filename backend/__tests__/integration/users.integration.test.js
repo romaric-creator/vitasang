@@ -23,7 +23,7 @@ describe('User Endpoints Integration Tests', () => {
         .send({
           nom: 'Test',
           prenom: 'User',
-          telephone: '651234567',
+          telephone: '6512345678',
           mot_de_passe: 'TestPassword123',
           groupe_sanguin: 'O+',
           ville: 'Casablanca',
@@ -58,7 +58,7 @@ describe('User Endpoints Integration Tests', () => {
         .send({
           nom: 'Test',
           prenom: 'User',
-          telephone: '651234567',
+          telephone: '6512345678',
           mot_de_passe: '123',
           groupe_sanguin: 'O+',
           ville: 'Casablanca'
@@ -74,7 +74,7 @@ describe('User Endpoints Integration Tests', () => {
         .send({
           nom: 'Test',
           prenom: 'User',
-          telephone: '651234567',
+          telephone: '6512345678',
           mot_de_passe: 'TestPassword123',
           groupe_sanguin: 'INVALID',
           ville: 'Casablanca'
@@ -104,7 +104,7 @@ describe('User Endpoints Integration Tests', () => {
         .send({
           nom: 'Login',
           prenom: 'Test',
-          telephone: '659876543',
+          telephone: '6598765432',
           mot_de_passe: 'LoginTest123',
           groupe_sanguin: 'AB+',
           ville: 'Marrakech'
@@ -115,7 +115,7 @@ describe('User Endpoints Integration Tests', () => {
       const response = await request(app)
         .post('/api/users/login')
         .send({
-          telephone: '659876543',
+          telephone: '6598765432',
           mot_de_passe: 'LoginTest123'
         });
 
@@ -140,7 +140,7 @@ describe('User Endpoints Integration Tests', () => {
       const response = await request(app)
         .post('/api/users/login')
         .send({
-          telephone: '659876543',
+          telephone: '6598765432',
           mot_de_passe: 'WrongPassword'
         });
 
@@ -151,11 +151,11 @@ describe('User Endpoints Integration Tests', () => {
       const response = await request(app)
         .post('/api/users/login')
         .send({
-          telephone: '659999999',
+          telephone: '6599999990',
           mot_de_passe: 'AnyPassword'
         });
 
-      expect(response.status).toBe(404);
+      expect(response.status).toBe(401);
     });
   });
 
@@ -209,7 +209,7 @@ describe('User Endpoints Integration Tests', () => {
       const loginResponse = await request(app)
         .post('/api/users/login')
         .send({
-          telephone: '659876543',
+          telephone: '6598765432',
           mot_de_passe: 'LoginTest123'
         });
 
@@ -242,7 +242,7 @@ describe('User Endpoints Integration Tests', () => {
       const loginResponse = await request(app)
         .post('/api/users/login')
         .send({
-          telephone: '659876543',
+          telephone: '6598765432',
           mot_de_passe: 'LoginTest123'
         });
 
@@ -266,7 +266,7 @@ describe('User Endpoints Integration Tests', () => {
       const loginResponse = await request(app)
         .post('/api/users/login')
         .send({
-          telephone: '659876543',
+          telephone: '6598765432',
           mot_de_passe: 'LoginTest123'
         });
 
@@ -287,7 +287,7 @@ describe('User Endpoints Integration Tests', () => {
       const loginResponse = await request(app)
         .post('/api/users/login')
         .send({
-          telephone: '659876543',
+          telephone: '6598765432',
           mot_de_passe: 'LoginTest123'
         });
 

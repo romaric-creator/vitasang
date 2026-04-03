@@ -21,7 +21,7 @@ jest.mock("../../models", () => ({
     count: jest.fn(),
   },
   Utilisateur: {
-      findAll: jest.fn(),
+    findAll: jest.fn(),
   },
   sequelize: {
     literal: jest.fn(),
@@ -53,6 +53,12 @@ jest.mock("../../utils/auth.middleware", () => ({
 
 jest.mock("../../middleware/cache", () => ({
   cacheMiddleware: () => (req, res, next) => next(),
+}));
+
+jest.mock("../../services/cache.service", () => ({
+  get: jest.fn().mockResolvedValue(null),
+  set: jest.fn().mockResolvedValue(true),
+  del: jest.fn().mockResolvedValue(true),
 }));
 
 const db = require("../../models");

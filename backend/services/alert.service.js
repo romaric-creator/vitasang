@@ -66,9 +66,9 @@ class AlertService {
       });
       logger.info("[AlertService.enqueue] Notification enqueued", { alertId: alerte.id_alerte });
     } catch (error) {
-      logger.error("[AlertService.enqueue] Failed to enqueue notification", { 
-        alertId: alerte.id_alerte, 
-        error: error.message 
+      logger.error("[AlertService.enqueue] Failed to enqueue notification", {
+        alertId: alerte.id_alerte,
+        error: error.message
       });
       throw error;
     }
@@ -144,7 +144,14 @@ class AlertService {
         {
           model: LogNotification,
           as: "notifications",
-          include: [{ model: Utilisateur, as: "destinataire", attributes: ["nom", "prenom", "telephone", "latitude", "longitude"] }],
+          include: [
+            {
+              model: Utilisateur,
+              as: "destinataire",
+              attributes: ["nom", "prenom", "telephone"],
+              include: [{ model: db.ProfilDonneur, as: "profilDonneur", attributes: ["lat_actuelle", "long_actuelle"] }]
+            }
+          ],
         },
         { model: Utilisateur, as: "initiateur", attributes: ["id_utilisateur", "nom", "prenom", "telephone"] },
       ],
@@ -160,18 +167,18 @@ class AlertService {
 
     const details = alerte.notifications.map(n => {
       let distance = null;
-      if (n.destinataire.latitude && n.destinataire.longitude && alerte.latitude && alerte.longitude) {
+      if (n.destinataire?.profilDonneur?.lat_actuelle && n.destinataire?.profilDonneur?.long_actuelle && alerte.latitude && alerte.longitude) {
         distance = calculateDistance(
           parseFloat(alerte.latitude),
           parseFloat(alerte.longitude),
-          parseFloat(n.destinataire.latitude),
-          parseFloat(n.destinataire.longitude)
+          parseFloat(n.destinataire.profilDonneur.lat_actuelle),
+          parseFloat(n.destinataire.profilDonneur.long_actuelle)
         );
       }
       return {
-        donneur: `${n.destinataire.prenom} ${n.destinataire.nom}`,
+        donneur: n.destinataire ? `${n.destinataire.prenom} ${n.destinataire.nom}` : "Utilisateur Inconnu",
         statut: n.statut_reception,
-        telephone: n.destinataire.telephone,
+        telephone: n.destinataire ? n.destinataire.telephone : null,
         distance: distance !== null ? distance.toFixed(1) : null
       };
     });
@@ -183,10 +190,10 @@ class AlertService {
     });
 
     return {
-      alerte: { 
-        id: alerte.id_alerte, 
-        groupe: alerte.groupe_requis, 
-        statut: alerte.statut, 
+      alerte: {
+        id: alerte.id_alerte,
+        groupe: alerte.groupe_requis,
+        statut: alerte.statut,
         createdAt: alerte.createdAt,
         lieu: alerte.lieu,
         latitude: alerte.latitude,

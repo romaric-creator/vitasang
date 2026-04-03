@@ -5,8 +5,24 @@ services:
     dockerContext: backend
     dockerfilePath: backend/Dockerfile
     plan: free
+    healthCheckPath: /
     envVars:
       - key: NODE_ENV
         value: production
       - key: PORT
         value: 8000
+      - key: LOG_LEVEL
+        value: info
+      - key: DB_LOGGING
+        value: "false"
+      # NOTE: Add these via Render Dashboard (Settings > Environment)
+      # - DB_HOST
+      # - DB_USER
+      # - DB_PASS
+      # - DB
+      # - JWT_SECRET
+      # - REDIS_URL (if using Redis)
+      # - CLOUDINARY_CLOUD_NAME
+      # - CLOUDINARY_API_KEY
+      # - CLOUDINARY_API_SECRET
+      # - SENTRY_DSN (optional)

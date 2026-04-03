@@ -7,7 +7,7 @@ class CacheService {
     this.useRedis = false;
     this.localCache = new NodeCache({ stdTTL: 300, checkperiod: 320 });
 
-    if (process.env.REDIS_URL) {
+    if (process.env.REDIS_URL && process.env.NODE_ENV !== 'test') {
       this.redis = new Redis(process.env.REDIS_URL);
       this.useRedis = true;
       this.redis.on("connect", () => logger.info("Redis Connected"));

@@ -67,7 +67,7 @@ describe("Users Controller - Integration Tests", () => {
         id_utilisateur: 1,
         nom: "Dupont",
         prenom: "Jean",
-        telephone: "651234567",
+        telephone: "6512345678",
         role: "donneur",
       });
       bcrypt.hash.mockResolvedValue("hashed_password");
@@ -76,7 +76,7 @@ describe("Users Controller - Integration Tests", () => {
       const userData = {
         nom: "Dupont",
         prenom: "Jean",
-        telephone: "651234567",
+        telephone: "6512345678",
         mot_de_passe: "Password123",
         groupe_sanguin: "O+",
         role: "donneur",
@@ -119,7 +119,7 @@ describe("Users Controller - Integration Tests", () => {
       const userData = {
         nom: "Dupont",
         prenom: "Jean",
-        telephone: "651234567",
+        telephone: "6512345678",
         mot_de_passe: "Password123",
         role: "donneur",
       };
@@ -140,7 +140,7 @@ describe("Users Controller - Integration Tests", () => {
       const userData = {
         nom: "Dupont",
         prenom: "Jean",
-        telephone: "651234567",
+        telephone: "6512345678",
         mot_de_passe: "Password123",
         role: "donneur",
       };
@@ -158,7 +158,7 @@ describe("Users Controller - Integration Tests", () => {
       const mockUser = {
         id_utilisateur: 1,
         nom: "Dupont",
-        telephone: "651234567",
+        telephone: "6512345678",
         mot_de_passe: "hashed_password",
         role: "donneur",
         profilDonneur: { groupe_sanguin: "O+" },
@@ -169,7 +169,7 @@ describe("Users Controller - Integration Tests", () => {
       jwt.sign.mockReturnValue("mock_token");
 
       const credentials = {
-        telephone: "651234567",
+        telephone: "6512345678",
         mot_de_passe: "Password123",
       };
 
@@ -184,7 +184,7 @@ describe("Users Controller - Integration Tests", () => {
     it("should return 401 with invalid password", async () => {
       const mockUser = {
         id_utilisateur: 1,
-        telephone: "651234567",
+        telephone: "6512345678",
         mot_de_passe: "hashed_password",
       };
 
@@ -192,7 +192,7 @@ describe("Users Controller - Integration Tests", () => {
       bcrypt.compare.mockResolvedValue(false);
 
       const credentials = {
-        telephone: "651234567",
+        telephone: "6512345678",
         mot_de_passe: "WrongPassword",
       };
 
@@ -215,7 +215,7 @@ describe("Users Controller - Integration Tests", () => {
         .post("/api/users/login")
         .send(credentials);
 
-      expect(response.status).toBe(404);
+      expect(response.status).toBe(401);
     });
   });
 });

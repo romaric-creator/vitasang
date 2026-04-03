@@ -68,7 +68,7 @@ function makeStore(prefix, windowMs) {
       if (redisClient && redisClient.isOpen) {
         try {
           await redisClient.decr(fullKey);
-        } catch (e) {}
+        } catch (e) { }
       }
     },
 
@@ -77,7 +77,7 @@ function makeStore(prefix, windowMs) {
       if (redisClient && redisClient.isOpen) {
         try {
           await redisClient.del(fullKey);
-        } catch (e) {}
+        } catch (e) { }
       }
       memoryStore.delete(fullKey);
     },
@@ -87,7 +87,8 @@ function makeStore(prefix, windowMs) {
 // Global rate limiter: 100 requests per 15 minutes
 const globalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 100,
+  max: process.env.NODE_ENV === 'test' ? 10000 : 100,
+  skip: () => process.env.NODE_ENV === 'test',
   standardHeaders: true,
   legacyHeaders: false,
   store: makeStore('rl:global:', 15 * 60 * 1000),
@@ -102,7 +103,8 @@ const globalLimiter = rateLimit({
 // Auth rate limiter: 5 attempts per 15 minutes
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 5,
+  max: process.env.NODE_ENV === 'test' ? 10000 : 5,
+  skip: () => process.env.NODE_ENV === 'test',
   skipSuccessfulRequests: true,
   store: makeStore('rl:auth:', 15 * 60 * 1000),
   handler: (req, res) => {
@@ -116,7 +118,8 @@ const authLimiter = rateLimit({
 // Register rate limiter: 10 attempts per day
 const registerLimiter = rateLimit({
   windowMs: 24 * 60 * 60 * 1000,
-  max: 10,
+  max: process.env.NODE_ENV === 'test' ? 10000 : 10,
+  skip: () => process.env.NODE_ENV === 'test',
   store: makeStore('rl:register:', 24 * 60 * 60 * 1000),
   handler: (req, res) => {
     logger.warn('Registration rate limit exceeded', { ip: req.ip });
@@ -129,7 +132,8 @@ const registerLimiter = rateLimit({
 // Alert rate limiter: 3 alerts per 30 minutes (to avoid SMS/Notif spam)
 const alertLimiter = rateLimit({
   windowMs: 30 * 60 * 1000,
-  max: 3,
+  max: process.env.NODE_ENV === 'test' ? 10000 : 3,
+  skip: () => process.env.NODE_ENV === 'test',
   store: makeStore('rl:alert:', 30 * 60 * 1000),
   handler: (req, res) => {
     logger.warn('Alert rate limit exceeded', { ip: req.ip });

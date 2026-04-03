@@ -7,7 +7,10 @@ const userService = require("../services/user.service");
 
 exports.addUser = async (req, res, next) => {
   try {
-    const { role } = req.body;
+    const { role, nom } = req.body;
+    if (!nom) {
+      return res.status(400).json({ message: "Le nom est requis." });
+    }
 
     if (role === "donneur") {
       const { user, token } = await userService.createDonneur(req.body);

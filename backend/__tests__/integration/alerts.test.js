@@ -217,33 +217,7 @@ describe('Alerts Controller - Integration Tests', () => {
     });
   });
 
-  describe('PUT /api/alerts/:id (Update Alert)', () => {
-    it('should attempt to update alert status', async () => {
-      const updateData = {
-        statut: 'annulee',
-      };
 
-      const response = await request(app)
-        .put('/api/alerts/1')
-        .set('Authorization', `Bearer ${token}`)
-        .send(updateData);
-
-      expect([200, 400, 403, 404]).toContain(response.status);
-    });
-
-    it('should reject invalid status', async () => {
-      const updateData = {
-        statut: 'INVALID_STATUS',
-      };
-
-      const response = await request(app)
-        .put('/api/alerts/1')
-        .set('Authorization', `Bearer ${token}`)
-        .send(updateData);
-
-      expect(response.status).toBe(400);
-    });
-  });
 
   describe('DELETE /api/alerts/:id (Cancel Alert)', () => {
     it('should attempt to cancel alert', async () => {

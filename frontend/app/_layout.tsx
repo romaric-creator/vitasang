@@ -15,7 +15,6 @@ import { color } from "@/constant/color";
 import { queryClient } from "@/config/queryClient";
 import { getUserIdFromStorage } from "@/utils/storage";
 
-
 import "../i18n";
 
 function RootLayoutNav() {
@@ -25,7 +24,8 @@ function RootLayoutNav() {
   const posthog = usePostHog();
   const [appReady, setAppReady] = useState(false);
 
-  const { show: showAlert } = require("@/context/NotificationContext").useNotification();
+  const { show: showAlert } =
+    require("@/context/NotificationContext").useNotification();
 
   useEffect(() => {
     if (isLoading) return;
@@ -39,52 +39,71 @@ function RootLayoutNav() {
         }
 
         // 1. Initialiser le cache image (Différé)
-        const { initImageCache, manageImageCacheSize } = require("@/hooks/useCachedImage");
-        initImageCache().then(() => manageImageCacheSize(50)).catch(() => { });
+        const {
+          initImageCache,
+          manageImageCacheSize,
+        } = require("@/hooks/useCachedImage");
+        initImageCache()
+          .then(() => manageImageCacheSize(50))
+          .catch(() => {});
 
         // 2. Token Push (Différé)
         const Constants = require("expo-constants").default;
         if (Constants.appOwnership !== "expo") {
-          const { registerForPushNotificationsAsync } = require("@/utils/pushNotifications");
+          const {
+            registerForPushNotificationsAsync,
+          } = require("@/utils/pushNotifications");
           const { updatePushToken } = require("@/services/user.service");
-          registerForPushNotificationsAsync().then((token: string) => {
-            if (token) updatePushToken(Number(userId), token);
-          }).catch(() => { });
+          registerForPushNotificationsAsync()
+            .then((token: string) => {
+              if (token) updatePushToken(Number(userId), token);
+            })
+            .catch(() => {});
         }
 
         // 3. Localisation (Différé)
         const Location = require("expo-location");
-        Location.requestForegroundPermissionsAsync().then(({ status }: any) => {
-          if (status === "granted") {
-            Location.getCurrentPositionAsync({
-              accuracy: Location.Accuracy.Balanced,
-            }).then((location: any) => {
-              const { updateUserLocation } = require("@/services/user.service");
-              updateUserLocation(
-                Number(userId),
-                location.coords.latitude,
-                location.coords.longitude,
-              );
-            }).catch(() => { });
-          }
-        }).catch(() => { });
+        Location.requestForegroundPermissionsAsync()
+          .then(({ status }: any) => {
+            if (status === "granted") {
+              Location.getCurrentPositionAsync({
+                accuracy: Location.Accuracy.Balanced,
+              })
+                .then((location: any) => {
+                  const {
+                    updateUserLocation,
+                  } = require("@/services/user.service");
+                  updateUserLocation(
+                    Number(userId),
+                    location.coords.latitude,
+                    location.coords.longitude,
+                  );
+                })
+                .catch(() => {});
+            }
+          })
+          .catch(() => {});
 
         // 4. Alert Retry Check (Différé)
-        const { checkAlertsBackground } = require("@/services/alertRetryService");
+        const {
+          checkAlertsBackground,
+        } = require("@/services/alertRetryService");
         checkAlertsBackground(showAlert);
 
         // 5. Pré-chargement des centres (React Query)
         const { queryClient: qc } = require("@/config/queryClient");
         const { queryKeys } = require("@/config/reactQuery");
-        const { getAllCentres: getCentres } = require("@/services/user.service");
+        const {
+          getAllCentres: getCentres,
+        } = require("@/services/user.service");
         qc.prefetchQuery({
           queryKey: queryKeys.centres.list(),
           queryFn: async () => {
             const res = await getCentres();
             return res.centres;
           },
-        }).catch(() => { });
-      } catch (e) { }
+        }).catch(() => {});
+      } catch (e) {}
     };
 
     runBackgroundTasks();
@@ -140,7 +159,10 @@ function RootLayoutNav() {
       <Stack.Screen name="alert-confirmation" />
       <Stack.Screen name="Splash" />
       <Stack.Screen name="OnboardingCarousel" />
-      <Stack.Screen name="create-alert/index" options={{ presentation: "modal", title: "Lancer une alerte" }} />
+      <Stack.Screen
+        name="create-alert/index"
+        options={{ presentation: "modal", title: "Lancer une alerte" }}
+      />
       <Stack.Screen name="alert-tracking/[id]" />
       <Stack.Screen name="edit-profile" />
       <Stack.Screen name="alert-response/[id]" />
@@ -160,28 +182,38 @@ const asyncStoragePersister = createAsyncStoragePersister({
   storage: AsyncStorage,
 });
 
-
 // Le RootLayout principal qui fournit les contextes d'authentification, notifications et React Query
 export default function RootLayout() {
+  const posthogKey = process.env.EXPO_PUBLIC_POSTHOG_KEY as string;
+  const hasPostHog = posthogKey && posthogKey.trim().length > 0;
+
+  const providers = (
+    <AuthProvider>
+      <NotificationProvider>
+        <RootLayoutNav />
+      </NotificationProvider>
+    </AuthProvider>
+  );
+
   return (
     <PersistQueryClientProvider
       client={queryClient}
       persistOptions={{ persister: asyncStoragePersister }}
     >
-      <PostHogProvider
-        apiKey={process.env.EXPO_PUBLIC_POSTHOG_KEY as string}
-        options={{
-          host: "https://us.i.posthog.com",
-          enableSessionReplay: true,
-          persistence: "memory", // Use memory persistence to avoid FileSystemDirectory issues on Android
-        }}
-      >
-        <AuthProvider>
-          <NotificationProvider>
-            <RootLayoutNav />
-          </NotificationProvider>
-        </AuthProvider>
-      </PostHogProvider>
+      {hasPostHog ? (
+        <PostHogProvider
+          apiKey={posthogKey}
+          options={{
+            host: "https://us.i.posthog.com",
+            enableSessionReplay: true,
+            persistence: "memory",
+          }}
+        >
+          {providers}
+        </PostHogProvider>
+      ) : (
+        providers
+      )}
     </PersistQueryClientProvider>
   );
 }
