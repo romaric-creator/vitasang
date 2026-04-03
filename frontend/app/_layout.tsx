@@ -45,7 +45,7 @@ function RootLayoutNav() {
         } = require("@/hooks/useCachedImage");
         initImageCache()
           .then(() => manageImageCacheSize(50))
-          .catch(() => {});
+          .catch(() => { });
 
         // 2. Token Push (Différé)
         const Constants = require("expo-constants").default;
@@ -58,7 +58,7 @@ function RootLayoutNav() {
             .then((token: string) => {
               if (token) updatePushToken(Number(userId), token);
             })
-            .catch(() => {});
+            .catch(() => { });
         }
 
         // 3. Localisation (Différé)
@@ -79,10 +79,10 @@ function RootLayoutNav() {
                     location.coords.longitude,
                   );
                 })
-                .catch(() => {});
+                .catch(() => { });
             }
           })
-          .catch(() => {});
+          .catch(() => { });
 
         // 4. Alert Retry Check (Différé)
         const {
@@ -102,8 +102,8 @@ function RootLayoutNav() {
             const res = await getCentres();
             return res.centres;
           },
-        }).catch(() => {});
-      } catch (e) {}
+        }).catch(() => { });
+      } catch (e) { }
     };
 
     runBackgroundTasks();
@@ -195,25 +195,20 @@ export default function RootLayout() {
     </AuthProvider>
   );
 
-  return (
-    <PersistQueryClientProvider
-      client={queryClient}
-      persistOptions={{ persister: asyncStoragePersister }}
+  <PersistQueryClientProvider
+    client={queryClient}
+    persistOptions={{ persister: asyncStoragePersister }}
+  >
+    <PostHogProvider
+      apiKey={posthogKey || "no-key"}
+      options={{
+        host: "https://us.i.posthog.com",
+        enableSessionReplay: true,
+        persistence: "memory",
+        disabled: !hasPostHog,
+      }}
     >
-      {hasPostHog ? (
-        <PostHogProvider
-          apiKey={posthogKey}
-          options={{
-            host: "https://us.i.posthog.com",
-            enableSessionReplay: true,
-            persistence: "memory",
-          }}
-        >
-          {providers}
-        </PostHogProvider>
-      ) : (
-        providers
-      )}
-    </PersistQueryClientProvider>
-  );
+      {providers}
+    </PostHogProvider>
+  </PersistQueryClientProvider>
 }
