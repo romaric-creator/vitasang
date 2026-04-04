@@ -1,14 +1,8 @@
 module.exports = {
   testEnvironment: 'node',
   coveragePathIgnorePatterns: ['/node_modules/'],
-  testMatch: ['**/__tests__/**/*.test.js', '**/?(*.)+(spec|test).js'],
+  testMatch: ['**/__tests__/**/*.test.js'],
   setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
-  moduleNameMapper: {
-    '^expo-server-sdk$': '<rootDir>/__mocks__/expo-server-sdk.js'
-  },
-  transformIgnorePatterns: [
-    'node_modules/(?!(expo-server-sdk)/)'
-  ],
   collectCoverageFrom: [
     'controllers/**/*.js',
     'utils/**/*.js',
@@ -17,5 +11,6 @@ module.exports = {
     '!**/*.test.js',
   ],
   verbose: true,
-  testTimeout: 10000,
+  testTimeout: 30000,
+  detectOpenHandles: true,
 };

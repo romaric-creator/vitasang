@@ -72,7 +72,7 @@ async function seed() {
         ville: city,
         latitude: coords.latitude,
         longitude: coords.longitude,
-        contact_urgence: generatePhoneNumber(900000 + i), // Plage haute pour les centres
+        contact_urgence: generatePhoneNumber(900000 + i),
         capacite_stockage_max: 5000
       });
     }

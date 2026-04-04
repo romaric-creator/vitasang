@@ -13,10 +13,14 @@ import {
 } from "@/services/errorService";
 
 const API_BASE_URL = (Constants.expoConfig?.extra?.env?.EXPO_PUBLIC_API_BASE_URL || "https://vitasang.onrender.com/api").replace(/\/$/, "") + "/";
-const REQUEST_TIMEOUT = 60000; // 60s pour gérer les réseaux 2G/3G et cold starts Render
+const REQUEST_TIMEOUT = 30000; // 30s - enough for most networks, cold start handled by pre-ping
 const MAX_RETRIES = 2;
+const PING_INTERVAL = 120000; // 2 minutes - wake up server before it sleeps
+const PING_TIMEOUT = 5000; // 5s timeout for ping requests
 
 let memoryToken: string | null = null;
+let lastPingTime = 0;
+let isPinging = false;
 export const setAuthToken = (token: string | null) => {
   memoryToken = token;
 };
@@ -68,7 +72,7 @@ export const createAxiosInstance = (): AxiosInstance => {
   });
 
   /**
-   * Request Interceptor - Add auth token and logging
+   * Request Interceptor - Add auth token, wake up server, and logging
    */
   instance.interceptors.request.use(
     async (config) => {
@@ -80,6 +84,27 @@ export const createAxiosInstance = (): AxiosInstance => {
 
       if (token && config.headers) {
         config.headers.Authorization = `Bearer ${token}`;
+      }
+
+      // Pre-ping to wake up sleeping server (e.g., Render.com free tier)
+      const now = Date.now();
+      const needsPing = now - lastPingTime > PING_INTERVAL && 
+                        config.url !== "ping" && 
+                        config.url !== "health" &&
+                        !isPinging;
+
+      if (needsPing) {
+        isPinging = true;
+        instance.get("ping", { timeout: PING_TIMEOUT })
+          .then(() => {
+            lastPingTime = Date.now();
+          })
+          .catch(() => {
+            // Ping failed, will retry on next request
+          })
+          .finally(() => {
+            isPinging = false;
+          });
       }
 
       // Log request in development

@@ -27,7 +27,7 @@ describe('Validation Middleware', () => {
   describe('Login validation', () => {
     test('should pass with valid login data', () => {
       const req = mockReq({
-        telephone: '6551234567',
+        telephone: '655123456', // 9 digits: 6 + 5 + 7 digits
         mot_de_passe: 'password123',
       });
       const res = mockRes();
@@ -73,8 +73,8 @@ describe('Validation Middleware', () => {
       const req = mockReq({
         nom: 'Dupont',
         prenom: 'Jean',
-        telephone: '6551234567',
-        mot_de_passe: 'password123',
+        telephone: '655123456', // 9 digits: 6 + 55 + 123456 = 655123456
+        mot_de_passe: 'Password123',
         groupe_sanguin: 'O+',
         role: 'donneur',
       });
