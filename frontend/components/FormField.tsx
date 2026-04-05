@@ -46,7 +46,7 @@ export const FormField: React.FC<FormFieldProps> = ({
     <View style={formStyles.field}>
       <Text style={formStyles.label}>
         {label}
-        {required && <Text style={{ color: '#e74c3c' }}>*</Text>}
+        {required && <Text style={{ color: color.error }}>*</Text>}
       </Text>
       <View style={styles.inputWrapper}>
         <TextInput

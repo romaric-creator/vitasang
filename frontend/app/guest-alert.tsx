@@ -15,6 +15,7 @@ import ThemedView from "@/components/ThemedView";
 import { LoadingOverlay } from "@/components/LoadingOverlay";
 import * as Location from "expo-location";
 import { searchDonors } from "@/services/user.service";
+import { storeData } from "@/utils/storage";
 import { createAlertValidationSchema } from "@/validation/ValidationSchemas";
 import { apiClient } from "@/config/axiosConfig";
 import FormField from "@/components/FormField";
@@ -106,22 +107,11 @@ export default function GuestAlertScreen() {
 
     setLoading(true);
     try {
-      // Utilisation directe de l'API guest
-      const response = await apiClient.post(`alerts/guest`, alertData);
-      
-      if (response.data.success) {
-        router.replace({
-          pathname: "/alert-confirmation",
-          params: { alertId: response.data.alertId.toString(), isGuest: "true" },
-        });
-      } else {
-        const msg = response.data.message || t("alert.idError");
-        setErrorMsg(msg);
-        Alert.alert(t("common.error"), msg);
-      }
+      await storeData("pending_alert", alertData);
+      router.push("/register");
     } catch (error: any) {
-      console.error("Submit Alert Error:", error);
-      const msg = error.response?.data?.message || error.message || t("alert.genericError");
+      console.error("Failed to store pending alert or redirect:", error);
+      const msg = t("alert.genericError") || "Erreur inattendue lors de la sauvegarde de l'alerte.";
       setErrorMsg(msg);
       Alert.alert(t("common.error"), msg);
     } finally {

@@ -122,7 +122,6 @@ function RootLayoutNav() {
     const currentSegment = segments[0]?.toLowerCase() || "";
 
     const inAuthFlow =
-      currentSegment === "(auth)" ||
       currentSegment === "login" ||
       currentSegment === "register" ||
       currentSegment === "splash" ||

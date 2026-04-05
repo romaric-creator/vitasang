@@ -1,0 +1,182 @@
+@startuml BloodDonationApp
+!define TABLE(name) class name << (T,#FFAAAA) >>
+!define VIEW(name) class name << (V,#FFAAFF) >>
+
+skinparam classBackgroundColor #F9F9F9
+skinparam classArrowColor #333333
+skinparam classBorderColor #333333
+skinparam classAttributeIconSize 0
+
+TABLE(Utilisateur) {
+  + id_utilisateur: INT (PK, AI)
+  - nom: VARCHAR(100)
+  - prenom: VARCHAR(100)
+  - email: VARCHAR(150) [nullable]
+  - telephone: VARCHAR(20) [unique]
+  - mot_de_passe: VARCHAR(255)
+  - role: ENUM(donneur|personnel|admin|cnts)
+  - region: VARCHAR(100)
+  - photo_profil: VARCHAR(255) [nullable]
+  - est_actif: BOOLEAN [default=true]
+  - push_token: TEXT [nullable]
+  - id_centre: INT (FK) [nullable]
+  + timestamps: createdAt, updatedAt
+}
+
+TABLE(ProfilDonneur) {
+  + id_donneur: INT (PK, FK)
+  - groupe_sanguin: ENUM(A+|A-|B+|B-|AB+|AB-|O+|O-)
+  - poids: DECIMAL(5,2)
+  - taille: DECIMAL(5,2)
+  - dernier_don: DATE [nullable]
+  - prochain_don_possible: DATE [nullable]
+  - disponible: BOOLEAN [default=true]
+  - raison_indisponibilite: VARCHAR(100) [nullable]
+  - date_disponibilite: DATE [nullable]
+  - lat_actuelle: DOUBLE [nullable]
+  - long_actuelle: DOUBLE [nullable]
+}
+
+TABLE(Centre) {
+  + id_centre: INT (PK, AI)
+  - nom_centre: VARCHAR(150)
+  - adresse: TEXT [nullable]
+  - ville: VARCHAR(100)
+  - latitude: DOUBLE
+  - longitude: DOUBLE
+  - contact_urgence: VARCHAR(20)
+  - capacite_stockage_max: INT [default=0]
+}
+
+TABLE(TypeDon) {
+  + id_type_don: INT (PK, AI)
+  - nom_type: VARCHAR(100)
+  - composant: VARCHAR(100)
+}
+
+TABLE(HistoriqueDon) {
+  + id_historique: INT (PK, AI)
+  - date_don: DATETIME [default=NOW]
+  - volume_ml: INT
+  - statut_don: ENUM(réussi|échoué|partiel)
+  - id_donneur: INT (FK)
+  - id_centre: INT (FK)
+  - id_type_don: INT (FK)
+}
+
+TABLE(RendezVous) {
+  + id_rdv: INT (PK, AI)
+  - date_heure_rdv: DATETIME
+  - statut_rdv: ENUM(planifie|valide|absent|annule|confirme|effectue)
+  - code_unique: VARCHAR(12) [unique, nullable]
+  - id_donneur: INT (FK)
+  - id_centre: INT (FK)
+  - id_type_don: INT (FK)
+  + timestamps: createdAt, updatedAt
+  --
+  INDEX: statut_rdv
+}
+
+TABLE(Alerte) {
+  + id_alerte: INT (PK, AI)
+  - id_initiateur: INT (FK) [nullable]
+  - nom_patient: VARCHAR(100)
+  - telephone_contact: VARCHAR(20)
+  - id_centre: INT (FK) [nullable]
+  - groupe_requis: ENUM(A+|A-|B+|B-|AB+|AB-|O+|O-|INCONNU)
+  - degre_urgence: ENUM(NORMAL|URGENT|TRÈS_URGENT)
+  - rayon_action_km: INT [default=20]
+  - lieu: VARCHAR(255)
+  - description: TEXT
+  - latitude: DOUBLE
+  - longitude: DOUBLE
+  - quantite_requise: INT [default=1]
+  - statut: ENUM(en_attente_validation|en_cours|resolu|annule)
+  + timestamps: createdAt, updatedAt
+  --
+  INDEX: statut
+}
+
+TABLE(StockSang) {
+  + id_stock: INT (PK, AI)
+  - groupe_sanguin: ENUM(A+|A-|B+|B-|AB+|AB-|O+|O-)
+  - quantite_poches: INT [default=0]
+  - seuil_alerte_min: INT [default=5]
+  - id_centre: INT (FK)
+  + timestamps: createdAt, updatedAt
+}
+
+TABLE(LogNotification) {
+  + id_notif: INT (PK, AI)
+  - id_alerte: INT (FK)
+  - id_utilisateur: INT (FK) [nullable]
+  - message: TEXT
+  - type_notif: ENUM(alert|rappel|info)
+  - statut_envoi: ENUM(pending|sent|failed|delivered)
+  - date_envoi: DATETIME
+  + timestamps: createdAt, updatedAt
+}
+
+TABLE(Message) {
+  + id_message: INT (PK, AI)
+  - titre: VARCHAR(200)
+  - corps: TEXT
+  - type_message: VARCHAR(50)
+  - id_expediteur: INT (FK)
+  - id_destinataire: INT (FK)
+  - lu: BOOLEAN [default=false]
+  + timestamps: createdAt, updatedAt
+}
+
+TABLE(Campagne) {
+  + id_campagne: INT (PK, AI)
+  - titre: VARCHAR(200)
+  - message: TEXT
+  - groupe_sanguin_cible: VARCHAR(5) [nullable]
+  - donneurs_touches: INT [default=0]
+  - statut: ENUM(lancee|terminee|annulee)
+  - id_centre: INT (FK)
+  + timestamps: createdAt, updatedAt
+}
+
+' Associations
+Utilisateur "1" --> "0..1" ProfilDonneur : has
+Utilisateur "1" --> "*" HistoriqueDon : donates
+Utilisateur "1" --> "*" RendezVous : books
+Utilisateur "*" --> "1" Centre : works_at
+Utilisateur "1" --> "*" Message : sends
+Utilisateur "1" --> "*" Message : receives
+Utilisateur "1" --> "*" Alerte : initiates
+
+ProfilDonneur "0..1" --> "1" Utilisateur : belongs_to
+
+Centre "1" --> "*" Utilisateur : employs
+Centre "1" --> "*" HistoriqueDon : hosts
+Centre "1" --> "*" RendezVous : schedules
+Centre "1" --> "*" Alerte : issues
+Centre "1" --> "*" StockSang : manages
+Centre "1" --> "*" Campagne : launches
+
+HistoriqueDon "*" --> "1" Utilisateur : by
+HistoriqueDon "*" --> "1" Centre : at
+HistoriqueDon "*" --> "1" TypeDon : is_type
+
+RendezVous "*" --> "1" Utilisateur : for
+RendezVous "*" --> "1" Centre : at
+RendezVous "*" --> "1" TypeDon : type
+
+Alerte "1" --> "*" LogNotification : triggers
+Alerte "*" --> "1" Centre : from
+Alerte "*" --> "0..1" Utilisateur : initiated_by
+
+StockSang "*" --> "1" Centre : in
+
+LogNotification "*" --> "1" Alerte : from
+LogNotification "*" --> "0..1" Utilisateur : sent_to
+
+Message "*" --> "1" Utilisateur : from_sender
+Message "*" --> "1" Utilisateur : to_receiver
+
+Campagne "*" --> "1" Centre : from
+
+@enduml

@@ -19,6 +19,7 @@ import { useAuth } from "@/context/AuthContext";
 import { TabBarIcon } from "@/components/TabBarIcon";
 import { useTranslation } from "react-i18next";
 import ThemedView from "@/components/ThemedView";
+import { ErrorAlert } from "@/components/ErrorAlert";
 
 export default function LoginScreen() {
   const { t } = useTranslation();
@@ -138,11 +139,13 @@ export default function LoginScreen() {
                 </TouchableOpacity>
 
                 {/* Erreur Générale */}
-                {generalError ? (
-                  <View style={styles.errorBox}>
-                    <Text style={styles.generalErrorText}>{generalError}</Text>
-                  </View>
-                ) : null}
+                <ErrorAlert
+                  visible={!!generalError}
+                  message={generalError}
+                  onDismiss={() => setGeneralError('')}
+                  type='error'
+                  title={t('common.errors.error')}
+                />
 
                 {/* Bouton Connexion */}
                 <TouchableOpacity
@@ -282,18 +285,5 @@ const styles = StyleSheet.create({
     fontSize: 14, 
     color: color.primary, 
     fontWeight: "800", 
-  },
-  errorBox: {
-    padding: 10,
-    backgroundColor: "#FEF2F2",
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: "#FECACA",
-  },
-  generalErrorText: {
-    color: "#991B1B",
-    fontSize: 13,
-    textAlign: "center",
-    fontWeight: "600",
   },
 });

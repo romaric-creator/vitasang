@@ -34,7 +34,7 @@ require("./jobs/notification.queue");
 
 const app = express();
 
-const corsOrigins = process.env.CORS_ORIGIN 
+const corsOrigins = process.env.CORS_ORIGIN
   ? process.env.CORS_ORIGIN.split(",").map(o => o.trim())
   : ["http://localhost:3000", "http://localhost:8081"];
 
@@ -105,11 +105,11 @@ app.get("/", (req, res) => {
   res.json({ message: "bienvenu sur vitasang.api.com", version: "1.0.0" });
 });
 
-app.get("/health", (req, res) => {
+app.get("/api/health", (req, res) => {
   res.json({ status: "OK", timestamp: new Date().toISOString() });
 });
 
-app.get("/ping", (req, res) => {
+app.get("/api/ping", (req, res) => {
   res.status(200).send("pong");
 });
 
