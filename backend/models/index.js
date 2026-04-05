@@ -8,6 +8,8 @@ const dbConfig = require("../config/db.js");
 
 const db = {};
 
+const isProduction = process.env.NODE_ENV === "production";
+
 const sequelize = new Sequelize(dbConfig.DB, dbConfig.USER, dbConfig.PASSWORD, {
   host: dbConfig.HOST,
   port: dbConfig.PORT,
@@ -21,9 +23,10 @@ const sequelize = new Sequelize(dbConfig.DB, dbConfig.USER, dbConfig.PASSWORD, {
     idle: dbConfig.pool.idle,
   },
   dialectOptions: {
-    ssl: {
-      rejectUnauthorized: process.env.NODE_ENV === "production" ? true : false,
-    },
+    ssl: isProduction ? {
+      require: true,
+      rejectUnauthorized: true,
+    } : false,
   },
   logging: process.env.DB_LOGGING === "true" ? console.log : false,
 });

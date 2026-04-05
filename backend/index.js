@@ -1,6 +1,6 @@
 require("dotenv").config();
 
-const mysql2 = require("mysql2"); // Importation forcée pour Vercel
+const mysql2 = require("mysql2");
 const express = require("express");
 const cors = require("cors");
 const morgan = require("morgan");
@@ -34,6 +34,15 @@ require("./jobs/notification.queue");
 
 const app = express();
 
+const corsOrigins = process.env.CORS_ORIGIN 
+  ? process.env.CORS_ORIGIN.split(",").map(o => o.trim())
+  : ["http://localhost:3000", "http://localhost:8081"];
+
+app.use(cors({
+  origin: corsOrigins,
+  credentials: true,
+}));
+
 // Sentry request handler (doit être le premier)
 if (process.env.SENTRY_DSN) {
   app.use(Sentry.Handlers.requestHandler());
@@ -55,17 +64,19 @@ app.use(express.urlencoded({ limit: "1mb", extended: true }));
 app.use(morgan("dev"));
 app.use("/uploads", express.static("uploads"));
 
-// Swagger API Documentation
-app.use(
-  "/api/docs",
-  swaggerUi.serve,
-  swaggerUi.setup(swaggerSpecs, {
-    swaggerOptions: {
-      persistAuthorization: true,
-      defaultModelsExpandDepth: 1,
-    },
-  }),
-);
+// Swagger API Documentation (désactivé en production)
+if (process.env.NODE_ENV !== "production") {
+  app.use(
+    "/api/docs",
+    swaggerUi.serve,
+    swaggerUi.setup(swaggerSpecs, {
+      swaggerOptions: {
+        persistAuthorization: true,
+        defaultModelsExpandDepth: 1,
+      },
+    }),
+  );
+}
 
 const userRoute = require("./routes/users.routes");
 const alertRoute = require("./routes/alerts.routes");

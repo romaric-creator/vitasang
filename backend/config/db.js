@@ -21,17 +21,18 @@ module.exports = {
   PASSWORD: process.env.DB_PASS,
   DB: process.env.DB || "vitasang",
   dialect: process.env.DB_DIALECT || "mysql",
-  storage: process.env.DB_STORAGE, // Pour SQLite
+  storage: process.env.DB_STORAGE,
   dialectOptions: {
-    ssl: process.env.DB_DIALECT === "sqlite" ? false : {
+    ssl: process.env.NODE_ENV === "production" ? {
+      require: true,
       minVersion: "TLSv1.2",
-      rejectUnauthorized: process.env.NODE_ENV === "production" ? true : false,
-    },
+      rejectUnauthorized: true,
+    } : false,
   },
   pool: {
-    max: 20, // Augmenté pour éviter les timeouts en cas de charge élevée
-    min: 2,  // Garde au moins 2 connexions actives
+    max: 30,
+    min: 5,
     acquire: 60000,
-    idle: 30000,
+    idle: 20000,
   },
 };
