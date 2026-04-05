@@ -6,21 +6,28 @@ let redisClient = null;
 if (process.env.NODE_ENV !== 'test') {
   const { createClient } = require('redis');
 
-  redisClient = createClient({
-    url: process.env.REDIS_URL || 'redis://localhost:6379',
-    socket: {
-      reconnectStrategy: (retries) => Math.min(retries * 50, 500),
-      connectTimeout: 5000,
-    },
-  });
+  const redisUrl = process.env.REDIS_URL;
+  
+  // Fallback vers memory store si pas de Redis configuré
+  if (!redisUrl || redisUrl.includes('your_token') || redisUrl.includes('localhost')) {
+    logger.warn('Redis non configuré, utilisation du cache mémoire pour le rate limiting');
+  } else {
+    redisClient = createClient({
+      url: redisUrl,
+      socket: {
+        reconnectStrategy: (retries) => Math.min(retries * 50, 500),
+        connectTimeout: 5000,
+      },
+    });
 
-  redisClient.on('error', (err) => {
-    logger.error('Redis Client Error', { message: err.message });
-  });
+    redisClient.on('error', (err) => {
+      logger.error('Redis Client Error', { message: err.message });
+    });
 
-  redisClient.connect().catch((err) => {
-    logger.error('Could not connect to Redis, using memory fallback', { message: err.message });
-  });
+    redisClient.connect().catch((err) => {
+      logger.error('Could not connect to Redis, using memory fallback', { message: err.message });
+    });
+  }
 }
 
 /**

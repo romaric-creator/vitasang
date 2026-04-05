@@ -3,17 +3,17 @@ const notificationProcessor = require("./notification.processor");
 
 let notificationQueue = { add: async () => {} };
 
-if (process.env.NODE_ENV !== "test") {
+const redisUrl = process.env.REDIS_URL;
+
+// Utiliser Redis seulement si configuré correctement
+if (redisUrl && !redisUrl.includes('your_token') && !redisUrl.includes('localhost') && process.env.NODE_ENV !== "test") {
   const { Queue, Worker } = require("bullmq");
   const IORedis = require("ioredis");
 
-  const connection = new IORedis(
-    process.env.REDIS_URL || "redis://localhost:6379",
-    {
-      maxRetriesPerRequest: null,
-      retryStrategy: (times) => Math.min(times * 50, 2000),
-    },
-  );
+  const connection = new IORedis(redisUrl, {
+    maxRetriesPerRequest: null,
+    retryStrategy: (times) => Math.min(times * 50, 2000),
+  });
 
   connection.on("error", (err) => {
     logger.error("Redis Connection Error:", err.message);
@@ -41,6 +41,10 @@ if (process.env.NODE_ENV !== "test") {
   worker.on("completed", (job) => {
     logger.info(`Job ${job.id} completed`);
   });
+  
+  logger.info("Notification queue initialized with Redis");
+} else {
+  logger.warn("Redis non configuré, notifications synchrones (sans queue)");
 }
 
 module.exports = { notificationQueue };

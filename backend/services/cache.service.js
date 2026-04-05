@@ -7,14 +7,23 @@ class CacheService {
     this.useRedis = false;
     this.localCache = new NodeCache({ stdTTL: 300, checkperiod: 320 });
 
-    if (process.env.REDIS_URL && process.env.NODE_ENV !== 'test') {
-      this.redis = new Redis(process.env.REDIS_URL);
-      this.useRedis = true;
-      this.redis.on("connect", () => logger.info("Redis Connected"));
-      this.redis.on("error", (err) => {
-        logger.error("Redis Error", err);
-        this.useRedis = false; // Fallback to local cache on error
-      });
+    const redisUrl = process.env.REDIS_URL;
+    
+    // Fallback vers memory cache si pas de Redis valide configuré
+    if (redisUrl && !redisUrl.includes('your_token') && !redisUrl.includes('localhost') && process.env.NODE_ENV !== 'test') {
+      try {
+        this.redis = new Redis(redisUrl);
+        this.useRedis = true;
+        this.redis.on("connect", () => logger.info("Redis Connected"));
+        this.redis.on("error", (err) => {
+          logger.error("Redis Error", err);
+          this.useRedis = false; // Fallback to local cache on error
+        });
+      } catch (error) {
+        logger.warn("Redis non configuré, utilisation du cache mémoire", { message: error.message });
+      }
+    } else {
+      logger.warn("Redis non configuré, utilisation du cache mémoire local");
     }
   }
 
