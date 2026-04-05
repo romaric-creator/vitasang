@@ -2,16 +2,21 @@ const Redis = require("ioredis");
 const NodeCache = require("node-cache");
 const logger = require("../config/logger");
 
+const isRedisConfigured = () => {
+  const redisUrl = process.env.REDIS_URL;
+  if (!redisUrl) return false;
+  // Vérifier que ce n'est pas une URL vide ou placeholder
+  return redisUrl.startsWith('rediss://') || redisUrl.startsWith('redis://');
+};
+
 class CacheService {
   constructor() {
     this.useRedis = false;
     this.localCache = new NodeCache({ stdTTL: 300, checkperiod: 320 });
 
-    const redisUrl = process.env.REDIS_URL;
-    
-    // Utiliser Redis seulement si configuré et valide (pas de placeholder)
-    if (redisUrl && !redisUrl.includes('your_token') && process.env.NODE_ENV !== 'test') {
+    if (isRedisConfigured() && process.env.NODE_ENV !== 'test') {
       try {
+        const redisUrl = process.env.REDIS_URL;
         this.redis = new Redis(redisUrl, {
           maxRetriesPerRequest: null,
           retryStrategy: (times) => Math.min(times * 100, 3000),

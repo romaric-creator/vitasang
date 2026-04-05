@@ -3,10 +3,16 @@ const notificationProcessor = require("./notification.processor");
 
 let notificationQueue = { add: async () => {} };
 
+const isRedisConfigured = () => {
+  const redisUrl = process.env.REDIS_URL;
+  if (!redisUrl) return false;
+  return redisUrl.startsWith('rediss://') || redisUrl.startsWith('redis://');
+};
+
 const redisUrl = process.env.REDIS_URL;
 
-// Utiliser Redis seulement si configuré correctement (rediss:// pour Upstash)
-if (redisUrl && !redisUrl.includes('your_token') && redisUrl.startsWith('rediss://') && process.env.NODE_ENV !== "test") {
+// Utiliser Redis seulement si configuré correctement
+if (isRedisConfigured() && process.env.NODE_ENV !== "test") {
   const { Queue, Worker } = require("bullmq");
   const IORedis = require("ioredis");
 

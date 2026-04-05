@@ -1,17 +1,20 @@
 const rateLimit = require('express-rate-limit');
 const logger = require('../config/logger');
 
+const isRedisConfigured = () => {
+  const redisUrl = process.env.REDIS_URL;
+  if (!redisUrl) return false;
+  return redisUrl.startsWith('rediss://') || redisUrl.startsWith('redis://');
+};
+
 let redisClient = null;
 
 if (process.env.NODE_ENV !== 'test') {
   const { createClient } = require('redis');
 
-  const redisUrl = process.env.REDIS_URL;
-  
-  // Utiliser Redis seulement si configuré correctement
-  if (redisUrl && !redisUrl.includes('your_token') && redisUrl.startsWith('rediss://')) {
+  if (isRedisConfigured()) {
     redisClient = createClient({
-      url: redisUrl,
+      url: process.env.REDIS_URL,
       socket: {
         reconnectStrategy: (retries) => Math.min(retries * 100, 3000),
         connectTimeout: 10000,
