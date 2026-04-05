@@ -9,21 +9,25 @@ class CacheService {
 
     const redisUrl = process.env.REDIS_URL;
     
-    // Fallback vers memory cache si pas de Redis valide configuré
-    if (redisUrl && !redisUrl.includes('your_token') && !redisUrl.includes('localhost') && process.env.NODE_ENV !== 'test') {
+    // Utiliser Redis seulement si configuré et valide (pas de placeholder)
+    if (redisUrl && !redisUrl.includes('your_token') && process.env.NODE_ENV !== 'test') {
       try {
-        this.redis = new Redis(redisUrl);
+        this.redis = new Redis(redisUrl, {
+          maxRetriesPerRequest: null,
+          retryStrategy: (times) => Math.min(times * 100, 3000),
+          connectTimeout: 10000,
+        });
         this.useRedis = true;
         this.redis.on("connect", () => logger.info("Redis Connected"));
         this.redis.on("error", (err) => {
-          logger.error("Redis Error", err);
-          this.useRedis = false; // Fallback to local cache on error
+          logger.error("Redis Error", { message: err.message });
+          this.useRedis = false;
         });
       } catch (error) {
-        logger.warn("Redis non configuré, utilisation du cache mémoire", { message: error.message });
+        logger.warn("Échec de connexion Redis, utilisation cache mémoire", { message: error.message });
       }
     } else {
-      logger.warn("Redis non configuré, utilisation du cache mémoire local");
+      logger.info("Cache mémoire local activé");
     }
   }
 

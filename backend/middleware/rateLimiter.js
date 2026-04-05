@@ -8,15 +8,13 @@ if (process.env.NODE_ENV !== 'test') {
 
   const redisUrl = process.env.REDIS_URL;
   
-  // Fallback vers memory store si pas de Redis configuré
-  if (!redisUrl || redisUrl.includes('your_token') || redisUrl.includes('localhost')) {
-    logger.warn('Redis non configuré, utilisation du cache mémoire pour le rate limiting');
-  } else {
+  // Utiliser Redis seulement si configuré correctement
+  if (redisUrl && !redisUrl.includes('your_token') && redisUrl.startsWith('rediss://')) {
     redisClient = createClient({
       url: redisUrl,
       socket: {
-        reconnectStrategy: (retries) => Math.min(retries * 50, 500),
-        connectTimeout: 5000,
+        reconnectStrategy: (retries) => Math.min(retries * 100, 3000),
+        connectTimeout: 10000,
       },
     });
 
@@ -27,6 +25,8 @@ if (process.env.NODE_ENV !== 'test') {
     redisClient.connect().catch((err) => {
       logger.error('Could not connect to Redis, using memory fallback', { message: err.message });
     });
+  } else {
+    logger.warn('Redis non configuré ou invalide, utilisation du cache mémoire pour le rate limiting');
   }
 }
 
