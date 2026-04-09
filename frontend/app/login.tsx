@@ -8,7 +8,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   StatusBar,
-  TextInput
+  TextInput,
 } from "react-native";
 import { Formik } from "formik";
 import { router } from "expo-router";
@@ -28,24 +28,34 @@ export default function LoginScreen() {
   const [generalError, setGeneralError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
-  const handleLogin = async (values: {
-    telephone: string;
-    mot_de_passe: string;
-  }) => {
+  const handleLogin = async (
+    values: { telephone: string; mot_de_passe: string },
+    { setErrors }: any,
+  ) => {
     setGeneralError("");
     setLoading(true);
 
     try {
       await signIn(values.telephone, values.mot_de_passe);
     } catch (err: any) {
-      console.error("Login error:", err);
-      const msg = err.message || "";
-      if (msg.includes("Network") || msg.includes("connexion")) {
-        setGeneralError(t("error.network") || "Vérifiez votre connexion internet.");
-      } else if (msg.includes("401") || msg.includes("identifiants")) {
-        setGeneralError(t("error.invalidCredentials") || "Numéro ou mot de passe incorrect.");
+      console.error("Login error details:", err);
+      
+      if (err.errors) {
+        setErrors(err.errors);
+        setGeneralError("Identifiants incorrects ou format invalide.");
       } else {
-        setGeneralError(t("login.error") || "Erreur de connexion.");
+        const msg = err.message || "";
+        if (msg.includes("Network") || msg.includes("connexion")) {
+          setGeneralError(
+            t("error.network") || "Vérifiez votre connexion internet.",
+          );
+        } else if (msg.includes("401") || msg.includes("identifiants")) {
+          setGeneralError(
+            t("error.invalidCredentials") || "Numéro ou mot de passe incorrect.",
+          );
+        } else {
+          setGeneralError(t("login.error") || "Erreur de connexion.");
+        }
       }
     } finally {
       setLoading(false);
@@ -60,7 +70,11 @@ export default function LoginScreen() {
         style={{ flex: 1 }}
       >
         <ScrollView
-          contentContainerStyle={{ flexGrow: 1, padding: 24, justifyContent: 'center' }}
+          contentContainerStyle={{
+            flexGrow: 1,
+            padding: 24,
+            justifyContent: "center",
+          }}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
@@ -75,14 +89,27 @@ export default function LoginScreen() {
             validationSchema={loginValidationSchema}
             onSubmit={handleLogin}
           >
-            {({ values, errors, touched, handleChange, handleBlur, handleSubmit }) => (
+            {({
+              values,
+              errors,
+              touched,
+              handleChange,
+              handleBlur,
+              handleSubmit,
+            }) => (
               <View style={styles.form}>
-                
                 {/* Telephone */}
                 <View style={styles.inputGroup}>
-                  <Text style={styles.label}>Téléphone<Text style={{color: color.primary}}>*</Text></Text>
+                  <Text style={styles.label}>
+                    Téléphone<Text style={{ color: color.primary }}>*</Text>
+                  </Text>
                   <TextInput
-                    style={[styles.input, (touched.telephone && errors.telephone) && styles.inputError]}
+                    style={[
+                      styles.input,
+                      touched.telephone &&
+                        errors.telephone &&
+                        styles.inputError,
+                    ]}
                     value={values.telephone}
                     onChangeText={handleChange("telephone")}
                     onBlur={handleBlur("telephone")}
@@ -99,8 +126,17 @@ export default function LoginScreen() {
 
                 {/* Mot de passe */}
                 <View style={styles.inputGroup}>
-                  <Text style={styles.label}>Mot de passe<Text style={{color: color.primary}}>*</Text></Text>
-                  <View style={[styles.passwordContainer, (touched.mot_de_passe && errors.mot_de_passe) && styles.inputError]}>
+                  <Text style={styles.label}>
+                    Mot de passe<Text style={{ color: color.primary }}>*</Text>
+                  </Text>
+                  <View
+                    style={[
+                      styles.passwordContainer,
+                      touched.mot_de_passe &&
+                        errors.mot_de_passe &&
+                        styles.inputError,
+                    ]}
+                  >
                     <TextInput
                       style={styles.passwordInput}
                       value={values.mot_de_passe}
@@ -112,16 +148,20 @@ export default function LoginScreen() {
                       autoComplete="password"
                       textContentType="password"
                     />
-                    <TouchableOpacity 
-                      onPress={() => setShowPassword(!showPassword)} 
+                    <TouchableOpacity
+                      onPress={() => setShowPassword(!showPassword)}
                       style={styles.eyeIcon}
-                      accessibilityLabel={showPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
+                      accessibilityLabel={
+                        showPassword
+                          ? "Masquer le mot de passe"
+                          : "Afficher le mot de passe"
+                      }
                       activeOpacity={0.6}
                     >
-                      <TabBarIcon 
-                        name={showPassword ? "eye" : "eye-slash"} 
-                        size={20} 
-                        color={showPassword ? color.primary : "#9CA3AF"} 
+                      <TabBarIcon
+                        name={showPassword ? "eye" : "eye-slash"}
+                        size={20}
+                        color={showPassword ? color.primary : "#9CA3AF"}
                       />
                     </TouchableOpacity>
                   </View>
@@ -131,8 +171,8 @@ export default function LoginScreen() {
                 </View>
 
                 {/* Lien Oublié */}
-                <TouchableOpacity 
-                  style={styles.forgotBtn} 
+                <TouchableOpacity
+                  style={styles.forgotBtn}
                   onPress={() => router.push("/aide-et-conseil")}
                 >
                   <Text style={styles.forgotText}>Mot de passe oublié ?</Text>
@@ -142,9 +182,9 @@ export default function LoginScreen() {
                 <ErrorAlert
                   visible={!!generalError}
                   message={generalError}
-                  onDismiss={() => setGeneralError('')}
-                  type='error'
-                  title={t('common.errors.error')}
+                  onDismiss={() => setGeneralError("")}
+                  type="error"
+                  title={t("common.errors.error")}
                 />
 
                 {/* Bouton Connexion */}
@@ -167,7 +207,6 @@ export default function LoginScreen() {
                     <Text style={styles.registerLink}>Inscrivez-vous ici</Text>
                   </TouchableOpacity>
                 </View>
-
               </View>
             )}
           </Formik>
@@ -181,19 +220,19 @@ const styles = StyleSheet.create({
   header: {
     marginBottom: 40,
   },
-  brandName: { 
-    fontSize: 32, 
-    fontWeight: "900", 
-    color: color.primary, 
+  brandName: {
+    fontSize: 32,
+    fontWeight: "900",
+    color: color.primary,
     marginBottom: 8,
   },
-  subTitle: { 
-    fontSize: 16, 
-    color: "#4B5563", 
+  subTitle: {
+    fontSize: 16,
+    color: "#4B5563",
     fontWeight: "600",
   },
-  form: { 
-    gap: 20 
+  form: {
+    gap: 20,
   },
   inputGroup: {
     marginBottom: 4,
@@ -228,7 +267,7 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 15,
     color: "#1F2937",
-    height: '100%',
+    height: "100%",
   },
   eyeIcon: {
     padding: 4,
@@ -242,13 +281,13 @@ const styles = StyleSheet.create({
     marginTop: 4,
     paddingLeft: 12,
   },
-  forgotBtn: { 
-    alignSelf: "flex-end", 
+  forgotBtn: {
+    alignSelf: "flex-end",
     paddingRight: 10,
   },
-  forgotText: { 
-    color: color.primary, 
-    fontWeight: "700", 
+  forgotText: {
+    color: color.primary,
+    fontWeight: "700",
     fontSize: 14,
   },
   loginBtn: {
@@ -276,14 +315,14 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginTop: 24,
   },
-  noAccountText: { 
-    fontSize: 14, 
-    color: "#6B7280", 
+  noAccountText: {
+    fontSize: 14,
+    color: "#6B7280",
     fontWeight: "500",
   },
-  registerLink: { 
-    fontSize: 14, 
-    color: color.primary, 
-    fontWeight: "800", 
+  registerLink: {
+    fontSize: 14,
+    color: color.primary,
+    fontWeight: "800",
   },
 });

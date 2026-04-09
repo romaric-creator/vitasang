@@ -114,7 +114,7 @@ describe('Alert Registration Flow', () => {
     fireEvent.changeText(getByPlaceholderText('Votre nom'), 'John');
     fireEvent.changeText(getByPlaceholderText('Votre prénom'), 'Doe');
     fireEvent.changeText(getByPlaceholderText('Ex: 6 99 99 99 99'), '699887766');
-    fireEvent.changeText(getByPlaceholderText('6 caractères min.'), 'password123');
+    fireEvent.changeText(getByPlaceholderText('8 caractères min.'), 'password123');
     fireEvent.press(getByText('Suivant'));
 
     // Ensure we are on Step 2
@@ -161,7 +161,7 @@ describe('Alert Registration Flow', () => {
     fireEvent.changeText(getByPlaceholderText('Votre nom'), 'Jane');
     fireEvent.changeText(getByPlaceholderText('Votre prénom'), 'Smith');
     fireEvent.changeText(getByPlaceholderText('Ex: 6 99 99 99 99'), '600112233');
-    fireEvent.changeText(getByPlaceholderText('6 caractères min.'), 'securepass');
+    fireEvent.changeText(getByPlaceholderText('8 caractères min.'), 'securepass');
     fireEvent.press(getByText('Suivant'));
 
     // Submit registration (Step 2)

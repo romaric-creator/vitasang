@@ -1,8 +1,14 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, StyleSheet, TouchableOpacity } from 'react-native';
-import { formStyles } from '@/styles/formStyles';
-import { TabBarIcon } from '@/components/TabBarIcon';
-import { color } from '@/constant/color';
+import React, { useState } from "react";
+import {
+  View,
+  Text,
+  TextInput,
+  StyleSheet,
+  TouchableOpacity,
+} from "react-native";
+import { formStyles } from "@/styles/formStyles";
+import { TabBarIcon } from "@/components/TabBarIcon";
+import { color } from "@/constant/color";
 
 interface FormFieldProps {
   label: string;
@@ -13,7 +19,7 @@ interface FormFieldProps {
   error?: string;
   touched?: boolean;
   secureTextEntry?: boolean;
-  keyboardType?: 'default' | 'email-address' | 'numeric' | 'phone-pad';
+  keyboardType?: "default" | "email-address" | "numeric" | "phone-pad";
   required?: boolean;
   helperText?: string;
   maxLength?: number;
@@ -31,13 +37,13 @@ export const FormField: React.FC<FormFieldProps> = ({
   error,
   touched,
   secureTextEntry = false,
-  keyboardType = 'default',
+  keyboardType = "default",
   required = false,
   helperText,
   maxLength,
   editable = true,
   multiline = false,
-  numberOfLines = 1
+  numberOfLines = 1,
 }) => {
   const isError = touched && !!error;
   const [isSecure, setIsSecure] = useState(secureTextEntry);
@@ -53,8 +59,8 @@ export const FormField: React.FC<FormFieldProps> = ({
           style={[
             formStyles.input,
             isError && formStyles.errorInput,
-            !editable && { backgroundColor: '#f0f0f0', color: '#888' },
-            secureTextEntry && { paddingRight: 40 }
+            !editable && { backgroundColor: "#f0f0f0", color: "#888" },
+            secureTextEntry && { paddingRight: 40 },
           ]}
           value={value}
           onChangeText={onChangeText}
@@ -73,13 +79,15 @@ export const FormField: React.FC<FormFieldProps> = ({
             style={styles.eyeIcon}
             onPress={() => setIsSecure(!isSecure)}
           >
-            <TabBarIcon name={isSecure ? "eye-slash" : "eye"} size={20} color={color.textLight} />
+            <TabBarIcon
+              name={isSecure ? "eye-slash" : "eye"}
+              size={20}
+              color={color.textLight}
+            />
           </TouchableOpacity>
         )}
       </View>
-      {error && isError && (
-        <Text style={formStyles.errorText}>{error}</Text>
-      )}
+      {error && isError && <Text style={formStyles.errorText}>{error}</Text>}
       {!error && helperText && (
         <Text style={formStyles.helperText}>{helperText}</Text>
       )}
@@ -89,15 +97,15 @@ export const FormField: React.FC<FormFieldProps> = ({
 
 const styles = StyleSheet.create({
   inputWrapper: {
-    position: 'relative',
-    justifyContent: 'center',
+    position: "relative",
+    justifyContent: "center",
   },
   eyeIcon: {
-    position: 'absolute',
+    position: "absolute",
     right: 12,
-    height: '100%',
-    justifyContent: 'center',
-  }
+    height: "100%",
+    justifyContent: "center",
+  },
 });
 
 export default FormField;

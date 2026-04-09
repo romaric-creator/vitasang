@@ -24,7 +24,7 @@ export default function TabLayout() {
       try {
         // Tente de récupérer le token (fonctionnera sur device physique, retournera undefined sur simulateur)
         const token = await registerForPushNotificationsAsync();
-        
+
         if (token) {
           console.log("[Notifications] Token obtenu, mise à jour backend...");
           await updatePushToken(userId, token);
@@ -42,7 +42,7 @@ export default function TabLayout() {
 
     try {
       const Notifications = require('expo-notifications');
-      
+
       // Gestion du clic sur notification (App en background/tuée)
       responseSubscription = Notifications.addNotificationResponseReceivedListener((response: any) => {
         const data = response.notification.request.content.data;
@@ -57,7 +57,7 @@ export default function TabLayout() {
         console.log("[Notifications] Reçue au premier plan:", notification);
         // Ici on pourrait afficher un Toast ou une alerte in-app personnalisée
       });
-      
+
     } catch (e) {
       console.log("[Notifications] Module non disponible ou erreur init écouteurs");
     }

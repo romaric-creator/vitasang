@@ -37,7 +37,7 @@ export default function RegisterScreen() {
   // Step 1: Info perso, Step 2: Info médicale (optionnelle)
   const [step, setStep] = useState(1);
 
-  const handleRegister = async (values: any) => {
+  const handleRegister = async (values: any, { setErrors }: any) => {
     setGeneralError("");
     setLoading(true);
     analyticsService.trackEvent("register_attempt");
@@ -110,15 +110,28 @@ export default function RegisterScreen() {
       analyticsService.trackEvent("register_success");
       router.replace("/(tabs)");
     } catch (err: any) {
-      console.error("Registration error:", err.message);
-      // Messages d'erreur conviviaux
-      let userMsg = t("register.error");
-      if (err.message.includes("Validation error") || err.message.includes("409"))
-        userMsg = "Ce numéro est déjà utilisé.";
-      if (err.message.includes("Network"))
-        userMsg = "Problème de connexion. Vérifiez votre réseau.";
+      console.error("Registration error details:", err);
+      
+      if (err.errors) {
+        // Erreurs de validation spécifiques aux champs
+        setErrors(err.errors);
+        setGeneralError("Veuillez corriger les erreurs ci-dessous.");
+        // Si on est à l'étape 2 et qu'une erreur de l'étape 1 surgit (ex: téléphone déjà pris)
+        const step1Fields = ["nom", "prenom", "telephone", "mot_de_passe"];
+        const hasStep1Errors = step1Fields.some(field => err.errors[field]);
+        if (hasStep1Errors && step === 2) {
+          setStep(1);
+        }
+      } else {
+        // Messages d'erreur conviviaux par défaut
+        let userMsg = err.message || t("register.error");
+        if (err.message.includes("Validation error") || err.message.includes("409"))
+          userMsg = "Ce numéro est déjà utilisé.";
+        if (err.message.includes("Network"))
+          userMsg = "Problème de connexion. Vérifiez votre réseau.";
 
-      setGeneralError(userMsg);
+        setGeneralError(userMsg);
+      }
     } finally {
       setLoading(false);
     }
@@ -233,7 +246,7 @@ export default function RegisterScreen() {
                       value={values.mot_de_passe}
                       onChangeText={handleChange("mot_de_passe")}
                       onBlur={handleBlur("mot_de_passe")}
-                      placeholder="6 caractères min."
+                      placeholder="8 caractères min."
                       secureTextEntry
                       error={errors.mot_de_passe}
                       touched={touched.mot_de_passe}

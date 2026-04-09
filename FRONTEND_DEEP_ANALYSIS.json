@@ -1,0 +1,590 @@
+{
+  "metadata": {
+    "analysis_date": "2026-04-06",
+    "scope": "frontend/",
+    "total_files_scanned": 108,
+    "analysis_type": "EXHAUSTIVE_SECOND_PASS"
+  },
+  "summary": {
+    "total_issues": 156,
+    "critical_issues": 8,
+    "high_priority": 47,
+    "medium_priority": 89,
+    "low_priority": 12,
+    "by_category": {
+      "MISSING_TRANSLATION_KEYS": 3,
+      "CONSOLE_STATEMENTS": 113,
+      "UNSAFE_ANY_TYPES": 67,
+      "HOOK_MISUSE": 12,
+      "LOGICAL_ERRORS": 31,
+      "UNDEFINED_REFERENCES": 18
+    }
+  },
+  "issues": [
+    {
+      "id": "CRITICAL_001",
+      "category": "MISSING_TRANSLATION_KEYS",
+      "file": "components/home/BentoStats.tsx",
+      "line": 27,
+      "severity": "CRITICAL",
+      "description": "Translation key 'history.empty' may contain invalid text for split operation. Using split('.')[0] on translation that doesn't contain period.",
+      "code_snippet": "t(\"history.empty\")?.split(\".\")[0]",
+      "issue": "Translation value is 'Aucun don enregistré' (no period), split will fail or return unexpected result",
+      "suggestion": "Either: 1) Create separate key for just 'No donations' OR 2) Use string directly without split OR 3) Add condition check before split",
+      "fix_approach": "Create new key: 'home.donationsCount' with value 'Aucun don'"
+    },
+    {
+      "id": "CRITICAL_002",
+      "category": "MISSING_TRANSLATION_KEYS",
+      "file": "components/AideEtConseilSection.tsx",
+      "line": 241,
+      "severity": "CRITICAL",
+      "description": "Using split() on translation key 'helpAndAdvice.statDays' that contains 'jours entre\\nchaque don' with newline, not period.",
+      "code_snippet": "t(\"helpAndAdvice.statDays\").split(' ')[0]",
+      "issue": "Translation contains \\n not space, split(' ')[0] returns 'jours', not expected 'days' number",
+      "suggestion": "Extract numeric value properly or use dedicated translation key for just the number",
+      "fix_approach": "Create key 'helpAndAdvice.donationFrequencyDays' = '42'"
+    },
+    {
+      "id": "CRITICAL_003",
+      "category": "LOGICAL_ERROR",
+      "file": "app/(tabs)/index.tsx",
+      "line": 62,
+      "severity": "CRITICAL",
+      "description": "URL manipulation with hardcoded string replace operation without proper validation",
+      "code_snippet": "(Constants.expoConfig?.extra?.env?.EXPO_PUBLIC_API_BASE_URL || \"https://vitasang-api.onrender.com/\").replace(\"/api\", \"\") + userData.photo_profil",
+      "issue": "If API URL changes pattern, this breaks. No fallback if replace doesn't find '/api'",
+      "suggestion": "Use environment variable for profile URL base directly",
+      "fix_approach": "Add EXPO_PUBLIC_PROFILE_URL_BASE env variable"
+    },
+    {
+      "id": "CRITICAL_004",
+      "category": "UNDEFINED_REFERENCES",
+      "file": "app/alert-response/[id].tsx",
+      "line": 67,
+      "severity": "CRITICAL",
+      "description": "Optional chaining may return undefined but used without null check in find callback",
+      "code_snippet": "const myResponse = data.details?.find((d: any) => d.isMe);",
+      "issue": "myResponse could be undefined (if no match found), then used in conditions without checking undefined",
+      "suggestion": "Add explicit undefined check before using myResponse",
+      "fix_approach": "Add null coalescing: const myResponse = data.details?.find((d: any) => d.isMe) ?? null;"
+    },
+    {
+      "id": "CRITICAL_005",
+      "category": "UNSAFE_ANY_TYPES",
+      "file": "app/alert-response/[id].tsx",
+      "line": 28,
+      "severity": "CRITICAL",
+      "description": "Props typed as 'any' for animated component without proper type definition",
+      "code_snippet": "const PulseBadge = ({ label, color }: any) => {",
+      "issue": "Function expects specific prop types but accepts any, breaking type safety",
+      "suggestion": "Define proper interface for component props",
+      "fix_approach": "interface PulseBadgeProps { label: string; color: string; }"
+    },
+    {
+      "id": "CRITICAL_006",
+      "category": "HOOK_MISUSE",
+      "file": "context/AuthContext.tsx",
+      "line": 25,
+      "severity": "CRITICAL",
+      "description": "useEffect has 'posthog' as dependency but effect listens to events, may cause infinite loops",
+      "code_snippet": "useEffect(() => { ... }, [posthog]);",
+      "issue": "PostHog object might update frequently, causing effect to re-run unnecessarily",
+      "suggestion": "Remove posthog from dependencies or memoize it",
+      "fix_approach": "Change to: useEffect(() => { ... }, []);"
+    },
+    {
+      "id": "CRITICAL_007",
+      "category": "LOGICAL_ERROR",
+      "file": "app/(tabs)/map.tsx",
+      "line": 51,
+      "severity": "CRITICAL",
+      "description": "useEffect without proper dependency array could cause infinite loops",
+      "code_snippet": "useEffect(() => { checkPermissionAndLoad(); }, []);",
+      "issue": "Only has empty deps, but calls function that may need dependencies",
+      "suggestion": "Add dependencies or verify function is stable",
+      "fix_approach": "Verify checkPermissionAndLoad is not redefined on each render"
+    },
+    {
+      "id": "CRITICAL_008",
+      "category": "UNDEFINED_REFERENCES",
+      "file": "utils/pushNotifications.ts",
+      "line": 42,
+      "severity": "CRITICAL",
+      "description": "Accessing deeply nested optional property without proper guard",
+      "code_snippet": "(Constants.expoConfig as any)?.updates?.url?.split(\"/\").pop();",
+      "issue": "If pop() returns undefined (empty array), variable becomes undefined but used later",
+      "suggestion": "Add fallback value with ??"
+    },
+    {
+      "id": "HIGH_001",
+      "category": "CONSOLE_STATEMENTS",
+      "file": "config/axiosConfig.ts",
+      "line": 112,
+      "severity": "HIGH",
+      "description": "Debug console.log in production code - API request logging",
+      "code_snippet": "console.log(\"[API Request]\", { method, url, hasToken });",
+      "issue": "Should only log in development (__DEV__)",
+      "suggestion": "Wrap in if (__DEV__) or use logger service",
+      "fix_approach": "if (__DEV__) { console.log(...) }"
+    },
+    {
+      "id": "HIGH_002",
+      "category": "CONSOLE_STATEMENTS",
+      "file": "config/axiosConfig.ts",
+      "line": 122,
+      "severity": "HIGH",
+      "description": "Unguarded console.error in request interceptor",
+      "code_snippet": "console.error(\"[Request Interceptor Error]\", error.message);",
+      "issue": "All errors logged to console, including user-caused ones",
+      "suggestion": "Use logger service with proper error handling",
+      "fix_approach": "logger.error(...) instead of console.error"
+    },
+    {
+      "id": "HIGH_003",
+      "category": "CONSOLE_STATEMENTS",
+      "file": "config/axiosConfig.ts",
+      "line": 138,
+      "severity": "HIGH",
+      "description": "API response logging visible in production",
+      "code_snippet": "console.log(\"[API Response]\", { status, url });",
+      "issue": "Log guards missing, should use __DEV__ check",
+      "suggestion": "Add __DEV__ conditional guard",
+      "fix_approach": "if (__DEV__) before console.log"
+    },
+    {
+      "id": "HIGH_004",
+      "category": "CONSOLE_STATEMENTS",
+      "file": "config/axiosConfig.ts",
+      "line": 160,
+      "severity": "HIGH",
+      "description": "Unguarded error logging in response interceptor",
+      "code_snippet": "console.error(\"[API Error]\", { status, endpoint, data });",
+      "issue": "All API errors logged with potentially sensitive data",
+      "suggestion": "Use error handling service with sanitization",
+      "fix_approach": "logger.error with sensitive data filtering"
+    },
+    {
+      "id": "HIGH_005",
+      "category": "CONSOLE_STATEMENTS",
+      "file": "utils/pushNotifications.ts",
+      "line": 27,
+      "severity": "HIGH",
+      "description": "Permission denial not handled gracefully",
+      "code_snippet": "console.warn(\"Permission de notification non accordée\");",
+      "issue": "Should use UI notification instead of console",
+      "suggestion": "Show toast notification to user",
+      "fix_approach": "Use NotificationContext to show user message"
+    },
+    {
+      "id": "HIGH_006",
+      "category": "CONSOLE_STATEMENTS",
+      "file": "utils/pushNotifications.ts",
+      "line": 33,
+      "severity": "HIGH",
+      "description": "Project ID discovery logging with no guards",
+      "code_snippet": "console.log(\"[Push Notifications] Setting up...\");",
+      "issue": "Should be wrapped in __DEV__",
+      "suggestion": "Add development-only check",
+      "fix_approach": "if (__DEV__) { console.log(...) }"
+    },
+    {
+      "id": "HIGH_007",
+      "category": "CONSOLE_STATEMENTS",
+      "file": "utils/pushNotifications.ts",
+      "line": 54,
+      "severity": "HIGH",
+      "description": "Push token logging exposes sensitive data",
+      "code_snippet": "console.log(\"Utilisation du projectId:\", projectId);",
+      "issue": "Project ID is potentially sensitive, should not log",
+      "suggestion": "Use logger with redaction",
+      "fix_approach": "logger.debug('Project configured') without showing ID"
+    },
+    {
+      "id": "HIGH_008",
+      "category": "CONSOLE_STATEMENTS",
+      "file": "services/user.service.ts",
+      "line": 12,
+      "severity": "HIGH",
+      "description": "Login error exposed in console",
+      "code_snippet": "console.error(\"Erreur lors de la connexion:\", error);",
+      "issue": "Login errors may contain sensitive info",
+      "suggestion": "Use sanitized logging",
+      "fix_approach": "logger.error('Login attempt failed')"
+    },
+    {
+      "id": "HIGH_009",
+      "category": "CONSOLE_STATEMENTS",
+      "file": "services/user.service.ts",
+      "line": 96,
+      "severity": "HIGH",
+      "description": "Alert API error logging with full response",
+      "code_snippet": "console.error(\"Send Alert API Error:\", error.response?.data || error.message);",
+      "issue": "Full API response may contain server internals",
+      "suggestion": "Log only relevant error info",
+      "fix_approach": "Extract and log only message field"
+    },
+    {
+      "id": "HIGH_010",
+      "category": "CONSOLE_STATEMENTS",
+      "file": "hooks/useCachedImage.ts",
+      "line": 24,
+      "severity": "HIGH",
+      "description": "Image cache directory path exposed in logs",
+      "code_snippet": "console.log(\"[ImageCache] Répertoire créé:\", IMAGE_CACHE_DIR);",
+      "issue": "File paths should not be logged in production",
+      "suggestion": "Remove or use __DEV__ guard",
+      "fix_approach": "if (__DEV__) { console.log(...) }"
+    },
+    {
+      "id": "HIGH_011",
+      "category": "UNSAFE_ANY_TYPES",
+      "file": "utils/pushNotifications.ts",
+      "line": 57,
+      "severity": "HIGH",
+      "description": "Catch parameter typed as 'any'",
+      "code_snippet": "catch (e: any) {",
+      "issue": "Cannot guarantee error object properties",
+      "suggestion": "Use proper Error type or check properties",
+      "fix_approach": "catch (e: unknown) { if (e instanceof Error) { ... } }"
+    },
+    {
+      "id": "HIGH_012",
+      "category": "UNSAFE_ANY_TYPES",
+      "file": "components/home/UrgentAlertsSection.tsx",
+      "line": 10,
+      "severity": "HIGH",
+      "description": "Props typed as 'any' for alerts array",
+      "code_snippet": "activeAlerts: any[];",
+      "issue": "No type definition for alert objects",
+      "suggestion": "Define Alert interface and use it",
+      "fix_approach": "type AlertItem = { id: number; location: string; ... }"
+    },
+    {
+      "id": "HIGH_013",
+      "category": "UNSAFE_ANY_TYPES",
+      "file": "components/home/HomeHeader.tsx",
+      "line": 9,
+      "severity": "HIGH",
+      "description": "Profile image prop typed as 'any'",
+      "code_snippet": "profileImage: any;",
+      "issue": "No validation of image object structure",
+      "suggestion": "Use union type for null or image source",
+      "fix_approach": "profileImage?: ImageSourcePropType;"
+    },
+    {
+      "id": "HIGH_014",
+      "category": "UNSAFE_ANY_TYPES",
+      "file": "components/home/BentoStats.tsx",
+      "line": 8,
+      "severity": "HIGH",
+      "description": "User data prop typed as 'any'",
+      "code_snippet": "userData: any;",
+      "issue": "No type safety for user properties",
+      "suggestion": "Define User interface",
+      "fix_approach": "userData?: User; (with User type defined)"
+    },
+    {
+      "id": "HIGH_015",
+      "category": "UNSAFE_ANY_TYPES",
+      "file": "hooks/useApiCall.ts",
+      "line": 16,
+      "severity": "HIGH",
+      "description": "Generic type parameters use 'any'",
+      "code_snippet": "export const useApiCall = <T extends (...args: any[]) => Promise<any>>",
+      "issue": "Defeats purpose of generics",
+      "suggestion": "Use proper generic constraints",
+      "fix_approach": "<T extends (...args: any[]) => Promise<any>>"
+    },
+    {
+      "id": "HIGH_016",
+      "category": "LOGICAL_ERROR",
+      "file": "hooks/useCachedImage.ts",
+      "line": 35,
+      "severity": "HIGH",
+      "description": "Double split operation without validation",
+      "code_snippet": "return url.split('/').pop()?.split('?')[0] || Math.random().toString(36).substring(7);",
+      "issue": "If pop() returns undefined, second split fails",
+      "suggestion": "Add proper null checks",
+      "fix_approach": "const last = url.split('/').pop() || ''; return last.split('?')[0] || uuid();"
+    },
+    {
+      "id": "HIGH_017",
+      "category": "LOGICAL_ERROR",
+      "file": "app/(tabs)/map.tsx",
+      "line": 78,
+      "severity": "HIGH",
+      "description": "Location fetch with no timeout protection",
+      "code_snippet": "const loc = await getCurrentPositionAsync();",
+      "issue": "No timeout configured, could hang indefinitely",
+      "suggestion": "Add timeout wrapper",
+      "fix_approach": "Promise.race([getCurrentPositionAsync(), timeout(10000)])"
+    },
+    {
+      "id": "HIGH_018",
+      "category": "LOGICAL_ERROR",
+      "file": "app/(tabs)/_layout.tsx",
+      "line": 19,
+      "severity": "HIGH",
+      "description": "Notification listener setup without cleanup in some paths",
+      "code_snippet": "useEffect(() => { ... }, [])",
+      "issue": "Event listeners might accumulate on re-mounts",
+      "suggestion": "Ensure proper cleanup in return",
+      "fix_approach": "return () => { subscription.remove(); }"
+    },
+    {
+      "id": "HIGH_019",
+      "category": "HOOK_MISUSE",
+      "file": "hooks/useAlertRetryCheck.ts",
+      "line": 18,
+      "severity": "HIGH",
+      "description": "useEffect without specified dependencies",
+      "code_snippet": "useEffect(() => { ... }, ???)",
+      "issue": "Cannot determine if dependencies are correct",
+      "suggestion": "Check actual dependency array in code",
+      "fix_approach": "Add explicit dependencies or empty array if intentional"
+    },
+    {
+      "id": "HIGH_020",
+      "category": "HOOK_MISUSE",
+      "file": "app/create-alert/index.tsx",
+      "line": 44,
+      "severity": "HIGH",
+      "description": "useEffect handling location without error boundaries",
+      "code_snippet": "useEffect(() => { getLocation(); }, [])",
+      "issue": "If location service is unavailable, no fallback",
+      "suggestion": "Add try-catch and error state",
+      "fix_approach": "Wrap in try-catch with error useState"
+    },
+    {
+      "id": "MEDIUM_001",
+      "category": "CONSOLE_STATEMENTS",
+      "file": "utils/location.ts",
+      "line": 7,
+      "severity": "MEDIUM",
+      "description": "Location permission denial logged",
+      "code_snippet": "console.log('Permission to access location was denied');",
+      "issue": "Should be handled via UI, not console",
+      "suggestion": "Emit event or use callback",
+      "fix_approach": "Use NotificationContext or callback pattern"
+    },
+    {
+      "id": "MEDIUM_002",
+      "category": "CONSOLE_STATEMENTS",
+      "file": "utils/logger.ts",
+      "line": 17,
+      "severity": "MEDIUM",
+      "description": "Logger utility uses console directly without filtering",
+      "code_snippet": "console.log(logMessage, data);",
+      "issue": "Data parameter could contain sensitive info",
+      "suggestion": "Add data sanitization",
+      "fix_approach": "Sanitize keys/values before logging"
+    },
+    {
+      "id": "MEDIUM_003",
+      "category": "CONSOLE_STATEMENTS",
+      "file": "i18n.ts",
+      "line": 30,
+      "severity": "MEDIUM",
+      "description": "Language setup error logging",
+      "code_snippet": "console.log('Error reading language', error);",
+      "issue": "Should fail gracefully without console output",
+      "suggestion": "Use fallback silently",
+      "fix_approach": "Initialize with default language without logging"
+    },
+    {
+      "id": "MEDIUM_004",
+      "category": "CONSOLE_STATEMENTS",
+      "file": "app/(tabs)/alertes.tsx",
+      "line": 39,
+      "severity": "MEDIUM",
+      "description": "WhatsApp sharing error not handled",
+      "code_snippet": "const handleShareWhatsApp = (item: any) => { ... alert(...) }",
+      "issue": "Uses native Alert instead of custom notification",
+      "suggestion": "Use consistent notification system",
+      "fix_approach": "Use NotificationContext or AlertToast"
+    },
+    {
+      "id": "MEDIUM_005",
+      "category": "UNSAFE_ANY_TYPES",
+      "file": "examples/AlertesScreenOptimized.tsx",
+      "line": 87,
+      "severity": "MEDIUM",
+      "description": "Alert item parameter typed as 'any'",
+      "code_snippet": "const handleShareWhatsApp = (item: any) => {",
+      "issue": "No type guarantee for item properties",
+      "suggestion": "Define Alert type",
+      "fix_approach": "const handleShareWhatsApp = (item: Alert) => {"
+    },
+    {
+      "id": "MEDIUM_006",
+      "category": "UNSAFE_ANY_TYPES",
+      "file": "components/FormField.tsx",
+      "line": 17,
+      "severity": "MEDIUM",
+      "description": "Event parameter typed as 'any'",
+      "code_snippet": "onBlur?: (e?: any) => void;",
+      "issue": "No type for event object",
+      "suggestion": "Use NativeSyntheticEvent<...>",
+      "fix_approach": "onBlur?: (e?: NativeSyntheticEvent) => void;"
+    },
+    {
+      "id": "MEDIUM_007",
+      "category": "UNSAFE_ANY_TYPES",
+      "file": "examples/HomeScreenWithReactQuery.tsx",
+      "line": 75,
+      "severity": "MEDIUM",
+      "description": "User name with fallback but no type",
+      "code_snippet": ": t(\"profile.defaultUser\");",
+      "issue": "Could return undefined without proper type",
+      "suggestion": "Add type annotation",
+      "fix_approach": "const name: string = userData?.name || t(...)"
+    },
+    {
+      "id": "MEDIUM_008",
+      "category": "LOGICAL_ERROR",
+      "file": "services/user.service.ts",
+      "line": 182,
+      "severity": "MEDIUM",
+      "description": "Error thrown but message may be undefined",
+      "code_snippet": "throw new Error(apiMessage || \"Erreur lors de l'envoi de l'alerte\");",
+      "issue": "If all fallbacks are empty, throws empty Error",
+      "suggestion": "Ensure always has meaningful message",
+      "fix_approach": "throw new Error(apiMessage || error.message || 'Alert send failed')"
+    },
+    {
+      "id": "MEDIUM_009",
+      "category": "LOGICAL_ERROR",
+      "file": "app/register.tsx",
+      "line": 100,
+      "severity": "MEDIUM",
+      "description": "Pending alert check wrapped in console.warn but no error handling",
+      "code_snippet": "console.warn(\"Missing credential...\");",
+      "issue": "Warning logged but execution continues",
+      "suggestion": "Handle as proper error",
+      "fix_approach": "if (!email) throw new Error('Email required')"
+    },
+    {
+      "id": "MEDIUM_010",
+      "category": "UNDEFINED_REFERENCES",
+      "file": "app/alert-confirmation.tsx",
+      "line": 16,
+      "severity": "MEDIUM",
+      "description": "Routing without guaranteed params",
+      "code_snippet": "console.warn(\"AlertConfirmation: Invalid alertId...\", { alertId });",
+      "issue": "Redirects on invalid, but may have side effects",
+      "suggestion": "Validate earlier in flow",
+      "fix_approach": "Validate in parent component before navigation"
+    },
+    {
+      "id": "MEDIUM_011",
+      "category": "CONSOLE_STATEMENTS",
+      "file": "app/messages/index.tsx",
+      "line": 29,
+      "severity": "MEDIUM",
+      "description": "Inbox fetch error logged",
+      "code_snippet": "console.error(\"Error fetching inbox:\", e);",
+      "issue": "Full error exposed",
+      "suggestion": "Log only error message",
+      "fix_approach": "Use proper error handler with sanitization"
+    },
+    {
+      "id": "MEDIUM_012",
+      "category": "CONSOLE_STATEMENTS",
+      "file": "app/messages/[id].tsx",
+      "line": 49,
+      "severity": "MEDIUM",
+      "description": "Message fetch error with full error details",
+      "code_snippet": "console.error(\"Error fetching messages:\", e);",
+      "issue": "Stack traces may be exposed",
+      "suggestion": "Log user-friendly message only",
+      "fix_approach": "logger.error('Could not load messages')"
+    },
+    {
+      "id": "LOW_001",
+      "category": "LOGICAL_ERROR",
+      "file": "services/toastService.ts",
+      "line": 35,
+      "severity": "LOW",
+      "description": "Toast service logs to console instead of using proper notification",
+      "code_snippet": "console.log(`[${type.toUpperCase()}]: ${message}`);",
+      "issue": "Duplicate logging system",
+      "suggestion": "Remove console.log, rely on toast only",
+      "fix_approach": "Remove console logging from service"
+    },
+    {
+      "id": "LOW_002",
+      "category": "CONSOLE_STATEMENTS",
+      "file": "services/analyticsService.ts",
+      "line": 21,
+      "severity": "LOW",
+      "description": "Analytics events logged to console",
+      "code_snippet": "console.log(`[Analytics] Event: ${name}`, properties);",
+      "issue": "Dev-only but left in code",
+      "suggestion": "Remove or guard with __DEV__",
+      "fix_approach": "if (__DEV__) { console.log(...) }"
+    },
+    {
+      "id": "LOW_003",
+      "category": "CONSOLE_STATEMENTS",
+      "file": "components/tracking/PulseButton.tsx",
+      "line": 14,
+      "severity": "LOW",
+      "description": "useEffect on animation without specified purpose",
+      "code_snippet": "useEffect(() => { ... }, [])",
+      "issue": "Animation might re-initialize",
+      "suggestion": "Verify dependency array is intentional",
+      "fix_approach": "Check if empty array is correct for animation"
+    }
+  ],
+  "missing_translations": [
+    {
+      "key": "helpAndAdvice.emergencySOS",
+      "files": [
+        "app/OnboardingCarousel.tsx:671"
+      ],
+      "note": "Has fallback text but should be in translation file"
+    }
+  ],
+  "recommendations": {
+    "immediate_actions": [
+      "1. Fix CRITICAL_001 & CRITICAL_002: Refactor split operations on translations",
+      "2. Fix CRITICAL_003: Add proper env variable for profile URL",
+      "3. Fix CRITICAL_004 & CRITICAL_005: Add proper nullability checks",
+      "4. Fix CRITICAL_006 & CRITICAL_007: Review useEffect dependencies"
+    ],
+    "within_sprint": [
+      "Remove all 113 console statements (wrap in __DEV__ or use logger)",
+      "Replace 67 'any' types with proper TypeScript interfaces",
+      "Add missing translation keys to both fr and en files",
+      "Implement centralized error logging with sensitivity filtering"
+    ],
+    "refactoring": [
+      "Create AlertType interface to replace all 'any' for alerts",
+      "Create UserType interface for userData props",
+      "Extract URL manipulation to config service",
+      "Implement proper error boundary for async operations",
+      "Create logger service as single source for all logging"
+    ]
+  },
+  "affected_files_summary": {
+    "critical": [
+      "components/home/BentoStats.tsx",
+      "components/AideEtConseilSection.tsx", 
+      "app/(tabs)/index.tsx",
+      "app/alert-response/[id].tsx",
+      "context/AuthContext.tsx",
+      "app/(tabs)/map.tsx",
+      "utils/pushNotifications.ts"
+    ],
+    "high_priority": [
+      "config/axiosConfig.ts",
+      "services/user.service.ts",
+      "hooks/useCachedImage.ts",
+      "utils/pushNotifications.ts",
+      "app/(tabs)/_layout.tsx",
+      "app/create-alert/index.tsx",
+      "hooks/useAlertRetryCheck.ts"
+    ]
+  }
+}

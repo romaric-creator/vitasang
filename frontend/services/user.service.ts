@@ -10,13 +10,14 @@ export const loginUser = async (telephone: string, mot_de_passe: string) => {
     return response.data;
   } catch (error: any) {
     console.error("Erreur lors de la connexion:", error);
-    if (error.response && error.response.data && error.response.data.message) {
-      throw new Error(error.response.data.message);
-    } else if (error.message) {
-      throw new Error(error.message);
-    } else {
-      throw new Error("Erreur de connexion inconnue");
+    if (error.response && error.response.data) {
+      const apiError = error.response.data;
+      const err = new Error(apiError.message || "Erreur de connexion");
+      (err as any).errors = apiError.errors;
+      (err as any).statusCode = error.response.status;
+      throw err;
     }
+    throw new Error(error.message || "Erreur de connexion inconnue");
   }
 };
 
@@ -43,13 +44,14 @@ export const registerUser = async (
     return response.data;
   } catch (error: any) {
     console.error("Erreur lors de l'inscription:", error);
-    if (error.response && error.response.data && error.response.data.message) {
-      throw new Error(error.response.data.message);
-    } else if (error.message) {
-      throw new Error(error.message);
-    } else {
-      throw new Error("Erreur d'inscription inconnue");
+    if (error.response && error.response.data) {
+      const apiError = error.response.data;
+      const err = new Error(apiError.message || "Erreur d'inscription");
+      (err as any).errors = apiError.errors;
+      (err as any).statusCode = error.response.status;
+      throw err;
     }
+    throw new Error(error.message || "Erreur d'inscription inconnue");
   }
 };
 

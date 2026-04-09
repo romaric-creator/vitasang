@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   ScrollView,
   Alert,
+  Modal,
 } from "react-native";
 import { Formik } from "formik";
 import { TabBarIcon } from "@/components/TabBarIcon";
@@ -32,7 +33,7 @@ import {
 export default function GuestAlertScreen() {
   const { t } = useTranslation();
   const router = useRouter();
-  
+
   // Pas d'auth ici
   const [location, setLocation] = useState<Location.LocationObject | null>(
     null,
@@ -41,6 +42,7 @@ export default function GuestAlertScreen() {
   const [loading, setLoading] = useState(false);
   const [isLocating, setIsLocating] = useState(true);
   const [donorCount, setDonorCount] = useState<number | null>(null);
+  const [showAccountPromptModal, setShowAccountPromptModal] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -57,7 +59,10 @@ export default function GuestAlertScreen() {
         setLocation(location);
       } catch (e) {
         console.warn("Location error:", e);
-        setErrorMsg(t("alert.locationError") || "Impossible de récupérer votre position. Veuillez vérifier votre GPS.");
+        setErrorMsg(
+          t("alert.locationError") ||
+            "Impossible de récupérer votre position. Veuillez vérifier votre GPS.",
+        );
       }
       setIsLocating(false);
     })();
@@ -82,9 +87,9 @@ export default function GuestAlertScreen() {
     }
   };
 
-  const handleSubmit = async (values: any) => {
-    setErrorMsg(null); // Réinitialiser l'erreur
-    
+  const handleStoreAndShowPrompt = async (values: any) => {
+    setErrorMsg(null);
+
     if (!location) {
       const msg = t("alert.locationError");
       setErrorMsg(msg);
@@ -108,15 +113,23 @@ export default function GuestAlertScreen() {
     setLoading(true);
     try {
       await storeData("pending_alert", alertData);
-      router.push("/register");
+      // Afficher le modal informatif au lieu de rediriger directement
+      setShowAccountPromptModal(true);
     } catch (error: any) {
-      console.error("Failed to store pending alert or redirect:", error);
-      const msg = t("alert.genericError") || "Erreur inattendue lors de la sauvegarde de l'alerte.";
+      console.error("Failed to store pending alert:", error);
+      const msg =
+        t("alert.genericError") ||
+        "Erreur inattendue lors de la sauvegarde de l'alerte.";
       setErrorMsg(msg);
       Alert.alert(t("common.error"), msg);
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleContinueToRegister = () => {
+    setShowAccountPromptModal(false);
+    router.push("/register");
   };
 
   return (
@@ -154,7 +167,7 @@ export default function GuestAlertScreen() {
               longitude: location?.coords.longitude || 0,
             }}
             validationSchema={createAlertValidationSchema}
-            onSubmit={handleSubmit}
+            onSubmit={handleStoreAndShowPrompt}
             enableReinitialize={true}
           >
             {({
@@ -197,7 +210,9 @@ export default function GuestAlertScreen() {
                 <FormField
                   label={t("alert.fields.contactPhone") || "Numéro de Contact"}
                   value={values.telephone_contact}
-                  onChangeText={(text) => setFieldValue("telephone_contact", text.replace(/\s/g, ""))}
+                  onChangeText={(text) =>
+                    setFieldValue("telephone_contact", text.replace(/\s/g, ""))
+                  }
                   onBlur={handleBlur("telephone_contact")}
                   placeholder="6XXXXXXXX"
                   error={errors.telephone_contact}
@@ -293,28 +308,106 @@ export default function GuestAlertScreen() {
 
                 {errorMsg && <Text style={styles.errorText}>{errorMsg}</Text>}
 
-                  <PrimaryButton
-                    title={t("alert.submit") || "LANCER L'ALERTE"}
-                    onPress={() => handleSubmit()}
-                    loading={loading}
-                    disabled={!location || loading}
-                    style={{ marginTop: 20 }}
-                  />
+                <PrimaryButton
+                  title={t("alert.submit") || "LANCER L'ALERTE"}
+                  onPress={() => handleSubmit()}
+                  loading={loading}
+                  disabled={!location || loading}
+                  style={{ marginTop: 20 }}
+                />
 
-                  {/* Lien de retour au login spécifique pour guest */}
-                  <TouchableOpacity 
-                    style={{ marginTop: 20, alignItems: "center" }} 
-                    onPress={() => router.replace("/login")}
-                  >
-                    <Text style={{ color: color.textSecondary, fontSize: 14 }}>
-                      {t("alert.haveAccount") || "Vous avez un compte ?"} <Text style={{ color: color.primary, fontWeight: "bold" }}>Connexion</Text>
+                {/* Lien de retour au login spécifique pour guest */}
+                <TouchableOpacity
+                  style={{ marginTop: 20, alignItems: "center" }}
+                  onPress={() => router.replace("/login")}
+                >
+                  <Text style={{ color: color.textSecondary, fontSize: 14 }}>
+                    {t("alert.haveAccount") || "Vous avez un compte ?"}{" "}
+                    <Text style={{ color: color.primary, fontWeight: "bold" }}>
+                      Connexion
                     </Text>
-                  </TouchableOpacity>
+                  </Text>
+                </TouchableOpacity>
               </View>
             )}
           </Formik>
         </ScrollView>
       )}
+
+      {/* Modal d'information sur la création du compte */}
+      <Modal
+        visible={showAccountPromptModal}
+        transparent={true}
+        animationType="slide"
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            {/* Icône de succès */}
+            <View style={styles.modalIcon}>
+              <TabBarIcon name="check-circle" size={48} color={color.primary} />
+            </View>
+
+            {/* Titre */}
+            <Text style={styles.modalTitle}>
+              {t("alert.accountCreationTitle") || "Créez votre compte"}
+            </Text>
+
+            {/* Message informatif */}
+            <Text style={styles.modalMessage}>
+              {t("alert.accountCreationMessage") ||
+                "Votre alerte a été enregistrée avec succès. Pour la lancer auprès des donneurs, vous devez créer un compte. Le compte sera créé immédiatement et votre alerte sera lancée automatiquement."}
+            </Text>
+
+            {/* Points clés */}
+            <View style={styles.keyPointsContainer}>
+              <View style={styles.keyPoint}>
+                <Text style={styles.keyPointNumber}>1</Text>
+                <Text style={styles.keyPointText}>
+                  {t("alert.step1") ||
+                    "Créez votre compte avec vos informations"}
+                </Text>
+              </View>
+
+              <View style={styles.keyPoint}>
+                <Text style={styles.keyPointNumber}>2</Text>
+                <Text style={styles.keyPointText}>
+                  {t("alert.step2") ||
+                    "Votre alerte sera lancée automatiquement"}
+                </Text>
+              </View>
+
+              <View style={styles.keyPoint}>
+                <Text style={styles.keyPointNumber}>3</Text>
+                <Text style={styles.keyPointText}>
+                  {t("alert.step3") ||
+                    "Les donneurs proches recevront votre alerte"}
+                </Text>
+              </View>
+            </View>
+
+            {/* Boutons */}
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                onPress={() => setShowAccountPromptModal(false)}
+                style={styles.cancelButton}
+              >
+                <Text style={styles.cancelButtonText}>
+                  {t("common.cancel") || "Annuler"}
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                onPress={handleContinueToRegister}
+                style={styles.continueButton}
+              >
+                <Text style={styles.continueButtonText}>
+                  {t("alert.continueToRegister") || "Créer mon compte"}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </ThemedView>
   );
 }
@@ -421,5 +514,103 @@ const styles = StyleSheet.create({
     color: color.primary,
     fontSize: 16,
     fontWeight: "700",
+  },
+  // Styles pour le Modal de notification du compte
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "flex-end",
+  },
+  modalContent: {
+    backgroundColor: color.surface,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    paddingVertical: 32,
+    paddingHorizontal: 20,
+    maxHeight: "85%",
+  },
+  modalIcon: {
+    alignItems: "center",
+    marginBottom: 24,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: "800",
+    color: color.primary,
+    textAlign: "center",
+    marginBottom: 12,
+  },
+  modalMessage: {
+    fontSize: 14,
+    color: color.textSecondary,
+    textAlign: "center",
+    lineHeight: 21,
+    marginBottom: 24,
+    fontWeight: "500",
+  },
+  keyPointsContainer: {
+    backgroundColor: color.screenBackground,
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 28,
+    gap: 12,
+  },
+  keyPoint: {
+    flexDirection: "row",
+    gap: 12,
+    alignItems: "flex-start",
+  },
+  keyPointNumber: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: color.primary,
+    color: "white",
+    fontSize: 14,
+    fontWeight: "700",
+    textAlign: "center",
+    lineHeight: 28,
+    flexShrink: 0,
+  },
+  keyPointText: {
+    flex: 1,
+    fontSize: 12,
+    color: color.textPrimary,
+    lineHeight: 18,
+    fontWeight: "500",
+  },
+  modalButtons: {
+    flexDirection: "row",
+    gap: 12,
+  },
+  cancelButton: {
+    flex: 1,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 10,
+    borderWidth: 1.5,
+    borderColor: color.border,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: color.screenBackground,
+  },
+  cancelButtonText: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: color.textSecondary,
+  },
+  continueButton: {
+    flex: 1,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 10,
+    backgroundColor: color.primary,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  continueButtonText: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: "white",
   },
 });

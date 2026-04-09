@@ -1,0 +1,404 @@
+@startuml BloodDonationApp_ClassDiagram
+!theme plain
+skinparam classBackgroundColor #FEFCE8
+skinparam classBorderColor #333333
+skinparam arrowColor #333333
+skinparam backgroundColor #FFFFFF
+
+title Blood Donation App - Diagramme de Classe UML
+
+' ====== MODELS LAYER ======
+package "Models (Sequelize)" {
+    class Utilisateur {
+        - id: UUID
+        - email: string
+        - telephone: string
+        - nom: string
+        - prenom: string
+        - motDePasse: string (hashed)
+        - role: ENUM[donneur|personnel|admin|cnts]
+        - dateInscription: DateTime
+        - actif: boolean
+        - derniereConnexion: DateTime
+        --
+        + authentifier(): boolean
+        + genererToken(): string
+        + estDonneur(): boolean
+    }
+
+    class ProfilDonneur {
+        - id: UUID
+        - utilisateurId: UUID (FK)
+        - groupeSanguin: string
+        - dateNaissance: Date
+        - sexe: ENUM[M|F]
+        - poids: number
+        - tailleDisponibilite: ENUM[]
+        - datesDernieresDons: Date[]
+        - etatSante: string
+        - allergie: string
+        - medicaments: string
+        --
+        + verifierEligibilite(): boolean
+        + calculerJoursAvantDon(): number
+    }
+
+    class Centre {
+        - id: UUID
+        - nom: string
+        - adresse: string
+        - latitude: number
+        - longitude: number
+        - telephone: string
+        - email: string
+        - horaireOuverture: Time
+        - horaireFermeture: Time
+        - capaciteJournaliere: number
+        - personnel: Utilisateur[]
+        --
+        + estOuvert(): boolean
+        + calculerDistance(lat, long): number
+        + obtenirDisponibilite(date): RendezVous[]
+    }
+
+    class RendezVous {
+        - id: UUID
+        - centreId: UUID (FK)
+        - donneur: Utilisateur (FK)
+        - dateHeureDebut: DateTime
+        - dateHeureFin: DateTime
+        - statut: ENUM[confirmé|annulé|complété]
+        - typesDons: TypeDon[]
+        - remarques: string
+        --
+        + reserver(): boolean
+        + annuler(): void
+        + completer(): void
+        + verifierConflits(): boolean
+    }
+
+    class HistoriqueDon {
+        - id: UUID
+        - donneurId: UUID (FK)
+        - centreId: UUID (FK)
+        - dateHeure: DateTime
+        - quantite: number
+        - typeDon: TypeDon (FK)
+        - numero: string
+        - remarques: string
+        --
+        + enregistrer(): void
+    }
+
+    class TypeDon {
+        - id: UUID
+        - nom: string
+        - description: string
+        - dureeAttente: number
+        - quantiteStandard: number
+        - professionnel: boolean
+        --
+        + obtenirDelai(): number
+    }
+
+    class StockSang {
+        - id: UUID
+        - centreId: UUID (FK)
+        - groupeSanguin: string
+        - quantite: number
+        - dateExpiration: Date
+        - statut: ENUM[disponible|reserve|expire]
+        --
+        + ajouterStock(quantite): void
+        + consommer(quantite): boolean
+        + estCritique(): boolean
+    }
+
+    class Alerte {
+        - id: UUID
+        - titre: string
+        - description: string
+        - typeAlerte: ENUM[urgente|routine|info]
+        - groupeSanguin: string
+        - latitude: number
+        - longitude: number
+        - rayon: number
+        - dateCreation: DateTime
+        - dateExpiration: DateTime
+        - centreId: UUID (FK)
+        - statut: ENUM[active|fermée|annulée]
+        --
+        + creer(): void
+        + determinerBeneficiaires(): Utilisateur[]
+        + validerProximite(lat, long): boolean
+        + fermer(): void
+    }
+
+    class LogNotification {
+        - id: UUID
+        - utilisateurId: UUID (FK)
+        - type: string
+        - titre: string
+        - corps: string
+        - dateEnvoi: DateTime
+        - dateReception: DateTime
+        - statut: ENUM[en_attente|envoyée|lue|erreur]
+        - alerteId: UUID (FK)
+        - campagneId: UUID (FK)
+        --
+        + envoyer(): boolean
+        + marquerCommeReception(): void
+    }
+
+    class Message {
+        - id: UUID
+        - expediteurId: UUID (FK)
+        - destinataireId: UUID (FK)
+        - contenu: string
+        - dateEnvoi: DateTime
+        - dateRecetion: DateTime
+        - lu: boolean
+        --
+        + marquerCommeReception(): void
+    }
+
+    class Campagne {
+        - id: UUID
+        - centrId: UUID (FK)
+        - titre: string
+        - description: string
+        - dateDebut: DateTime
+        - dateFin: DateTime
+        - objectifDonneurs: number
+        - statut: ENUM[planifiée|en_cours|terminée]
+        - segmentation: object
+        --
+        + lancerCampagne(): void
+        + calculerResultats(): object
+    }
+}
+
+' ====== CONTROLLERS LAYER ======
+package "Controllers" {
+    class UsersController {
+        - userService: UserService
+        --
+        + register(data): Promise
+        + login(credentials): Promise
+        + logout(userId): Promise
+        + getUserProfile(userId): Promise
+        + updateProfile(userId, data): Promise
+    }
+
+    class CentresController {
+        - cacheService: CacheService
+        --
+        + getCentres(filters): Promise
+        + getCentreById(id): Promise
+        + searchNearby(lat, lon, rayon): Promise
+        + getDisponibilite(centreId): Promise
+    }
+
+    class RendezVousController {
+        - rdvService: RendezVousService
+        --
+        + reserver(data): Promise
+        + annuler(id): Promise
+        + getMesRendezVous(userId): Promise
+        + getHistorique(userId): Promise
+    }
+
+    class AlertesController {
+        - alertService: AlertService
+        - notificationQueue: BullMQ
+        --
+        + creerAlerte(data): Promise
+        + getAlertes(filtres): Promise
+        + validerAlerte(alerteId): Promise
+        + fermerAlerte(id): Promise
+    }
+
+    class CampagnesController {
+        - campaignService: CampaignService
+        --
+        + creerCampagne(data): Promise
+        + lancerCampagne(id): Promise
+        + getResultats(id): Promise
+    }
+
+    class MessagesController {
+        - messageService: MessageService
+        --
+        + sendMessage(data): Promise
+        + getConversation(userId, otherId): Promise
+    }
+}
+
+' ====== SERVICES LAYER ======
+package "Services" {
+    class UserService {
+        - userRepository: Repository
+        - emailService: EmailService
+        --
+        + creerUtilisateur(data): Promise
+        + authentifier(email, password): Promise
+        + genererToken(userId): string
+        + validerEmail(email): boolean
+    }
+
+    class AlertService {
+        - alertRepository: Repository
+        - redisClient: Redis
+        - bullQueue: BullMQ
+        --
+        + creerAlerte(data): Promise
+        + determinerBeneficiaires(alerte): Utilisateur[]
+        + envoyerNotifications(users): Promise
+        + validerAlerte(alerteId): Promise
+    }
+
+    class CacheService {
+        - redisClient: Redis
+        --
+        + get(cle): Promise
+        + set(cle, valeur, ttl): Promise
+        + delete(cle): Promise
+        + invalidate(pattern): Promise
+    }
+
+    class NotificationService {
+        - expoClient: Expo
+        - bullQueue: BullMQ
+        --
+        + sendPush(token, titre, corps): Promise
+        + queueNotification(notification): void
+        + sendEmail(email, contenu): Promise
+    }
+}
+
+' ====== EXTERNAL SERVICES ======
+package "Services Externes" {
+    class ExpoSDK {
+        + sendPushNotification(token, message): Promise
+    }
+
+    class RedisClient {
+        + connect(): void
+        + set(key, value, ttl): void
+        + get(key): string
+        + del(key): void
+    }
+
+    class BullMQ {
+        + add(jobName, data, options): void
+        + process(jobName, handler): void
+        + on(event, callback): void
+    }
+
+    class SentryMonitoring {
+        + captureException(error): void
+        + captureMessage(message): void
+    }
+
+    class SequelizeORM {
+        + define(name, attributes): Model
+        + sync(): Promise
+        + query(sql): Promise
+    }
+}
+
+' ====== FRONTEND COMPONENTS ======
+package "Frontend (React Native)" {
+    class AuthContext {
+        - user: Utilisateur
+        - token: string
+        - isLoading: boolean
+        --
+        + login(credentials): Promise
+        + logout(): void
+        + register(data): Promise
+    }
+
+    class NotificationContext {
+        - notifications: LogNotification[]
+        - unreadCount: number
+        --
+        + addNotification(notification): void
+        + markAsRead(id): void
+    }
+
+    class AlerteScreen {
+        - alertes: Alerte[]
+        - selectedAlert: Alerte
+        --
+        + displayAlertes(): void
+        + onAlertSelect(alerte): void
+    }
+
+    class RendezVousScreen {
+        - rendezVous: RendezVous[]
+        - selectedCentre: Centre
+        --
+        + reserverRendezVous(data): void
+        + afficherDisponibilites(): void
+    }
+
+    class ProfilScreen {
+        - profil: ProfilDonneur
+        --
+        + afficherProfil(): void
+        + modifierProfil(data): void
+    }
+
+    class CentresNearbyScreen {
+        - centres: Centre[]
+        - userLocation: {lat, lon}
+        --
+        + rechercherProches(): void
+        + afficherDistance(centre): void
+    }
+}
+
+' ====== RELATIONSHIPS ======
+
+' One-to-One
+Utilisateur "1" --> "1" ProfilDonneur : possède
+Centre "1" --> "0..*" Utilisateur : emploie (personnel)
+
+' One-to-Many
+Centre "1" --> "0..*" RendezVous : héberge
+Centre "1" --> "0..*" StockSang : stocke
+Centre "1" --> "0..*" Alerte : crée
+Utilisateur "1" --> "0..*" RendezVous : réserve
+Utilisateur "1" --> "0..*" HistoriqueDon : donne
+Utilisateur "1" --> "0..*" LogNotification : reçoit
+Utilisateur "1" --> "0..*" Message : envoie
+Utilisateur "1" --> "0..*" Message : reçoit
+RendezVous "0..*" --> "1..*" TypeDon : concerne
+
+' Many-to-Many (implicit via LogNotification)
+Alerte --> LogNotification : génère
+Campagne --> LogNotification : génère
+
+' Service Relationships
+UsersController --> UserService : utilise
+CentresController --> CacheService : utilise
+AlertesController --> AlertService : utilise
+AlertesController --> NotificationService : utilise
+AlertesController --> BullMQ : file d'attente
+
+AlertService --> RedisClient : cache
+AlertService --> BullMQ : jobs
+NotificationService --> ExpoSDK : push
+NotificationService --> BullMQ : file d'attente
+
+UserService --> SequelizeORM : ORM
+AlertService --> SequelizeORM : ORM
+
+' Frontend to Services
+AuthContext -.-> UsersController : API calls
+AlerteScreen -.-> AlertesController : API calls
+RendezVousScreen -.-> RendezVousController : API calls
+NotificationContext -.-> LogNotification : listen
+
+@enduml

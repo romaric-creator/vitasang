@@ -278,7 +278,8 @@ export default {
     itineraryUnavailable: "Directions unavailable",
     sending: "Sending...",
     authRequired: "Login required",
-    authMessage: "Create an account to track your alert and receive notifications.",
+    authMessage:
+      "Create an account to track your alert and receive notifications.",
     fields: {
       patientName: "Patient Name",
       contactPhone: "Contact Phone",
@@ -313,24 +314,46 @@ export default {
       eligibility: {
         title: "Self-Eligibility Check",
         subtitle: "Please answer honestly for your own safety.",
-        warning: "If you answer YES to any of these questions, it is better not to donate today.",
+        warning:
+          "If you answer YES to any of these questions, it is better not to donate today.",
         confirmBtn: "I CONFIRM MY ELIGIBILITY",
         testTitle: "Eligibility Test",
         resultTitle: "Test Result",
         eligible: "You seem eligible!",
         notEligible: "A delay might be necessary",
-        eligibleDesc: "Based on your answers, you meet the basic conditions to donate blood today.",
-        notEligibleDesc: "Some of your answers indicate it's better to wait or consult a doctor before donating.",
+        eligibleDesc:
+          "Based on your answers, you meet the basic conditions to donate blood today.",
+        notEligibleDesc:
+          "Some of your answers indicate it's better to wait or consult a doctor before donating.",
         noteTitle: "Important",
-        noteText: "This test is indicative. Only the donation center doctor can definitively validate your suitability after a confidential interview.",
+        noteText:
+          "This test is indicative. Only the donation center doctor can definitively validate your suitability after a confidential interview.",
         stepText: "Question {{current}} of {{total}}",
         questions: {
-          q1: { text: "Do you weigh more than 50 kg?", hint: "The volume of blood collected depends on your total weight." },
-          q2: { text: "Are you between 18 and 70 years old?", hint: "This is the legal age range for blood donation." },
-          q3: { text: "Have you eaten and are you well hydrated?", hint: "Never donate on an empty stomach to avoid discomfort." },
-          q4: { text: "Have you had a fever in the last 2 weeks?", hint: "A recent infection can be transmitted through blood." },
-          q5: { text: "Have you had a tattoo or piercing in the last 4 months?", hint: "This is a precautionary period for infectious risks." },
-          q6: { text: "Have you taken antibiotics in the last 7 days?", hint: "You must wait until the end of the treatment." },
+          q1: {
+            text: "Do you weigh more than 50 kg?",
+            hint: "The volume of blood collected depends on your total weight.",
+          },
+          q2: {
+            text: "Are you between 18 and 70 years old?",
+            hint: "This is the legal age range for blood donation.",
+          },
+          q3: {
+            text: "Have you eaten and are you well hydrated?",
+            hint: "Never donate on an empty stomach to avoid discomfort.",
+          },
+          q4: {
+            text: "Have you had a fever in the last 2 weeks?",
+            hint: "A recent infection can be transmitted through blood.",
+          },
+          q5: {
+            text: "Have you had a tattoo or piercing in the last 4 months?",
+            hint: "This is a precautionary period for infectious risks.",
+          },
+          q6: {
+            text: "Have you taken antibiotics in the last 7 days?",
+            hint: "You must wait until the end of the treatment.",
+          },
         },
       },
     },
@@ -379,7 +402,8 @@ export default {
       info: "You will be redirected to your alert tracking in a few seconds.",
       bypass: "Skip waiting",
     },
-    shareMessage: "🚨 *VITAL EMERGENCY — BLOOD DONATION APPEAL* 🩸\n\nUrgent need for blood group *{{group}}* to save a life.\n\n📍 *Location* : {{location}}\n🗺️ *Directions* : https://www.google.com/maps/search/?api=1&query={{latitude}},{{longitude}}\n⚠️ *Urgency* : {{urgency}}\n📦 *Need* : {{quantity}} bag(s)\n📞 *Contact* : {{phone}}\n\nThis is for a free and voluntary donation. If you can help or know someone who can, click here:\n🔗 https://vitasang.cm/alerte/{{id}}\n\n_Please share widely in your groups. Every share can save a life. God bless us._ 🙏🇨🇲\n#VitaSang #Cameroon #VoluntaryBloodDonation",
+    shareMessage:
+      "🚨 *VITAL EMERGENCY — BLOOD DONATION APPEAL* 🩸\n\nUrgent need for blood group *{{group}}* to save a life.\n\n📍 *Location* : {{location}}\n🗺️ *Directions* : https://www.google.com/maps/search/?api=1&query={{latitude}},{{longitude}}\n⚠️ *Urgency* : {{urgency}}\n📦 *Need* : {{quantity}} bag(s)\n📞 *Contact* : {{phone}}\n\nThis is for a free and voluntary donation. If you can help or know someone who can, click here:\n🔗 https://vitasang.cm/alerte/{{id}}\n\n_Please share widely in your groups. Every share can save a life. God bless us._ 🙏🇨🇲\n#VitaSang #Cameroon #VoluntaryBloodDonation",
     fatigue: {
       noAlerts: "You haven't received any alerts today",
       isFatigued: "You're receiving many alerts. Take a break!",
@@ -387,11 +411,20 @@ export default {
       regularParticipation: "You participate regularly. Great job!",
       explore: "Explore available alerts",
     },
+    accountCreationTitle: "Create your account",
+    accountCreationMessage:
+      "Your alert has been saved successfully. To launch it to nearby donors, you need to create an account. Your account will be created immediately and your alert will be launched automatically.",
+    step1: "Create your account with your information",
+    step2: "Your alert will be launched automatically",
+    step3: "Nearby donors will receive your alert",
+    continueToRegister: "Create my account",
+    haveAccount: "Already have an account?",
   },
   helpAndAdvice: {
     headerTitle: "Help & Awareness",
     heroTitle: "Why Donate Blood?",
-    heroText: "Each donation can save up to 3 lives. By donating your blood, you participate in a vital chain of solidarity.",
+    heroText:
+      "Each donation can save up to 3 lives. By donating your blood, you participate in a vital chain of solidarity.",
     statDays: "days between\neach donation",
     statMl: "ml collected\nper donation",
     statLivesSaved: "lives saved\nper donation",
@@ -421,14 +454,19 @@ export default {
     sectionWhoCanDonateItem5: "No transmissible diseases",
     faqTitle: "Frequently Asked Questions",
     faqQuestion1: "Is it painful?",
-    faqAnswer1: "No, the initial prick is minor. After a few seconds, you won't feel anything.",
+    faqAnswer1:
+      "No, the initial prick is minor. After a few seconds, you won't feel anything.",
     faqQuestion2: "How long does a donation take?",
-    faqAnswer2: "Generally, the donation takes between 8 and 10 minutes. Allow 30 minutes in total including reception and rest.",
+    faqAnswer2:
+      "Generally, the donation takes between 8 and 10 minutes. Allow 30 minutes in total including reception and rest.",
     faqQuestion3: "Can you donate if you have tattoos?",
-    faqAnswer3: "Yes, if the tattoos are more than 4 months old. Otherwise, you must wait 4 months after to donate.",
+    faqAnswer3:
+      "Yes, if the tattoos are more than 4 months old. Otherwise, you must wait 4 months after to donate.",
     faqQuestion4: "What are the risks?",
-    faqAnswer4: "The risks are very minimal. Sterile needles reduce the risk of infection to almost zero.",
-    infoBanner: "For more information, consult your local blood transfusion center.",
+    faqAnswer4:
+      "The risks are very minimal. Sterile needles reduce the risk of infection to almost zero.",
+    infoBanner:
+      "For more information, consult your local blood transfusion center.",
   },
   guestAlert: {
     title: "SOS Emergency",
@@ -456,15 +494,18 @@ export default {
   onboarding: {
     slide1: {
       title: "Find nearby donors",
-      description: "Connect with compatible blood donors in your area in case of emergency.",
+      description:
+        "Connect with compatible blood donors in your area in case of emergency.",
     },
     slide2: {
       title: "Track your donations",
-      description: "Keep a history of your donations and receive reminders for your next life-saving opportunity.",
+      description:
+        "Keep a history of your donations and receive reminders for your next life-saving opportunity.",
     },
     slide3: {
       title: "Receive urgent alerts",
-      description: "Stay informed in real-time about urgent blood needs and act quickly.",
+      description:
+        "Stay informed in real-time about urgent blood needs and act quickly.",
     },
     actions: {
       emergency: "Emergency: Launch an alert",

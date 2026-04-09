@@ -13,8 +13,10 @@ export const loginValidationSchema = yup.object().shape({
   mot_de_passe: yup
     .string()
     .required('Le mot de passe est requis')
-    .min(6, 'Au minimum 6 caractères')
+    .min(8, 'Au minimum 8 caractères')
     .max(50, 'Maximum 50 caractères')
+    .matches(/[A-Z]/, 'Au moins une majuscule')
+    .matches(/[0-9]/, 'Au moins un chiffre'),
 });
 
 export const registerValidationSchema = yup.object().shape({
@@ -42,7 +44,7 @@ export const registerValidationSchema = yup.object().shape({
   mot_de_passe: yup
     .string()
     .required('Le mot de passe est requis')
-    .min(6, 'Au minimum 6 caractères')
+    .min(8, 'Au minimum 8 caractères')
     .max(50, 'Maximum 50 caractères')
     // Simplification : on retire les contraintes trop strictes de regex pour l'instant si demandé,
     // mais gardons un minimum de sécurité

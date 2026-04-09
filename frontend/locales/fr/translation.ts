@@ -63,7 +63,8 @@ export default {
       title: "Aide & Sensibilisation",
       subtitle: "Découvrez l'impact de votre don",
       didYouKnow: "Saviez-vous ?",
-      didYouKnowText: "Une personne sur 2 aura besoin de sang au cours de sa vie",
+      didYouKnowText:
+        "Une personne sur 2 aura besoin de sang au cours de sa vie",
       stats: {
         frequency: "Fréquence max",
         perDonation: "Par don",
@@ -293,7 +294,8 @@ export default {
     itineraryUnavailable: "Coordonnées indisponibles",
     sending: "Envoi en cours...",
     authRequired: "Connexion requise",
-    authMessage: "Créez un compte pour suivre votre alerte et recevoir des notifications.",
+    authMessage:
+      "Créez un compte pour suivre votre alerte et recevoir des notifications.",
     fields: {
       patientName: "Nom du Patient",
       contactPhone: "Numéro de Contact",
@@ -328,24 +330,46 @@ export default {
       eligibility: {
         title: "Auto-Éligibilité",
         subtitle: "Répondez honnêtement pour votre propre sécurité.",
-        warning: "Si vous répondez OUI à l'une de ces questions, il est préférable de ne pas donner aujourd'hui.",
+        warning:
+          "Si vous répondez OUI à l'une de ces questions, il est préférable de ne pas donner aujourd'hui.",
         confirmBtn: "JE CONFIRME MON ÉLIGIBILITÉ",
         testTitle: "Test d'éligibilité",
         resultTitle: "Résultat du test",
         eligible: "Vous semblez éligible !",
         notEligible: "Un report est peut-être nécessaire",
-        eligibleDesc: "D'après vos réponses, vous remplissez les conditions de base pour donner votre sang aujourd'hui.",
-        notEligibleDesc: "Certaines de vos réponses indiquent qu'il est préférable d'attendre ou de consulter un médecin avant de donner.",
+        eligibleDesc:
+          "D'après vos réponses, vous remplissez les conditions de base pour donner votre sang aujourd'hui.",
+        notEligibleDesc:
+          "Certaines de vos réponses indiquent qu'il est préférable d'attendre ou de consulter un médecin avant de donner.",
         noteTitle: "Important",
-        noteText: "Ce test est indicatif. Seul le médecin du centre de don peut valider définitivement votre aptitude après un entretien confidentiel.",
+        noteText:
+          "Ce test est indicatif. Seul le médecin du centre de don peut valider définitivement votre aptitude après un entretien confidentiel.",
         stepText: "Question {{current}} sur {{total}}",
         questions: {
-          q1: { text: "Pesez-vous plus de 50 kg ?", hint: "Le volume de sang prélevé dépend de votre poids total." },
-          q2: { text: "Avez-vous entre 18 et 70 ans ?", hint: "C'est la tranche d'âge légale pour donner son sang." },
-          q3: { text: "Avez-vous mangé et êtes-vous bien hydraté ?", hint: "Ne jamais donner à jeun pour éviter les malaises." },
-          q4: { text: "Avez-vous eu de la fièvre au cours des 2 dernières semaines ?", hint: "Une infection récente peut être transmise par le sang." },
-          q5: { text: "Avez-vous fait un tatouage ou piercing ces 4 derniers mois ?", hint: "C'est un délai de précaution pour les risques infectieux." },
-          q6: { text: "Avez-vous pris des antibiotiques ces 7 derniers jours ?", hint: "Il faut attendre la fin du traitement." },
+          q1: {
+            text: "Pesez-vous plus de 50 kg ?",
+            hint: "Le volume de sang prélevé dépend de votre poids total.",
+          },
+          q2: {
+            text: "Avez-vous entre 18 et 70 ans ?",
+            hint: "C'est la tranche d'âge légale pour donner son sang.",
+          },
+          q3: {
+            text: "Avez-vous mangé et êtes-vous bien hydraté ?",
+            hint: "Ne jamais donner à jeun pour éviter les malaises.",
+          },
+          q4: {
+            text: "Avez-vous eu de la fièvre au cours des 2 dernières semaines ?",
+            hint: "Une infection récente peut être transmise par le sang.",
+          },
+          q5: {
+            text: "Avez-vous fait un tatouage ou piercing ces 4 derniers mois ?",
+            hint: "C'est un délai de précaution pour les risques infectieux.",
+          },
+          q6: {
+            text: "Avez-vous pris des antibiotiques ces 7 derniers jours ?",
+            hint: "Il faut attendre la fin du traitement.",
+          },
         },
       },
     },
@@ -395,7 +419,8 @@ export default {
       loading: "Recherche de donneurs...",
       info: "Vous serez redirigé vers le suivi de votre alerte dans quelques secondes.",
     },
-    shareMessage: "🚨 *URGENCE VITALE — APPEL À LA SOLIDARITÉ* 🩸\n\nBesoin urgent de sang groupe *{{group}}* pour sauver une vie.\n\n📍 *Lieu* : {{location}}\n🗺️ *Itinéraire* : https://www.google.com/maps/search/?api=1&query={{latitude}},{{longitude}}\n⚠️ *Urgence* : {{urgency}}\n📦 *Besoin* : {{quantity}} poche(s)\n📞 *Contact* : {{phone}}\n\nC'est pour un don bénévole et gratuit. Si vous pouvez aider ou connaissez quelqu'un, cliquez ici :\n🔗 https://vitasang.cm/alerte/{{id}}\n\n_Partagez au maximum dans vos groupes. Chaque partage peut sauver une vie. Que le Seigneur nous garde._ 🙏🇨🇲\n#VitaSang #Cameroun #DonDeSangBénévole",
+    shareMessage:
+      "🚨 *URGENCE VITALE — APPEL À LA SOLIDARITÉ* 🩸\n\nBesoin urgent de sang groupe *{{group}}* pour sauver une vie.\n\n📍 *Lieu* : {{location}}\n🗺️ *Itinéraire* : https://www.google.com/maps/search/?api=1&query={{latitude}},{{longitude}}\n⚠️ *Urgence* : {{urgency}}\n📦 *Besoin* : {{quantity}} poche(s)\n📞 *Contact* : {{phone}}\n\nC'est pour un don bénévole et gratuit. Si vous pouvez aider ou connaissez quelqu'un, cliquez ici :\n🔗 https://vitasang.cm/alerte/{{id}}\n\n_Partagez au maximum dans vos groupes. Chaque partage peut sauver une vie. Que le Seigneur nous garde._ 🙏🇨🇲\n#VitaSang #Cameroun #DonDeSangBénévole",
     fatigue: {
       noAlerts: "Vous n'avez pas reçu d'alertes aujourd'hui",
       isFatigued: "Vous recevez beaucoup d'alertes. Prenez une pause !",
@@ -403,11 +428,20 @@ export default {
       regularParticipation: "Vous participez régulièrement. C'est super !",
       explore: "Explorez nos alertes disponibles",
     },
+    accountCreationTitle: "Créez votre compte",
+    accountCreationMessage:
+      "Votre alerte a été enregistrée avec succès. Pour la lancer auprès des donneurs, vous devez créer un compte. Le compte sera créé immédiatement et votre alerte sera lancée automatiquement.",
+    step1: "Créez votre compte avec vos informations",
+    step2: "Votre alerte sera lancée automatiquement",
+    step3: "Les donneurs proches recevront votre alerte",
+    continueToRegister: "Créer mon compte",
+    haveAccount: "Vous avez un compte ?",
   },
   helpAndAdvice: {
     headerTitle: "Aide & Sensibilisation",
     heroTitle: "Pourquoi Donner du Sang?",
-    heroText: "Chaque don peut sauver jusqu'à 3 vies. En donnant votre sang, vous participez à une chaîne de solidarité vitale.",
+    heroText:
+      "Chaque don peut sauver jusqu'à 3 vies. En donnant votre sang, vous participez à une chaîne de solidarité vitale.",
     statDays: "jours entre\nchaque don",
     statMl: "ml prélevés\npar don",
     statLivesSaved: "vies sauvées\npar don",
@@ -415,7 +449,8 @@ export default {
     sectionAdvantagesItem1: "Réduit le risque de maladies cardiovasculaires",
     sectionAdvantagesItem2: "Équilibre le taux de fer dans le sang",
     sectionAdvantagesItem3: "Améliore la circulation sanguine",
-    sectionAdvantagesItem4: "Stimule la production de nouvelles cellules sanguines",
+    sectionAdvantagesItem4:
+      "Stimule la production de nouvelles cellules sanguines",
     sectionAdvantagesItem5: "Détection précoce de problèmes de santé",
     sectionPreparationTitle: "Préparation au Don",
     sectionPreparationItem1: "Buvez abondamment (eau) 48h avant",
@@ -437,14 +472,19 @@ export default {
     sectionWhoCanDonateItem5: "Pas de maladie transmissible",
     faqTitle: "Questions Fréquentes",
     faqQuestion1: "Est-ce que c'est douloureux?",
-    faqAnswer1: "Non, la piqûre initiale est mineure. Après quelques secondes, vous ne sentirez plus rien.",
+    faqAnswer1:
+      "Non, la piqûre initiale est mineure. Après quelques secondes, vous ne sentirez plus rien.",
     faqQuestion2: "Combien de temps dure un don?",
-    faqAnswer2: "En général, le don prend entre 8 et 10 minutes. Compter 30 minutes au total avec l'accueil et le repos.",
+    faqAnswer2:
+      "En général, le don prend entre 8 et 10 minutes. Compter 30 minutes au total avec l'accueil et le repos.",
     faqQuestion3: "Peut-on donner si on a des tatouages?",
-    faqAnswer3: "Oui, si les tatouages ont plus de 4 mois. Sinon, il faut attendre 4 mois après pour donner.",
+    faqAnswer3:
+      "Oui, si les tatouages ont plus de 4 mois. Sinon, il faut attendre 4 mois après pour donner.",
     faqQuestion4: "Quels sont les risques?",
-    faqAnswer4: "Les risques sont très minimes. Les aiguilles stériles réduisent les risques d'infection à quasi zéro.",
-    infoBanner: "Pour plus d'informations, consultez votre centre de transfusion local.",
+    faqAnswer4:
+      "Les risques sont très minimes. Les aiguilles stériles réduisent les risques d'infection à quasi zéro.",
+    infoBanner:
+      "Pour plus d'informations, consultez votre centre de transfusion local.",
   },
   guestAlert: {
     title: "Urgence SOS",
@@ -472,15 +512,18 @@ export default {
   onboarding: {
     slide1: {
       title: "Trouvez des donneurs proches",
-      description: "Connectez-vous avec des donneurs de sang compatibles dans votre région en cas d'urgence.",
+      description:
+        "Connectez-vous avec des donneurs de sang compatibles dans votre région en cas d'urgence.",
     },
     slide2: {
       title: "Suivez vos dons",
-      description: "Gardez un historique de vos dons et recevez des rappels pour votre prochaine opportunité de sauver une vie.",
+      description:
+        "Gardez un historique de vos dons et recevez des rappels pour votre prochaine opportunité de sauver une vie.",
     },
     slide3: {
       title: "Recevez des alertes urgentes",
-      description: "Soyez informé en temps réel des besoins urgents en sang et agissez rapidement.",
+      description:
+        "Soyez informé en temps réel des besoins urgents en sang et agissez rapidement.",
     },
     actions: {
       emergency: "Urgence : Lancer une alerte",

@@ -27,7 +27,6 @@ const { width: viewportWidth } = Dimensions.get("window");
 
 const SanguLocaliseur = () => (
   <Svg width={260} height={280} viewBox="0 0 260 280">
-    {/* Ombre sol */}
     <Ellipse cx={130} cy={268} rx={58} ry={10} fill="#B71C1C" opacity={0.25} />
     {/* ── Bras gauche (tenu sur la hanche) ── */}
     <Path
@@ -68,7 +67,7 @@ const SanguLocaliseur = () => (
       stroke="#B71C1C"
       strokeWidth={4}
     />
-    {/* ── PIN GPS flottant ── */} {/* Tige du pin */}
+    {/* ── PIN GPS flottant ── */}{/* Tige du pin */}
     <Path
       d="M210 48 Q210 68 194 72"
       stroke="#FFFFFF"
@@ -117,9 +116,9 @@ const SanguLocaliseur = () => (
     <Circle cx={110} cy={152} r={22} fill="white" />
     <Circle cx={150} cy={152} r={22} fill="white" />
     <Circle cx={114} cy={154} r={10} fill="#1A1A2E" />
-    <Circle cx={154} cy={154} r={10} fill="#1A1A2E" /> {/* Brillance */}
+    <Circle cx={154} cy={154} r={10} fill="#1A1A2E" />{/* Brillance */}
     <Circle cx={120} cy={148} r={4.5} fill="white" />
-    <Circle cx={160} cy={148} r={4.5} fill="white" /> {/* ── Joues ── */}
+    <Circle cx={160} cy={148} r={4.5} fill="white" />{/* ── Joues ── */}
     <Ellipse cx={86} cy={168} rx={13} ry={9} fill="#EF9A9A" opacity={0.55} />
     <Ellipse cx={174} cy={168} rx={13} ry={9} fill="#EF9A9A" opacity={0.55} />
     {/* ── Sourire ── */}
@@ -154,7 +153,6 @@ const SanguLocaliseur = () => (
 // ─────────────────────────────────────────────
 const SanguHistorique = () => (
   <Svg width={260} height={280} viewBox="0 0 260 280">
-    {/* Ombre sol */}
     <Ellipse cx={130} cy={268} rx={58} ry={10} fill="#B71C1C" opacity={0.25} />
     {/* ── Bras gauche levé (tient le clipboard) ── */}
     <Path
@@ -317,7 +315,7 @@ const SanguHistorique = () => (
     <Circle cx={114} cy={154} r={10} fill="#1A1A2E" />
     <Circle cx={154} cy={154} r={10} fill="#1A1A2E" />
     <Circle cx={120} cy={148} r={4.5} fill="white" />
-    <Circle cx={160} cy={148} r={4.5} fill="white" /> {/* ── Joues ── */}
+    <Circle cx={160} cy={148} r={4.5} fill="white" />{/* ── Joues ── */}
     <Ellipse cx={86} cy={168} rx={13} ry={9} fill="#EF9A9A" opacity={0.55} />
     <Ellipse cx={174} cy={168} rx={13} ry={9} fill="#EF9A9A" opacity={0.55} />
     {/* ── Grand sourire satisfait ── */}
@@ -352,7 +350,6 @@ const SanguHistorique = () => (
 // ─────────────────────────────────────────────
 const SanguAlertes = () => (
   <Svg width={260} height={280} viewBox="0 0 260 280">
-    {/* Ombre sol */}
     <Ellipse cx={130} cy={268} rx={58} ry={10} fill="#B71C1C" opacity={0.25} />
     {/* ── Bras gauche (sur la hanche) ── */}
     <Path
@@ -393,7 +390,7 @@ const SanguAlertes = () => (
       stroke="#B71C1C"
       strokeWidth={4}
     />
-    {/* ── MÉGAPHONE ── */} {/* Corps conique du mégaphone */}
+    {/* ── MÉGAPHONE ── */}{/* Corps conique du mégaphone */}
     <Path
       d="M200 40 L240 24 L240 72 L200 56 Z"
       fill="#FFD600"
@@ -455,7 +452,7 @@ const SanguAlertes = () => (
       strokeLinecap="round"
       opacity={0.4}
     />
-    {/* ── Éclairs d'urgence ── */} {/* Éclair gauche */}
+    {/* ── Éclairs d'urgence ── */}{/* Éclair gauche */}
     <Polygon
       points="28,60 18,82 30,82 20,106 40,78 28,78"
       fill="#FFD600"
@@ -474,7 +471,7 @@ const SanguAlertes = () => (
       strokeWidth={2}
     />
     <Rect x={43} y={20} width={6} height={10} rx={3} fill="#EF3340" />
-    <Circle cx={46} cy={34} r={3} fill="#EF3340" /> {/* ── Corps ── */}
+    <Circle cx={46} cy={34} r={3} fill="#EF3340" />{/* ── Corps ── */}
     <Path
       d="M130 60 C176 74 190 120 190 166 Q190 220 130 220 Q70 220 70 166 C70 120 84 74 130 60 Z"
       fill="#EF3340"
@@ -505,7 +502,7 @@ const SanguAlertes = () => (
     <Circle cx={114} cy={152} r={11} fill="#1A1A2E" />
     <Circle cx={154} cy={152} r={11} fill="#1A1A2E" />
     <Circle cx={121} cy={146} r={5} fill="white" />
-    <Circle cx={161} cy={146} r={5} fill="white" /> {/* ── Joues ── */}
+    <Circle cx={161} cy={146} r={5} fill="white" />{/* ── Joues ── */}
     <Ellipse cx={85} cy={167} rx={13} ry={9} fill="#EF9A9A" opacity={0.55} />
     <Ellipse cx={175} cy={167} rx={13} ry={9} fill="#EF9A9A" opacity={0.55} />
     {/* ── Bouche ouverte (urgent!) ── */}
