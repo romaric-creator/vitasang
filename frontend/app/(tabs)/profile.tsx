@@ -5,19 +5,17 @@ import {
   TouchableOpacity,
   ScrollView,
   Alert,
+  Image,
 } from "react-native";
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { useTranslation } from "react-i18next";
 import {
   SkeletonLoader,
   SkeletonListLoader,
 } from "@/components/SkeletonLoader";
 import { color } from "@/constant/color";
-import { getUserIdFromStorage } from "@/utils/storage";
-import { getUserProfile } from "@/services/user.service";
 import { useUserProfile } from "@/hooks/useAuth";
 import { useRouter } from "expo-router";
-import { Image } from "react-native";
 import { useAuth } from "@/context/AuthContext";
 import Constants from "expo-constants";
 import ThemedView from "@/components/ThemedView";
@@ -46,14 +44,10 @@ const ProfileItem = ({
 export default function Profile() {
   const router = useRouter();
   const { t } = useTranslation();
-  const { signOut } = useAuth();
-  const [userId, setUserId] = useState<number | null>(null);
+  const { signOut, user: authUser } = useAuth();
 
-  useEffect(() => {
-    getUserIdFromStorage().then((id) => {
-      if (id) setUserId(Number(id));
-    });
-  }, []);
+  // ✅ userId extrait directement de l'AuthContext — plus de waterfall async
+  const userId = authUser?.id_utilisateur ?? authUser?.id ?? null;
 
   const profileQuery = useUserProfile(userId as number, !!userId);
   const loading = !userId || (profileQuery.isLoading && !profileQuery.data);

@@ -33,7 +33,7 @@ export const useLogin = () => {
     onSuccess: async (data) => {
       // Store token and user
       await storeData("token", data.token);
-      await storeData("user", JSON.stringify(data.user));
+      await storeData("user", data.user);
 
       // Set in cache for instant access
       queryClient.setQueryData(queryKeys.auth.user(), data.user);
@@ -76,7 +76,7 @@ export const useRegister = () => {
     onSuccess: async (data) => {
       // Store token and user
       await storeData("token", data.token);
-      await storeData("user", JSON.stringify(data.user));
+      await storeData("user", data.user);
 
       // Set in cache
       queryClient.setQueryData(queryKeys.auth.user(), data.user);

@@ -4,6 +4,7 @@ const ProfilDonneur = db.ProfilDonneur;
 const Centre = db.Centre;
 const logger = require("../config/logger");
 const userService = require("../services/user.service");
+const cacheService = require("../services/cache.service");
 
 exports.addUser = async (req, res, next) => {
   try {
@@ -352,6 +353,13 @@ exports.getUserHistory = async (req, res, next) => {
       return res.status(403).json({ error: "Vous ne pouvez voir que votre historique." });
     }
 
+    // ✅ Cache 5 minutes par utilisateur + page
+    const cacheKey = `user:${id}:history:page${page}:limit${limit}`;
+    const cachedData = await cacheService.get(cacheKey);
+    if (cachedData) {
+      return res.status(200).json(cachedData);
+    }
+
     const { count, rows: history } = await db.HistoriqueDon.findAndCountAll({
       where: { id_donneur: id },
       include: [
@@ -363,7 +371,7 @@ exports.getUserHistory = async (req, res, next) => {
       offset,
     });
 
-    res.status(200).json({
+    const response = {
       success: true,
       history,
       pagination: {
@@ -372,7 +380,10 @@ exports.getUserHistory = async (req, res, next) => {
         total: count,
         pages: Math.ceil(count / limit),
       },
-    });
+    };
+
+    await cacheService.set(cacheKey, response, 300); // 5 minutes
+    res.status(200).json(response);
   } catch (error) {
     next(error);
   }

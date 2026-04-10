@@ -119,6 +119,14 @@ exports.getCentreAvailability = async (req, res, next) => {
   try {
     const { id } = req.params;
 
+    // ✅ Cache 5 minutes par centre + date du jour (les créneaux changent peu souvent)
+    const today = new Date().toISOString().split('T')[0];
+    const cacheKey = `centre:${id}:availability:${today}`;
+    const cachedData = await cacheService.get(cacheKey);
+    if (cachedData) {
+      return res.status(200).json(cachedData);
+    }
+
     const centre = await Centre.findByPk(id);
     if (!centre) {
       return res.status(404).json({ error: "Centre non trouvé" });
@@ -129,12 +137,12 @@ exports.getCentreAvailability = async (req, res, next) => {
       ? Math.max(1, Math.floor(centre.capacite_stockage_max / 10))
       : 3;
 
-    const today = new Date();
-    const startDate = new Date(today);
+    const todayDate = new Date();
+    const startDate = new Date(todayDate);
     startDate.setDate(startDate.getDate() + 1);
     startDate.setHours(0, 0, 0, 0);
 
-    const endDate = new Date(today);
+    const endDate = new Date(todayDate);
     endDate.setDate(endDate.getDate() + 7);
     endDate.setHours(23, 59, 59, 999);
 
@@ -167,7 +175,7 @@ exports.getCentreAvailability = async (req, res, next) => {
 
     const slots = [];
     for (let i = 1; i <= 7; i++) {
-      const date = new Date(today);
+      const date = new Date(todayDate);
       date.setDate(date.getDate() + i);
       const dateStr = date.toISOString().split("T")[0];
 
@@ -183,7 +191,11 @@ exports.getCentreAvailability = async (req, res, next) => {
       });
     }
 
-    res.status(200).json({ centreId: id, slots, maxPerSlot });
+    const response = { centreId: id, slots, maxPerSlot };
+    // ✅ Cache 5 minutes — suffisant car les RDV ne se créent pas à la seconde
+    await cacheService.set(cacheKey, response, 300);
+
+    res.status(200).json(response);
   } catch (error) {
     logger.error('Error fetching availability', { error: error.message, centreId: req.params.id });
     next(error);

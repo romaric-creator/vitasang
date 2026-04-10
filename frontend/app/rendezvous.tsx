@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, memo } from "react";
 import {
   StyleSheet,
   Text,
@@ -13,9 +13,9 @@ import { DataCard, DataCardRow } from "@/components/DataCard";
 import ThemedView from "@/components/ThemedView";
 import { SkeletonListLoader } from "@/components/SkeletonLoader";
 import { color } from "@/constant/color";
-import { getUserIdFromStorage } from "@/utils/storage";
-import { getMyAppointments, cancelAppointment } from "@/services/user.service";
+import { useMyAppointments, useCancelAppointment } from "@/hooks/useCentersAndAppointments";
 import { useNotification } from "@/context/NotificationContext";
+import { useTranslation } from "react-i18next";
 
 interface Appointment {
   id: number;
@@ -33,60 +33,25 @@ interface Appointment {
   };
 }
 
-import { useTranslation } from "react-i18next";
-
 export default function RendezVousList() {
   const { t, i18n } = useTranslation();
   const router = useRouter();
   const { show } = useNotification();
-  const [appointments, setAppointments] = useState<Appointment[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
-  const [userId, setUserId] = useState<number | null>(null);
 
-  useEffect(() => {
-    loadAppointments();
-  }, []);
+  // ✅ React Query — cache + invalidation automatique
+  const { data, isLoading, isRefetching, refetch } = useMyAppointments();
+  const cancelMutation = useCancelAppointment();
 
-  const loadAppointments = async () => {
+  const appointments: Appointment[] = data?.appointments || [];
+
+  const handleCancel = useCallback(async (appointmentId: number) => {
     try {
-      const id = await getUserIdFromStorage();
-      setUserId(id);
-      if (id) {
-        const res = await getMyAppointments(id);
-        if (res.success && res.appointments) {
-          setAppointments(res.appointments);
-        } else {
-          setAppointments([]);
-        }
-      }
-    } catch (error) {
-      console.error("Error loading appointments:", error);
-      setAppointments([]);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const onRefresh = async () => {
-    setRefreshing(true);
-    await loadAppointments();
-    setRefreshing(false);
-  };
-
-  const handleCancel = async (appointmentId: number) => {
-    try {
-      const res = await cancelAppointment(appointmentId);
-      if (res.success) {
-        show("success", t("appointments.canceled"));
-        await loadAppointments();
-      } else {
-        show("error", res.message || t("appointments.cancelError"));
-      }
+      await cancelMutation.mutateAsync(appointmentId);
+      show("success", t("appointments.canceled"));
     } catch (error: any) {
       show("error", t("appointments.cancelGenericError"));
     }
-  };
+  }, [cancelMutation, show, t]);
 
   const formatDate = (dateString: string) => {
     try {
@@ -168,7 +133,7 @@ export default function RendezVousList() {
     );
   };
 
-  if (loading) {
+  if (isLoading) {
     return (
       <ThemedView style={styles.container}>
         <PageHeader title={t("appointments.title")} />
@@ -197,7 +162,7 @@ export default function RendezVousList() {
           renderItem={({ item }) => <AppointmentCard item={item} />}
           keyExtractor={(item) => item.id.toString()}
           refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+            <RefreshControl refreshing={isRefetching} onRefresh={refetch} colors={[color.primary]} />
           }
           scrollEnabled={true}
           contentContainerStyle={styles.listContent}

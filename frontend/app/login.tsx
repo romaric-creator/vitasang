@@ -37,6 +37,7 @@ export default function LoginScreen() {
 
     try {
       await signIn(values.telephone, values.mot_de_passe);
+      router.replace("/(tabs)");
     } catch (err: any) {
       console.error("Login error details:", err);
       

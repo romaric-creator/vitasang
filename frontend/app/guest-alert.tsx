@@ -55,7 +55,10 @@ export default function GuestAlertScreen() {
       }
 
       try {
-        let location = await Location.getCurrentPositionAsync({});
+        let location = await Location.getCurrentPositionAsync({
+          accuracy: Location.Accuracy.Balanced, // ✅ Balanced = plus rapide que High
+          timeInterval: 10000, // ✅ Timeout 10s pour éviter un blocage infini
+        });
         setLocation(location);
       } catch (e) {
         console.warn("Location error:", e);
@@ -575,7 +578,7 @@ const styles = StyleSheet.create({
   keyPointText: {
     flex: 1,
     fontSize: 12,
-    color: color.textPrimary,
+    color: color.textMain,
     lineHeight: 18,
     fontWeight: "500",
   },

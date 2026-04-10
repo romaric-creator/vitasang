@@ -4,10 +4,9 @@ import {
   StatusBar,
   RefreshControl,
 } from "react-native";
-import React, { useState, useCallback, useEffect } from "react";
+import React, { useCallback } from "react";
 import ThemedView from "@/components/ThemedView";
 import { color } from "@/constant/color";
-import { getUserIdFromStorage } from "@/utils/storage";
 import { useTranslation } from "react-i18next";
 import { useFocusEffect } from "@react-navigation/native";
 import { useUserProfile } from "@/hooks/useAuth";
@@ -15,6 +14,7 @@ import { useActiveAlerts } from "@/hooks/useAlerts";
 import { AlertFatigueInsights } from "@/components/AlertFatigueInsights";
 import Constants from "expo-constants";
 import { usePostHog } from "posthog-react-native";
+import { useAuth } from "@/context/AuthContext";
 
 // Extracted Components
 import { HomeHeader } from "@/components/home/HomeHeader";
@@ -25,14 +25,11 @@ import { AideSensibilisationSection } from "@/components/home/AideSensibilisatio
 
 export default function Home() {
   const { t } = useTranslation();
-  const [userId, setUserId] = useState<number | null>(null);
+  const { user: authUser } = useAuth();
   const posthog = usePostHog();
 
-  useEffect(() => {
-    getUserIdFromStorage().then((id) => {
-      if (id) setUserId(Number(id));
-    });
-  }, []);
+  // ✅ userId depuis AuthContext — synchrone, pas de waterfall
+  const userId = authUser?.id_utilisateur ?? authUser?.id ?? null;
 
   const profileQuery = useUserProfile(userId as number, !!userId);
   const alertsQuery = useActiveAlerts();

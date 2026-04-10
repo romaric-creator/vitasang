@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, useMemo } from "react";
 import {
   StyleSheet,
   View,
@@ -7,9 +7,7 @@ import {
   FlatList,
   RefreshControl,
   TextInput,
-  Dimensions,
   Platform,
-  Alert,
 } from "react-native";
 import MapView, { Marker, PROVIDER_GOOGLE, Callout } from "react-native-maps";
 import { useRouter } from "expo-router";
@@ -17,11 +15,12 @@ import * as Location from 'expo-location';
 import { TabBarIcon } from "@/components/TabBarIcon";
 import { color } from "@/constant/color";
 import { LoadingOverlay } from "@/components/LoadingOverlay";
-import { getAllCentres } from "@/services/user.service";
 import { getCurrentPositionAsync } from "@/utils/location";
 import { useTranslation } from "react-i18next";
 import { DataCard, DataCardRow } from "@/components/DataCard";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useAllCentres } from "@/hooks/useCentersAndAppointments";
+import { SkeletonListLoader } from "@/components/SkeletonLoader";
 
 export default function MapScreen() {
   const { t } = useTranslation();
@@ -29,10 +28,6 @@ export default function MapScreen() {
   const insets = useSafeAreaInsets();
   const mapRef = useRef<MapView>(null);
 
-  const [centres, setCentres] = useState<any[]>([]);
-  const [allCentres, setAllCentres] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [viewMode, setViewMode] = useState<"map" | "list">("map");
   const [permissionStatus, setPermissionStatus] = useState<Location.PermissionStatus | null>(null);
@@ -48,6 +43,10 @@ export default function MapScreen() {
     longitudeDelta: 0.1,
   };
 
+  // ✅ Utilise React Query pour le cache automatique entre les tabs
+  const { data, isLoading, isRefetching, refetch } = useAllCentres();
+  const allCentres = data?.centres || [];
+
   useEffect(() => {
     checkPermissionAndLoad();
   }, []);
@@ -56,67 +55,51 @@ export default function MapScreen() {
     try {
       const { status } = await Location.requestForegroundPermissionsAsync();
       setPermissionStatus(status);
-      if (status !== 'granted') {
-        setLoading(false);
-        return;
-      }
-      loadData();
+      if (status !== 'granted') return;
+      fetchUserLocation();
     } catch (e) {
-      console.error("Permission error:", e);
-      setLoading(false);
+      if (__DEV__) console.error("Permission error:", e);
     }
-  };
-
-  const loadData = async () => {
-    setLoading(true);
-    await Promise.all([fetchCentres(), fetchUserLocation()]);
-    setLoading(false);
   };
 
   const fetchUserLocation = async () => {
     try {
-      console.log("[Map] Fetching user location...");
       const loc = await getCurrentPositionAsync();
-      console.log("[Map] User location result:", loc);
       if (loc) setUserLocation(loc);
     } catch (e) {
-      console.warn("[Map] Could not get location:", e);
+      if (__DEV__) console.warn("[Map] Could not get location:", e);
     }
   };
 
-  const fetchCentres = async () => {
-    try {
-      console.log("[Map] Fetching centres from API...");
-      const res = await getAllCentres();
-      console.log("[Map] API Response success:", res.success, "Centres count:", res.centres?.length);
-      if (res.success && res.centres) {
-        setAllCentres(res.centres);
-        setCentres(res.centres);
-      }
-    } catch (error) {
-      console.error("[Map] Error fetching centres:", error);
-    }
-  };
+  const onRefresh = () => refetch();
 
-  const onRefresh = async () => {
-    setRefreshing(true);
-    await fetchCentres();
-    setRefreshing(false);
-  };
+  const handleSearch = (text: string) => setSearchQuery(text);
 
-  const handleSearch = (text: string) => {
-    setSearchQuery(text);
-    if (text.trim() === "") {
-      setCentres(allCentres);
-    } else {
-      const filtered = allCentres.filter(
-        (c) =>
-          c.nom.toLowerCase().includes(text.toLowerCase()) ||
-          c.ville.toLowerCase().includes(text.toLowerCase()),
-      );
-      setCentres(filtered);
-    }
-  };
+  // ✅ Filtrage mémoïsé — ne se recalcule que si allCentres ou searchQuery changent
+  const filteredCentres = useMemo(() => {
+    if (!searchQuery.trim()) return allCentres;
+    const q = searchQuery.toLowerCase();
+    return allCentres.filter(
+      (c: any) =>
+        c.nom?.toLowerCase().includes(q) ||
+        c.ville?.toLowerCase().includes(q)
+    );
+  }, [allCentres, searchQuery]);
+
+  // ✅ Marqueurs valides mémoïsés — ne se recalcule pas à chaque rendu
+  const mappableCentres = useMemo(() => {
+    const seen = new Set<string>();
+    return filteredCentres.filter((c: any) => {
+      const id = c.id_centre || c.id;
+      const lat = c.latitude;
+      const lng = c.longitude;
+      if (!id || !lat || !lng || isNaN(Number(lat)) || isNaN(Number(lng))) return false;
+      const key = String(id);
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  }, [filteredCentres]);
 
   const renderCentreItem = ({ item }: { item: any }) => {
     const data: DataCardRow[] = [
@@ -130,7 +113,7 @@ export default function MapScreen() {
 
     const actionButton = {
       text: t("appointments.book"),
-      onPress: () => router.push(`/book-appointment/${item.id_centre}`),
+      onPress: () => router.push(`/book-appointment/${item.id_centre || item.id}`),
       color: color.primary,
     };
 
@@ -146,22 +129,7 @@ export default function MapScreen() {
     );
   };
 
-  const mappableCentres = centres
-    .filter((c) => {
-      const id = c.id_centre || c.id;
-      const lat = c.latitude;
-      const lng = c.longitude;
-      return id && lat && lng && !isNaN(Number(lat)) && !isNaN(Number(lng));
-    })
-    .reduce((uniqueCentres: any[], centre) => {
-      const id = centre.id_centre || centre.id;
-      if (!uniqueCentres.find((u) => (u.id_centre || u.id) === id)) {
-        uniqueCentres.push(centre);
-      }
-      return uniqueCentres;
-    }, []);
-
-  console.log("[Map] Rendering. Total centres:", centres?.length, "Mappable centres:", mappableCentres?.length);
+  const loading = isLoading && !data;
 
   return (
     <View style={styles.container}>
@@ -202,11 +170,11 @@ export default function MapScreen() {
         <View style={styles.mapContainer}>
           {permissionStatus === 'denied' ? (
             <View style={styles.center}>
-               <TabBarIcon name="map-marker" size={50} color={color.textLight} />
-               <Text style={styles.emptyText}>{t("alert.locationError")}</Text>
-               <TouchableOpacity style={styles.retryBtn} onPress={checkPermissionAndLoad}>
-                  <Text style={styles.retryText}>{t("common.errors.retry")}</Text>
-               </TouchableOpacity>
+              <TabBarIcon name="map-marker" size={50} color={color.textLight} />
+              <Text style={styles.emptyText}>{t("alert.locationError")}</Text>
+              <TouchableOpacity style={styles.retryBtn} onPress={checkPermissionAndLoad}>
+                <Text style={styles.retryText}>{t("common.errors.retry")}</Text>
+              </TouchableOpacity>
             </View>
           ) : (
             <MapView
@@ -216,22 +184,22 @@ export default function MapScreen() {
               initialRegion={
                 userLocation
                   ? {
-                      ...userLocation,
-                      latitudeDelta: 0.1,
-                      longitudeDelta: 0.1,
-                    }
+                    ...userLocation,
+                    latitudeDelta: 0.1,
+                    longitudeDelta: 0.1,
+                  }
                   : {
-                      ...doualaRegion,
-                      latitudeDelta: 0.1,
-                      longitudeDelta: 0.1,
-                    }
+                    ...doualaRegion,
+                    latitudeDelta: 0.1,
+                    longitudeDelta: 0.1,
+                  }
               }
               showsUserLocation={true}
               showsMyLocationButton={true}
             >
-              {mappableCentres.map((centre) => (
+              {mappableCentres.map((centre: any) => (
                 <Marker
-                  key={centre.id_centre || centre.id}
+                  key={String(centre.id_centre || centre.id)}
                   coordinate={{
                     latitude: Number(centre.latitude),
                     longitude: Number(centre.longitude),
@@ -246,7 +214,7 @@ export default function MapScreen() {
                   <Callout
                     tooltip
                     onPress={() =>
-                      router.push(`/book-appointment/${centre.id_centre}`)
+                      router.push(`/book-appointment/${centre.id_centre || centre.id}`)
                     }
                   >
                     <View style={styles.calloutContainer}>
@@ -260,19 +228,27 @@ export default function MapScreen() {
             </MapView>
           )}
         </View>
+      ) : loading ? (
+        // ✅ Skeleton pendant le chargement initial de la liste
+        <View style={[styles.listContent, { paddingTop: insets.top + 70 }]}>
+          <SkeletonListLoader count={5} itemHeight={110} />
+        </View>
       ) : (
         <FlatList
-          data={centres}
+          data={filteredCentres}
+          // ✅ keyExtractor stable — plus de Math.random() qui détruisait le cache React
           keyExtractor={(item) =>
             item.id_centre
-              ? item.id_centre.toString()
-              : `centre-${Math.random()}`
+              ? `centre-${item.id_centre}`
+              : item.id
+                ? `centre-${item.id}`
+                : `centre-fallback-${item.nom}`
           }
           renderItem={renderCentreItem}
           contentContainerStyle={[styles.listContent, { paddingTop: insets.top + 70 }]}
           refreshControl={
             <RefreshControl
-              refreshing={refreshing}
+              refreshing={isRefetching}
               onRefresh={onRefresh}
               colors={[color.primary]}
             />
@@ -286,7 +262,7 @@ export default function MapScreen() {
         />
       )}
 
-      {loading && !refreshing && <LoadingOverlay visible={true} fullScreen={false} style={styles.loaderArea} />}
+      {loading && !isRefetching && <LoadingOverlay visible={true} fullScreen={false} style={styles.loaderArea} />}
     </View>
   );
 }
@@ -334,7 +310,7 @@ const styles = StyleSheet.create({
   },
   mapContainer: { flex: 1 },
   map: { ...StyleSheet.absoluteFillObject },
-  listContent: { paddingBottom: 100 },
+  listContent: { paddingBottom: 100, paddingHorizontal: 0 },
   markerContainer: { alignItems: "center" },
   markerPin: {
     width: 32,

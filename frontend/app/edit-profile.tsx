@@ -11,7 +11,8 @@ import { ModernSpinner } from "@/components/ModernSpinner";
 import { useRouter } from "expo-router";
 import { Formik } from "formik";
 import { color } from "@/constant/color";
-import { getUserIdFromStorage, storeData } from "@/utils/storage";
+import { getUserIdFromStorage, storeData, getData } from "@/utils/storage";
+import { useAuth } from "@/context/AuthContext";
 import ThemedView from "@/components/ThemedView";
 import { getUserProfile, updateUserProfile } from "@/services/user.service";
 import { useNotification } from "@/context/NotificationContext";
@@ -34,6 +35,7 @@ export default function EditProfileScreen() {
   const { t } = useTranslation();
   const router = useRouter();
   const { show } = useNotification();
+  const { completeAuth, updateUser } = useAuth();
   const [userData, setUserData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -123,10 +125,10 @@ export default function EditProfileScreen() {
       // 2. Update profile data
       const response = await updateUserProfile(userId, values);
       if (response.success) {
-        // 3. Refresh local storage with latest data
+        // 3. Refresh local storage AND context with latest data
         const updatedRes = await getUserProfile(userId);
         if (updatedRes.success) {
-          await storeData("user", updatedRes.user);
+          await updateUser(updatedRes.user);
         }
 
         show("success", t("editProfile.success"));

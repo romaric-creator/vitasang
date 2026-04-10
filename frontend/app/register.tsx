@@ -32,6 +32,7 @@ import { LoadingSpinner } from "@/components/LoadingSpinner";
 
 export default function RegisterScreen() {
   const { t } = useTranslation();
+  const { completeAuth } = useAuth();
   const [loading, setLoading] = useState(false);
   const [generalError, setGeneralError] = useState("");
   // Step 1: Info perso, Step 2: Info médicale (optionnelle)
@@ -60,20 +61,16 @@ export default function RegisterScreen() {
         "donneur",
       );
 
-      const userToStore = {
-        ...data.user,
-        id_utilisateur: data.user.id || data.user.id_utilisateur,
-      };
+      // Met à jour l'état d'authentification global
+      await completeAuth(data.user, data.token);
 
-      // Stockage sécurisé
-      await storeData("user", userToStore);
-      await storeData("token", data.token);
+      const userId = data.user.id || data.user.id_utilisateur;
 
       // Gestion Push Token (Silencieuse)
       try {
         const pushToken = await registerForPushNotificationsAsync();
-        if (pushToken && userToStore.id_utilisateur) {
-          await updatePushToken(userToStore.id_utilisateur, pushToken);
+        if (pushToken && userId) {
+          await updatePushToken(userId, pushToken);
         }
       } catch (e) {
         /* Ignorer erreur push silencieuse */

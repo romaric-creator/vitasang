@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback, memo } from "react";
+import React, { useCallback, memo } from "react";
 import {
   StyleSheet,
   Text,
@@ -8,16 +8,17 @@ import {
   RefreshControl,
   Platform,
 } from "react-native";
-import { ModernSpinner } from "@/components/ModernSpinner";
 import { SkeletonListLoader } from "@/components/SkeletonLoader";
 import { useRouter } from "expo-router";
 import { PageHeader } from "@/components/PageHeader";
 import { DataCard, DataCardRow } from "@/components/DataCard";
 import ThemedView from "@/components/ThemedView";
 import { color } from "@/constant/color";
-import { getUserIdFromStorage } from "@/utils/storage";
-import { getUserHistory } from "@/services/user.service";
+import { useAuth } from "@/context/AuthContext";
+import { useQuery } from "@tanstack/react-query";
+import { apiClient } from "@/config/axiosConfig";
 import { useNotification } from "@/context/NotificationContext";
+import { useTranslation } from "react-i18next";
 
 interface DonationHistory {
   id: number;
@@ -30,44 +31,24 @@ interface DonationHistory {
   };
 }
 
-import { useTranslation } from "react-i18next";
-
 export default function Historique() {
   const { t, i18n } = useTranslation();
   const router = useRouter();
-  const { show } = useNotification();
-  const [donations, setDonations] = useState<DonationHistory[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
+  const { user: authUser } = useAuth();
 
-  useEffect(() => {
-    loadHistory();
-  }, []);
+  // ✅ userId depuis AuthContext — synchrone, pas de waterfall
+  const userId = authUser?.id_utilisateur ?? authUser?.id ?? null;
 
-  const loadHistory = async () => {
-    try {
-      const id = await getUserIdFromStorage();
-      if (id) {
-        const res = await getUserHistory(id);
-        if (res.success && res.history) {
-          setDonations(res.history);
-        } else {
-          setDonations([]);
-        }
-      }
-    } catch (error) {
-      console.error("Error loading history:", error);
-      setDonations([]);
-    } finally {
-      setLoading(false);
-    }
-  };
+  // ✅ React Query avec cache 10 minutes
+  const { data, isLoading, isRefetching, refetch } = useQuery({
+    queryKey: ['user-history', userId],
+    queryFn: () => apiClient.get(`/users/${userId}/history`).then(r => r.data),
+    enabled: !!userId,
+    staleTime: 1000 * 60 * 10, // 10 minutes
+    gcTime: 1000 * 60 * 20,
+  });
 
-  const onRefresh = async () => {
-    setRefreshing(true);
-    await loadHistory();
-    setRefreshing(false);
-  };
+  const donations: DonationHistory[] = data?.history || [];
 
   const formatDate = useCallback((dateString: string) => {
     try {
@@ -105,7 +86,7 @@ export default function Historique() {
     <DonationCard item={item} />
   ), [DonationCard]);
 
-  if (loading) {
+  if (isLoading) {
     return (
       <ThemedView style={styles.container}>
         <PageHeader title={t("history.title")} />
@@ -134,7 +115,7 @@ export default function Historique() {
           renderItem={renderItem}
           keyExtractor={(item) => item.id.toString()}
           refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+            <RefreshControl refreshing={isRefetching} onRefresh={refetch} colors={[color.primary]} />
           }
           scrollEnabled={true}
           contentContainerStyle={styles.listContent}

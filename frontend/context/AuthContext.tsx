@@ -12,6 +12,8 @@ interface AuthContextType {
   isLoading: boolean;
   signIn: (telephone: string, mot_de_passe: string) => Promise<void>;
   signOut: () => Promise<void>;
+  completeAuth: (user: any, token: string) => Promise<void>;
+  updateUser: (user: any) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -40,7 +42,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       }
     });
 
-
     const checkAuthStatus = async () => {
       try {
         const token = await getData('token');
@@ -53,8 +54,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             role: user.role
           });
           setUser(user);
+          setIsAuth(true);
+        } else {
+          setIsAuth(false);
         }
-        setIsAuth(!!token); // true if token exists, false otherwise
       } catch (error) {
         console.error("Failed to check auth status:", error);
         setIsAuth(false);
@@ -70,49 +73,69 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     };
   }, [posthog]);
 
-  const signIn = async (telephone: string, mot_de_passe: string) => {
-    setIsLoading(true);
-    posthog?.capture('login_started');
+  const completeAuth = async (userData: any, token: string) => {
     try {
-      const data = await apiLoginUser(telephone, mot_de_passe);
-      posthog?.capture('login_success', { role: data.user.role });
-      setAuthToken(data.token);
-      await storeData('token', data.token);
+      setAuthToken(token);
+      await storeData('token', token);
+      
       const userToStore = {
-        ...data.user,
-        id_utilisateur: data.user.id || data.user.id_utilisateur,
+        ...userData,
+        id_utilisateur: userData.id || userData.id_utilisateur,
       };
       await storeData('user', userToStore);
 
-      // Identification PostHog
       posthog?.identify(userToStore.id_utilisateur.toString(), {
         nom: userToStore.nom,
         prenom: userToStore.prenom,
         role: userToStore.role
       });
+
       setUser(userToStore);
+      setIsAuth(true);
+    } catch (error) {
+      console.error("Complete auth failed:", error);
+    }
+  };
+
+  const signIn = async (telephone: string, mot_de_passe: string) => {
+    setIsLoading(true);
+    posthog?.capture('login_started');
+    try {
+      const data = await apiLoginUser(telephone, mot_de_passe);
+      await completeAuth(data.user, data.token);
+      posthog?.capture('login_success', { role: data.user.role });
 
       // TRAITER L'ALERTE EN ATTENTE (Guest flow)
       try {
         const pendingAlert = await getData('pending_alert');
         if (pendingAlert) {
-          console.log("Envoi de l'alerte en attente...");
           await sendAlert(pendingAlert);
           await removeData('pending_alert');
-          console.log("Alerte en attente envoyée avec succès.");
         }
       } catch (e) {
         console.error("Erreur lors de l'envoi de l'alerte en attente:", e);
       }
 
-      setIsAuth(true);
     } catch (error: any) {
       console.error("Sign in failed:", error);
       posthog?.capture('login_failed', { error: error.message });
       setIsAuth(false);
-      throw error; // Re-throw to allow UI to handle specific login errors
+      throw error;
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const updateUser = async (userData: any) => {
+    try {
+      const userToStore = {
+        ...userData,
+        id_utilisateur: userData.id || userData.id_utilisateur,
+      };
+      await storeData('user', userToStore);
+      setUser(userToStore);
+    } catch (error) {
+      console.error("Update user in context failed:", error);
     }
   };
 
@@ -122,7 +145,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setAuthToken(null);
       await removeData('token');
       await removeData('user');
-      posthog?.reset(); // Réinitialiser PostHog
+      posthog?.reset();
       setUser(null);
       setIsAuth(false);
     } catch (error) {
@@ -133,7 +156,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ isAuth, user, isLoading, signIn, signOut }}>
+    <AuthContext.Provider value={{ isAuth, user, isLoading, signIn, signOut, completeAuth, updateUser }}>
       {children}
     </AuthContext.Provider>
   );
