@@ -94,10 +94,10 @@ function makeStore(prefix, windowMs) {
   };
 }
 
-// Global rate limiter: 100 requests per 15 minutes
+// Global rate limiter: 500 requests per 15 minutes
 const globalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: process.env.NODE_ENV === 'test' ? 10000 : 100,
+  max: process.env.NODE_ENV === 'test' ? 10000 : 500,
   skip: () => process.env.NODE_ENV === 'test',
   standardHeaders: true,
   legacyHeaders: false,
@@ -139,16 +139,17 @@ const registerLimiter = rateLimit({
   },
 });
 
-// Alert rate limiter: 3 alerts per 30 minutes (to avoid SMS/Notif spam)
+// Alert rate limiter: 10 alerts per hour (to avoid SMS/Notif spam)
+// Désactivé en développement pour permettre les tests
 const alertLimiter = rateLimit({
-  windowMs: 30 * 60 * 1000,
-  max: process.env.NODE_ENV === 'test' ? 10000 : 3,
-  skip: () => process.env.NODE_ENV === 'test',
-  store: makeStore('rl:alert:', 30 * 60 * 1000),
+  windowMs: 60 * 60 * 1000,
+  max: process.env.NODE_ENV === 'development' ? 1000 : 10,
+  skip: () => process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test',
+  store: makeStore('rl:alert:', 60 * 60 * 1000),
   handler: (req, res) => {
     logger.warn('Alert rate limit exceeded', { ip: req.ip });
     res.status(429).json({
-      message: "Trop d'alertes envoyées. Veuillez patienter 30 minutes avant de recommencer.",
+      message: "Trop d'alertes envoyées. Veuillez patienter 1 heure avant de recommencer.",
     });
   },
 });

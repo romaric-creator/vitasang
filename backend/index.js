@@ -94,7 +94,7 @@ const messagesRoute = require("./routes/messages.routes");
 // Limiters spécifiques AVANT le global
 app.use("/api/users/register", registerLimiter);
 app.use("/api/users/login", authLimiter);
-app.use("/api/alerts", alertLimiter);
+// Pas de rate limit sur les alertes (国有 urgence)
 
 // Global rate limiter
 app.use(globalLimiter);
