@@ -1,32 +1,21 @@
 require("dotenv").config();
 
-const mysql2 = require("mysql2");
-const express = require("express");
-const cors = require("cors");
-const morgan = require("morgan");
-const db = require("./models/index");
-const logger = require("./config/logger");
-const {
-  globalLimiter,
-  authLimiter,
-  registerLimiter,
-  alertLimiter,
-} = require("./middleware/rateLimiter");
-const helmet = require("helmet");
-const swaggerUi = require("swagger-ui-express");
-const swaggerSpecs = require("./config/swagger");
-const { errorHandler, notFoundHandler } = require("./middleware/errorHandler");
-
 const Sentry = require("@sentry/node");
 
-// Initialisation Sentry (Point 30 de l'audit)
-const sentryEnabled = !!process.env.SENTRY_DSN;
-if (sentryEnabled) {
-  Sentry.init({
-    dsn: process.env.SENTRY_DSN,
-    environment: process.env.NODE_ENV || "development",
-    tracesSampleRate: 1.0,
-  });
+// Initialisation Sentry - vérifier si le package est bien chargé
+let sentryEnabled = false;
+try {
+  sentryEnabled = !!(process.env.SENTRY_DSN && Sentry.Handlers);
+  if (sentryEnabled) {
+    Sentry.init({
+      dsn: process.env.SENTRY_DSN,
+      environment: process.env.NODE_ENV || "development",
+      tracesSampleRate: 1.0,
+    });
+    console.log("Sentry initialisé avec succès");
+  }
+} catch (err) {
+  console.log("Sentry non configuré:", err.message);
 }
 
 // Initialisation des tâches en arrière-plan
