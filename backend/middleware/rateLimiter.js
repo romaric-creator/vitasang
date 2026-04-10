@@ -95,10 +95,11 @@ function makeStore(prefix, windowMs) {
 }
 
 // Global rate limiter: 500 requests per 15 minutes
+// Skip pour les routes d'alertes car ce sont des urgences vitales
 const globalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: process.env.NODE_ENV === 'test' ? 10000 : 500,
-  skip: () => process.env.NODE_ENV === 'test',
+  skip: (req) => process.env.NODE_ENV === 'test' || req.path.startsWith('/api/alerts'),
   standardHeaders: true,
   legacyHeaders: false,
   store: makeStore('rl:global:', 15 * 60 * 1000),
@@ -114,7 +115,7 @@ const globalLimiter = rateLimit({
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: process.env.NODE_ENV === 'test' ? 10000 : 5,
-  skip: () => process.env.NODE_ENV === 'test',
+  skip: (req) => process.env.NODE_ENV === 'test' || req.path.startsWith('/api/alerts'),
   skipSuccessfulRequests: true,
   store: makeStore('rl:auth:', 15 * 60 * 1000),
   handler: (req, res) => {
@@ -129,7 +130,7 @@ const authLimiter = rateLimit({
 const registerLimiter = rateLimit({
   windowMs: 24 * 60 * 60 * 1000,
   max: process.env.NODE_ENV === 'test' ? 10000 : 10,
-  skip: () => process.env.NODE_ENV === 'test',
+  skip: (req) => process.env.NODE_ENV === 'test' || req.path.startsWith('/api/alerts'),
   store: makeStore('rl:register:', 24 * 60 * 60 * 1000),
   handler: (req, res) => {
     logger.warn('Registration rate limit exceeded', { ip: req.ip });
