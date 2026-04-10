@@ -6,6 +6,17 @@ const helmet = require("helmet");
 const compression = require("compression");
 const morgan = require("morgan");
 const Sentry = require("@sentry/node");
+const db = require("./models/index");
+const logger = require("./config/logger");
+const swaggerUi = require("swagger-ui-express");
+const swaggerSpecs = require("./config/swagger");
+const {
+  globalLimiter,
+  authLimiter,
+  registerLimiter,
+  alertLimiter,
+} = require("./middleware/rateLimiter");
+const { errorHandler, notFoundHandler } = require("./middleware/errorHandler");
 
 // Initialisation Sentry - vérifier si le package est bien chargé
 let sentryEnabled = false;
