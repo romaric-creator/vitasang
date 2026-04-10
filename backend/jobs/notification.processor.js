@@ -66,6 +66,7 @@ const notificationProcessor = async (job) => {
     longitude,
     rayon_action_km,
     degre_urgence,
+    initiatorId, // ID de celui qui a créé l'alerte
   } = job.data;
 
   // Logique Mode Nuit (Désactivée en DEV/TEST)
@@ -94,7 +95,11 @@ const notificationProcessor = async (job) => {
       );
 
   const donors = await Utilisateur.findAll({
-    where: { role: "donneur" },
+    where: { 
+      role: "donneur",
+      // Exclure linitiateur de lalerte
+      ...(initiatorId && { id_utilisateur: { [db.Sequelize.Op.ne]: initiatorId } }),
+    },
     include: [
       {
         model: ProfilDonneur,

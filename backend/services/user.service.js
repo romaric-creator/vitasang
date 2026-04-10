@@ -186,7 +186,7 @@ class UserService {
     }
 
     // Limiter le rayon de recherche pour éviter les timeouts
-    const safeRadius = Math.min(searchRayon, 100); // Max 100km
+    const safeRadius = Math.min(searchRayon, 200); // Max 200km
     
     const compatibleGroups = Object.keys(BLOOD_COMPATIBILITY).filter((group) =>
       BLOOD_COMPATIBILITY[group].includes(targetBlood),
@@ -224,7 +224,7 @@ class UserService {
           include: [[db.sequelize.literal(haversine), 'distance']]
         },
         order: db.sequelize.literal('distance ASC'),
-        limit: 50,
+        // Pas de limite - tous les donneurs compatibles
       });
 
       return donors;

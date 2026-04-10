@@ -63,6 +63,7 @@ class AlertService {
         rayon_action_km: alerte.rayon_action_km,
         degre_urgence: alerte.degre_urgence,
         validatorId,
+        initiatorId: alerte.id_initiateur,
       });
       logger.info("[AlertService.enqueue] Notification enqueued", { alertId: alerte.id_alerte });
     } catch (error) {
