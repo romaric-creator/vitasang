@@ -3,8 +3,6 @@ const logger = require('../config/logger');
 
 const isRedisConfigured = () => {
   const redisUrl = process.env.REDIS_URL;
-  // Disable Redis pour éviter les limites atteinte - utiliser mémoire
-  if (process.env.USE_REDIS !== 'true') return false;
   if (!redisUrl) return false;
   return redisUrl.startsWith('rediss://') || redisUrl.startsWith('redis://');
 };

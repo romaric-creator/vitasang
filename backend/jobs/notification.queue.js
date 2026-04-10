@@ -5,8 +5,6 @@ let notificationQueue = { add: async () => {} };
 
 const isRedisConfigured = () => {
   const redisUrl = process.env.REDIS_URL;
-  // Disable Redis pour éviter les limites atteinte
-  if (process.env.USE_REDIS !== 'true') return false;
   if (!redisUrl) return false;
   return redisUrl.startsWith('rediss://') || redisUrl.startsWith('redis://');
 };
