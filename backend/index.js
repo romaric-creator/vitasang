@@ -133,5 +133,5 @@ if (require.main === module) {
   });
 }
 
-// Export pour Vercel
+// Export pour Render
 module.exports = app;

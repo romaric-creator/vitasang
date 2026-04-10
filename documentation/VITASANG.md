@@ -108,7 +108,7 @@ CRITIQUE Zéro cache applicatif Toute l'application Aucune couche de cache. Cent
 Fix : npm install node-cache. TTL 10-30 min pour données quasi-statiques.
 4.2 Backend — sévères
 Sévérité Problème Fichier Description + Fix
-SÉVÈRE db.sequelize.sync() à chaque démarrage index.js sync() vérifie et recrée les tables à chaque cold start. Sur Vercel serverless, c'est exécuté à chaque requête.
+SÉVÈRE db.sequelize.sync() à chaque démarrage index.js sync() vérifie et recrée les tables à chaque cold start. Sur Render, c'est exécuté à chaque requête.
 Fix : Supprimer sync(), utiliser les migrations sequelize-cli en production.
 SÉVÈRE getCentreStats : 4 await séquentiels centres.controller.js 4 requêtes DB indépendantes exécutées séquentiellement. La page dashboard met 4× plus de temps que nécessaire.
 Fix : await Promise.all([StockSang.findAll(), RendezVous.count(), Alerte.count(), HistoriqueDon.count()])
@@ -139,7 +139,7 @@ BLOQUANT Calcul géo Haversine en JavaScript alerts.controller.js Tous les donne
 Fix : Utiliser la formule Haversine directement dans la requête Sequelize avec Sequelize.literal().
 BLOQUANT Rate limiter en mémoire vive middleware/rateLimiter.js express-rate-limit store en mémoire. Multi-instances (PM2 cluster) = compteurs indépendants, rate limiting inefficace.
 Fix : npm install rate-limit-redis. Utiliser RedisStore pour compteur partagé entre instances.
-BLOQUANT Uploads local incompatible multi-instances index.js + middleware/upload.js express.static('uploads') sert un dossier local. Sur Vercel serverless ou containers multiples, les fichiers ne sont pas partagés.
+BLOQUANT Uploads local incompatible multi-instances index.js + middleware/upload.js express.static('uploads') sert un dossier local. Sur Render ou containers multiples, les fichiers ne sont pas partagés.
 Fix : Supprimer express.static('uploads') si Cloudinary est utilisé pour tout (c'est le cas).
 5.2 Limitants — freinent la croissance
 Sévérité Problème Fichier Description + Fix
@@ -156,7 +156,7 @@ Action Raison
 Versioning API /v1/ Sans versioning, tout changement breaking casse toutes les apps mobiles en production.
 Migrer vers PostgreSQL + PostGIS Index spatiaux GIST pour requêtes géo 100× plus rapides que Haversine sur MariaDB.
 Supprimer db.sequelize.sync() Utiliser sequelize-cli migrations. sync() en production est dangereux et lent.
-CDN pour assets statiques Décharger le serveur API du trafic statique via Cloudflare ou Vercel Edge.
+CDN pour assets statiques Décharger le serveur API du trafic statique via Cloudflare ou Render.
 
 6. Communication Frontend ↔ Backend
 

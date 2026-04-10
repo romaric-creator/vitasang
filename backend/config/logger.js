@@ -2,11 +2,11 @@ const winston = require('winston');
 const path = require('path');
 const fs = require('fs');
 
-const isVercel = process.env.VERCEL === '1';
+const isRender = process.env.RENDER === '1';
 const logsDir = path.join(__dirname, '../logs');
 
-// Créer le dossier logs s'il n'existe pas, sauf sur Vercel (read-only file system)
-if (!isVercel) {
+// Créer le dossier logs s'il n'existe pas, sauf sur Render (read-only file system)
+if (!isRender) {
   if (!fs.existsSync(logsDir)) {
     try {
       fs.mkdirSync(logsDir);
@@ -18,7 +18,7 @@ if (!isVercel) {
 
 const transports = [];
 
-if (!isVercel) {
+if (!isRender) {
   transports.push(
     // Log errors in error.log
     new winston.transports.File({
