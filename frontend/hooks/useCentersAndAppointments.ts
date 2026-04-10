@@ -24,7 +24,7 @@ export const useNearbyCenters = (
     queryKey: queryKeys.centers.nearby(latitude, longitude, radius),
     queryFn: () =>
       apiClient.get(
-        `/centres/nearby?latitude=${latitude}&longitude=${longitude}&radius=${radius}`,
+        `centres/nearby?latitude=${latitude}&longitude=${longitude}&radius=${radius}`,
       ).then((r) => r.data),
     staleTime: 1000 * 60 * 10, // 10 minutes
     gcTime: 1000 * 60 * 30,
@@ -39,7 +39,7 @@ export const useNearbyCenters = (
 export const useCenterDetail = (centerId: number, enabled: boolean = true) => {
   return useQuery({
     queryKey: queryKeys.centers.detail(centerId),
-    queryFn: () => apiClient.get(`/centres/${centerId}`).then((r) => r.data),
+    queryFn: () => apiClient.get(`centres/${centerId}`).then((r) => r.data),
     enabled: enabled && !!centerId,
     staleTime: 1000 * 60 * 15, // 15 minutes
   });
@@ -53,7 +53,7 @@ export const useCenterStocks = (centerId: number, enabled: boolean = true) => {
   return useQuery({
     queryKey: queryKeys.centers.stocks(centerId),
     queryFn: () =>
-      apiClient.get(`/centres/${centerId}/stocks`).then((r) => r.data),
+      apiClient.get(`centres/${centerId}/stocks`).then((r) => r.data),
     enabled: enabled && !!centerId,
     staleTime: 1000 * 60 * 20,
     refetchInterval: 1000 * 60 * 5, // Auto-refetch every 5 minutes
@@ -67,7 +67,7 @@ export const useCenterStocks = (centerId: number, enabled: boolean = true) => {
 export const useAllCentres = () => {
   return useQuery({
     queryKey: queryKeys.centers.all,
-    queryFn: () => apiClient.get("/centres").then((r) => r.data),
+    queryFn: () => apiClient.get("centres").then((r) => r.data),
     staleTime: 1000 * 60 * 10,
   });
 };
@@ -84,7 +84,7 @@ export const useMyAppointments = (enabled: boolean = true) => {
   return useQuery({
     queryKey: queryKeys.appointments.myAppointments(),
     queryFn: () =>
-      apiClient.get("/rendezvous/my-appointments").then((r) => r.data),
+      apiClient.get("rendez-vous/my-appointments").then((r) => r.data),
     enabled,
     staleTime: 1000 * 60 * 3,
     gcTime: 1000 * 60 * 5,
@@ -102,7 +102,7 @@ export const useAppointmentDetail = (
   return useQuery({
     queryKey: queryKeys.appointments.detail(appointmentId),
     queryFn: () =>
-      apiClient.get(`/rendezvous/${appointmentId}`).then((r) => r.data),
+      apiClient.get(`rendez-vous/${appointmentId}`).then((r) => r.data),
     enabled: enabled && !!appointmentId,
     staleTime: 1000 * 60 * 10,
   });
@@ -119,7 +119,7 @@ export const useCenterAppointments = (
   return useQuery({
     queryKey: queryKeys.appointments.byCenter(centerId),
     queryFn: () =>
-      apiClient.get(`/rendezvous/center/${centerId}`).then((r) => r.data),
+      apiClient.get(`rendez-vous/center/${centerId}`).then((r) => r.data),
     enabled: enabled && !!centerId,
     staleTime: 1000 * 60 * 5,
   });
@@ -142,7 +142,7 @@ export const useCreateAppointment = () => {
       id_type_don: number;
       date_heure_rdv: string;
     }) =>
-      apiClient.post("/rendezvous", data).then((r) => r.data),
+      apiClient.post("rendez-vous", data).then((r) => r.data),
 
     onSuccess: (newAppointment) => {
       // Invalidate user's appointments
@@ -173,7 +173,7 @@ export const useCancelAppointment = () => {
 
   return useMutation({
     mutationFn: (appointmentId: number) =>
-      apiClient.delete(`/rendezvous/${appointmentId}`).then((r) => r.data),
+      apiClient.delete(`rendez-vous/${appointmentId}`).then((r) => r.data),
 
     onSuccess: (_, appointmentId) => {
       queryClient.removeQueries({
@@ -201,7 +201,7 @@ export const useUpdateAppointment = () => {
       appointmentId: number;
       data: any;
     }) =>
-      apiClient.put(`/rendezvous/${appointmentId}`, data).then((r) => r.data),
+      apiClient.put(`rendez-vous/${appointmentId}`, data).then((r) => r.data),
 
     onSuccess: (updatedAppointment) => {
       queryClient.setQueryData(

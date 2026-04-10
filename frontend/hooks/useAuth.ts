@@ -174,7 +174,7 @@ export const useUserProfile = (userId: number, enabled: boolean = true) => {
   return useQuery({
     queryKey: queryKeys.users.profile(userId),
     queryFn: () =>
-      apiClient.get(`/users/${userId}/profile`).then((r) => r.data),
+      apiClient.get(`users/${userId}/profile`).then((r) => r.data),
     enabled: enabled && !!userId,
     staleTime: 1000 * 60 * 10, // 10 minutes for static profiles
   });

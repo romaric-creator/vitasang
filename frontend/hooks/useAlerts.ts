@@ -50,7 +50,7 @@ export const useAcceptedAlerts = (enabled: boolean = true) => {
 export const useAlertDetail = (alertId: number, enabled: boolean = true) => {
   return useQuery({
     queryKey: queryKeys.alerts.detail(alertId),
-    queryFn: () => apiClient.get(`/alerts/${alertId}`).then((r) => r.data),
+    queryFn: () => apiClient.get(`alerts/${alertId}`).then((r) => r.data),
     enabled: enabled && !!alertId,
     staleTime: 1000 * 60 * 5,
   });
@@ -134,7 +134,7 @@ export const useValidateAlert = () => {
       alertId: number;
       validated: boolean;
     }) =>
-      apiClient.post(`/alerts/${alertId}/validate`, { validated }).then((r) => r.data),
+      apiClient.post(`alerts/${alertId}/validate`, { validated }).then((r) => r.data),
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: queryKeys.alerts.all,
