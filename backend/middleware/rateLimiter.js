@@ -3,6 +3,8 @@ const logger = require('../config/logger');
 
 const isRedisConfigured = () => {
   const redisUrl = process.env.REDIS_URL;
+  // Disable Redis pour éviter les limites atteinte - utiliser mémoire
+  if (process.env.USE_REDIS !== 'true') return false;
   if (!redisUrl) return false;
   return redisUrl.startsWith('rediss://') || redisUrl.startsWith('redis://');
 };
@@ -13,21 +15,29 @@ if (process.env.NODE_ENV !== 'test') {
   const { createClient } = require('redis');
 
   if (isRedisConfigured()) {
-    redisClient = createClient({
-      url: process.env.REDIS_URL,
-      socket: {
-        reconnectStrategy: (retries) => Math.min(retries * 100, 3000),
-        connectTimeout: 10000,
-      },
-    });
+    try {
+      redisClient = createClient({
+        url: process.env.REDIS_URL,
+        socket: {
+          reconnectStrategy: () => false, // Don't reconnect - fail fast
+          connectTimeout: 5000,
+        },
+      });
 
-    redisClient.on('error', (err) => {
-      logger.error('Redis Client Error', { message: err.message });
-    });
+      redisClient.on('error', (err) => {
+        if (!err.message.includes('max requests limit')) {
+          logger.error('Redis Client Error', { message: err.message });
+        }
+      });
 
-    redisClient.connect().catch((err) => {
-      logger.error('Could not connect to Redis, using memory fallback', { message: err.message });
-    });
+      redisClient.connect().catch((err) => {
+        logger.warn('Redis non disponible, fallback mémoire', { message: err.message });
+        redisClient = null;
+      });
+    } catch (err) {
+      logger.warn('Redis non configuré, utilisation du cache mémoire');
+      redisClient = null;
+    }
   } else {
     logger.warn('Redis non configuré ou invalide, utilisation du cache mémoire pour le rate limiting');
   }
