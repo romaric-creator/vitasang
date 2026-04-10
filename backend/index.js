@@ -1,5 +1,6 @@
 require("dotenv").config();
 
+const express = require("express");
 const Sentry = require("@sentry/node");
 
 // Initialisation Sentry - vérifier si le package est bien chargé
