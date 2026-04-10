@@ -118,9 +118,10 @@ export default function CreateAlertScreen() {
     try {
       const result = await sendAlert(alertData);
       if (result && result.success !== false) {
+        const alertId = result.alerte?.id_alerte || result.alertId || result.id;
         router.replace({
           pathname: "/alert-tracking/[id]",
-          params: { id: result.alertId || result.id },
+          params: { id: alertId.toString() },
         });
       } else {
         const msg = result.message || t("alert.idError");

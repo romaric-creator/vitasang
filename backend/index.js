@@ -20,7 +20,8 @@ const { errorHandler, notFoundHandler } = require("./middleware/errorHandler");
 const Sentry = require("@sentry/node");
 
 // Initialisation Sentry (Point 30 de l'audit)
-if (process.env.SENTRY_DSN) {
+const sentryEnabled = !!process.env.SENTRY_DSN;
+if (sentryEnabled) {
   Sentry.init({
     dsn: process.env.SENTRY_DSN,
     environment: process.env.NODE_ENV || "development",
@@ -44,7 +45,7 @@ app.use(cors({
 }));
 
 // Sentry request handler (doit être le premier)
-if (process.env.SENTRY_DSN) {
+if (sentryEnabled) {
   app.use(Sentry.Handlers.requestHandler());
 }
 
@@ -114,7 +115,7 @@ app.get("/api/ping", (req, res) => {
 });
 
 // Sentry error handler (doit être avant l'error handler global)
-if (process.env.SENTRY_DSN) {
+if (sentryEnabled) {
   app.use(Sentry.Handlers.errorHandler());
 }
 

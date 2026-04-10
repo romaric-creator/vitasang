@@ -91,6 +91,8 @@ const schemas = {
       "string.empty": "Le lieu est requis",
     }),
     description: Joi.string().allow(""),
+    nom_patient: Joi.string().max(100).allow(""),
+    telephone_contact: Joi.string().max(20).allow(""),
   }),
 
   // Update push token validation

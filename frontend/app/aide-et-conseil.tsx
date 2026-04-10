@@ -12,6 +12,7 @@ import ThemedView from "@/components/ThemedView";
 import { TabBarIcon } from "@/components/TabBarIcon";
 import { color } from "@/constant/color";
 import { useTranslation } from "react-i18next";
+import { useAuth } from "@/context/AuthContext";
 
 // Extracted Components
 import { HelpStatCard } from "@/components/help/HelpStatCard";
@@ -21,7 +22,16 @@ import { HelpFaqItem } from "@/components/help/HelpFaqItem";
 export default function AideEtConseilScreen() {
   const { t } = useTranslation();
   const router = useRouter();
+  const { isAuth } = useAuth();
   const [expandedSection, setExpandedSection] = useState<number | null>(null);
+
+  const handleLaunchAlert = () => {
+    if (isAuth) {
+      router.push("/create-alert");
+    } else {
+      router.push("/guest-alert");
+    }
+  };
 
   const sections = [
     {
@@ -146,7 +156,7 @@ export default function AideEtConseilScreen() {
 
         <TouchableOpacity
           style={styles.ctaButton}
-          onPress={() => router.push("/create-alert" as any)}
+          onPress={handleLaunchAlert}
         >
           <TabBarIcon name="bolt" size={24} color="white" />
           <Text style={styles.ctaText}>{t("home.launchAlert")}</Text>

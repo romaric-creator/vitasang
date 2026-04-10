@@ -3,6 +3,7 @@ import { StyleSheet, TouchableOpacity, View, Text } from "react-native";
 import { TabBarIcon } from "@/components/TabBarIcon";
 import { color } from "@/constant/color";
 import { useRouter } from "expo-router";
+import { useAuth } from "@/context/AuthContext";
 
 interface LaunchAlertButtonProps {
   t: (key: string) => string;
@@ -10,14 +11,21 @@ interface LaunchAlertButtonProps {
 
 export const LaunchAlertButton = ({ t }: LaunchAlertButtonProps) => {
   const router = useRouter();
+  const { isAuth } = useAuth();
+
+  const handlePress = () => {
+    console.log("[LaunchAlertButton] Redirecting, isAuth:", isAuth);
+    if (isAuth) {
+      router.push("/create-alert");
+    } else {
+      router.push("/guest-alert");
+    }
+  };
 
   return (
     <TouchableOpacity
       style={styles.mainActionBtn}
-      onPress={() => {
-        console.log("[LaunchAlertButton] Redirecting to /create-alert");
-        router.push("/create-alert" as any);
-      }}
+      onPress={handlePress}
     >
       <View style={styles.mainActionGradient}>
         <TabBarIcon name="bolt" size={24} color="white" />
