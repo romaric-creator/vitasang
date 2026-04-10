@@ -11,6 +11,10 @@ module.exports = {
     '!**/*.test.js',
   ],
   verbose: true,
-  testTimeout: 30000,
+  testTimeout: 10000,
   detectOpenHandles: true,
+  testPathIgnorePatterns: [
+    '/node_modules/',
+    '__tests__/integration/',
+  ],
 };
