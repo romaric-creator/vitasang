@@ -9,6 +9,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import { AuthProvider, useAuth } from "@/context/AuthContext";
 import { NotificationProvider } from "@/context/NotificationContext";
+import { ToastProvider } from "@/context/ToastContext";
 import { queryClient } from "@/config/queryClient";
 import { getUserIdFromStorage } from "@/utils/storage";
 
@@ -186,7 +187,9 @@ export default function RootLayout() {
   const providers = (
     <AuthProvider>
       <NotificationProvider>
-        <RootLayoutNav />
+        <ToastProvider>
+          <RootLayoutNav />
+        </ToastProvider>
       </NotificationProvider>
     </AuthProvider>
   );
