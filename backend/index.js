@@ -1,6 +1,10 @@
 require("dotenv").config();
 
 const express = require("express");
+const cors = require("cors");
+const helmet = require("helmet");
+const compression = require("compression");
+const morgan = require("morgan");
 const Sentry = require("@sentry/node");
 
 // Initialisation Sentry - vérifier si le package est bien chargé
@@ -42,11 +46,11 @@ if (sentryEnabled) {
 // Trust proxy est essentiel sur Render pour que le rate limiter voit la vraie IP du client
 app.set("trust proxy", 1);
 app.use(helmet({
-  contentSecurityPolicy: false, // Disabling CSP for now to avoid issues with images, should be fine for simple API
+  contentSecurityPolicy: false,
   crossOriginEmbedderPolicy: false,
 }));
 
-app.use(require("compression")({
+app.use(compression({
   level: 6,
   threshold: 1024,
 }));
