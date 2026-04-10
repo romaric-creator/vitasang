@@ -179,9 +179,23 @@ class UserService {
     const searchRayon = parseFloat(radius);
     const targetBlood = decodeURIComponent(groupe_sanguin).replace(" ", "+");
 
+    // Validation des coordonnées
+    if (isNaN(userLat) || isNaN(userLong) || isNaN(searchRayon)) {
+      logger.warn("searchDonors: coordonnées invalides", { latitude, longitude, radius });
+      return [];
+    }
+
+    // Limiter le rayon de recherche pour éviter les timeouts
+    const safeRadius = Math.min(searchRayon, 100); // Max 100km
+    
     const compatibleGroups = Object.keys(BLOOD_COMPATIBILITY).filter((group) =>
       BLOOD_COMPATIBILITY[group].includes(targetBlood),
     );
+
+    // Si pas de groupes compatibles, retourner vide
+    if (compatibleGroups.length === 0) {
+      return [];
+    }
 
     const haversine = `(
       6371 * acos(
@@ -191,27 +205,33 @@ class UserService {
       )
     )`;
 
-    const donors = await Utilisateur.findAll({
-      where: { role: "donneur" },
-      include: [
-        {
-          model: ProfilDonneur,
-          as: "profilDonneur",
-          where: {
-            groupe_sanguin: compatibleGroups,
-            [db.Sequelize.Op.and]: db.sequelize.where(db.sequelize.literal(haversine), '<=', searchRayon)
+    try {
+      const donors = await Utilisateur.findAll({
+        where: { role: "donneur" },
+        include: [
+          {
+            model: ProfilDonneur,
+            as: "profilDonneur",
+            where: {
+              groupe_sanguin: compatibleGroups,
+              [db.Sequelize.Op.and]: db.sequelize.where(db.sequelize.literal(haversine), '<=', safeRadius)
+            },
+            required: true,
           },
-          required: true,
+        ],
+        attributes: {
+          exclude: ["mot_de_passe", "id_centre"],
+          include: [[db.sequelize.literal(haversine), 'distance']]
         },
-      ],
-      attributes: {
-        exclude: ["mot_de_passe", "id_centre"],
-        include: [[db.sequelize.literal(haversine), 'distance']]
-      },
-      order: db.sequelize.literal('distance ASC')
-    });
+        order: db.sequelize.literal('distance ASC'),
+        limit: 50,
+      });
 
-    return donors;
+      return donors;
+    } catch (error) {
+      logger.error("searchDonors: erreur SQL", { error: error.message, params });
+      return [];
+    }
   }
 
   /**
