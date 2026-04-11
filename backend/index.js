@@ -119,6 +119,32 @@ app.get("/api/ping", (req, res) => {
   res.status(200).send("pong");
 });
 
+// Endpoint pour créer une alerte test
+app.post("/api/test/alert", async (req, res) => {
+  const alertService = require("./services/alert.service");
+  
+  try {
+    const alertData = {
+      latitude: 4.0511,
+      longitude: 9.7679,
+      groupe_sanguin: "O+",
+      radius: 15,
+      urgence: "URGENT",
+      quantite_requise: 1,
+      lieu: "Hôpital Général de Douala",
+      description: "Urgence - patient nécessitant une transfusion",
+      nom_patient: "Jean",
+      telephone_contact: "237612345678"
+    };
+    
+    const { alerte } = await alertService.createAlert(alertData, 1);
+    res.json({ success: true, alertId: alerte.id_alerte, alert: alerte });
+  } catch (error) {
+    logger.error("Test alert creation failed", { error: error.message });
+    res.status(500).json({ message: "Erreur création alerte", error: error.message });
+  }
+});
+
 // Test push notification endpoint
 app.post("/api/test/push", async (req, res) => {
   const { token, title, body, alertId, distance, groupe } = req.body;
