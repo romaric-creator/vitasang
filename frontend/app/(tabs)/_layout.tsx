@@ -48,7 +48,14 @@ export default function TabLayout() {
         const data = response.notification.request.content.data;
         console.log("[Notifications] Clic détecté:", data);
         if (data?.alertId) {
-          router.push(`/alert-response/${data.alertId}?distance=${data.distance || ''}`);
+          // Use replace to avoid going back to tabs
+          router.replace({
+            pathname: "/alert-response/[id]",
+            params: { 
+              id: String(data.alertId),
+              distance: data.distance || ''
+            }
+          });
         }
       });
 
