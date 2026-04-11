@@ -25,6 +25,27 @@ function RootLayoutNav() {
   const { show: showAlert } =
     require("@/context/NotificationContext").useNotification();
 
+  // Handle notification tap when app is cold-launched
+  useEffect(() => {
+    const handleNotificationTap = async () => {
+      try {
+        const Notifications = require("expo-notifications");
+        const response = await Notifications.getInitialNotification();
+        if (response) {
+          const data = response.notification.request.content.data;
+          console.log("[ColdLaunch] Notification tap:", data);
+          if (data?.alertId) {
+            router.push(`/alert-response/${data.alertId}?distance=${data.distance || ''}`);
+          }
+        }
+      } catch (e) {
+        console.log("[ColdLaunch] Error:", e);
+      }
+    };
+    
+    handleNotificationTap();
+  }, []);
+
   useEffect(() => {
     if (isLoading) return;
 
