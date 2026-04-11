@@ -126,17 +126,21 @@ app.post("/api/test/push", async (req, res) => {
     return res.status(400).json({ message: "Token requis" });
   }
   
+  const bloodGroup = groupe || "A+";
+  const location = "Hôpital Général de Douala";
+  
   try {
     const { sendPushNotifications, buildPushMessage } = require("./utils/expoNotifications");
     const message = buildPushMessage({
       to: token,
-      title: title || "🩸 URGENCE - Don de sang",
-      body: body || "Un patient a besoin de votre aide!",
+      title: "🩸 URGENCE - Don de sang O+",
+      body: "Un patient a besoin de sang O+ URGENT à Douala. Cliquez pour aider!",
       data: { 
         type: "alert",
         alertId: alertId || 1,
-        distance: distance || 5,
-        groupe: groupe || "O+"
+        distance: distance || 3,
+        groupe: bloodGroup,
+        lieu: location
       }
     });
     const result = await sendPushNotifications([message]);
