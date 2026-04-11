@@ -121,7 +121,7 @@ app.get("/api/ping", (req, res) => {
 
 // Test push notification endpoint
 app.post("/api/test/push", async (req, res) => {
-  const { token, title, body } = req.body;
+  const { token, title, body, alertId, distance, groupe } = req.body;
   if (!token) {
     return res.status(400).json({ message: "Token requis" });
   }
@@ -130,9 +130,14 @@ app.post("/api/test/push", async (req, res) => {
     const { sendPushNotifications, buildPushMessage } = require("./utils/expoNotifications");
     const message = buildPushMessage({
       to: token,
-      title: title || "Test VitaSang",
-      body: body || "Ceci est un test de notification",
-      data: { type: "test" }
+      title: title || "🩸 URGENCE - Don de sang",
+      body: body || "Un patient a besoin de votre aide!",
+      data: { 
+        type: "alert",
+        alertId: alertId || 1,
+        distance: distance || 5,
+        groupe: groupe || "O+"
+      }
     });
     const result = await sendPushNotifications([message]);
     res.json({ success: true, result });
