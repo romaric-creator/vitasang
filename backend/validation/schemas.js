@@ -13,7 +13,7 @@ const schemas = {
     }),
     telephone: Joi.string()
       .required()
-      .pattern(/^6[5-9]\d{7}$/)
+      .pattern(/^6\d{8}$/)
       .messages({
         "string.empty": "Le numéro de téléphone est requis",
         "string.pattern.base":
