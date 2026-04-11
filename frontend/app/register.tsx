@@ -205,22 +205,22 @@ export default function RegisterScreen() {
                     <View style={styles.row}>
                       <View style={{ flex: 1, marginRight: 8 }}>
                         <FormField
-                          label="Nom"
+                          label="Nom d'affichage"
                           value={values.nom}
                           onChangeText={handleChange("nom")}
                           onBlur={handleBlur("nom")}
-                          placeholder="Votre nom"
+                          placeholder="Ex: Dupont"
                           error={errors.nom}
                           touched={touched.nom}
                         />
                       </View>
                       <View style={{ flex: 1, marginLeft: 8 }}>
                         <FormField
-                          label="Prénom"
+                          label="Nom"
                           value={values.prenom}
                           onChangeText={handleChange("prenom")}
                           onBlur={handleBlur("prenom")}
-                          placeholder="Votre prénom"
+                          placeholder="Ex: Jean"
                           error={errors.prenom}
                           touched={touched.prenom}
                         />

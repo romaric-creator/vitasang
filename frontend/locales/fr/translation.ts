@@ -176,8 +176,8 @@ export default {
     notFound: "Impossible de charger le profil",
     back: "RETOUR",
     fields: {
-      lastName: "Nom",
-      firstName: "Prénom",
+      lastName: "Nom d'affichage",
+      firstName: "Nom",
       phone: "Téléphone",
       city: "Ville",
     },
@@ -265,8 +265,8 @@ export default {
     error: "Une erreur inattendue est survenue.",
     hintPhone: "Format requis : 9 chiffres (ex: 651234567)",
     fields: {
-      lastName: "Nom",
-      firstName: "Prénom",
+      lastName: "Nom d'affichage",
+      firstName: "Nom",
       phone: "Téléphone",
       password: "Mot de passe",
       confirmPassword: "Confirmer mot de passe",

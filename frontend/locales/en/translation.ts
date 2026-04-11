@@ -180,8 +180,8 @@ export default {
     },
     back: "BACK",
     fields: {
-      lastName: "Last Name",
-      firstName: "First Name",
+      lastName: "Display Name",
+      firstName: "Name",
       phone: "Phone",
       city: "City",
     },
@@ -251,8 +251,8 @@ export default {
     error: "An unexpected error occurred.",
     hintPhone: "Required format: 9 digits (e.g. 651234567)",
     fields: {
-      lastName: "Last Name",
-      firstName: "First Name",
+      lastName: "Display Name",
+      firstName: "Name",
       phone: "Phone",
       password: "Password",
       confirmPassword: "Confirm password",
