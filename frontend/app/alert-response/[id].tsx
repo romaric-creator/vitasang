@@ -21,7 +21,7 @@ import { getAlertStatus, respondToAlert } from "@/services/user.service";
 import { analyticsService } from "@/services/analyticsService";
 import { useTranslation } from "react-i18next";
 import ThemedView from "@/components/ThemedView";
-import { useNotification } from "@/context/NotificationContext";
+import { useToast } from "@/context/ToastContext";
 
 const { width } = Dimensions.get("window");
 
@@ -50,7 +50,7 @@ export default function AlertResponse() {
   const params = useLocalSearchParams();
   const { id, distance } = params;
   const router = useRouter();
-  const { show } = useNotification();
+  const { success, error } = useToast();
 
   const [alertData, setAlertData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -93,12 +93,12 @@ export default function AlertResponse() {
         const refreshed = await getAlertStatus(Number(id));
         if (refreshed?.alerte) setAlertData(refreshed.alerte);
         setHasAccepted(true);
-        show("success", "Merci pour votre engagement !");
+        success("Merci pour votre engagement !");
       } else {
         router.replace("/(tabs)");
       }
     } catch (error: any) {
-      show("error", error.message || t("common.error"));
+      error(error.message || t("common.error"));
     } finally {
       setIsResponding(false);
     }

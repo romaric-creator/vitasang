@@ -11,7 +11,7 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { PageHeader } from "@/components/PageHeader";
 import ThemedView from "@/components/ThemedView";
 import { color } from "@/constant/color";
-import { useNotification } from "@/context/NotificationContext";
+import { useToast } from "@/context/ToastContext";
 import { Formik } from "formik";
 import * as Yup from "yup";
 import FormField from "@/components/FormField";
@@ -31,7 +31,7 @@ const BookingSchema = Yup.object().shape({
 export default function BookAppointmentScreen() {
   const { t } = useTranslation();
   const router = useRouter();
-  const { show } = useNotification();
+  const { success, error } = useToast();
   const params = useLocalSearchParams();
   const centreId = Number(params.centreId);
 
@@ -52,10 +52,10 @@ export default function BookAppointmentScreen() {
         if (res.success) {
           setCentre(res.centre);
         } else {
-          show("error", t("booking.loadError"));
+error(t("booking.loadError"));
         }
       } catch (error) {
-        show("error", t("booking.loadError"));
+        error(t("booking.loadError"));
       } finally {
         setLoading(false);
       }
@@ -79,14 +79,14 @@ export default function BookAppointmentScreen() {
           centreId: centreId,
           centreName: centre.nom_centre,
         });
-        show("success", t("booking.success"));
+        success(t("booking.success"));
         router.replace("/rendezvous");
       } else {
-        show("error", t("booking.submitError"));
+        error(t("booking.submitError"));
       }
 
     } catch (error) {
-      show("error", t("booking.submitError"));
+      error(t("booking.submitError"));
     } finally {
       setIsSubmitting(false);
     }

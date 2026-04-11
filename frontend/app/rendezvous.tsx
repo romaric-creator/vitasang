@@ -14,7 +14,7 @@ import ThemedView from "@/components/ThemedView";
 import { SkeletonListLoader } from "@/components/SkeletonLoader";
 import { color } from "@/constant/color";
 import { useMyAppointments, useCancelAppointment } from "@/hooks/useCentersAndAppointments";
-import { useNotification } from "@/context/NotificationContext";
+import { useToast } from "@/context/ToastContext";
 import { useTranslation } from "react-i18next";
 
 interface Appointment {
@@ -36,7 +36,7 @@ interface Appointment {
 export default function RendezVousList() {
   const { t, i18n } = useTranslation();
   const router = useRouter();
-  const { show } = useNotification();
+  const { success, error } = useToast();
 
   // ✅ React Query — cache + invalidation automatique
   const { data, isLoading, isRefetching, refetch } = useMyAppointments();
@@ -47,9 +47,9 @@ export default function RendezVousList() {
   const handleCancel = useCallback(async (appointmentId: number) => {
     try {
       await cancelMutation.mutateAsync(appointmentId);
-      show("success", t("appointments.canceled"));
+      success(t("appointments.canceled"));
     } catch (error: any) {
-      show("error", t("appointments.cancelGenericError"));
+      error(t("appointments.cancelGenericError"));
     }
   }, [cancelMutation, show, t]);
 

@@ -15,7 +15,7 @@ import { getUserIdFromStorage, storeData, getData } from "@/utils/storage";
 import { useAuth } from "@/context/AuthContext";
 import ThemedView from "@/components/ThemedView";
 import { getUserProfile, updateUserProfile } from "@/services/user.service";
-import { useNotification } from "@/context/NotificationContext";
+import { useToast } from "@/context/ToastContext";
 import { editProfileValidationSchema } from "@/validation/ValidationSchemas";
 import FormField from "@/components/FormField";
 import { PrimaryButton } from "@/components/PrimaryButton";
@@ -34,7 +34,7 @@ import { SkeletonLoader } from "@/components/SkeletonLoader";
 export default function EditProfileScreen() {
   const { t } = useTranslation();
   const router = useRouter();
-  const { show } = useNotification();
+  const { error } = useToast();
   const { completeAuth, updateUser } = useAuth();
   const [userData, setUserData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -52,7 +52,7 @@ export default function EditProfileScreen() {
       setLoading(true);
       const id = await getUserIdFromStorage();
       if (!id) {
-        show("error", "Session expirée. Veuillez vous reconnecter.");
+        error("Session expirée. Veuillez vous reconnecter.");
         router.replace("/login");
         return;
       }
@@ -76,9 +76,9 @@ export default function EditProfileScreen() {
         const cachedUser = await getData("user");
         if (cachedUser) {
           setUserData(cachedUser);
-          show("info", "Affichage des données hors-ligne.");
+          info("Affichage des données hors-ligne.");
         } else {
-          show("error", t("editProfile.loadError"));
+error(t("editProfile.loadError"));
         }
       }
     } catch (error) {
@@ -102,7 +102,7 @@ export default function EditProfileScreen() {
         setSelectedImage(result.assets[0].uri);
       }
     } catch (e) {
-      show("error", "Impossible d'accéder à la galerie.");
+      error("Impossible d'accéder à la galerie.");
     }
   };
 
@@ -117,7 +117,7 @@ export default function EditProfileScreen() {
           await uploadProfilePicture(userId, selectedImage);
         } catch (uploadErr) {
           console.error("Image upload failed:", uploadErr);
-          show("error", t("editProfile.image.error"));
+          error(t("editProfile.image.error"));
           // On continue quand même la mise à jour des autres champs
         }
       }
@@ -131,13 +131,13 @@ export default function EditProfileScreen() {
           await updateUser(updatedRes.user);
         }
 
-        show("success", t("editProfile.success"));
+        success(t("editProfile.success"));
         setTimeout(() => router.replace("/(tabs)/profile"), 1500);
       } else {
-        show("error", response.message || t("editProfile.error"));
+        error(response.message || t("editProfile.error"));
       }
     } catch (error: any) {
-      show("error", error?.message || t("editProfile.error"));
+      error(error?.message || t("editProfile.error"));
       console.error("Error updating profile:", error);
     } finally {
       setSaving(false);
