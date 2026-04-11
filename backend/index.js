@@ -119,6 +119,29 @@ app.get("/api/ping", (req, res) => {
   res.status(200).send("pong");
 });
 
+// Test push notification endpoint
+app.post("/api/test/push", async (req, res) => {
+  const { token, title, body } = req.body;
+  if (!token) {
+    return res.status(400).json({ message: "Token requis" });
+  }
+  
+  try {
+    const { sendPushNotifications, buildPushMessage } = require("./utils/expoNotifications");
+    const message = buildPushMessage({
+      to: token,
+      title: title || "Test VitaSang",
+      body: body || "Ceci est un test de notification",
+      data: { type: "test" }
+    });
+    const result = await sendPushNotifications([message]);
+    res.json({ success: true, result });
+  } catch (error) {
+    logger.error("Test push failed", { error: error.message });
+    res.status(500).json({ message: "Notification failed", error: error.message });
+  }
+});
+
 // Sentry error handler (doit être avant l'error handler global)
 if (sentryEnabled) {
   app.use(Sentry.Handlers.errorHandler());
