@@ -1,6 +1,6 @@
 import React from "react";
-import { View, StyleSheet } from "react-native";
-import { MotiView } from "moti";
+import { View, StyleSheet, Animated } from "react-native";
+import { color } from "@/constant/color";
 
 interface SkeletonLoaderProps {
   width?: number | string;
@@ -11,8 +11,7 @@ interface SkeletonLoaderProps {
 }
 
 /**
- * Skeleton Loader Component - Meilleur que les spinners fullscreen
- * Utilise Moti pour les animations smooth
+ * Skeleton Loader - Couleurs normalisées depuis color.ts
  */
 export const SkeletonLoader: React.FC<SkeletonLoaderProps> = ({
   width = "100%",
@@ -21,18 +20,38 @@ export const SkeletonLoader: React.FC<SkeletonLoaderProps> = ({
   style,
   animated = true,
 }) => {
+  const opacityAnim = React.useRef(new Animated.Value(0.6)).current;
+
+  React.useEffect(() => {
+    if (!animated) return;
+    
+    const anim = Animated.loop(
+      Animated.sequence([
+        Animated.timing(opacityAnim, {
+          toValue: 0.3,
+          duration: 800,
+          useNativeDriver: true,
+        }),
+        Animated.timing(opacityAnim, {
+          toValue: 0.6,
+          duration: 800,
+          useNativeDriver: true,
+        }),
+      ])
+    );
+    anim.start();
+    return () => anim.stop();
+  }, [animated, opacityAnim]);
+
   if (!animated) {
     return (
-      <View style={[styles.skeleton, { width, height, borderRadius }, style]} />
+      <View style={[styles.skeleton, { width, height, borderRadius, opacity: 0.6 }, style]} />
     );
   }
 
   return (
-    <MotiView
-      from={{ opacity: 0.6 }}
-      animate={{ opacity: 0.3 }}
-      transition={{ type: "timing", duration: 800, loop: true }}
-      style={[styles.skeleton, { width, height, borderRadius }, style]}
+    <Animated.View
+      style={[styles.skeleton, { width, height, borderRadius, opacity: opacityAnim }, style]}
     />
   );
 };
@@ -105,7 +124,7 @@ export const SkeletonMapMarkers: React.FC<{ count?: number }> = ({
 
 const styles = StyleSheet.create({
   skeleton: {
-    backgroundColor: "#e0e0e0",
+    backgroundColor: color.surfaceDark,
   },
   listContainer: {
     gap: 12,
@@ -115,7 +134,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     gap: 12,
     alignItems: "center",
-    backgroundColor: "#f5f5f5",
+    backgroundColor: color.surface,
     borderRadius: 8,
     padding: 12,
   },
