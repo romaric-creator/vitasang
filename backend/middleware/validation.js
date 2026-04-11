@@ -37,6 +37,7 @@ const validateRequest = (schema) => {
 
       return res.status(400).json({
         message: 'Erreur de validation',
+        details: Object.values(fieldErrors)[0],
         errors: fieldErrors,
       });
     }
