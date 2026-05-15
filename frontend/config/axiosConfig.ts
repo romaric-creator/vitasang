@@ -13,10 +13,10 @@ import {
 } from "@/services/errorService";
 
 const API_BASE_URL = (Constants.expoConfig?.extra?.env?.EXPO_PUBLIC_API_BASE_URL || "https://vitasang.onrender.com/api").replace(/\/$/, "") + "/";
-const REQUEST_TIMEOUT = 30000; // 30s - enough for most networks, cold start handled by pre-ping
+const REQUEST_TIMEOUT = 60000; // 60s - Render free tier can take up to 50s to wake up
 const MAX_RETRIES = 2;
 const PING_INTERVAL = 120000; // 2 minutes - wake up server before it sleeps
-const PING_TIMEOUT = 5000; // 5s timeout for ping requests
+const PING_TIMEOUT = 10000; // 10s timeout for ping requests
 
 let memoryToken: string | null = null;
 let lastPingTime = 0;

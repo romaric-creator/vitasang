@@ -6,36 +6,33 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform,
+  StatusBar,
+  Image,
+  TouchableOpacity as RNTouchableOpacity,
 } from "react-native";
-import { ModernSpinner } from "@/components/ModernSpinner";
 import { useRouter } from "expo-router";
 import { Formik } from "formik";
 import { color } from "@/constant/color";
-import { getUserIdFromStorage, storeData, getData } from "@/utils/storage";
+import { getUserIdFromStorage, getData } from "@/utils/storage";
 import { useAuth } from "@/context/AuthContext";
-import ThemedView from "@/components/ThemedView";
 import { getUserProfile, updateUserProfile } from "@/services/user.service";
 import { useToast } from "@/context/ToastContext";
 import { editProfileValidationSchema } from "@/validation/ValidationSchemas";
 import FormField from "@/components/FormField";
-import { PrimaryButton } from "@/components/PrimaryButton";
 import { BloodGroupSelector } from "@/components/BloodGroupSelector";
 import { PageHeader } from "@/components/PageHeader";
 import * as ImagePicker from "expo-image-picker";
 import { uploadProfilePicture } from "@/services/user.service";
 import { TabBarIcon } from "@/components/TabBarIcon";
-import { Image, TouchableOpacity as RNTouchableOpacity } from "react-native";
-import Constants from "expo-constants"; // Import Constants
-
+import Constants from "expo-constants";
 import { useTranslation } from "react-i18next";
-import { LoadingOverlay } from "@/components/LoadingOverlay";
 import { SkeletonLoader } from "@/components/SkeletonLoader";
 
 export default function EditProfileScreen() {
   const { t } = useTranslation();
   const router = useRouter();
-  const { error } = useToast();
-  const { completeAuth, updateUser } = useAuth();
+  const { success, error, info } = useToast();
+  const { updateUser } = useAuth();
   const [userData, setUserData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -65,25 +62,24 @@ export default function EditProfileScreen() {
         if (res.user.photo_profil) {
           const photoUrl = res.user.photo_profil.startsWith("http")
             ? res.user.photo_profil
-            : Constants.expoConfig?.extra?.env?.EXPO_PUBLIC_API_BASE_URL?.replace(
+            : (Constants.expoConfig?.extra?.env?.EXPO_PUBLIC_API_BASE_URL || "").replace(
                 "/api",
                 "",
               ) + res.user.photo_profil;
           setCurrentImage(photoUrl);
         }
       } else {
-        // Fallback sur les données du cache local si l'API échoue
         const cachedUser = await getData("user");
         if (cachedUser) {
           setUserData(cachedUser);
           info("Affichage des données hors-ligne.");
         } else {
-error(t("editProfile.loadError"));
+          error(t("editProfile.loadError"));
         }
       }
-    } catch (error) {
-      show("error", t("editProfile.loadError"));
-      console.error("Error loading profile:", error);
+    } catch (err) {
+      error(t("editProfile.loadError"));
+      console.error("Error loading profile:", err);
     } finally {
       setLoading(false);
     }
@@ -95,7 +91,7 @@ error(t("editProfile.loadError"));
         mediaTypes: ["images"],
         allowsEditing: true,
         aspect: [1, 1],
-        quality: 0.5, // Réduit pour économiser la data au Cameroun
+        quality: 0.5,
       });
 
       if (!result.canceled) {
@@ -111,34 +107,30 @@ error(t("editProfile.loadError"));
 
     setSaving(true);
     try {
-      // 1. Upload image if selected
       if (selectedImage) {
         try {
           await uploadProfilePicture(userId, selectedImage);
         } catch (uploadErr) {
           console.error("Image upload failed:", uploadErr);
           error(t("editProfile.image.error"));
-          // On continue quand même la mise à jour des autres champs
         }
       }
 
-      // 2. Update profile data
       const response = await updateUserProfile(userId, values);
       if (response.success) {
-        // 3. Refresh local storage AND context with latest data
         const updatedRes = await getUserProfile(userId);
         if (updatedRes.success) {
           await updateUser(updatedRes.user);
         }
 
         success(t("editProfile.success"));
-        setTimeout(() => router.replace("/(tabs)/profile"), 1500);
+        router.replace("/(tabs)/profile");
       } else {
         error(response.message || t("editProfile.error"));
       }
-    } catch (error: any) {
-      error(error?.message || t("editProfile.error"));
-      console.error("Error updating profile:", error);
+    } catch (err: any) {
+      error(err?.message || t("editProfile.error"));
+      console.error("Error updating profile:", err);
     } finally {
       setSaving(false);
     }
@@ -146,27 +138,14 @@ error(t("editProfile.loadError"));
 
   if (loading) {
     return (
-      <ThemedView style={styles.container}>
+      <View style={styles.loadingContainer}>
         <PageHeader title={t("editProfile.title")} />
-        <View style={{ padding: 16, gap: 12 }}>
+        <View style={{ padding: 24, gap: 16 }}>
           <SkeletonLoader width={100} height={100} borderRadius={50} />
-          <SkeletonLoader width="100%" height={50} style={{ marginTop: 16 }} />
-          <SkeletonLoader width="100%" height={50} />
-          <SkeletonLoader width="100%" height={50} />
+          <SkeletonLoader width="100%" height={60} style={{ marginTop: 24, borderRadius: 20 }} />
+          <SkeletonLoader width="100%" height={60} style={{ borderRadius: 20 }} />
+          <SkeletonLoader width="100%" height={60} style={{ borderRadius: 20 }} />
         </View>
-      </ThemedView>
-    );
-  }
-
-  if (!userData) {
-    return (
-      <View style={[styles.container, styles.centerContent]}>
-        <Text style={styles.errorText}>{t("editProfile.notFound")}</Text>
-        <PrimaryButton
-          title={t("editProfile.back")}
-          onPress={() => router.back()}
-          style={{ marginTop: 20 }}
-        />
       </View>
     );
   }
@@ -176,9 +155,11 @@ error(t("editProfile.loadError"));
       behavior={Platform.OS === "ios" ? "padding" : "height"}
       style={{ flex: 1 }}
     >
+      <StatusBar barStyle="dark-content" />
       <ScrollView
         contentContainerStyle={{ flexGrow: 1 }}
-        style={{ backgroundColor: color.screenBackground }}
+        style={{ backgroundColor: color.background }}
+        showsVerticalScrollIndicator={false}
       >
         <View style={styles.container}>
           <PageHeader title={t("editProfile.title")} />
@@ -188,27 +169,30 @@ error(t("editProfile.loadError"));
             <Text style={styles.subtitle}>{t("editProfile.subtitle")}</Text>
           </View>
 
-          <View style={styles.avatarContainer}>
+          <View style={styles.avatarSection}>
             <RNTouchableOpacity
               onPress={pickImage}
               style={styles.avatarWrapper}
+              activeOpacity={0.8}
             >
-              {selectedImage || currentImage ? (
-                <Image
-                  source={{ uri: selectedImage || currentImage || "" }}
-                  style={styles.avatar}
-                />
-              ) : (
-                <View style={[styles.avatar, styles.avatarPlaceholder]}>
-                  <TabBarIcon
-                    name="user"
-                    size={40}
-                    color={color.textSecondary}
+              <View style={styles.avatarBorder}>
+                {selectedImage || currentImage ? (
+                  <Image
+                    source={{ uri: selectedImage || currentImage || "" }}
+                    style={styles.avatar}
                   />
-                </View>
-              )}
-              <View style={styles.cameraIcon}>
-                <TabBarIcon name="camera" size={14} color="white" />
+                ) : (
+                  <View style={[styles.avatar, styles.avatarPlaceholder]}>
+                    <TabBarIcon
+                      name="user"
+                      size={48}
+                      color={color.secondaryLight}
+                    />
+                  </View>
+                )}
+              </View>
+              <View style={styles.cameraBtn}>
+                <TabBarIcon name="camera" size={16} color="white" />
               </View>
             </RNTouchableOpacity>
           </View>
@@ -233,7 +217,7 @@ error(t("editProfile.loadError"));
               handleBlur,
               handleSubmit,
             }) => (
-              <View style={styles.formContainer}>
+              <View style={styles.form}>
                 <FormField
                   label={t("editProfile.fields.lastName")}
                   value={values.nom}
@@ -243,7 +227,6 @@ error(t("editProfile.loadError"));
                   error={errors.nom as any}
                   touched={touched.nom as any}
                   editable={!saving}
-                  required
                 />
 
                 <FormField
@@ -255,7 +238,6 @@ error(t("editProfile.loadError"));
                   error={errors.prenom as any}
                   touched={touched.prenom as any}
                   editable={!saving}
-                  required
                 />
 
                 <FormField
@@ -268,7 +250,6 @@ error(t("editProfile.loadError"));
                   touched={touched.telephone as any}
                   keyboardType="phone-pad"
                   editable={!saving}
-                  required
                 />
 
                 <FormField
@@ -280,22 +261,36 @@ error(t("editProfile.loadError"));
                   error={errors.ville as any}
                   touched={touched.ville as any}
                   editable={!saving}
-                  required
                 />
 
-                <BloodGroupSelector
-                  value={values.groupe_sanguin}
-                  onSelect={(group) => handleChange("groupe_sanguin")(group)}
-                  error={errors.groupe_sanguin as any}
-                  touched={touched.groupe_sanguin as any}
-                />
+                <View style={styles.bloodSection}>
+                  <Text style={styles.fieldLabel}>Groupe Sanguin</Text>
+                  <BloodGroupSelector
+                    value={values.groupe_sanguin}
+                    onSelect={(group) => handleChange("groupe_sanguin")(group)}
+                    error={errors.groupe_sanguin as any}
+                    touched={touched.groupe_sanguin as any}
+                  />
+                </View>
 
-                <PrimaryButton
-                  title={t("editProfile.save")}
+                <RNTouchableOpacity
+                  style={[styles.saveBtn, saving && styles.saveBtnDisabled]}
                   onPress={() => handleSubmit()}
-                  loading={saving}
-                  style={{ marginTop: 24 }}
-                />
+                  disabled={saving}
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.saveBtnText}>
+                    {saving ? "ENREGISTREMENT..." : t("editProfile.save").toUpperCase()}
+                  </Text>
+                </RNTouchableOpacity>
+                
+                <RNTouchableOpacity
+                  style={styles.cancelBtn}
+                  onPress={() => router.back()}
+                  disabled={saving}
+                >
+                  <Text style={styles.cancelBtnText}>Annuler</Text>
+                </RNTouchableOpacity>
               </View>
             )}
           </Formik>
@@ -308,70 +303,113 @@ error(t("editProfile.loadError"));
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingHorizontal: 16,
-    paddingTop: 8,
-    paddingBottom: 20,
+    paddingHorizontal: 20,
+    paddingBottom: 40,
   },
-  centerContent: {
-    justifyContent: "center",
-    alignItems: "center",
+  loadingContainer: {
+    flex: 1,
+    backgroundColor: "white",
   },
   headerSection: {
-    marginTop: 10,
-    marginBottom: 20,
+    marginBottom: 24,
   },
   title: {
-    color: color.primary,
-    fontWeight: "800",
-    fontSize: 24,
+    color: color.secondary,
+    fontWeight: "900",
+    fontSize: 28,
     letterSpacing: -0.5,
-    marginBottom: 4,
+    marginBottom: 6,
   },
   subtitle: {
     fontWeight: "600",
     color: color.textSecondary,
-    fontSize: 13,
+    fontSize: 15,
   },
-  formContainer: {
-    flex: 1,
-  },
-  avatarContainer: {
+  avatarSection: {
     alignItems: "center",
-    marginBottom: 20,
+    marginBottom: 32,
   },
   avatarWrapper: {
     position: "relative",
   },
+  avatarBorder: {
+    padding: 4,
+    borderRadius: 60,
+    backgroundColor: "white",
+    shadowColor: color.secondary,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.1,
+    shadowRadius: 15,
+    elevation: 10,
+  },
   avatar: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    borderWidth: 3,
-    borderColor: color.primary,
+    width: 110,
+    height: 110,
+    borderRadius: 55,
+    backgroundColor: color.secondaryGhost,
   },
   avatarPlaceholder: {
-    backgroundColor: color.surface,
     justifyContent: "center",
     alignItems: "center",
   },
-  cameraIcon: {
+  cameraBtn: {
     position: "absolute",
-    bottom: 0,
-    right: 0,
+    bottom: 4,
+    right: 4,
     backgroundColor: color.primary,
-    width: 32,
+    width: 36,
     height: 32,
-    borderRadius: 16,
+    borderRadius: 12,
     justifyContent: "center",
     alignItems: "center",
-    borderWidth: 2,
+    borderWidth: 3,
     borderColor: "white",
   },
-  errorText: {
-    color: color.error,
-    textAlign: "center",
-    marginTop: 16,
+  form: {
+    gap: 16,
+  },
+  fieldLabel: {
     fontSize: 14,
-    fontWeight: "600",
+    fontWeight: "800",
+    color: color.secondary,
+    marginBottom: 10,
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+  },
+  bloodSection: {
+    marginTop: 8,
+  },
+  saveBtn: {
+    height: 60,
+    borderRadius: 24,
+    backgroundColor: color.secondary,
+    justifyContent: "center",
+    alignItems: "center",
+    marginTop: 24,
+    shadowColor: color.secondary,
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.2,
+    shadowRadius: 20,
+    elevation: 8,
+  },
+  saveBtnDisabled: {
+    backgroundColor: color.disabled,
+  },
+  saveBtnText: {
+    color: "white",
+    fontSize: 16,
+    fontWeight: "900",
+    letterSpacing: 1,
+  },
+  cancelBtn: {
+    height: 56,
+    justifyContent: "center",
+    alignItems: "center",
+    marginTop: 8,
+  },
+  cancelBtnText: {
+    color: color.textSecondary,
+    fontSize: 15,
+    fontWeight: "700",
   },
 });

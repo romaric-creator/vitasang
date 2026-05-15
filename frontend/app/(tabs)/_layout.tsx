@@ -44,26 +44,30 @@ export default function TabLayout() {
       const Notifications = require('expo-notifications');
 
       // Gestion du clic sur notification (App en background/tuée)
-      responseSubscription = Notifications.addNotificationResponseReceivedListener((response: any) => {
-        const data = response.notification.request.content.data;
-        console.log("[Notifications] Clic détecté:", data);
-        if (data?.alertId) {
-          // Use replace to avoid going back to tabs
-          router.replace({
-            pathname: "/alert-response/[id]",
-            params: { 
-              id: String(data.alertId),
-              distance: data.distance || ''
-            }
-          });
-        }
-      });
+      if (typeof Notifications.addNotificationResponseReceivedListener === 'function') {
+        responseSubscription = Notifications.addNotificationResponseReceivedListener((response: any) => {
+          const data = response.notification.request.content.data;
+          console.log("[Notifications] Clic détecté:", data);
+          if (data?.alertId) {
+            // Use replace to avoid going back to tabs
+            router.replace({
+              pathname: "/alert-response/[id]",
+              params: { 
+                id: String(data.alertId),
+                distance: data.distance || ''
+              }
+            });
+          }
+        });
+      }
 
       // Gestion de la réception (App au premier plan)
-      receivedSubscription = Notifications.addNotificationReceivedListener((notification: any) => {
-        console.log("[Notifications] Reçue au premier plan:", notification);
-        // Ici on pourrait afficher un Toast ou une alerte in-app personnalisée
-      });
+      if (typeof Notifications.addNotificationReceivedListener === 'function') {
+        receivedSubscription = Notifications.addNotificationReceivedListener((notification: any) => {
+          console.log("[Notifications] Reçue au premier plan:", notification);
+          // Ici on pourrait afficher un Toast ou une alerte in-app personnalisée
+        });
+      }
 
     } catch (e) {
       console.log("[Notifications] Module non disponible ou erreur init écouteurs");
@@ -80,28 +84,32 @@ export default function TabLayout() {
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: color.primary,
+        tabBarActiveTintColor: color.secondary, // Teal pour le côté Santé/Confiance
         tabBarInactiveTintColor: color.textLight,
         headerShown: false,
         tabBarButton: HapticTab,
         tabBarStyle: {
           backgroundColor: color.surface,
-          borderTopColor: color.divider,
-          borderTopWidth: 1.5,
-          paddingBottom: 10,
-          paddingTop: 10,
-          height: 70,
-          elevation: 0,
-          shadowColor: 'transparent',
+          borderTopWidth: 0,
+          paddingBottom: 12,
+          paddingTop: 12,
+          height: 76,
+          elevation: 10,
+          shadowColor: color.secondary,
+          shadowOffset: { width: 0, height: -4 },
+          shadowOpacity: 0.05,
+          shadowRadius: 10,
         },
         tabBarLabelStyle: {
           fontSize: 12,
-          fontWeight: "700",
+          fontWeight: "800",
           marginTop: 4,
-          letterSpacing: 0.2,
+          letterSpacing: 0.3,
+          textTransform: "uppercase",
         },
       }}
     >
+
       <Tabs.Screen
         name="index"
         options={{

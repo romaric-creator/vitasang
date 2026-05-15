@@ -13,40 +13,42 @@ export const BentoStats = ({ userData, t }: BentoStatsProps) => {
   const router = useRouter();
 
   return (
-    <View style={styles.bentoRow}>
+    <View style={styles.container}>
       <TouchableOpacity
-        style={[styles.bentoItem, styles.heroBlock]}
+        style={[styles.heroBlock]}
         onPress={() => router.push("/historique")}
+        activeOpacity={0.9}
       >
-        <View style={styles.heroIconCircle}>
-          <TabBarIcon name="heart" size={24} color="white" />
+        <View style={styles.heroHeader}>
+          <View style={styles.iconCircle}>
+            <TabBarIcon name="heart" size={24} color="white" />
+          </View>
+          <View style={styles.heroTextContainer}>
+            <Text style={styles.heroLabel}>{t("home.livesSaved")}</Text>
+            <Text style={styles.heroSub}>{t("history.empty")}</Text>
+          </View>
         </View>
         <Text style={styles.heroValue}>{userData?.donsCount || 0}</Text>
-        <Text style={styles.heroLabel}>{t("home.livesSaved")}</Text>
-        <Text style={styles.heroSub}>
-          {t("history.empty")}
-        </Text>
       </TouchableOpacity>
 
-      <View style={styles.bentoColumn}>
-        <View style={[styles.bentoItem, styles.bloodBlock]}>
-          <Text style={styles.bloodLabel}>{t("home.bloodGroup")}</Text>
+      <View style={styles.statsRow}>
+        <View style={[styles.statItem, styles.bloodBlock]}>
+          <Text style={styles.statLabel}>{t("home.bloodGroup")}</Text>
           <Text style={styles.bloodValue}>
             {userData?.groupe_sanguin || "--"}
           </Text>
         </View>
 
         <TouchableOpacity
-          style={[styles.bentoItem, styles.statusBlock]}
+          style={[styles.statItem, styles.nextBlock]}
           onPress={() => router.push("/eligibility-test")}
+          activeOpacity={0.7}
         >
-          <TabBarIcon
-            name="calendar-check-o"
-            size={18}
-            color={color.primary}
-          />
-          <Text style={styles.statusLabel}>{t("home.nextDonation")}</Text>
-          <Text style={styles.statusValue}>{t("home.available")}</Text>
+          <View style={styles.nextHeader}>
+            <TabBarIcon name="calendar" size={16} color={color.primary} />
+            <Text style={styles.statLabel}>{t("home.nextDonation")}</Text>
+          </View>
+          <Text style={styles.nextValue}>{t("home.available")}</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -54,84 +56,104 @@ export const BentoStats = ({ userData, t }: BentoStatsProps) => {
 };
 
 const styles = StyleSheet.create({
-  bentoRow: {
-    flexDirection: "row",
-    gap: 12,
-    marginBottom: 20,
-  },
-  bentoColumn: {
-    flex: 1,
-    gap: 12,
-  },
-  bentoItem: {
-    backgroundColor: color.surface,
-    borderRadius: 24,
-    padding: 20,
-    borderWidth: 1,
-    borderColor: color.border,
+  container: {
+    gap: 16,
+    marginBottom: 24,
   },
   heroBlock: {
-    flex: 1.2,
     backgroundColor: color.primary,
-    borderColor: color.primary,
-    justifyContent: "center",
+    borderRadius: 32,
+    padding: 24,
+    shadowColor: color.primary,
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.2,
+    shadowRadius: 20,
+    elevation: 10,
   },
-  heroIconCircle: {
-    width: 44,
-    height: 44,
-    borderRadius: 14,
-    backgroundColor: "rgba(255,255,255,0.2)",
+  heroHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 16,
+    marginBottom: 4,
+  },
+  iconCircle: {
+    width: 52,
+    height: 52,
+    borderRadius: 20,
+    backgroundColor: "rgba(255,255,255,0.25)",
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: 16,
   },
-  heroValue: {
-    fontSize: 42,
-    fontWeight: "900",
-    color: "white",
-    letterSpacing: -1,
+  heroTextContainer: {
+    flex: 1,
   },
   heroLabel: {
-    fontSize: 16,
-    fontWeight: "800",
+    fontSize: 18,
+    fontWeight: "900",
     color: "white",
-    marginTop: -4,
+    letterSpacing: 0.5,
   },
   heroSub: {
-    fontSize: 11,
-    color: "rgba(255,255,255,0.7)",
-    marginTop: 8,
+    fontSize: 13,
+    color: "rgba(255,255,255,0.85)",
     fontWeight: "600",
   },
-  bloodBlock: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
+  heroValue: {
+    fontSize: 68,
+    fontWeight: "950",
+    color: "white",
+    letterSpacing: -2,
+    marginTop: -4,
   },
-  bloodLabel: {
-    fontSize: 11,
-    fontWeight: "700",
+  statsRow: {
+    flexDirection: "row",
+    gap: 16,
+  },
+  statItem: {
+    flex: 1,
+    backgroundColor: color.surface,
+    borderRadius: 28,
+    padding: 24,
+    borderWidth: 0,
+    shadowColor: color.secondary,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.06,
+    shadowRadius: 15,
+    elevation: 3,
+  },
+  bloodBlock: {
+    alignItems: "flex-start",
+    backgroundColor: "white",
+  },
+  nextBlock: {
+    alignItems: "flex-start",
+    gap: 10,
+    backgroundColor: color.secondaryGhost,
+  },
+  nextHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  statLabel: {
+    fontSize: 12,
+    fontWeight: "800",
     color: color.textSecondary,
     textTransform: "uppercase",
+    letterSpacing: 1,
   },
   bloodValue: {
-    fontSize: 32,
-    fontWeight: "900",
-    color: color.primary,
+    fontSize: 40,
+    fontWeight: "950",
+    color: color.secondaryDark,
     letterSpacing: -1,
+    marginTop: 6,
   },
-  statusBlock: {
-    flex: 1,
-    gap: 4,
-  },
-  statusLabel: {
-    fontSize: 11,
-    fontWeight: "700",
-    color: color.textSecondary,
-  },
-  statusValue: {
-    fontSize: 12,
+  nextValue: {
+    fontSize: 16,
     fontWeight: "900",
-    color: color.success,
+    color: color.secondary,
   },
+
 });
+

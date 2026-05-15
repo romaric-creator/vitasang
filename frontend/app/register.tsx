@@ -7,6 +7,7 @@ import {
   StyleSheet,
   KeyboardAvoidingView,
   Platform,
+  StatusBar,
 } from "react-native";
 import { useAuth } from "@/context/AuthContext";
 import { analyticsService } from "@/services/analyticsService";
@@ -21,21 +22,20 @@ import {
 } from "@/services/user.service";
 import { registerForPushNotificationsAsync } from "@/utils/pushNotifications";
 
-import { storeData, getData, removeData } from "@/utils/storage";
+import { getData, removeData } from "@/utils/storage";
 import { registerValidationSchema } from "@/validation/ValidationSchemas";
 import FormField from "@/components/FormField";
-import { PrimaryButton } from "@/components/PrimaryButton";
 import { BloodGroupSelector } from "@/components/BloodGroupSelector";
 import { useTranslation } from "react-i18next";
 import { ErrorAlert } from "@/components/ErrorAlert";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
+import { TabBarIcon } from "@/components/TabBarIcon";
 
 export default function RegisterScreen() {
   const { t } = useTranslation();
   const { completeAuth } = useAuth();
   const [loading, setLoading] = useState(false);
   const [generalError, setGeneralError] = useState("");
-  // Step 1: Info perso, Step 2: Info médicale (optionnelle)
   const [step, setStep] = useState(1);
 
   const handleRegister = async (values: any, { setErrors }: any) => {
@@ -44,9 +44,7 @@ export default function RegisterScreen() {
     analyticsService.trackEvent("register_attempt");
 
     try {
-      // Nettoyage du numéro de téléphone (espaces)
       const cleanPhone = values.telephone.replace(/\s/g, "");
-      // Gestion groupe sanguin null si vide ou "INCONNU"
       const cleanBloodGroup =
         values.groupe_sanguin === "" || values.groupe_sanguin === "INCONNU"
           ? null
@@ -61,22 +59,17 @@ export default function RegisterScreen() {
         "donneur",
       );
 
-      // Met à jour l'état d'authentification global
       await completeAuth(data.user, data.token);
 
       const userId = data.user.id || data.user.id_utilisateur;
 
-      // Gestion Push Token (Silencieuse)
       try {
         const pushToken = await registerForPushNotificationsAsync();
         if (pushToken && userId) {
           await updatePushToken(userId, pushToken);
         }
-      } catch (e) {
-        /* Ignorer erreur push silencieuse */
-      }
+      } catch (e) {}
 
-      // Gestion Alerte en attente (Workflow spécifique)
       try {
         const pendingAlert = await getData("pending_alert");
         if (pendingAlert) {
@@ -84,52 +77,31 @@ export default function RegisterScreen() {
             const result = await sendAlert(pendingAlert);
             if (result.alertId && !isNaN(Number(result.alertId))) {
               await removeData("pending_alert");
-              analyticsService.trackEvent("pending_alert_sent", {
-                alertId: result.alertId,
-              });
               router.replace({
                 pathname: "/alert-confirmation",
                 params: { alertId: result.alertId.toString() },
               });
               return;
             }
-          } catch (alertError) {
-            console.warn(
-              "Failed to send pending alert after registration",
-              alertError,
-            );
-          }
+          } catch (alertError) {}
         }
-      } catch (e) {
-        console.warn("Error checking pending alert", e);
-      }
+      } catch (e) {}
 
       analyticsService.trackEvent("register_success");
-      // Navigation automatique géré par _layout.tsx une fois isAuth = true
     } catch (err: any) {
       console.error("Registration error details:", err);
-
       if (err.errors) {
-        // Erreurs de validation spécifiques aux champs
         setErrors(err.errors);
         setGeneralError("Veuillez corriger les erreurs ci-dessous.");
-        // Si on est à l'étape 2 et qu'une erreur de l'étape 1 surgit (ex: téléphone déjà pris)
         const step1Fields = ["nom", "prenom", "telephone", "mot_de_passe"];
         const hasStep1Errors = step1Fields.some((field) => err.errors[field]);
         if (hasStep1Errors && step === 2) {
           setStep(1);
         }
       } else {
-        // Messages d'erreur conviviaux par défaut
         let userMsg = err.message || t("register.error");
-        if (
-          err.message.includes("Validation error") ||
-          err.message.includes("409")
-        )
+        if (err.message.includes("Validation error") || err.message.includes("409"))
           userMsg = "Ce numéro est déjà utilisé.";
-        if (err.message.includes("Network"))
-          userMsg = "Problème de connexion. Vérifiez votre réseau.";
-
         setGeneralError(userMsg);
       }
     } finally {
@@ -149,7 +121,6 @@ export default function RegisterScreen() {
     validateForm(values).then((errors: any) => {
       const step1Errors = ["nom", "prenom", "telephone", "mot_de_passe"];
       const hasErrors = step1Errors.some((field) => errors[field]);
-
       if (!hasErrors) {
         setStep(2);
       }
@@ -157,25 +128,32 @@ export default function RegisterScreen() {
   };
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-      style={{ flex: 1 }}
-    >
+    <View style={styles.container}>
+      <StatusBar barStyle="dark-content" backgroundColor="white" />
       <LoadingSpinner visible={loading} />
-      <ScrollView
-        contentContainerStyle={{ flexGrow: 1 }}
-        style={{ backgroundColor: color.surface }}
-        showsVerticalScrollIndicator={false}
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        style={{ flex: 1 }}
       >
-        <View style={styles.container}>
-          <View style={styles.headerSection}>
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
+          {/* Header */}
+          <View style={styles.header}>
+            <View style={styles.stepIndicator}>
+              <View style={[styles.stepDot, styles.stepDotActive]} />
+              <View style={[styles.stepLine, step === 2 && styles.stepLineActive]} />
+              <View style={[styles.stepDot, step === 2 && styles.stepDotActive]} />
+            </View>
             <Text style={styles.title}>
-              {step === 1 ? "Créer un compte" : "Dernière étape"}
+              {step === 1 ? "Rejoignez-nous" : "Informations vitales"}
             </Text>
             <Text style={styles.subtitle}>
               {step === 1
-                ? "Rejoignez la communauté des héros."
-                : "Connaissez-vous votre groupe sanguin ?"}
+                ? "Créez votre profil de donneur"
+                : "Aidez-nous à mieux vous connaître"}
             </Text>
           </View>
 
@@ -185,7 +163,7 @@ export default function RegisterScreen() {
               prenom: "",
               telephone: "",
               mot_de_passe: "",
-              groupe_sanguin: "", // Vide par défaut
+              groupe_sanguin: "",
             }}
             validationSchema={registerValidationSchema}
             onSubmit={handleRegister}
@@ -200,32 +178,32 @@ export default function RegisterScreen() {
               validateForm,
               setTouched,
               setFieldValue,
-              isValid,
             }) => (
-              <View style={styles.formContainer}>
+              <View style={styles.form}>
                 {step === 1 && (
                   <>
                     <View style={styles.row}>
-                      <View style={{ flex: 1, marginRight: 8 }}>
+                      <View style={{ flex: 1 }}>
                         <FormField
-                          label="Nom d'affichage"
-                          value={values.nom}
-                          onChangeText={handleChange("nom")}
-                          onBlur={handleBlur("nom")}
-                          placeholder="Ex: Dupont"
-                          error={errors.nom}
-                          touched={touched.nom}
-                        />
-                      </View>
-                      <View style={{ flex: 1, marginLeft: 8 }}>
-                        <FormField
-                          label="Nom"
+                          label="Prénom"
                           value={values.prenom}
                           onChangeText={handleChange("prenom")}
                           onBlur={handleBlur("prenom")}
-                          placeholder="Ex: Jean"
+                          placeholder="Jean"
                           error={errors.prenom}
                           touched={touched.prenom}
+                        />
+                      </View>
+                      <View style={{ width: 16 }} />
+                      <View style={{ flex: 1 }}>
+                        <FormField
+                          label="Nom"
+                          value={values.nom}
+                          onChangeText={handleChange("nom")}
+                          onBlur={handleBlur("nom")}
+                          placeholder="Dupont"
+                          error={errors.nom}
+                          touched={touched.nom}
                         />
                       </View>
                     </View>
@@ -235,7 +213,7 @@ export default function RegisterScreen() {
                       value={values.telephone}
                       onChangeText={handleChange("telephone")}
                       onBlur={handleBlur("telephone")}
-                      placeholder="Ex: 6 99 99 99 99"
+                      placeholder="6 99 99 99 99"
                       keyboardType="phone-pad"
                       error={errors.telephone}
                       touched={touched.telephone}
@@ -252,51 +230,54 @@ export default function RegisterScreen() {
                       touched={touched.mot_de_passe}
                     />
 
-                    <PrimaryButton
-                      title="Suivant"
-                      onPress={() =>
-                        handleNextStep(validateForm, values, setTouched)
-                      }
-                      style={{ marginTop: 24 }}
-                    />
+                    <TouchableOpacity
+                      style={styles.primaryBtn}
+                      onPress={() => handleNextStep(validateForm, values, setTouched)}
+                      activeOpacity={0.8}
+                    >
+                      <Text style={styles.primaryBtnText}>CONTINUER</Text>
+                    </TouchableOpacity>
                   </>
                 )}
 
                 {step === 2 && (
                   <>
-                    <Text style={styles.label}>
-                      Votre groupe sanguin (Optionnel)
-                    </Text>
-                    <BloodGroupSelector
-                      value={values.groupe_sanguin}
-                      onSelect={(group) =>
-                        handleChange("groupe_sanguin")(group)
-                      }
-                      error={errors.groupe_sanguin}
-                      touched={touched.groupe_sanguin}
-                    />
-
-                    {/* Option Explicite "Je ne sais pas" */}
-                    <TouchableOpacity
-                      style={[
-                        styles.unknownButton,
-                        (values.groupe_sanguin === "INCONNU" ||
-                          values.groupe_sanguin === "") &&
-                          styles.unknownButtonActive,
-                      ]}
-                      onPress={() => setFieldValue("groupe_sanguin", "INCONNU")}
-                    >
-                      <Text
-                        style={[
-                          styles.unknownButtonText,
-                          (values.groupe_sanguin === "INCONNU" ||
-                            values.groupe_sanguin === "") &&
-                            styles.unknownButtonTextActive,
-                        ]}
-                      >
-                        Je ne connais pas mon groupe sanguin
+                    <View style={styles.bloodSection}>
+                      <Text style={styles.sectionLabel}>
+                        Quel est votre groupe sanguin ?
                       </Text>
-                    </TouchableOpacity>
+                      <BloodGroupSelector
+                        value={values.groupe_sanguin}
+                        onSelect={(group) => setFieldValue("groupe_sanguin", group)}
+                        error={errors.groupe_sanguin}
+                        touched={touched.groupe_sanguin}
+                      />
+
+                      <TouchableOpacity
+                        style={[
+                          styles.unknownCard,
+                          (values.groupe_sanguin === "INCONNU" || values.groupe_sanguin === "") &&
+                            styles.unknownCardActive,
+                        ]}
+                        onPress={() => setFieldValue("groupe_sanguin", "INCONNU")}
+                        activeOpacity={0.7}
+                      >
+                        <TabBarIcon 
+                          name="question-circle" 
+                          size={20} 
+                          color={(values.groupe_sanguin === "INCONNU" || values.groupe_sanguin === "") ? color.primary : color.textSecondary} 
+                        />
+                        <Text
+                          style={[
+                            styles.unknownText,
+                            (values.groupe_sanguin === "INCONNU" || values.groupe_sanguin === "") &&
+                              styles.unknownTextActive,
+                          ]}
+                        >
+                          Je ne connais pas mon groupe sanguin
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
 
                     <ErrorAlert
                       visible={!!generalError}
@@ -306,131 +287,189 @@ export default function RegisterScreen() {
 
                     <View style={styles.buttonRow}>
                       <TouchableOpacity
-                        style={styles.backButton}
+                        style={styles.backBtn}
                         onPress={() => setStep(1)}
                       >
-                        <Text style={styles.backButtonText}>Retour</Text>
+                        <Text style={styles.backBtnText}>Retour</Text>
                       </TouchableOpacity>
 
-                      <PrimaryButton
-                        title={loading ? "Création..." : "Terminer"}
+                      <TouchableOpacity
+                        style={[styles.primaryBtn, { flex: 1, marginTop: 0 }]}
                         onPress={() => handleSubmit()}
-                        // loading prop removed
-                        style={{ flex: 1 }}
-                      />
+                        activeOpacity={0.8}
+                      >
+                        <Text style={styles.primaryBtnText}>
+                          {loading ? "CRÉATION..." : "S'INSCRIRE"}
+                        </Text>
+                      </TouchableOpacity>
                     </View>
                   </>
                 )}
 
                 <TouchableOpacity
                   onPress={() => router.replace("/login")}
-                  style={{ marginTop: 24, padding: 10 }}
+                  style={styles.loginFooter}
                 >
-                  <Text style={styles.loginLinkText}>
-                    Déjà un compte ?{" "}
-                    <Text style={styles.loginLinkHighlight}>Se connecter</Text>
+                  <Text style={styles.loginText}>
+                    Déjà inscrit ?{" "}
+                    <Text style={styles.loginHighlight}>Se connecter</Text>
                   </Text>
                 </TouchableOpacity>
               </View>
             )}
           </Formik>
-        </View>
-      </ScrollView>
-    </KeyboardAvoidingView>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingHorizontal: 24,
+    backgroundColor: "white",
+  },
+  scrollContent: {
+    padding: 24,
     paddingTop: 60,
     paddingBottom: 40,
   },
-  headerSection: {
-    marginBottom: 30,
+  header: {
     alignItems: "center",
+    marginBottom: 40,
+  },
+  stepIndicator: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 24,
+    gap: 8,
+  },
+  stepDot: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: color.borderLight,
+  },
+  stepDotActive: {
+    backgroundColor: color.secondary,
+    width: 24,
+  },
+  stepLine: {
+    width: 40,
+    height: 3,
+    backgroundColor: color.borderLight,
+    borderRadius: 2,
+  },
+  stepLineActive: {
+    backgroundColor: color.secondary,
   },
   title: {
-    color: color.primary,
-    fontWeight: "900",
-    fontSize: 28,
+    fontSize: 32,
+    fontWeight: "950",
+    color: color.text,
     letterSpacing: -1,
-    marginBottom: 6,
     textAlign: "center",
   },
   subtitle: {
-    color: color.textSecondary,
     fontSize: 16,
+    color: color.textSecondary,
     textAlign: "center",
-    opacity: 0.8,
+    fontWeight: "700",
+    marginTop: 8,
   },
-  formContainer: {
+  form: {
     flex: 1,
   },
   row: {
     flexDirection: "row",
-    marginBottom: 16,
+    marginBottom: 4,
   },
-  label: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: color.text,
-    marginBottom: 12,
+  bloodSection: {
+    marginBottom: 24,
   },
-  unknownButton: {
-    padding: 16,
-    borderRadius: 28,
-    borderWidth: 1,
-    borderColor: color.border,
-    alignItems: "center",
-    marginTop: 16,
-    backgroundColor: color.background,
-  },
-  unknownButtonActive: {
-    backgroundColor: color.primary + "10", // 10% opacity
-    borderColor: color.primary,
-  },
-  unknownButtonText: {
-    color: color.textSecondary,
-    fontWeight: "600",
-  },
-  unknownButtonTextActive: {
-    color: color.primary,
-  },
-  loginLinkText: {
-    color: color.textSecondary,
+  sectionLabel: {
+    fontSize: 15,
+    fontWeight: "800",
+    color: color.secondaryDark,
+    marginBottom: 24,
     textAlign: "center",
-    fontSize: 14,
+    textTransform: "uppercase",
+    letterSpacing: 1,
   },
-  loginLinkHighlight: {
-    color: color.primary,
+  unknownCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 16,
+    padding: 22,
+    borderRadius: 24,
+    borderWidth: 0,
+    marginTop: 20,
+    backgroundColor: color.background,
+    shadowColor: color.secondary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.04,
+    shadowRadius: 10,
+    elevation: 2,
+  },
+  unknownCardActive: {
+    backgroundColor: color.primaryGhost,
+  },
+  unknownText: {
+    fontSize: 15,
+    color: color.textSecondary,
     fontWeight: "700",
   },
-  errorContainer: {
-    backgroundColor: "#FFE5E5",
-    padding: 12,
-    borderRadius: 8,
-    marginTop: 20,
+  unknownTextActive: {
+    color: color.primary,
   },
-  errorText: {
-    color: "#D32F2F",
-    textAlign: "center",
-    fontSize: 14,
-    fontWeight: "500",
+  primaryBtn: {
+    height: 64,
+    borderRadius: 24,
+    backgroundColor: color.secondary,
+    justifyContent: "center",
+    alignItems: "center",
+    marginTop: 24,
+    shadowColor: color.secondary,
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.2,
+    shadowRadius: 20,
+    elevation: 8,
+  },
+  primaryBtnText: {
+    color: "white",
+    fontSize: 16,
+    fontWeight: "900",
+    letterSpacing: 1,
   },
   buttonRow: {
     flexDirection: "row",
     alignItems: "center",
-    marginTop: 32,
     gap: 16,
+    marginTop: 16,
   },
-  backButton: {
-    padding: 16,
+  backBtn: {
+    paddingHorizontal: 20,
+    paddingVertical: 16,
   },
-  backButtonText: {
+  backBtnText: {
     color: color.textSecondary,
-    fontWeight: "600",
+    fontWeight: "800",
     fontSize: 16,
   },
+  loginFooter: {
+    marginTop: 40,
+    alignItems: "center",
+    padding: 10,
+  },
+  loginText: {
+    color: color.textSecondary,
+    fontSize: 16,
+    fontWeight: "600",
+  },
+  loginHighlight: {
+    color: color.secondary,
+    fontWeight: "900",
+  },
 });
+
+

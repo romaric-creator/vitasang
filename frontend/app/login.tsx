@@ -14,7 +14,6 @@ import { Formik } from "formik";
 import { router } from "expo-router";
 import { color } from "@/constant/color";
 import { loginValidationSchema } from "@/validation/ValidationSchemas";
-import { PrimaryButton } from "@/components/PrimaryButton";
 import { useAuth } from "@/context/AuthContext";
 import { TabBarIcon } from "@/components/TabBarIcon";
 import { useTranslation } from "react-i18next";
@@ -37,24 +36,17 @@ export default function LoginScreen() {
 
     try {
       await signIn(values.telephone, values.mot_de_passe);
-      // Navigation automatique géré par _layout.tsx une fois isAuth = true
     } catch (err: any) {
       console.error("Login error details:", err);
-
       if (err.errors) {
         setErrors(err.errors);
         setGeneralError("Identifiants incorrects ou format invalide.");
       } else {
         const msg = err.message || "";
         if (msg.includes("Network") || msg.includes("connexion")) {
-          setGeneralError(
-            t("error.network") || "Vérifiez votre connexion internet.",
-          );
+          setGeneralError(t("error.network") || "Vérifiez votre connexion internet.");
         } else if (msg.includes("401") || msg.includes("identifiants")) {
-          setGeneralError(
-            t("error.invalidCredentials") ||
-              "Numéro ou mot de passe incorrect.",
-          );
+          setGeneralError(t("error.invalidCredentials") || "Numéro ou mot de passe incorrect.");
         } else {
           setGeneralError(t("login.error") || "Erreur de connexion.");
         }
@@ -65,25 +57,24 @@ export default function LoginScreen() {
   };
 
   return (
-    <ThemedView style={{ flex: 1, backgroundColor: "white" }}>
+    <ThemedView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="white" />
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={{ flex: 1 }}
       >
         <ScrollView
-          contentContainerStyle={{
-            flexGrow: 1,
-            padding: 24,
-            justifyContent: "center",
-          }}
+          contentContainerStyle={styles.scrollContent}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          {/* Header */}
+          {/* Brand Header */}
           <View style={styles.header}>
+            <View style={styles.logoCircle}>
+              <TabBarIcon name="tint" size={40} color="white" />
+            </View>
             <Text style={styles.brandName}>VitaSang</Text>
-            <Text style={styles.subTitle}>Connectez-vous à votre compte</Text>
+            <Text style={styles.subTitle}>{t("login.welcomeBack") || "Bon retour parmi nous"}</Text>
           </View>
 
           <Formik
@@ -102,25 +93,20 @@ export default function LoginScreen() {
               <View style={styles.form}>
                 {/* Telephone */}
                 <View style={styles.inputGroup}>
-                  <Text style={styles.label}>
-                    Téléphone<Text style={{ color: color.primary }}>*</Text>
-                  </Text>
-                  <TextInput
-                    style={[
-                      styles.input,
-                      touched.telephone &&
-                        errors.telephone &&
-                        styles.inputError,
-                    ]}
-                    value={values.telephone}
-                    onChangeText={handleChange("telephone")}
-                    onBlur={handleBlur("telephone")}
-                    placeholder="Ex: +2376XXXXXXXX"
-                    placeholderTextColor="#9CA3AF"
-                    keyboardType="phone-pad"
-                    autoComplete="tel"
-                    textContentType="telephoneNumber"
-                  />
+                  <Text style={styles.label}>Téléphone</Text>
+                  <View style={[styles.inputWrapper, touched.telephone && errors.telephone && styles.inputError]}>
+                    <TabBarIcon name="phone" size={20} color={color.textSecondary} style={styles.inputIcon} />
+                    <TextInput
+                      style={styles.input}
+                      value={values.telephone}
+                      onChangeText={handleChange("telephone")}
+                      onBlur={handleBlur("telephone")}
+                      placeholder="Ex: +2376XXXXXXXX"
+                      placeholderTextColor={color.textMuted}
+                      keyboardType="phone-pad"
+                      autoComplete="tel"
+                    />
+                  </View>
                   {touched.telephone && errors.telephone && (
                     <Text style={styles.errorText}>{errors.telephone}</Text>
                   )}
@@ -128,42 +114,26 @@ export default function LoginScreen() {
 
                 {/* Mot de passe */}
                 <View style={styles.inputGroup}>
-                  <Text style={styles.label}>
-                    Mot de passe<Text style={{ color: color.primary }}>*</Text>
-                  </Text>
-                  <View
-                    style={[
-                      styles.passwordContainer,
-                      touched.mot_de_passe &&
-                        errors.mot_de_passe &&
-                        styles.inputError,
-                    ]}
-                  >
+                  <Text style={styles.label}>Mot de passe</Text>
+                  <View style={[styles.inputWrapper, touched.mot_de_passe && errors.mot_de_passe && styles.inputError]}>
+                    <TabBarIcon name="lock" size={20} color={color.textSecondary} style={styles.inputIcon} />
                     <TextInput
-                      style={styles.passwordInput}
+                      style={styles.input}
                       value={values.mot_de_passe}
                       onChangeText={handleChange("mot_de_passe")}
                       onBlur={handleBlur("mot_de_passe")}
                       placeholder="Votre mot de passe"
-                      placeholderTextColor="#9CA3AF"
+                      placeholderTextColor={color.textMuted}
                       secureTextEntry={!showPassword}
-                      autoComplete="password"
-                      textContentType="password"
                     />
                     <TouchableOpacity
                       onPress={() => setShowPassword(!showPassword)}
                       style={styles.eyeIcon}
-                      accessibilityLabel={
-                        showPassword
-                          ? "Masquer le mot de passe"
-                          : "Afficher le mot de passe"
-                      }
-                      activeOpacity={0.6}
                     >
                       <TabBarIcon
                         name={showPassword ? "eye" : "eye-slash"}
                         size={20}
-                        color={showPassword ? color.primary : "#9CA3AF"}
+                        color={showPassword ? color.primary : color.textMuted}
                       />
                     </TouchableOpacity>
                   </View>
@@ -191,22 +161,21 @@ export default function LoginScreen() {
 
                 {/* Bouton Connexion */}
                 <TouchableOpacity
-                  style={styles.loginBtn}
+                  style={[styles.loginBtn, loading && styles.disabledBtn]}
                   onPress={() => handleSubmit()}
                   disabled={loading}
+                  activeOpacity={0.8}
                 >
-                  {loading ? (
-                    <Text style={styles.loginBtnText}>CHARGEMENT...</Text>
-                  ) : (
-                    <Text style={styles.loginBtnText}>CONNEXION</Text>
-                  )}
+                  <Text style={styles.loginBtnText}>
+                    {loading ? "CHARGEMENT..." : "SE CONNECTER"}
+                  </Text>
                 </TouchableOpacity>
 
                 {/* Footer */}
                 <View style={styles.footer}>
-                  <Text style={styles.noAccountText}>Pas de compte ? </Text>
+                  <Text style={styles.noAccountText}>Pas encore de compte ? </Text>
                   <TouchableOpacity onPress={() => router.replace("/register")}>
-                    <Text style={styles.registerLink}>Inscrivez-vous ici</Text>
+                    <Text style={styles.registerLink}>S'inscrire</Text>
                   </TouchableOpacity>
                 </View>
               </View>
@@ -219,112 +188,143 @@ export default function LoginScreen() {
 }
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: "white",
+  },
+  scrollContent: {
+    flexGrow: 1,
+    padding: 24,
+    paddingTop: 80,
+    paddingBottom: 40,
+  },
   header: {
-    marginBottom: 40,
+    alignItems: "center",
+    marginBottom: 56,
+  },
+  logoCircle: {
+    width: 90,
+    height: 90,
+    borderRadius: 36,
+    backgroundColor: color.secondary, // Teal for Trust
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 24,
+    shadowColor: color.secondary,
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.15,
+    shadowRadius: 20,
+    elevation: 10,
   },
   brandName: {
-    fontSize: 32,
-    fontWeight: "900",
-    color: color.primary,
-    marginBottom: 8,
+    fontSize: 38,
+    fontWeight: "950",
+    color: color.text,
+    letterSpacing: -1.5,
   },
   subTitle: {
     fontSize: 16,
-    color: "#4B5563",
-    fontWeight: "600",
+    color: color.textSecondary,
+    fontWeight: "700",
+    marginTop: 8,
   },
   form: {
     gap: 20,
   },
   inputGroup: {
-    marginBottom: 4,
-  },
-  label: {
-    fontSize: 14,
-    fontWeight: "700",
-    color: "#1F2937",
     marginBottom: 8,
   },
-  input: {
-    height: 52,
-    borderWidth: 1,
-    borderColor: "#E5E7EB",
-    borderRadius: 28,
-    paddingHorizontal: 20,
-    fontSize: 15,
-    color: "#1F2937",
-    backgroundColor: "white",
+  label: {
+    fontSize: 13,
+    fontWeight: "900",
+    color: color.secondaryDark,
+    marginBottom: 10,
+    textTransform: "uppercase",
+    letterSpacing: 1,
+    paddingLeft: 4,
   },
-  passwordContainer: {
+  inputWrapper: {
     flexDirection: "row",
     alignItems: "center",
-    height: 52,
-    borderWidth: 1,
-    borderColor: "#E5E7EB",
-    borderRadius: 28,
+    height: 60,
+    backgroundColor: color.background,
+    borderRadius: 24,
     paddingHorizontal: 20,
-    backgroundColor: "white",
+    borderWidth: 1.5,
+    borderColor: "transparent",
   },
-  passwordInput: {
+  inputIcon: {
+    marginRight: 12,
+    opacity: 0.6,
+  },
+  input: {
     flex: 1,
-    fontSize: 15,
-    color: "#1F2937",
+    fontSize: 16,
+    color: color.text,
     height: "100%",
+    fontWeight: "700",
   },
   eyeIcon: {
-    padding: 4,
+    padding: 8,
   },
   inputError: {
     borderColor: color.error,
+    backgroundColor: color.errorLight,
   },
   errorText: {
     color: color.error,
-    fontSize: 12,
-    marginTop: 4,
-    paddingLeft: 12,
+    fontSize: 13,
+    marginTop: 8,
+    paddingLeft: 4,
+    fontWeight: "600",
   },
   forgotBtn: {
     alignSelf: "flex-end",
-    paddingRight: 10,
+    paddingVertical: 8,
   },
   forgotText: {
-    color: color.primary,
-    fontWeight: "700",
-    fontSize: 14,
+    color: color.secondary,
+    fontWeight: "800",
+    fontSize: 15,
   },
   loginBtn: {
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: color.primary,
+    height: 64,
+    borderRadius: 24,
+    backgroundColor: color.secondary,
     justifyContent: "center",
     alignItems: "center",
-    marginTop: 10,
-    shadowColor: color.primary,
-    shadowOffset: { width: 0, height: 4 },
+    marginTop: 16,
+    shadowColor: color.secondary,
+    shadowOffset: { width: 0, height: 12 },
     shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 4,
+    shadowRadius: 20,
+    elevation: 8,
+  },
+  disabledBtn: {
+    backgroundColor: color.disabled,
   },
   loginBtnText: {
     color: "white",
-    fontSize: 16,
-    fontWeight: "800",
-    letterSpacing: 0.5,
+    fontSize: 17,
+    fontWeight: "950",
+    letterSpacing: 1.5,
   },
   footer: {
     flexDirection: "row",
     justifyContent: "center",
     alignItems: "center",
-    marginTop: 24,
+    marginTop: 40,
   },
   noAccountText: {
-    fontSize: 14,
-    color: "#6B7280",
-    fontWeight: "500",
+    fontSize: 16,
+    color: color.textSecondary,
+    fontWeight: "600",
   },
   registerLink: {
-    fontSize: 14,
-    color: color.primary,
-    fontWeight: "800",
+    fontSize: 16,
+    color: color.secondary,
+    fontWeight: "900",
   },
 });
+
+

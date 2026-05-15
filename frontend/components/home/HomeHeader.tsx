@@ -17,20 +17,29 @@ export const HomeHeader = ({ fullName, profileImage, hasActiveAlerts, t }: HomeH
   return (
     <View style={styles.header}>
       <View style={styles.headerContent}>
-        {profileImage && (
-          <Image source={profileImage} style={styles.profileImage} />
-        )}
-        <View>
+        <View style={styles.profileWrapper}>
+          {profileImage ? (
+            <Image source={profileImage} style={styles.profileImage} />
+          ) : (
+            <View style={[styles.profileImage, styles.profilePlaceholder]}>
+              <TabBarIcon name="user" size={24} color={color.textSecondary} />
+            </View>
+          )}
+        </View>
+        <View style={styles.textContainer}>
           <Text style={styles.greeting}>{t("home.profileLabel")}</Text>
-          <Text style={styles.userName}>{fullName}</Text>
+          <Text style={styles.userName} numberOfLines={1}>{fullName}</Text>
         </View>
       </View>
       <TouchableOpacity
         style={styles.headerAction}
         onPress={() => router.push("/(tabs)/alertes")}
+        activeOpacity={0.7}
       >
-        <TabBarIcon name="bell-o" size={22} color={color.textMain} />
-        {hasActiveAlerts && <View style={styles.badge} />}
+        <View style={styles.iconCircle}>
+          <TabBarIcon name="bell-o" size={22} color={color.secondary} />
+          {hasActiveAlerts && <View style={styles.badge} />}
+        </View>
       </TouchableOpacity>
     </View>
   );
@@ -41,56 +50,77 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    paddingHorizontal: 24,
+    paddingHorizontal: 20,
     paddingTop: 60,
     paddingBottom: 20,
+    backgroundColor: "white",
   },
   headerContent: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
+    gap: 16,
     flex: 1,
   },
+  profileWrapper: {
+    padding: 3,
+    borderRadius: 22,
+    backgroundColor: color.secondaryGhost,
+  },
   profileImage: {
-    width: 56,
-    height: 56,
+    width: 54,
+    height: 52,
     borderRadius: 18,
-    backgroundColor: color.surfaceDark,
-    borderWidth: 2,
-    borderColor: color.primary,
+    backgroundColor: "white",
+  },
+  profilePlaceholder: {
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  textContainer: {
+    flex: 1,
   },
   greeting: {
     fontSize: 13,
-    color: color.textSecondary,
-    fontWeight: "600",
+    color: color.secondary,
+    fontWeight: "800",
     textTransform: "uppercase",
-    letterSpacing: 1,
+    letterSpacing: 1.5,
+    marginBottom: 2,
   },
   userName: {
     fontSize: 24,
-    fontWeight: "900",
-    color: color.textMain,
+    fontWeight: "950",
+    color: color.text,
     letterSpacing: -0.5,
   },
   headerAction: {
-    width: 48,
-    height: 48,
-    borderRadius: 16,
-    backgroundColor: color.surface,
     justifyContent: "center",
     alignItems: "center",
-    borderWidth: 1,
-    borderColor: color.border,
+  },
+  iconCircle: {
+    width: 52,
+    height: 52,
+    borderRadius: 20,
+    backgroundColor: "white",
+    justifyContent: "center",
+    alignItems: "center",
+    shadowColor: color.secondary,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.08,
+    shadowRadius: 15,
+    elevation: 4,
   },
   badge: {
     position: "absolute",
-    top: 14,
-    right: 14,
-    width: 8,
-    height: 8,
-    borderRadius: 4,
+    top: 12,
+    right: 12,
+    width: 12,
+    height: 12,
+    borderRadius: 6,
     backgroundColor: color.primary,
-    borderWidth: 2,
-    borderColor: color.surface,
+    borderWidth: 3,
+    borderColor: "white",
   },
 });
+
+

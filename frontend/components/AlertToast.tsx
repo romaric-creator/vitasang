@@ -1,15 +1,15 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef } from "react";
 import {
   View,
   Text,
   StyleSheet,
   Animated,
   TouchableOpacity,
-} from 'react-native';
-import { TabBarIcon } from './TabBarIcon';
-import { color } from '@/constant/color';
+} from "react-native";
+import { TabBarIcon } from "./TabBarIcon";
+import { color } from "@/constant/color";
 
-export type AlertType = 'success' | 'error' | 'warning' | 'info';
+export type AlertType = "success" | "error" | "warning" | "info";
 
 interface AlertToastProps {
   visible: boolean;
@@ -101,11 +101,14 @@ export const AlertToast: React.FC<AlertToastProps> = ({
   };
 
   const style = typeStyles[type];
-  const iconMap: Record<AlertType, React.ComponentProps<typeof TabBarIcon>['name']> = {
-    success: 'check-circle',
-    error: 'times-circle',
-    warning: 'exclamation-triangle',
-    info: 'info-circle',
+  const iconMap: Record<
+    AlertType,
+    React.ComponentProps<typeof TabBarIcon>["name"]
+  > = {
+    success: "check-circle",
+    error: "times-circle",
+    warning: "exclamation-triangle",
+    info: "info-circle",
   };
 
   return (
@@ -127,11 +130,7 @@ export const AlertToast: React.FC<AlertToastProps> = ({
           },
         ]}
       >
-        <TabBarIcon
-          name={iconMap[type]}
-          size={22}
-          color={style.iconColor}
-        />
+        <TabBarIcon name={iconMap[type]} size={22} color={style.iconColor} />
         <View style={styles.content}>
           {title && (
             <Text style={[styles.title, { color: color.textMain }]}>
@@ -143,11 +142,7 @@ export const AlertToast: React.FC<AlertToastProps> = ({
           </Text>
         </View>
         <TouchableOpacity onPress={dismiss} style={styles.closeBtn}>
-          <TabBarIcon
-            name="times"
-            size={18}
-            color={color.textLight}
-          />
+          <TabBarIcon name="times" size={18} color={color.textLight} />
         </TouchableOpacity>
       </View>
     </Animated.View>
@@ -156,41 +151,43 @@ export const AlertToast: React.FC<AlertToastProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    position: 'absolute',
+    position: "absolute",
     top: 60,
     left: 20,
     right: 20,
     zIndex: 999,
   },
   toast: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 16,
-    paddingHorizontal: 20,
-    borderRadius: 20,
-    borderWidth: 1.5,
-    shadowColor: color.shadow,
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 1,
-    shadowRadius: 16,
-    elevation: 6,
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    // Soft UI Evolution: Shadow moderne et douce
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   content: {
     flex: 1,
-    marginHorizontal: 16,
+    marginHorizontal: 12,
   },
   title: {
-    fontWeight: '800',
-    fontSize: 16,
-    marginBottom: 4,
-    letterSpacing: -0.3,
+    fontWeight: "700",
+    fontSize: 14,
+    marginBottom: 3,
+    letterSpacing: -0.2,
   },
   message: {
-    fontSize: 14,
-    lineHeight: 20,
-    fontWeight: '600',
+    fontSize: 13,
+    lineHeight: 18,
+    fontWeight: "500",
   },
   closeBtn: {
-    padding: 4,
+    padding: 6,
+    borderRadius: 6,
   },
 });

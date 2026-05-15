@@ -30,15 +30,19 @@ function RootLayoutNav() {
     const handleNotificationTap = async () => {
       try {
         const Notifications = require("expo-notifications");
-        const response = await Notifications.getInitialNotification();
-        if (response) {
-          const data = response.notification.request.content.data;
-          console.log("[ColdLaunch] Notification tap:", data);
-          if (data?.alertId) {
-            router.push(
-              `/alert-response/${data.alertId}?distance=${data.distance || ""}`,
-            );
+        if (typeof Notifications.getInitialNotification === 'function') {
+          const response = await Notifications.getInitialNotification();
+          if (response) {
+            const data = response.notification.request.content.data;
+            console.log("[ColdLaunch] Notification tap:", data);
+            if (data?.alertId) {
+              router.push(
+                `/alert-response/${data.alertId}?distance=${data.distance || ""}`,
+              );
+            }
           }
+        } else {
+          console.log("[ColdLaunch] Notifications.getInitialNotification non disponible (Expo Go?)");
         }
       } catch (e) {
         console.log("[ColdLaunch] Error:", e);

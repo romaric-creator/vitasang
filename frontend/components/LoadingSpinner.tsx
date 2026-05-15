@@ -7,19 +7,29 @@ interface LoadingSpinnerProps {
   visible?: boolean;
   size?: "small" | "large";
   color?: string;
+  accessible?: boolean;
+  accessibilityLabel?: string;
 }
 
 export const LoadingSpinner = ({
   visible = true,
   size = "large",
   color: spinnerColor = color.primary,
+  accessible = true,
+  accessibilityLabel = "Loading",
 }: LoadingSpinnerProps) => {
   if (!visible) {
     return null;
   }
 
   return (
-    <View style={styles.container} testID="loading-spinner-container">
+    <View
+      style={styles.container}
+      testID="loading-spinner-container"
+      accessible={accessible}
+      accessibilityLabel={accessibilityLabel}
+      accessibilityLiveRegion="assertive"
+    >
       <View style={styles.spinnerContainer}>
         <ModernSpinner
           size={size === "small" ? "small" : "medium"}
@@ -39,7 +49,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    backgroundColor: "rgba(15, 23, 42, 0.3)",
     zIndex: 1000,
   },
   spinnerContainer: {
@@ -50,5 +60,11 @@ const styles = StyleSheet.create({
     alignItems: "center",
     minWidth: 100,
     minHeight: 100,
+    // Soft UI Evolution: Shadow moderne
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.12,
+    shadowRadius: 8,
+    elevation: 4,
   },
 });

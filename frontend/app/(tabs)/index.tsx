@@ -66,7 +66,7 @@ export default function Home() {
 
   return (
     <ThemedView style={styles.container}>
-      <StatusBar barStyle="dark-content" />
+      <StatusBar barStyle="dark-content" translucent backgroundColor="transparent" />
 
       <HomeHeader
         fullName={fullName}
@@ -82,8 +82,8 @@ export default function Home() {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            colors={[color.primary]}
-            tintColor={color.primary}
+            colors={[color.secondary]}
+            tintColor={color.secondary}
           />
         }
       >
@@ -104,10 +104,12 @@ export default function Home() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: color.background,
+    backgroundColor: "white", // Fond pur pour la fraîcheur
   },
   scrollContent: {
     paddingHorizontal: 20,
     paddingBottom: 40,
+    paddingTop: 8,
   },
 });
+
