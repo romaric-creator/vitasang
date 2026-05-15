@@ -86,25 +86,30 @@ if (process.env.NODE_ENV !== "production") {
 
 const userRoute = require("./routes/users.routes");
 const alertRoute = require("./routes/alerts.routes");
-const rendezvousRoute = require("./routes/rendezvous.routes");
-const centresRoute = require("./routes/centres.routes");
-const campaignsRoute = require("./routes/campaigns.routes");
 const messagesRoute = require("./routes/messages.routes");
+
+// DISABLED ROUTES - Only alerts, messages, and profile management enabled
+// const rendezvousRoute = require("./routes/rendezvous.routes");
+// const centresRoute = require("./routes/centres.routes");
+// const campaignsRoute = require("./routes/campaigns.routes");
 
 // Limiters spécifiques AVANT le global
 app.use("/api/users/register", registerLimiter);
 app.use("/api/users/login", authLimiter);
-// Pas de rate limit sur les alertes (国有 urgence)
+// Pas de rate limit sur les alertes (urgence)
 
 // Global rate limiter
 app.use(globalLimiter);
 
+// ENABLED ROUTES: Users (Profile), Alerts, Messages
 app.use("/api/users", userRoute);
 app.use("/api/alerts", alertRoute);
-app.use("/api/rendez-vous", rendezvousRoute);
-app.use("/api/centres", centresRoute);
-app.use("/api/campaigns", campaignsRoute);
 app.use("/api/messages", messagesRoute);
+
+// DISABLED ROUTES
+// app.use("/api/rendez-vous", rendezvousRoute);
+// app.use("/api/centres", centresRoute);
+// app.use("/api/campaigns", campaignsRoute);
 
 // Route racine & Health Check
 app.get("/", (req, res) => {
@@ -122,7 +127,7 @@ app.get("/api/ping", (req, res) => {
 // Endpoint pour créer une alerte test
 app.post("/api/test/alert", async (req, res) => {
   const alertService = require("./services/alert.service");
-  
+
   try {
     const alertData = {
       latitude: 4.0511,
@@ -136,7 +141,7 @@ app.post("/api/test/alert", async (req, res) => {
       nom_patient: "Jean",
       telephone_contact: "237612345678"
     };
-    
+
     const { alerte } = await alertService.createAlert(alertData, 1);
     res.json({ success: true, alertId: alerte.id_alerte, alert: alerte });
   } catch (error) {
@@ -151,17 +156,17 @@ app.post("/api/test/push", async (req, res) => {
   if (!token) {
     return res.status(400).json({ message: "Token requis" });
   }
-  
+
   const bloodGroup = groupe || "A+";
   const location = "Hôpital Général de Douala";
-  
+
   try {
     const { sendPushNotifications, buildPushMessage } = require("./utils/expoNotifications");
     const message = buildPushMessage({
       to: token,
       title: "🩸 URGENCE - Don de sang O+",
       body: "Un patient a besoin de sang O+ URGENT à Douala. Cliquez pour aider!",
-      data: { 
+      data: {
         type: "alert",
         alertId: alertId || 1,
         distance: distance || 3,

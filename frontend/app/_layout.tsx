@@ -35,14 +35,16 @@ function RootLayoutNav() {
           const data = response.notification.request.content.data;
           console.log("[ColdLaunch] Notification tap:", data);
           if (data?.alertId) {
-            router.push(`/alert-response/${data.alertId}?distance=${data.distance || ''}`);
+            router.push(
+              `/alert-response/${data.alertId}?distance=${data.distance || ""}`,
+            );
           }
         }
       } catch (e) {
         console.log("[ColdLaunch] Error:", e);
       }
     };
-    
+
     handleNotificationTap();
   }, []);
 
@@ -64,7 +66,7 @@ function RootLayoutNav() {
         } = require("@/hooks/useCachedImage");
         initImageCache()
           .then(() => manageImageCacheSize(50))
-          .catch(() => { });
+          .catch(() => {});
 
         // 2. Token Push (Différé)
         const Constants = require("expo-constants").default;
@@ -77,7 +79,7 @@ function RootLayoutNav() {
             .then((token: string) => {
               if (token) updatePushToken(Number(userId), token);
             })
-            .catch(() => { });
+            .catch(() => {});
         }
 
         // 3. Localisation (Différé)
@@ -98,10 +100,10 @@ function RootLayoutNav() {
                     location.coords.longitude,
                   );
                 })
-                .catch(() => { });
+                .catch(() => {});
             }
           })
-          .catch(() => { });
+          .catch(() => {});
 
         // 4. Alert Retry Check (Différé)
         const {
@@ -121,8 +123,8 @@ function RootLayoutNav() {
             const res = await getCentres();
             return res.centres;
           },
-        }).catch(() => { });
-      } catch (e) { }
+        }).catch(() => {});
+      } catch (e) {}
     };
 
     runBackgroundTasks();
@@ -138,28 +140,23 @@ function RootLayoutNav() {
   }, [segments, posthog]);
 
   // Effet pour gérer les redirections basées sur l'authentification
+  // SIMPLIFIÉ: Plus de dépendance sur segments pour éviter les retriggers excessifs
   useEffect(() => {
-    if (isLoading || !appReady) return; // Attendre loading d'auth ET initApp
+    if (isLoading || !appReady) return;
 
-    const currentSegment = segments[0]?.toLowerCase() || "";
+    // Petit délai pour permettre au state de se stabiliser complètement
+    const timer = setTimeout(() => {
+      if (isAuth) {
+        // Utilisateur authentifié → App principale
+        router.replace("/(tabs)");
+      } else {
+        // Utilisateur non authentifié → Onboarding
+        router.replace("/OnboardingCarousel");
+      }
+    }, 50);
 
-    const inAuthFlow =
-      currentSegment === "login" ||
-      currentSegment === "register" ||
-      currentSegment === "splash" ||
-      currentSegment === "onboardingcarousel" ||
-      currentSegment === "guest-alert" ||
-      currentSegment === "alert-confirmation" ||
-      currentSegment === "Splash";
-
-    if (isAuth && inAuthFlow) {
-      // Si authentifié et dans le flux d'auth, rediriger vers l'application principale
-      router.replace("/(tabs)");
-    } else if (!isAuth && !inAuthFlow) {
-      // Si non authentifié et pas dans le flux d'auth, rediriger vers l'onboarding directement
-      router.replace("/OnboardingCarousel");
-    }
-  }, [isAuth, isLoading, appReady, segments]);
+    return () => clearTimeout(timer);
+  }, [isAuth, isLoading, appReady]);
 
   // Afficher l'écran de Splash pendant le chargement initial
   if (isLoading || !appReady) {

@@ -17,6 +17,10 @@ exports.sendMessage = async (req, res, next) => {
             return res.status(400).json({ message: "id_destinataire et contenu sont requis." });
         }
 
+        if (contenu.length > 1000) {
+            return res.status(400).json({ message: "Le message est trop long (max 1000 caractères)." });
+        }
+
         // Verify recipient exists
         const recipient = await Utilisateur.findByPk(id_destinataire);
         if (!recipient) {

@@ -127,7 +127,7 @@ class UserService {
       where: { telephone: cleanPhone, est_actif: true },
       include: [
         { model: ProfilDonneur, as: "profilDonneur" },
-        { model: Centre },
+        { model: Centre, as: "centre" },
       ],
     });
 
@@ -153,15 +153,15 @@ class UserService {
 
     if (user.role === "donneur" && user.profilDonneur) {
       userResponse.profilDonneur = user.profilDonneur;
-    } else if ((user.role === "personnel" || user.role === "admin") && user.Centre) {
+    } else if ((user.role === "personnel" || user.role === "admin") && user.centre) {
       userResponse.centre = {
-        id: user.Centre.id_centre,
-        nom: user.Centre.nom_centre,
-        adresse: user.Centre.adresse,
-        ville: user.Centre.ville,
-        telephone: user.Centre.contact_urgence,
-        latitude: user.Centre.latitude,
-        longitude: user.Centre.longitude
+        id: user.centre.id_centre,
+        nom: user.centre.nom_centre,
+        adresse: user.centre.adresse,
+        ville: user.centre.ville,
+        telephone: user.centre.contact_urgence,
+        latitude: user.centre.latitude,
+        longitude: user.centre.longitude
       };
     }
 

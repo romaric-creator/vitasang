@@ -37,10 +37,10 @@ export default function LoginScreen() {
 
     try {
       await signIn(values.telephone, values.mot_de_passe);
-      router.replace("/(tabs)");
+      // Navigation automatique géré par _layout.tsx une fois isAuth = true
     } catch (err: any) {
       console.error("Login error details:", err);
-      
+
       if (err.errors) {
         setErrors(err.errors);
         setGeneralError("Identifiants incorrects ou format invalide.");
@@ -52,7 +52,8 @@ export default function LoginScreen() {
           );
         } else if (msg.includes("401") || msg.includes("identifiants")) {
           setGeneralError(
-            t("error.invalidCredentials") || "Numéro ou mot de passe incorrect.",
+            t("error.invalidCredentials") ||
+              "Numéro ou mot de passe incorrect.",
           );
         } else {
           setGeneralError(t("login.error") || "Erreur de connexion.");

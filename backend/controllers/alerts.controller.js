@@ -88,8 +88,17 @@ exports.getLiveAlerts = async (req, res, next) => {
 
 exports.getNearbyAlerts = async (req, res, next) => {
   try {
-    const { lat, lng, radius } = req.query;
-    const haversine = haversineSQL(parseFloat(lat), parseFloat(lng));
+    const { lat, lng, latitude, longitude, radius } = req.query;
+    
+    // Support multiple param names (lat/lng vs latitude/longitude)
+    const searchLat = lat || latitude;
+    const searchLng = lng || longitude;
+
+    if (!searchLat || !searchLng) {
+      return res.status(400).json({ success: false, message: "Coordonnées (lat, lng) manquantes." });
+    }
+
+    const haversine = haversineSQL(parseFloat(searchLat), parseFloat(searchLng));
     const alerts = await Alerte.findAll({
       where: {
         statut: "en_cours",

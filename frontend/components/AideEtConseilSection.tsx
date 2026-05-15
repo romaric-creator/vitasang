@@ -238,7 +238,7 @@ export const AideEtConseilSection: React.FC<AideEtConseilSectionProps> = ({
       {/* Quick Stats */}
       <View style={styles.statsGrid}>
         <View style={[styles.statItem, styles.statPrimary]}>
-          <Text style={styles.statValue}>42 {t("helpAndAdvice.statDays").split(' ')[0]}</Text>
+          <Text style={styles.statValue}>42 jours</Text>
           <Text style={styles.statLabel}>{t("home.tipsSection.stats.frequency")}</Text>
         </View>
         <View style={[styles.statItem, styles.statSecondary]}>

@@ -105,24 +105,27 @@ export default function RegisterScreen() {
       }
 
       analyticsService.trackEvent("register_success");
-      router.replace("/(tabs)");
+      // Navigation automatique géré par _layout.tsx une fois isAuth = true
     } catch (err: any) {
       console.error("Registration error details:", err);
-      
+
       if (err.errors) {
         // Erreurs de validation spécifiques aux champs
         setErrors(err.errors);
         setGeneralError("Veuillez corriger les erreurs ci-dessous.");
         // Si on est à l'étape 2 et qu'une erreur de l'étape 1 surgit (ex: téléphone déjà pris)
         const step1Fields = ["nom", "prenom", "telephone", "mot_de_passe"];
-        const hasStep1Errors = step1Fields.some(field => err.errors[field]);
+        const hasStep1Errors = step1Fields.some((field) => err.errors[field]);
         if (hasStep1Errors && step === 2) {
           setStep(1);
         }
       } else {
         // Messages d'erreur conviviaux par défaut
         let userMsg = err.message || t("register.error");
-        if (err.message.includes("Validation error") || err.message.includes("409"))
+        if (
+          err.message.includes("Validation error") ||
+          err.message.includes("409")
+        )
           userMsg = "Ce numéro est déjà utilisé.";
         if (err.message.includes("Network"))
           userMsg = "Problème de connexion. Vérifiez votre réseau.";

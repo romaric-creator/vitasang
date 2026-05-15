@@ -51,6 +51,7 @@ module.exports = (sequelize, DataTypes) => {
     // Un utilisateur (personnel) peut être rattaché à un centre
     Utilisateur.belongsTo(models.Centre, {
       foreignKey: "id_centre",
+      as: "centre",
       allowNull: true, // Un donneur n'a pas d'id_centre
     });
 

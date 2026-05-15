@@ -1,7 +1,13 @@
 const logger = require("../config/logger");
 const notificationProcessor = require("./notification.processor");
 
-let notificationQueue = { add: async () => {} };
+let notificationQueue = { 
+  add: async (name, data) => {
+    logger.warn(`[NotificationQueue] Job skipped: '${name}'. Redis not configured or connection failed.`, { 
+      jobData: { ...data, contenu: data?.contenu ? data.contenu.substring(0, 20) + "..." : undefined } 
+    });
+  } 
+};
 
 const isRedisConfigured = () => {
   const redisUrl = process.env.REDIS_URL;

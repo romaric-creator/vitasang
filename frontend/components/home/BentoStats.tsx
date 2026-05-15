@@ -24,7 +24,7 @@ export const BentoStats = ({ userData, t }: BentoStatsProps) => {
         <Text style={styles.heroValue}>{userData?.donsCount || 0}</Text>
         <Text style={styles.heroLabel}>{t("home.livesSaved")}</Text>
         <Text style={styles.heroSub}>
-          {t("history.empty")?.split(".")[0]}
+          {t("history.empty")}
         </Text>
       </TouchableOpacity>
 

@@ -64,11 +64,10 @@ export default function AlertResponse() {
         const data = await getAlertStatus(Number(id));
         setAlertData(data.alerte);
         // Check if user already accepted in the past
-        const myResponse = data.details?.find((d: any) => d.isMe); 
+        const myResponse = data.details?.find((d: any) => d.isMe) ?? null;
         if (myResponse && (myResponse.statut === 'accepte' || myResponse.statut === 'don_effectue')) {
           setHasAccepted(true);
-        }
-      } catch (error) {
+        }      } catch (error) {
         console.error("Fetch Error:", error);
       } finally {
         setLoading(false);
