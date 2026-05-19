@@ -182,6 +182,7 @@ function RootLayoutNav() {
         <Stack.Screen name="alert-tracking/[id]" />
         <Stack.Screen name="edit-profile" />
         <Stack.Screen name="alert-response/[id]" />
+        <Stack.Screen name="alert-public/[token]" />
         {/* <Stack.Screen name="book-appointment/[centreId]" /> */}
         {/* <Stack.Screen name="historique" /> */}
         {/* <Stack.Screen name="rendezvous" /> */}

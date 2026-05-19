@@ -186,6 +186,28 @@ exports.getAlertByToken = async (req, res, next) => {
   }
 };
 
+exports.respondToAlertByToken = async (req, res, next) => {
+  try {
+    const { nom, telephone, reponse } = req.body;
+    const alerte = await Alerte.findOne({ where: { public_token: req.params.token } });
+    if (!alerte) throw ErrorTypes.RESOURCE_NOT_FOUND("Alerte");
+    if (alerte.statut !== "en_cours") {
+      return res.status(409).json({ success: false, message: "Cette alerte n'est plus active." });
+    }
+    // Crée une réponse invité dans LogNotification (id_utilisateur null)
+    await LogNotification.create({
+      id_alerte: alerte.id_alerte,
+      id_utilisateur: null,
+      statut_reception: reponse,
+      nom_guest: nom,
+      telephone_guest: telephone,
+    });
+    res.json({ success: true, message: reponse === "accepte" ? "Merci ! L'équipe va vous contacter." : "Réponse enregistrée." });
+  } catch (error) {
+    next(error);
+  }
+};
+
 exports.confirmDonation = async (req, res, next) => {
   try {
     const notification = await LogNotification.findOne({ where: { id_alerte: req.params.id, id_utilisateur: req.user.id } });

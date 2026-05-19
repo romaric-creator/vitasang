@@ -30,6 +30,11 @@ router.post(
 router.get("/public/:token", cacheMiddleware(2 * 60), alertsController.getAlertByToken);
 router.get("/:id/status", alertsController.getAlertStatus);
 
+/**
+ * PUBLIC ROUTE - Respond to an alert as a guest (non-registered visitor)
+ */
+router.post("/public/:token/respond", validateRequest(schemas.publicAlertRespond), alertsController.respondToAlertByToken);
+
 // --- PROTECTED ROUTES (Requires Token) ---
 router.use(verifyToken);
 

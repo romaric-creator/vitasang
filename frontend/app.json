@@ -10,7 +10,8 @@
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.hidari-dev.VitaSang"
+      "bundleIdentifier": "com.hidari-dev.VitaSang",
+      "associatedDomains": ["applinks:vitasang.com"]
     },
     "android": {
       "edgeToEdgeEnabled": true,
@@ -21,7 +22,18 @@
         "googleMaps": {
           "apiKey": "$EXPO_PUBLIC_GOOGLE_MAPS_API_KEY"
         }
-      }
+      },
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "autoVerify": true,
+          "data": [
+            { "scheme": "https", "host": "vitasang.com", "pathPrefix": "/alerte" },
+            { "scheme": "vitasang" }
+          ],
+          "category": ["BROWSABLE", "DEFAULT"]
+        }
+      ]
     },
     "web": {
       "output": "static",

@@ -16,6 +16,8 @@ module.exports = (sequelize, DataTypes) => {
       push_token: { type: DataTypes.TEXT, allowNull: true },
       details_echec: { type: DataTypes.TEXT, allowNull: true },
       push_ticket_id: { type: DataTypes.STRING(100), allowNull: true },
+      nom_guest: { type: DataTypes.STRING(100), allowNull: true },
+      telephone_guest: { type: DataTypes.STRING(20), allowNull: true },
     },
     {
       tableName: "Notifications_Log",

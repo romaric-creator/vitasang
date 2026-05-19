@@ -128,6 +128,19 @@ export const getMyAlerts = async () => {
   }
 };
 
+export const getAlertByPublicToken = async (token: string) => {
+  try {
+    const response = await apiClient.get(`alerts/public/${token}`);
+    return response.data;
+  } catch (error: any) {
+    throw new Error(
+      error.response?.data?.message ||
+      error?.message ||
+      "Alerte introuvable",
+    );
+  }
+};
+
 export const getActiveAlerts = async () => {
   try {
     const response = await apiClient.get(`alerts/public`);

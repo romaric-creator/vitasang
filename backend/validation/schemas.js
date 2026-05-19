@@ -190,6 +190,13 @@ const schemas = {
     latitude: Joi.number().min(-90).max(90),
     longitude: Joi.number().min(-180).max(180),
   }),
+
+  // Public alert respond (guest visitor)
+  publicAlertRespond: Joi.object({
+    nom: Joi.string().min(2).max(100).required(),
+    telephone: Joi.string().min(8).max(20).required(),
+    reponse: Joi.string().valid("accepte", "refuse").required(),
+  }),
 };
 
 module.exports = schemas;
