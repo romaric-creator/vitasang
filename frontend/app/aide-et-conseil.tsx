@@ -5,40 +5,37 @@ import {
   Text,
   View,
   TouchableOpacity,
-  StatusBar,
 } from "react-native";
 import { useRouter } from "expo-router";
-import ThemedView from "@/components/ThemedView";
 import { TabBarIcon } from "@/components/TabBarIcon";
 import { color } from "@/constant/color";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/context/AuthContext";
 
-// Extracted Components
-import { HelpStatCard } from "@/components/help/HelpStatCard";
-import { HelpSectionCard } from "@/components/help/HelpSectionCard";
-import { HelpFaqItem } from "@/components/help/HelpFaqItem";
-
 export default function AideEtConseilScreen() {
   const { t } = useTranslation();
   const router = useRouter();
   const { isAuth } = useAuth();
+  const [expandedFaq, setExpandedFaq] = useState<number | null>(null);
   const [expandedSection, setExpandedSection] = useState<number | null>(null);
 
   const handleLaunchAlert = () => {
-    if (isAuth) {
-      router.push("/create-alert");
-    } else {
-      router.push("/guest-alert");
-    }
+    router.push(isAuth ? "/create-alert" : "/guest-alert");
   };
+
+  const quickFacts = [
+    { icon: "clock-o", value: "42j", label: t("helpAndAdvice.statDays") },
+    { icon: "tint", value: "450ml", label: t("helpAndAdvice.statMl") },
+    { icon: "heart", value: "3", label: t("helpAndAdvice.statLivesSaved") },
+  ];
 
   const sections = [
     {
       id: 1,
-      title: t("helpAndAdvice.sectionAdvantagesTitle"),
       icon: "heart",
       color: color.primary,
+      bg: color.primaryGhost,
+      title: t("helpAndAdvice.sectionAdvantagesTitle"),
       items: [
         t("helpAndAdvice.sectionAdvantagesItem1"),
         t("helpAndAdvice.sectionAdvantagesItem2"),
@@ -49,9 +46,10 @@ export default function AideEtConseilScreen() {
     },
     {
       id: 2,
-      title: t("helpAndAdvice.sectionPreparationTitle"),
       icon: "check-circle",
       color: color.success,
+      bg: color.successLight,
+      title: t("helpAndAdvice.sectionPreparationTitle"),
       items: [
         t("helpAndAdvice.sectionPreparationItem1"),
         t("helpAndAdvice.sectionPreparationItem2"),
@@ -62,9 +60,10 @@ export default function AideEtConseilScreen() {
     },
     {
       id: 3,
-      title: t("helpAndAdvice.sectionAfterDonationTitle"),
       icon: "heartbeat",
-      color: color.secondary,
+      color: color.warning,
+      bg: color.warningLight,
+      title: t("helpAndAdvice.sectionAfterDonationTitle"),
       items: [
         t("helpAndAdvice.sectionAfterDonationItem1"),
         t("helpAndAdvice.sectionAfterDonationItem2"),
@@ -75,9 +74,10 @@ export default function AideEtConseilScreen() {
     },
     {
       id: 4,
-      title: t("helpAndAdvice.sectionWhoCanDonateTitle"),
       icon: "users",
       color: color.accent,
+      bg: color.accentLight,
+      title: t("helpAndAdvice.sectionWhoCanDonateTitle"),
       items: [
         t("helpAndAdvice.sectionWhoCanDonateItem1"),
         t("helpAndAdvice.sectionWhoCanDonateItem2"),
@@ -88,86 +88,114 @@ export default function AideEtConseilScreen() {
     },
   ];
 
-  return (
-    <ThemedView style={styles.container}>
-      <StatusBar barStyle="dark-content" />
+  const faqs = [
+    { q: t("helpAndAdvice.faqQuestion1"), a: t("helpAndAdvice.faqAnswer1") },
+    { q: t("helpAndAdvice.faqQuestion2"), a: t("helpAndAdvice.faqAnswer2") },
+    { q: t("helpAndAdvice.faqQuestion3"), a: t("helpAndAdvice.faqAnswer3") },
+    { q: t("helpAndAdvice.faqQuestion4"), a: t("helpAndAdvice.faqAnswer4") },
+  ];
 
+  return (
+    <View style={styles.container}>
+      {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()}>
-          <TabBarIcon name="arrow-left" size={24} color={color.textMain} />
+        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn} activeOpacity={0.7}>
+          <TabBarIcon name="arrow-left" size={20} color={color.textMain} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>{t("helpAndAdvice.headerTitle")}</Text>
-        <View style={{ width: 24 }} />
+        <View style={{ width: 40 }} />
       </View>
 
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContent}
-      >
-        <View style={styles.heroSection}>
-          <View style={styles.heroIcon}>
-            <TabBarIcon name="heart" size={48} color={color.primary} />
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
+
+        {/* Hero */}
+        <View style={styles.hero}>
+          <View style={styles.heroIconWrap}>
+            <TabBarIcon name="heartbeat" size={28} color={color.primary} />
           </View>
           <Text style={styles.heroTitle}>{t("helpAndAdvice.heroTitle")}</Text>
-          <Text style={styles.heroText}>{t("helpAndAdvice.heroText")}</Text>
+          <Text style={styles.heroSub}>{t("helpAndAdvice.heroText")}</Text>
         </View>
 
-        <View style={styles.statsContainer}>
-          <HelpStatCard value="42" label={t("helpAndAdvice.statDays")} />
-          <HelpStatCard value="450" label={t("helpAndAdvice.statMl")} />
-          <HelpStatCard value="3" label={t("helpAndAdvice.statLivesSaved")} />
-        </View>
-
-        <View style={styles.sectionsContainer}>
-          {sections.map((section) => (
-            <HelpSectionCard
-              key={section.id}
-              section={section}
-              isExpanded={expandedSection === section.id}
-              onPress={() =>
-                setExpandedSection(
-                  expandedSection === section.id ? null : section.id,
-                )
-              }
-            />
+        {/* Quick facts row */}
+        <View style={styles.factsRow}>
+          {quickFacts.map((f, i) => (
+            <View key={i} style={styles.factCard}>
+              <TabBarIcon name={f.icon} size={16} color={color.primary} />
+              <Text style={styles.factValue}>{f.value}</Text>
+              <Text style={styles.factLabel}>{f.label}</Text>
+            </View>
           ))}
         </View>
 
-        <View style={styles.faqSection}>
-          <Text style={styles.faqTitle}>{t("helpAndAdvice.faqTitle")}</Text>
-
-          <HelpFaqItem
-            question={t("helpAndAdvice.faqQuestion1")}
-            answer={t("helpAndAdvice.faqAnswer1")}
-          />
-          <HelpFaqItem
-            question={t("helpAndAdvice.faqQuestion2")}
-            answer={t("helpAndAdvice.faqAnswer2")}
-          />
-          <HelpFaqItem
-            question={t("helpAndAdvice.faqQuestion3")}
-            answer={t("helpAndAdvice.faqAnswer3")}
-          />
-          <HelpFaqItem
-            question={t("helpAndAdvice.faqQuestion4")}
-            answer={t("helpAndAdvice.faqAnswer4")}
-          />
+        {/* Sections accordéon */}
+        <Text style={styles.sectionLabel}>{t("helpAndAdvice.heroTitle")}</Text>
+        <View style={styles.accordionGroup}>
+          {sections.map((s, idx) => {
+            const open = expandedSection === s.id;
+            return (
+              <View key={s.id}>
+                {idx > 0 && <View style={styles.accordionSep} />}
+                <TouchableOpacity
+                  style={styles.accordionRow}
+                  onPress={() => setExpandedSection(open ? null : s.id)}
+                  activeOpacity={0.7}
+                >
+                  <View style={[styles.accordionIcon, { backgroundColor: s.bg }]}>
+                    <TabBarIcon name={s.icon} size={17} color={s.color} />
+                  </View>
+                  <Text style={styles.accordionTitle}>{s.title}</Text>
+                  <TabBarIcon name={open ? "chevron-up" : "chevron-down"} size={14} color={color.textLight} />
+                </TouchableOpacity>
+                {open && (
+                  <View style={styles.accordionContent}>
+                    {s.items.map((item, i) => (
+                      <View key={i} style={styles.bulletRow}>
+                        <View style={[styles.bullet, { backgroundColor: s.color }]} />
+                        <Text style={styles.bulletText}>{item}</Text>
+                      </View>
+                    ))}
+                  </View>
+                )}
+              </View>
+            );
+          })}
         </View>
 
-        <TouchableOpacity
-          style={styles.ctaButton}
-          onPress={handleLaunchAlert}
-        >
-          <TabBarIcon name="bolt" size={24} color="white" />
+        {/* FAQ */}
+        <Text style={styles.sectionLabel}>{t("helpAndAdvice.faqTitle")}</Text>
+        <View style={styles.accordionGroup}>
+          {faqs.map((faq, idx) => {
+            const open = expandedFaq === idx;
+            return (
+              <View key={idx}>
+                {idx > 0 && <View style={styles.accordionSep} />}
+                <TouchableOpacity
+                  style={styles.faqRow}
+                  onPress={() => setExpandedFaq(open ? null : idx)}
+                  activeOpacity={0.7}
+                >
+                  <Text style={styles.faqQuestion}>{faq.q}</Text>
+                  <TabBarIcon name={open ? "chevron-up" : "chevron-down"} size={14} color={color.primary} />
+                </TouchableOpacity>
+                {open && (
+                  <View style={styles.faqAnswer}>
+                    <Text style={styles.faqAnswerText}>{faq.a}</Text>
+                  </View>
+                )}
+              </View>
+            );
+          })}
+        </View>
+
+        {/* CTA */}
+        <TouchableOpacity style={styles.cta} onPress={handleLaunchAlert} activeOpacity={0.85}>
+          <TabBarIcon name="bolt" size={18} color={color.textWhite} />
           <Text style={styles.ctaText}>{t("home.launchAlert")}</Text>
         </TouchableOpacity>
 
-        <View style={styles.infoBanner}>
-          <TabBarIcon name="info-circle" size={20} color={color.accent} />
-          <Text style={styles.infoText}>{t("helpAndAdvice.infoBanner")}</Text>
-        </View>
       </ScrollView>
-    </ThemedView>
+    </View>
   );
 }
 
@@ -178,69 +206,191 @@ const styles = StyleSheet.create({
   },
   header: {
     flexDirection: "row",
-    justifyContent: "space-between",
     alignItems: "center",
-    paddingHorizontal: 20,
+    justifyContent: "space-between",
     paddingTop: 60,
-    paddingBottom: 20,
+    paddingBottom: 16,
+    paddingHorizontal: 20,
+    backgroundColor: color.surface,
     borderBottomWidth: 1,
-    borderBottomColor: color.border,
+    borderBottomColor: color.borderLight,
+  },
+  backBtn: {
+    width: 40,
+    height: 40,
+    justifyContent: "center",
   },
   headerTitle: {
-    fontSize: 18,
-    fontWeight: "800",
+    fontSize: 17,
+    fontWeight: "700",
     color: color.textMain,
   },
-  scrollContent: {
+  scroll: {
     paddingHorizontal: 16,
-    paddingVertical: 20,
+    paddingBottom: 48,
   },
-  heroSection: {
+
+  // Hero
+  hero: {
     alignItems: "center",
-    marginBottom: 30,
+    paddingVertical: 28,
+    gap: 8,
   },
-  heroIcon: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
+  heroIconWrap: {
+    width: 60,
+    height: 60,
+    borderRadius: 18,
     backgroundColor: color.primaryGhost,
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: 16,
+    marginBottom: 4,
   },
   heroTitle: {
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: "900",
     color: color.textMain,
-    marginBottom: 10,
     textAlign: "center",
   },
-  heroText: {
-    fontSize: 14,
+  heroSub: {
+    fontSize: 13,
     color: color.textSecondary,
     textAlign: "center",
-    lineHeight: 20,
-    fontWeight: "600",
+    lineHeight: 19,
+    paddingHorizontal: 12,
   },
-  statsContainer: {
+
+  // Quick facts
+  factsRow: {
     flexDirection: "row",
-    gap: 12,
-    marginBottom: 30,
+    gap: 10,
+    marginBottom: 28,
   },
-  sectionsContainer: {
-    gap: 12,
-    marginBottom: 30,
+  factCard: {
+    flex: 1,
+    backgroundColor: color.surface,
+    borderRadius: 14,
+    paddingVertical: 14,
+    alignItems: "center",
+    gap: 4,
+    borderWidth: 1,
+    borderColor: color.borderLight,
   },
-  faqSection: {
-    marginBottom: 30,
-  },
-  faqTitle: {
-    fontSize: 18,
+  factValue: {
+    fontSize: 20,
     fontWeight: "900",
-    color: color.textMain,
-    marginBottom: 16,
+    color: color.primary,
   },
-  ctaButton: {
+  factLabel: {
+    fontSize: 10,
+    fontWeight: "700",
+    color: color.textSecondary,
+    textAlign: "center",
+    lineHeight: 13,
+  },
+
+  // Labels de section
+  sectionLabel: {
+    fontSize: 11,
+    fontWeight: "700",
+    color: color.textSecondary,
+    textTransform: "uppercase",
+    letterSpacing: 0.8,
+    marginBottom: 10,
+    paddingHorizontal: 2,
+  },
+
+  // Accordéon commun
+  accordionGroup: {
+    backgroundColor: color.surface,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: color.borderLight,
+    overflow: "hidden",
+    marginBottom: 24,
+  },
+  accordionSep: {
+    height: 1,
+    backgroundColor: color.borderLight,
+    marginLeft: 62,
+  },
+
+  // Sections
+  accordionRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    gap: 12,
+  },
+  accordionIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  accordionTitle: {
+    flex: 1,
+    fontSize: 14,
+    fontWeight: "700",
+    color: color.textMain,
+  },
+  accordionContent: {
+    paddingHorizontal: 16,
+    paddingBottom: 16,
+    paddingTop: 4,
+    gap: 10,
+    backgroundColor: color.background,
+  },
+  bulletRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 10,
+  },
+  bullet: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    marginTop: 6,
+    flexShrink: 0,
+  },
+  bulletText: {
+    flex: 1,
+    fontSize: 13,
+    color: color.textSecondary,
+    lineHeight: 18,
+    fontWeight: "500",
+  },
+
+  // FAQ
+  faqRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 15,
+    paddingHorizontal: 16,
+    gap: 12,
+  },
+  faqQuestion: {
+    flex: 1,
+    fontSize: 14,
+    fontWeight: "700",
+    color: color.textMain,
+  },
+  faqAnswer: {
+    paddingHorizontal: 16,
+    paddingBottom: 14,
+    paddingTop: 2,
+    backgroundColor: color.background,
+  },
+  faqAnswerText: {
+    fontSize: 13,
+    color: color.textSecondary,
+    lineHeight: 19,
+    fontWeight: "500",
+  },
+
+  // CTA
+  cta: {
     backgroundColor: color.primary,
     flexDirection: "row",
     alignItems: "center",
@@ -248,29 +398,11 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     borderRadius: 16,
     gap: 10,
-    marginBottom: 20,
+    marginTop: 4,
   },
   ctaText: {
-    color: "white",
-    fontSize: 16,
+    color: color.textWhite,
+    fontSize: 15,
     fontWeight: "800",
-  },
-  infoBanner: {
-    backgroundColor: color.accentLight,
-    borderRadius: 14,
-    padding: 14,
-    flexDirection: "row",
-    gap: 12,
-    alignItems: "flex-start",
-    marginBottom: 20,
-    borderWidth: 1,
-    borderColor: color.accent,
-  },
-  infoText: {
-    flex: 1,
-    fontSize: 12,
-    color: color.accent,
-    fontWeight: "600",
-    lineHeight: 16,
   },
 });

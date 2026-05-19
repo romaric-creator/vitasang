@@ -6,9 +6,9 @@ import {
     Switch,
     ScrollView,
     ActivityIndicator,
+    TouchableOpacity,
 } from 'react-native';
-import ThemedView from '@/components/ThemedView';
-import { PageHeader } from '@/components/PageHeader';
+import { useRouter } from 'expo-router';
 import { color } from '@/constant/color';
 import { TabBarIcon } from '@/components/TabBarIcon';
 import { useTranslation } from 'react-i18next';
@@ -19,6 +19,7 @@ import { useToast } from '@/context/ToastContext';
 
 export default function NotificationsSettings() {
     const { t } = useTranslation();
+    const router = useRouter();
     const { user: authUser } = useAuth();
     const { success, error: showError } = useToast();
     const userId = authUser?.id_utilisateur ?? authUser?.id ?? null;
@@ -57,7 +58,7 @@ export default function NotificationsSettings() {
 
     const renderSwitch = (field: string, value: boolean, setter: (v: boolean) => void) => {
         if (saving === field) {
-            return <ActivityIndicator size="small" color={color.primary} />;
+            return <ActivityIndicator size="small" color={color.primary} style={{ width: 51 }} />;
         }
         return (
             <Switch
@@ -71,156 +72,238 @@ export default function NotificationsSettings() {
     };
 
     return (
-        <ThemedView style={styles.container}>
-            <PageHeader title={t('notifications.title')} />
+        <View style={styles.container}>
+            {/* Header */}
+            <View style={styles.header}>
+                <TouchableOpacity onPress={() => router.back()} style={styles.backBtn} activeOpacity={0.7}>
+                    <TabBarIcon name="arrow-left" size={20} color={color.textMain} />
+                </TouchableOpacity>
+                <Text style={styles.headerTitle}>{t('notifications.title')}</Text>
+                <View style={{ width: 40 }} />
+            </View>
 
             <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
 
-                <Text style={styles.sectionTitle}>{t('notifications.channels')}</Text>
-
-                <View style={styles.card}>
-                    <View style={styles.settingRow}>
-                        <View style={styles.settingLeft}>
-                            <View style={[styles.iconBox, { backgroundColor: color.accentLight }]}>
-                                <TabBarIcon name="bell-o" size={18} color={color.accent} />
-                            </View>
-                            <View style={{ flex: 1 }}>
-                                <Text style={styles.settingTitle}>{t('notifications.push.title')}</Text>
-                                <Text style={styles.settingDesc}>{t('notifications.push.desc')}</Text>
-                            </View>
-                        </View>
-                        {renderSwitch('push_notifications', pushEnabled, setPushEnabled)}
+                {/* Hero compact */}
+                <View style={styles.hero}>
+                    <View style={styles.heroIcon}>
+                        <TabBarIcon name="bell" size={22} color={color.primary} />
                     </View>
-
-                    <View style={styles.divider} />
-
-                    <View style={styles.settingRow}>
-                        <View style={styles.settingLeft}>
-                            <View style={[styles.iconBox, { backgroundColor: color.successLight }]}>
-                                <TabBarIcon name="envelope-o" size={18} color={color.success} />
-                            </View>
-                            <View style={{ flex: 1 }}>
-                                <Text style={styles.settingTitle}>{t('notifications.email.title')}</Text>
-                                <Text style={styles.settingDesc}>{t('notifications.email.desc')}</Text>
-                            </View>
-                        </View>
-                        {renderSwitch('email_notifications', emailEnabled, setEmailEnabled)}
-                    </View>
-
-                    <View style={styles.divider} />
-
-                    <View style={styles.settingRow}>
-                        <View style={styles.settingLeft}>
-                            <View style={[styles.iconBox, { backgroundColor: color.warningLight }]}>
-                                <TabBarIcon name="commenting-o" size={18} color={color.warning} />
-                            </View>
-                            <View style={{ flex: 1 }}>
-                                <Text style={styles.settingTitle}>{t('notifications.sms.title')}</Text>
-                                <Text style={styles.settingDesc}>{t('notifications.sms.desc')}</Text>
-                            </View>
-                        </View>
-                        {renderSwitch('sms_notifications', smsEnabled, setSmsEnabled)}
-                    </View>
+                    <Text style={styles.heroTitle}>{t('notifications.channels')}</Text>
+                    <Text style={styles.heroSub}>
+                        {t('notifications.commitment')}
+                    </Text>
                 </View>
 
-                <Text style={styles.sectionTitle}>{t('notifications.preferences')}</Text>
-
-                <View style={styles.card}>
-                    <View style={styles.settingRow}>
-                        <View style={styles.settingLeft}>
-                            <View style={[styles.iconBox, { backgroundColor: color.errorLight }]}>
-                                <TabBarIcon name="exclamation-circle" size={18} color={color.error} />
-                            </View>
-                            <View style={{ flex: 1 }}>
-                                <Text style={styles.settingTitle}>{t('notifications.urgentOnly.title')}</Text>
-                                <Text style={styles.settingDesc}>{t('notifications.urgentOnly.desc')}</Text>
-                            </View>
-                        </View>
-                        {renderSwitch('urgent_only', urgentOnly, setUrgentOnly)}
-                    </View>
+                {/* Canaux */}
+                <View style={styles.group}>
+                    <SettingRow
+                        icon="bell"
+                        iconBg={color.primaryGhost}
+                        iconColor={color.primary}
+                        title={t('notifications.push.title')}
+                        desc={t('notifications.push.desc')}
+                        active={pushEnabled}
+                        control={renderSwitch('push_notifications', pushEnabled, setPushEnabled)}
+                    />
+                    <View style={styles.sep} />
+                    <SettingRow
+                        icon="envelope-o"
+                        iconBg={color.successLight}
+                        iconColor={color.success}
+                        title={t('notifications.email.title')}
+                        desc={t('notifications.email.desc')}
+                        active={emailEnabled}
+                        control={renderSwitch('email_notifications', emailEnabled, setEmailEnabled)}
+                    />
+                    <View style={styles.sep} />
+                    <SettingRow
+                        icon="commenting-o"
+                        iconBg={color.warningLight}
+                        iconColor={color.warning}
+                        title={t('notifications.sms.title')}
+                        desc={t('notifications.sms.desc')}
+                        active={smsEnabled}
+                        control={renderSwitch('sms_notifications', smsEnabled, setSmsEnabled)}
+                    />
                 </View>
 
-                <Text style={styles.infoText}>
-                    {t('notifications.commitment')}
-                </Text>
+                {/* Préférences */}
+                <Text style={styles.sectionLabel}>{t('notifications.preferences')}</Text>
+
+                <View style={styles.group}>
+                    <SettingRow
+                        icon="exclamation-circle"
+                        iconBg={color.errorLight}
+                        iconColor={color.error}
+                        title={t('notifications.urgentOnly.title')}
+                        desc={t('notifications.urgentOnly.desc')}
+                        active={urgentOnly}
+                        control={renderSwitch('urgent_only', urgentOnly, setUrgentOnly)}
+                    />
+                </View>
+
+                {/* Info footer */}
+                <View style={styles.footer}>
+                    <TabBarIcon name="lock" size={13} color={color.textLight} />
+                    <Text style={styles.footerText}>
+                        Vos préférences sont synchronisées sur tous vos appareils.
+                    </Text>
+                </View>
 
             </ScrollView>
-        </ThemedView>
+        </View>
     );
 }
+
+function SettingRow({ icon, iconBg, iconColor, title, desc, active, control }: {
+    icon: string;
+    iconBg: string;
+    iconColor: string;
+    title: string;
+    desc: string;
+    active: boolean;
+    control: React.ReactNode;
+}) {
+    return (
+        <View style={rowStyles.row}>
+            <View style={[rowStyles.iconBox, { backgroundColor: iconBg }]}>
+                <TabBarIcon name={icon} size={17} color={iconColor} />
+            </View>
+            <View style={rowStyles.text}>
+                <Text style={[rowStyles.title, !active && rowStyles.titleMuted]}>{title}</Text>
+                <Text style={rowStyles.desc}>{desc}</Text>
+            </View>
+            {control}
+        </View>
+    );
+}
+
+const rowStyles = StyleSheet.create({
+    row: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingVertical: 14,
+        paddingHorizontal: 16,
+        gap: 12,
+    },
+    iconBox: {
+        width: 38,
+        height: 38,
+        borderRadius: 11,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    text: {
+        flex: 1,
+    },
+    title: {
+        fontSize: 14,
+        fontWeight: '700',
+        color: color.textMain,
+        marginBottom: 2,
+    },
+    titleMuted: {
+        color: color.textSecondary,
+    },
+    desc: {
+        fontSize: 12,
+        color: color.textLight,
+        lineHeight: 16,
+    },
+});
 
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        paddingHorizontal: 16,
-        paddingTop: 8,
-        backgroundColor: color.screenBackground,
+        backgroundColor: color.background,
+    },
+    header: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        paddingTop: 60,
+        paddingBottom: 16,
+        paddingHorizontal: 20,
+        backgroundColor: color.surface,
+        borderBottomWidth: 1,
+        borderBottomColor: color.borderLight,
+    },
+    backBtn: {
+        width: 40,
+        height: 40,
+        justifyContent: 'center',
+    },
+    headerTitle: {
+        fontSize: 17,
+        fontWeight: '700',
+        color: color.textMain,
     },
     scroll: {
-        paddingBottom: 40,
+        paddingHorizontal: 16,
+        paddingBottom: 48,
     },
-    sectionTitle: {
-        fontSize: 12,
-        fontWeight: '700',
-        color: color.textSecondary,
-        marginTop: 16,
-        marginBottom: 10,
-        textTransform: 'uppercase',
-        letterSpacing: 0.5,
+    hero: {
+        alignItems: 'center',
+        paddingVertical: 28,
+        gap: 8,
     },
-    card: {
-        backgroundColor: color.surface,
+    heroIcon: {
+        width: 52,
+        height: 52,
         borderRadius: 16,
-        padding: 12,
-        shadowColor: color.shadow,
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 1,
-        shadowRadius: 8,
-        elevation: 2,
-        borderWidth: 1,
-        borderColor: color.borderLight,
-    },
-    settingRow: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        paddingVertical: 8,
-    },
-    settingLeft: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 12,
-        flex: 1,
-        paddingRight: 10,
-    },
-    iconBox: {
-        width: 36,
-        height: 36,
-        borderRadius: 10,
+        backgroundColor: color.primaryGhost,
         justifyContent: 'center',
         alignItems: 'center',
+        marginBottom: 4,
     },
-    settingTitle: {
-        fontSize: 14,
-        fontWeight: '600',
+    heroTitle: {
+        fontSize: 17,
+        fontWeight: '800',
         color: color.textMain,
-        marginBottom: 2,
     },
-    settingDesc: {
-        fontSize: 11,
+    heroSub: {
+        fontSize: 12,
         color: color.textSecondary,
+        textAlign: 'center',
+        lineHeight: 17,
+        paddingHorizontal: 16,
     },
-    divider: {
+    sectionLabel: {
+        fontSize: 11,
+        fontWeight: '700',
+        color: color.textSecondary,
+        textTransform: 'uppercase',
+        letterSpacing: 0.8,
+        marginTop: 24,
+        marginBottom: 8,
+        paddingHorizontal: 4,
+    },
+    group: {
+        backgroundColor: color.surface,
+        borderRadius: 16,
+        borderWidth: 1,
+        borderColor: color.borderLight,
+        overflow: 'hidden',
+    },
+    sep: {
         height: 1,
         backgroundColor: color.borderLight,
-        marginVertical: 8,
+        marginLeft: 66,
     },
-    infoText: {
+    footer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 6,
+        justifyContent: 'center',
+        marginTop: 32,
+        paddingHorizontal: 16,
+    },
+    footerText: {
         fontSize: 11,
         color: color.textLight,
         textAlign: 'center',
-        marginTop: 24,
-        lineHeight: 16,
-        paddingHorizontal: 16,
-    }
+        lineHeight: 15,
+        flex: 1,
+    },
 });
