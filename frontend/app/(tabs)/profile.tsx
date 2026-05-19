@@ -24,31 +24,12 @@ import { useToast } from "@/context/ToastContext";
 import { PrimaryButton } from "@/components/PrimaryButton";
 
 // --- Interfaces de Typage pour TypeScript ---
-interface InfoItemProps {
-  icon: string;
-  label: string;
-  value: string;
-  isLast?: boolean;
-}
-
 interface ActionItemProps {
   icon: string;
   label: string;
   onPress: () => void;
   isLast?: boolean;
 }
-
-const InfoItem = ({ icon, label, value, isLast }: InfoItemProps) => (
-  <View style={[styles.infoItem, isLast && { borderBottomWidth: 0 }]}>
-    <View style={styles.infoIconBox}>
-      <TabBarIcon name={icon} size={18} color={color.textSecondary} />
-    </View>
-    <View style={styles.infoTextBox}>
-      <Text style={styles.infoLabel}>{label}</Text>
-      <Text style={styles.infoValue}>{value}</Text>
-    </View>
-  </View>
-);
 
 const ActionItem = ({ icon, label, onPress, isLast }: ActionItemProps) => (
   <TouchableOpacity 
@@ -167,7 +148,7 @@ export default function Profile() {
             >
               <TabBarIcon name="arrow-left" size={20} color={color.textWhite} />
             </TouchableOpacity>
-            <Text style={styles.headerTitle}>{t("profile.title") || "Profil"}</Text>
+            <Text style={styles.headerTitle}>{t("profile.title")}</Text>
             <View style={{ width: 40 }} />
           </View>
 
@@ -192,8 +173,8 @@ export default function Profile() {
             <Text style={styles.headerName}>{fullName}</Text>
             <Text style={styles.headerRole}>
               {userData?.role === "medecin"
-                ? t("profile.roleDoctor") || "Médecin"
-                : t("profile.roleDonor") || "Donneur"}
+                ? t("profile.roleDoctor")
+                : userData?.ville ? `${t("profile.roleDonor")} · ${userData.ville}` : t("profile.roleDonor")}
             </Text>
             {userData?.groupe_sanguin ? (
               <View style={styles.bloodBadge}>
@@ -208,41 +189,13 @@ export default function Profile() {
           <View style={styles.statsCard}>
             <View style={styles.statBox}>
               <Text style={styles.statValue}>{donsCount}</Text>
-              <Text style={styles.statLabel}>{t("profile.donations") || "Dons"}</Text>
+              <Text style={styles.statLabel}>{t("profile.donations")}</Text>
             </View>
             <View style={styles.statLine} />
             <View style={styles.statBox}>
               <Text style={styles.statValue}>{alertesCount}</Text>
-              <Text style={styles.statLabel}>{t("profile.alerts") || "Alertes"}</Text>
+              <Text style={styles.statLabel}>{t("profile.alerts")}</Text>
             </View>
-          </View>
-        </View>
-
-        {/* Informations Section */}
-        <View style={styles.infoSection}>
-          <Text style={styles.sectionHeading}>{t("profile.informations") || "Informations"}</Text>
-          <View style={styles.infoCard}>
-            <InfoItem 
-              icon="phone" 
-              label={t("profile.phone") || "TÉLÉPHONE"} 
-              value={userData?.telephone || t("common.notProvided") || "Non renseigné"} 
-            />
-            <InfoItem 
-              icon="envelope-o" 
-              label={t("profile.email") || "EMAIL"} 
-              value={userData?.email || t("common.notProvided") || "Non renseigné"} 
-            />
-            <InfoItem 
-              icon="tint" 
-              label={t("profile.bloodGroup") || "GROUPE SANGUIN"} 
-              value={userData?.groupe_sanguin || t("common.unknown") || "Inconnu"} 
-            />
-            <InfoItem
-              icon="map-marker"
-              label={t("profile.city") || "VILLE"}
-              value={userData?.ville || userData?.region || "Cameroun"}
-              isLast
-            />
           </View>
         </View>
 
@@ -257,8 +210,8 @@ export default function Profile() {
             <View>
               <Text style={[styles.statusText, !disponible && { color: color.textSecondary }]}>
                 {disponible
-                  ? t("profile.availableToDonate") || "Disponible pour donner"
-                  : t("profile.unavailableStatus") || "Indisponible"}
+                  ? t("profile.availableToDonate")
+                  : t("profile.unavailableStatus")}
               </Text>
             </View>
           </View>
@@ -275,8 +228,8 @@ export default function Profile() {
               accessibilityState={{ checked: disponible }}
               accessibilityLabel={
                 disponible
-                  ? t("profile.availableToDonate") || "Disponible pour donner"
-                  : t("profile.unavailableStatus") || "Indisponible"
+                  ? t("profile.availableToDonate")
+                  : t("profile.unavailableStatus")
               }
             />
           )}
@@ -284,13 +237,12 @@ export default function Profile() {
 
         {/* Actions Section */}
         <View style={styles.actionsSection}>
-          <Text style={styles.sectionHeading}>{t("profile.actions") || "Actions"}</Text>
+          <Text style={styles.sectionHeading}>{t("profile.actions")}</Text>
           <View style={styles.actionsCard}>
-            <ActionItem icon="history" label={t("profile.donationHistory") || "Historique des dons"} onPress={() => router.push("/historique")} />
-            <ActionItem icon="calendar" label={t("profile.appointments") || "Mes rendez-vous"} onPress={() => router.push("/rendezvous")} />
-            <ActionItem icon="check-circle-o" label={t("profile.eligibilityTest") || "Test d'éligibilité"} onPress={() => router.push("/eligibility-test")} />
-            <ActionItem icon="bell-o" label={t("profile.notifications") || "Notifications"} onPress={() => router.push("/notifications-settings")} />
-            <ActionItem icon="question-circle-o" label={t("profile.helpAdvice") || "Aide & Conseils"} onPress={() => router.push("/aide-et-conseil")} isLast />
+            <ActionItem icon="history" label={t("profile.donationHistory")} onPress={() => router.push("/historique")} />
+            <ActionItem icon="check-circle-o" label={t("profile.eligibilityTest")} onPress={() => router.push("/eligibility-test")} />
+            <ActionItem icon="bell-o" label={t("profile.notifications")} onPress={() => router.push("/notifications-settings")} />
+            <ActionItem icon="question-circle-o" label={t("profile.helpAdvice")} onPress={() => router.push("/aide-et-conseil")} isLast />
           </View>
         </View>
 
@@ -456,10 +408,6 @@ const styles = StyleSheet.create({
     backgroundColor: color.borderLight,
     alignSelf: "center",
   },
-  infoSection: {
-    paddingHorizontal: 20,
-    marginBottom: 12,
-  },
   sectionHeading: {
     fontSize: 11,
     fontWeight: "700",
@@ -467,38 +415,6 @@ const styles = StyleSheet.create({
     textTransform: "uppercase",
     letterSpacing: 0.6,
     marginBottom: 8,
-  },
-  infoCard: {
-    backgroundColor: color.surface,
-    borderRadius: 16,
-    paddingHorizontal: 16,
-  },
-  infoItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingVertical: 11,
-    borderBottomWidth: 1,
-    borderBottomColor: color.borderLight,
-  },
-  infoIconBox: {
-    width: 30,
-    height: 30,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  infoTextBox: {
-    marginLeft: 10,
-  },
-  infoLabel: {
-    fontSize: 10,
-    fontWeight: "700",
-    color: color.textLight,
-    marginBottom: 1,
-  },
-  infoValue: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: color.textMain,
   },
   statusCard: {
     marginHorizontal: 20,

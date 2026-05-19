@@ -19,6 +19,20 @@ const {
 const { errorHandler, notFoundHandler } = require("./middleware/errorHandler");
 const { verifyToken, isAdmin } = require("./utils/auth.middleware");
 
+// Validation des variables d'environnement critiques (production uniquement)
+if (process.env.NODE_ENV === 'production') {
+  const requiredEnvVars = ['JWT_SECRET', 'DB_USER', 'DB_PASS'];
+  const missingVars = requiredEnvVars.filter(v => !process.env[v]);
+  if (missingVars.length > 0) {
+    console.error(`FATAL: Missing required environment variables: ${missingVars.join(', ')}`);
+    process.exit(1);
+  }
+  if (!process.env.JWT_SECRET || process.env.JWT_SECRET.length < 32) {
+    console.error('FATAL: JWT_SECRET must be at least 32 characters');
+    process.exit(1);
+  }
+}
+
 // Initialisation Sentry - vérifier si le package est bien chargé
 let sentryEnabled = false;
 try {
@@ -27,7 +41,7 @@ try {
     Sentry.init({
       dsn: process.env.SENTRY_DSN,
       environment: process.env.NODE_ENV || "development",
-      tracesSampleRate: 1.0,
+      tracesSampleRate: 0.1,
     });
     console.log("Sentry initialisé avec succès");
   }
@@ -69,7 +83,7 @@ app.use(compression({
 app.use(express.json({ limit: "1mb" }));
 app.use(express.urlencoded({ limit: "1mb", extended: true }));
 app.use(morgan(process.env.NODE_ENV === "production" ? "combined" : "dev"));
-app.use("/uploads", express.static("uploads"));
+// Uploads handled exclusively via Cloudinary - no local static serving
 
 // Swagger API Documentation (désactivé en production)
 if (process.env.NODE_ENV !== "production") {
@@ -90,10 +104,9 @@ const alertRoute = require("./routes/alerts.routes");
 const messagesRoute = require("./routes/messages.routes");
 const waitlistRoute = require("./routes/waitlist.routes");
 
-// DISABLED ROUTES - Only alerts, messages, and profile management enabled
-// const rendezvousRoute = require("./routes/rendezvous.routes");
-// const centresRoute = require("./routes/centres.routes");
-// const campaignsRoute = require("./routes/campaigns.routes");
+const rendezvousRoute = require("./routes/rendezvous.routes");
+const centresRoute = require("./routes/centres.routes");
+const campaignsRoute = require("./routes/campaigns.routes");
 
 // Limiters spécifiques AVANT le global
 app.use("/api/users/register", registerLimiter);
@@ -109,18 +122,22 @@ app.use("/api/alerts", alertRoute);
 app.use("/api/messages", messagesRoute);
 app.use("/api/waitlist", waitlistRoute);
 
-// DISABLED ROUTES
-// app.use("/api/rendez-vous", rendezvousRoute);
-// app.use("/api/centres", centresRoute);
-// app.use("/api/campaigns", campaignsRoute);
+app.use("/api/rendez-vous", rendezvousRoute);
+app.use("/api/centres", centresRoute);
+app.use("/api/campaigns", campaignsRoute);
 
 // Route racine & Health Check
 app.get("/", (req, res) => {
   res.json({ message: "bienvenu sur vitasang.api.com", version: "1.0.0" });
 });
 
-app.get("/api/health", (req, res) => {
-  res.json({ status: "OK", timestamp: new Date().toISOString() });
+app.get("/api/health", async (req, res) => {
+  try {
+    await db.sequelize.authenticate();
+    res.json({ status: "OK", db: "connected", timestamp: new Date().toISOString() });
+  } catch (error) {
+    res.status(503).json({ status: "ERROR", db: "disconnected", timestamp: new Date().toISOString() });
+  }
 });
 
 app.get("/api/ping", (req, res) => {
@@ -197,12 +214,12 @@ app.use(notFoundHandler);
 app.use(errorHandler);
 
 // Démarrage serveur (si lancé directement)
+let server;
 if (require.main === module) {
   const PORT = process.env.PORT || 10000;
-  app.listen(PORT, "0.0.0.0", () => {
+  server = app.listen(PORT, "0.0.0.0", () => {
     logger.info(`Serveur VITASANG démarré sur : http://0.0.0.0:${PORT}`);
 
-    // Tentative de connexion MariaDB en arrière-plan
     db.sequelize
       .authenticate()
       .then(() => {
@@ -213,6 +230,25 @@ if (require.main === module) {
       });
   });
 }
+
+// Graceful shutdown
+const gracefulShutdown = (signal) => {
+  logger.info(`${signal} received, shutting down gracefully`);
+  if (server) {
+    server.close(() => {
+      db.sequelize.close().then(() => {
+        logger.info("Database connections closed");
+        process.exit(0);
+      });
+    });
+  }
+  setTimeout(() => {
+    logger.error("Forced shutdown after timeout");
+    process.exit(1);
+  }, 10000);
+};
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+process.on('SIGINT', () => gracefulShutdown('SIGINT'));
 
 // Export pour Render
 module.exports = app;

@@ -224,7 +224,7 @@ class UserService {
           include: [[db.sequelize.literal(haversine), 'distance']]
         },
         order: db.sequelize.literal('distance ASC'),
-        // Pas de limite - tous les donneurs compatibles
+        limit: 200,
       });
 
       return donors;
@@ -239,12 +239,9 @@ class UserService {
    */
   generateToken(user) {
     return jwt.sign(
-      { 
-        id: user.id_utilisateur, 
+      {
+        id: user.id_utilisateur,
         role: user.role,
-        nom: user.nom,
-        prenom: user.prenom,
-        telephone: user.telephone
       },
       process.env.JWT_SECRET,
       { expiresIn: "24h" },

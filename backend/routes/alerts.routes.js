@@ -8,6 +8,7 @@ const {
 } = require("../utils/auth.middleware");
 const { validateRequest } = require("../middleware/validation");
 const { cacheMiddleware } = require("../middleware/cache");
+const { alertLimiter } = require("../middleware/rateLimiter");
 const schemas = require("../validation/schemas");
 
 /**
@@ -20,6 +21,7 @@ router.get("/public", cacheMiddleware(5 * 60), alertsController.getLiveAlerts);
  */
 router.post(
   "/guest",
+  alertLimiter,
   validateRequest(schemas.createGuestAlert),
   alertsController.createGuestAlert,
 );
@@ -33,7 +35,7 @@ router.get("/:id/status", alertsController.getAlertStatus);
 /**
  * PUBLIC ROUTE - Respond to an alert as a guest (non-registered visitor)
  */
-router.post("/public/:token/respond", validateRequest(schemas.publicAlertRespond), alertsController.respondToAlertByToken);
+router.post("/public/:token/respond", alertLimiter, validateRequest(schemas.publicAlertRespond), alertsController.respondToAlertByToken);
 
 // --- PROTECTED ROUTES (Requires Token) ---
 router.use(verifyToken);

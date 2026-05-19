@@ -26,19 +26,25 @@ if (isRedisConfigured() && process.env.NODE_ENV !== "test") {
 
     const connection = new IORedis(redisUrl, {
       maxRetriesPerRequest: 1,
-      retryStrategy: () => null, // Don't retry, fail fast
+      retryStrategy: () => null,
       connectTimeout: 5000,
       lazyConnect: true,
     });
 
+    let errorLogged = false;
     connection.on("error", (err) => {
-      if (!err.message.includes("max requests limit")) {
-        logger.error("Redis Connection Error:", err.message);
+      if (!errorLogged) {
+        logger.warn("Redis Connection Error:", { message: err.message });
+        errorLogged = true;
       }
       redisConnectionFailed = true;
     });
 
-    connection.connect().catch(() => {
+    connection.connect().catch((err) => {
+      if (!errorLogged) {
+        logger.warn("Redis non disponible pour la queue", { message: err.message });
+        errorLogged = true;
+      }
       redisConnectionFailed = true;
     });
 

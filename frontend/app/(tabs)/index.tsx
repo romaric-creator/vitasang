@@ -1,9 +1,7 @@
 import {
   StyleSheet,
   ScrollView,
-  StatusBar,
   RefreshControl,
-  View,
 } from "react-native";
 import React, { useCallback } from "react";
 import ThemedView from "@/components/ThemedView";
@@ -17,9 +15,8 @@ import Constants from "expo-constants";
 import { usePostHog } from "posthog-react-native";
 import { useAuth } from "@/context/AuthContext";
 
-// Extracted Components
 import { HomeHeader } from "@/components/home/HomeHeader";
-import { BentoStats } from "@/components/home/BentoStats";
+import { DonorStatusCard } from "@/components/home/DonorStatusCard";
 import { LaunchAlertButton } from "@/components/home/LaunchAlertButton";
 import { UrgentAlertsSection } from "@/components/home/UrgentAlertsSection";
 import { AideSensibilisationSection } from "@/components/home/AideSensibilisationSection";
@@ -29,7 +26,6 @@ export default function Home() {
   const { user: authUser } = useAuth();
   const posthog = usePostHog();
 
-  // ✅ userId depuis AuthContext — synchrone, pas de waterfall
   const userId = authUser?.id_utilisateur ?? authUser?.id ?? null;
 
   const profileQuery = useUserProfile(userId as number, !!userId);
@@ -42,6 +38,8 @@ export default function Home() {
   useFocusEffect(
     useCallback(() => {
       posthog?.capture("home_visited");
+      profileQuery.refetch();
+      alertsQuery.refetch();
     }, [posthog]),
   );
 
@@ -86,19 +84,19 @@ export default function Home() {
           />
         }
       >
-        <LaunchAlertButton t={t} />
+        <DonorStatusCard
+          groupeSanguin={userData?.groupe_sanguin}
+          disponible={userData?.disponible ?? true}
+          donsCount={userData?.donsCount ?? 0}
+          lastDonationDate={userData?.lastDonationDate}
+          t={t}
+        />
 
-        <View style={{ height: 16 }} />
+        <LaunchAlertButton t={t} />
 
         <UrgentAlertsSection activeAlerts={activeAlerts} t={t} />
 
         {activeAlerts.length > 0 && <AlertFatigueInsights visible={true} />}
-
-        <View style={{ height: 16 }} />
-
-        <BentoStats userData={userData} t={t} />
-
-        <View style={{ height: 8 }} />
 
         <AideSensibilisationSection t={t} />
       </ScrollView>
@@ -112,9 +110,9 @@ const styles = StyleSheet.create({
     backgroundColor: color.background,
   },
   scrollContent: {
-    paddingHorizontal: 20,
-    paddingBottom: 40,
-    paddingTop: 12,
+    paddingHorizontal: color.spacing.l,
+    paddingBottom: color.spacing.xxl,
+    paddingTop: color.spacing.s,
   },
 });
 

@@ -27,7 +27,7 @@ jobs:
         run: cd backend && npm test
         env:
           NODE_ENV: test
-          JWT_SECRET: f4a7c1b5d9e382fa6cf2bd9087ea71a8123c5e8b
+          JWT_SECRET: ${{ secrets.JWT_SECRET_TEST }}
           API_BASE_URL: https://vitasang.onrender.com
 
   frontend-tests:

@@ -57,14 +57,17 @@ function getBoundingBox(lat, lon, radiusKm) {
  * @param {string} lngCol Nom de la colonne longitude (défaut: 'longitude')
  */
 function haversineSQL(lat, lng, tableAlias = "", latCol = "latitude", lngCol = "longitude") {
+  const safeLat = Number(parseFloat(lat));
+  const safeLng = Number(parseFloat(lng));
+  if (isNaN(safeLat) || isNaN(safeLng)) {
+    throw new Error(`Invalid coordinates: lat=${lat}, lng=${lng}`);
+  }
   const prefix = tableAlias ? `\`${tableAlias}\`.` : "";
-  // SQLite ne supporte pas LEAST/GREATEST par défaut. On utilise une version plus simple
-  // qui fonctionne sur MySQL/MariaDB et SQLite (les erreurs de précision sont minimes pour de courtes distances)
   return `(
     6371 * acos(
-      cos(radians(${lat})) * cos(radians(${prefix}\`${latCol}\`)) *
-      cos(radians(${prefix}\`${lngCol}\`) - radians(${lng})) +
-      sin(radians(${lat})) * sin(radians(${prefix}\`${latCol}\`))
+      cos(radians(${safeLat})) * cos(radians(${prefix}\`${latCol}\`)) *
+      cos(radians(${prefix}\`${lngCol}\`) - radians(${safeLng})) +
+      sin(radians(${safeLat})) * sin(radians(${prefix}\`${latCol}\`))
     )
   )`;
 }

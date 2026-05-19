@@ -160,6 +160,9 @@ exports.deleteAlert = async (req, res, next) => {
   try {
     const alerte = await Alerte.findByPk(req.params.id);
     if (!alerte) throw ErrorTypes.RESOURCE_NOT_FOUND("Alerte");
+    if (alerte.id_initiateur !== req.user.id && req.user.role !== 'admin') {
+      return res.status(403).json({ success: false, message: "Non autorisé à annuler cette alerte." });
+    }
     alerte.statut = "annule";
     await alerte.save();
     res.json({ success: true, message: "Alerte annulée" });
@@ -210,11 +213,33 @@ exports.respondToAlertByToken = async (req, res, next) => {
 
 exports.confirmDonation = async (req, res, next) => {
   try {
-    const notification = await LogNotification.findOne({ where: { id_alerte: req.params.id, id_utilisateur: req.user.id } });
+    const notification = await LogNotification.findOne({
+      where: { id_alerte: req.params.id, id_utilisateur: req.user.id },
+    });
     if (!notification) throw ErrorTypes.RESOURCE_NOT_FOUND("Interaction");
+
     notification.statut_reception = "don_effectue";
     await notification.save();
-    res.json({ success: true, message: "Merci !" });
+
+    // Enregistrer dans l'historique et mettre à jour le profil donneur
+    const alerte = await db.Alerte.findByPk(req.params.id);
+    await Promise.all([
+      db.HistoriqueDon.create({
+        id_donneur: req.user.id,
+        id_centre: alerte?.id_centre ?? null,
+        date_don: new Date(),
+        statut_don: "réussi",
+      }),
+      db.ProfilDonneur.update(
+        {
+          dernier_don: new Date(),
+          disponible: false,
+        },
+        { where: { id_donneur: req.user.id } }
+      ),
+    ]);
+
+    res.json({ success: true, message: "Don enregistré. Merci !" });
   } catch (error) {
     next(error);
   }

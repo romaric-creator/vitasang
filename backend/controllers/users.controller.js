@@ -125,11 +125,16 @@ exports.getUserById = async (req, res, next) => {
       ],
       attributes: { exclude: ["mot_de_passe", "id_centre"] },
     });
-    if (user) {
-      res.status(200).json(user);
-    } else {
-      res.status(404).json({ message: "Utilisateur non trouvé" });
+    if (!user) {
+      return res.status(404).json({ message: "Utilisateur non trouvé" });
     }
+    const isOwner = req.user.id === user.id_utilisateur;
+    const isAdmin = req.user.role === 'admin';
+    if (!isOwner && !isAdmin) {
+      const { telephone, email, ...safeData } = user.toJSON();
+      return res.status(200).json(safeData);
+    }
+    res.status(200).json(user);
   } catch (error) {
     next(error);
   }
@@ -138,6 +143,9 @@ exports.getUserById = async (req, res, next) => {
 exports.getUsersByBloodGroup = async (req, res, next) => {
   try {
     const groupeSanguin = decodeURIComponent(req.params.groupe);
+    const page = parseInt(req.query.page) || 1;
+    const limit = Math.min(parseInt(req.query.limit) || 50, 100);
+    const offset = (page - 1) * limit;
     const users = await Utilisateur.findAll({
       include: [
         {
@@ -148,6 +156,8 @@ exports.getUsersByBloodGroup = async (req, res, next) => {
         },
       ],
       attributes: { exclude: ["mot_de_passe", "id_centre"] },
+      limit,
+      offset,
     });
     res.status(200).json(users);
   } catch (error) {

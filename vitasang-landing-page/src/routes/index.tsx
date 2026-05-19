@@ -13,21 +13,6 @@ import { useReveal } from "@/hooks/use-reveal";
 
 export const Route = createFileRoute("/")({
   component: Index,
-  head: () => ({
-      meta: [
-        { title: "VitaSang — Sauvez une vie en 47 secondes au Cameroun" },
-        {
-          name: "description",
-          content:
-            "L'app qui révolutionne le don de sang au Cameroun. Connectez-vous instantanément aux banques de sang et aux donneurs en urgence. 100% bénévole et sécurisé.",
-        },
-        { property: "og:title", content: "VitaSang — L'Urgence n'attend pas, nous non plus." },
-        {
-          property: "og:description",
-          content: "Rejoignez la communauté de donneurs qui sauve le Cameroun, une goutte à la fois. Téléchargez l'application dès maintenant.",
-        },
-      ],
-  }),
 });
 
 function Index() {

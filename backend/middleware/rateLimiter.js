@@ -17,19 +17,25 @@ if (process.env.NODE_ENV !== 'test') {
       redisClient = createClient({
         url: process.env.REDIS_URL,
         socket: {
-          reconnectStrategy: () => false, // Don't reconnect - fail fast
+          reconnectStrategy: () => false,
           connectTimeout: 5000,
         },
       });
 
+      let rlErrorLogged = false;
       redisClient.on('error', (err) => {
-        if (!err.message.includes('max requests limit')) {
-          logger.error('Redis Client Error', { message: err.message });
+        if (!rlErrorLogged) {
+          logger.warn('Redis rate-limiter unavailable, using memory', { message: err.message });
+          rlErrorLogged = true;
         }
+        redisClient = null;
       });
 
       redisClient.connect().catch((err) => {
-        logger.warn('Redis non disponible, fallback mémoire', { message: err.message });
+        if (!rlErrorLogged) {
+          logger.warn('Redis non disponible, fallback mémoire', { message: err.message });
+          rlErrorLogged = true;
+        }
         redisClient = null;
       });
     } catch (err) {

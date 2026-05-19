@@ -32,20 +32,6 @@ export const Route = createFileRoute("/alerte/$token")({
       return { alerte: null, error: true };
     }
   },
-  head: ({ loaderData }) => ({
-    meta: [
-      {
-        title: loaderData?.alerte
-          ? `🩸 Urgence ${loaderData.alerte.groupe} — ${loaderData.alerte.lieu} | VitaSang`
-          : "Alerte Sang — VitaSang",
-      },
-      { property: "og:title", content: `🚨 Besoin urgent de sang ${loaderData?.alerte?.groupe ?? ""} — VitaSang` },
-      {
-        property: "og:description",
-        content: `Un patient a besoin d'une transfusion à ${loaderData?.alerte?.lieu ?? "un hôpital proche"}. Vous pouvez sauver une vie.`,
-      },
-    ],
-  }),
 });
 
 function AlertePage() {
