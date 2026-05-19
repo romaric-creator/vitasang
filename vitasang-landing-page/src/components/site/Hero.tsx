@@ -30,8 +30,8 @@ export function Hero() {
       </svg>
 
       {/* Animated background elements */}
-      <div className="absolute inset-x-0 top-20 -z-10 flex justify-center opacity-20 blur-3xl" aria-hidden="true">
-        <div className="aspect-[1108/632] w-[69.25rem] flex-none bg-gradient-to-r from-[#ef4444] to-[#3b82f6]" style={{ clipPath: 'polygon(73.6% 51.7%, 91.7% 11.8%, 100% 46.4%, 97.4% 82.2%, 92.5% 84.9%, 75.7% 64%, 55.3% 47.5%, 46.5% 49.4%, 45% 62.9%, 50.3% 87.2%, 21.3% 64.1%, 0.1% 100%, 5.4% 51.1%, 21.4% 63.9%, 58.9% 0.2%, 73.6% 51.7%)' }} />
+      <div className="absolute inset-x-0 top-0 -z-10 flex justify-center" aria-hidden="true">
+        <div className="h-[600px] w-full bg-gradient-to-br from-red-500/10 via-transparent to-blue-500/10 blur-3xl" />
       </div>
 
       <div className="relative mx-auto grid max-w-7xl items-center gap-12 px-6 md:grid-cols-2">
@@ -66,7 +66,7 @@ export function Hero() {
             <a
               href="#problem"
               aria-label="Pourquoi VitaSang est indispensable ?"
-              className="inline-flex items-center gap-2 rounded-full border-2 border-primary/20 bg-white/50 px-7 py-4 text-base font-bold text-primary backdrop-blur transition-all hover:border-primary hover:bg-white"
+              className="inline-flex items-center gap-2 rounded-full border-2 border-primary/20 bg-white px-7 py-4 text-base font-bold text-primary transition-all hover:border-primary hover:shadow-md"
             >
               <Heart size={20} className="stroke-[1.5]" />
               Découvrir l'urgence
@@ -78,7 +78,7 @@ export function Hero() {
         <div className="reveal relative mx-auto w-full max-w-sm md:max-w-md mt-10 md:mt-0">
           {/* Trust Floating Badges */}
           <div className="absolute -left-12 top-20 z-40 hidden animate-[float_4s_ease-in-out_infinite] md:block">
-            <div className="flex flex-col items-center gap-1 rounded-2xl border border-primary/20 bg-white/90 p-3 shadow-xl backdrop-blur">
+            <div className="flex flex-col items-center gap-1 rounded-2xl border border-primary/20 bg-white p-3 shadow-lg">
               <div className="flex h-10 w-10 items-center justify-center rounded-full bg-red-50">
                 <ShieldCheck size={20} className="text-primary stroke-[1.5]" />
               </div>
@@ -87,7 +87,7 @@ export function Hero() {
           </div>
           
           <div className="absolute -right-12 bottom-40 z-40 hidden animate-[float_5s_ease-in-out_infinite] md:block [animation-delay:1s]">
-            <div className="flex items-center gap-2 rounded-2xl border border-primary/10 bg-white/90 p-3 shadow-xl backdrop-blur">
+            <div className="flex items-center gap-2 rounded-2xl border border-primary/10 bg-white p-3 shadow-lg">
               <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-50 text-blue-600">
                 <Heart size={18} fill="currentColor" />
               </div>
@@ -100,12 +100,12 @@ export function Hero() {
 
           <div
             aria-hidden="true"
-            className="absolute -inset-10 rounded-[3rem] opacity-30 blur-3xl"
+            className="absolute -inset-6 rounded-[3rem] opacity-20 blur-2xl"
             style={{ background: "var(--gradient-primary)" }}
           />
-          
+
           {/* Smartphone Mockup Frame */}
-          <div className="relative mx-auto h-[550px] w-[280px] rounded-[3rem] border-[8px] border-dark bg-dark p-2 shadow-[0_50px_100px_-20px_rgba(0,0,0,0.5)] md:h-[700px] md:w-[350px]">
+          <div className="relative mx-auto h-[550px] w-[280px] rounded-[3rem] border-[8px] border-dark bg-dark p-2 shadow-2xl md:h-[700px] md:w-[350px]">
             {/* Reflective Glare */}
             <div className="absolute inset-2 rounded-[2.5rem] bg-gradient-to-tr from-white/10 to-transparent pointer-events-none z-30" />
             

@@ -12,7 +12,7 @@ interface AlertePublique {
   whatsapp?: string;
 }
 
-const API_URL = import.meta.env.VITE_API_URL ?? "https://vitasang-api.onrender.com";
+const API_URL = import.meta.env.VITE_API_URL ?? "https://vitasang.christiantendainfo2006.workers.dev";
 
 const URGENCE_CONFIG = {
   TRES_URGENT: { label: "TRÈS URGENT", bgClass: "bg-red-600", pulse: true },
