@@ -8,6 +8,14 @@
     "scheme": ["vitasang"],
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/78a20355-02ca-4b7a-8225-d0dd4b60b197",
+      "checkAutomatically": "ON_LOAD",
+      "fallbackToCacheTimeout": 0
+    },
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.hidari-dev.VitaSang",
@@ -41,6 +49,7 @@
     },
     "plugins": [
       "expo-router",
+      "expo-updates",
       [
         "expo-splash-screen",
         {
