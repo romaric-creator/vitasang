@@ -126,7 +126,6 @@ export default function EditProfileScreen() {
         <StatusBar barStyle="dark-content" />
         <RNTouchableOpacity style={styles.headerBackBtn} onPress={() => router.back()}>
           <TabBarIcon name="arrow-left" size={18} color={color.textMain} />
-          <Text style={styles.headerBackText}>Retour</Text>
         </RNTouchableOpacity>
         <ActivityIndicator size="large" color={color.primary} style={{ marginTop: 60 }} />
         <Text style={styles.loadingText}>Chargement du profil...</Text>
@@ -145,7 +144,6 @@ export default function EditProfileScreen() {
       <View style={[styles.fixedHeader, { paddingTop: insets.top + 8 }]}>
         <RNTouchableOpacity onPress={() => router.back()} style={styles.headerBackBtn} activeOpacity={0.7}>
           <TabBarIcon name="chevron-left" size={20} color={color.primary} />
-          <Text style={styles.headerBackText}>Retour</Text>
         </RNTouchableOpacity>
         <Text style={styles.headerTitle}>{t("editProfile.title") || "Paramètres"}</Text>
         {/* Indicateur de rafraîchissement silencieux */}
@@ -162,12 +160,6 @@ export default function EditProfileScreen() {
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-        {/* Section Titre */}
-        <View style={styles.headerSection}>
-          <Text style={styles.title}>{t("editProfile.header") || "Mon Profil"}</Text>
-          <Text style={styles.subtitle}>{t("editProfile.subtitle") || "Gardez vos informations vitales à jour"}</Text>
-        </View>
-
         {/* Avatar */}
         <View style={styles.avatarSection}>
           <RNTouchableOpacity onPress={pickImage} style={styles.avatarWrapper} activeOpacity={0.8}>
@@ -187,7 +179,6 @@ export default function EditProfileScreen() {
               <TabBarIcon name="camera" size={14} color="white" />
             </View>
           </RNTouchableOpacity>
-          <Text style={styles.changePhotoHint}>Appuyer pour changer la photo</Text>
         </View>
 
         {/* Formulaire */}
@@ -320,16 +311,9 @@ const styles = StyleSheet.create({
     borderBottomColor: color.borderLight,
   },
   headerBackBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
     padding: 4,
-    width: 80,
-  },
-  headerBackText: {
-    fontSize: 15,
-    color: color.primary,
-    fontWeight: "600",
+    width: 40,
+    justifyContent: "center",
   },
   headerTitle: {
     fontSize: 17,
@@ -342,22 +326,6 @@ const styles = StyleSheet.create({
   scrollContent: {
     padding: 20,
     paddingBottom: 48,
-  },
-  headerSection: {
-    marginBottom: 28,
-  },
-  title: {
-    color: color.textMain,
-    fontWeight: "900",
-    fontSize: 26,
-    letterSpacing: -0.5,
-    marginBottom: 4,
-  },
-  subtitle: {
-    fontWeight: "600",
-    color: color.textSecondary,
-    fontSize: 14,
-    opacity: 0.7,
   },
   // Avatar
   avatarSection: {
@@ -400,13 +368,6 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: "white",
     elevation: 5,
-  },
-  changePhotoHint: {
-    marginTop: 10,
-    fontSize: 12,
-    color: color.textSecondary,
-    fontWeight: "600",
-    opacity: 0.6,
   },
   // Formulaire
   form: {

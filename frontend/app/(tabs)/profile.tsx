@@ -168,13 +168,7 @@ export default function Profile() {
               <TabBarIcon name="arrow-left" size={20} color={color.textWhite} />
             </TouchableOpacity>
             <Text style={styles.headerTitle}>{t("profile.title") || "Profil"}</Text>
-            <TouchableOpacity
-              style={styles.optionsBtn}
-              activeOpacity={0.7}
-              accessibilityLabel="Options du profil"
-            >
-              <TabBarIcon name="ellipsis-v" size={20} color={color.textWhite} />
-            </TouchableOpacity>
+            <View style={{ width: 40 }} />
           </View>
 
           <View style={styles.avatarArea}>
@@ -221,11 +215,6 @@ export default function Profile() {
               <Text style={styles.statValue}>{alertesCount}</Text>
               <Text style={styles.statLabel}>{t("profile.alerts") || "Alertes"}</Text>
             </View>
-            <View style={styles.statLine} />
-            <View style={styles.statBox}>
-              <Text style={styles.statValue}>{donsCount * 3}</Text>
-              <Text style={styles.statLabel}>{t("profile.livesSaved") || "Vies"}</Text>
-            </View>
           </View>
         </View>
 
@@ -248,18 +237,11 @@ export default function Profile() {
               label={t("profile.bloodGroup") || "GROUPE SANGUIN"} 
               value={userData?.groupe_sanguin || t("common.unknown") || "Inconnu"} 
             />
-            <InfoItem 
-              icon="map-marker" 
-              label={t("profile.city") || "VILLE"} 
-              value={userData?.ville || userData?.region || "Cameroun"} 
-            />
-            <InfoItem 
-              icon="calendar-o" 
-              label={t("profile.memberSince") || "MEMBRE DEPUIS"} 
-              value={userData?.createdAt 
-                ? new Date(userData.createdAt).toLocaleDateString("fr-FR", { month: "long", year: "numeric" })
-                : t("profile.recentMember") || "Membre récent"} 
-              isLast 
+            <InfoItem
+              icon="map-marker"
+              label={t("profile.city") || "VILLE"}
+              value={userData?.ville || userData?.region || "Cameroun"}
+              isLast
             />
           </View>
         </View>
@@ -277,9 +259,6 @@ export default function Profile() {
                 {disponible
                   ? t("profile.availableToDonate") || "Disponible pour donner"
                   : t("profile.unavailableStatus") || "Indisponible"}
-              </Text>
-              <Text style={styles.statusSubtext}>
-                {disponible ? "Appuyez pour désactiver" : "Appuyez pour activer"}
               </Text>
             </View>
           </View>
@@ -308,7 +287,10 @@ export default function Profile() {
           <Text style={styles.sectionHeading}>{t("profile.actions") || "Actions"}</Text>
           <View style={styles.actionsCard}>
             <ActionItem icon="history" label={t("profile.donationHistory") || "Historique des dons"} onPress={() => router.push("/historique")} />
-            <ActionItem icon="bell-o" label={t("profile.notifications") || "Notifications"} onPress={() => router.push("/notifications-settings")} isLast />
+            <ActionItem icon="calendar" label={t("profile.appointments") || "Mes rendez-vous"} onPress={() => router.push("/rendezvous")} />
+            <ActionItem icon="check-circle-o" label={t("profile.eligibilityTest") || "Test d'éligibilité"} onPress={() => router.push("/eligibility-test")} />
+            <ActionItem icon="bell-o" label={t("profile.notifications") || "Notifications"} onPress={() => router.push("/notifications-settings")} />
+            <ActionItem icon="question-circle-o" label={t("profile.helpAdvice") || "Aide & Conseils"} onPress={() => router.push("/aide-et-conseil")} isLast />
           </View>
         </View>
 
@@ -359,12 +341,6 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     justifyContent: "center",
-  },
-  optionsBtn: {
-    width: 40,
-    height: 40,
-    justifyContent: "center",
-    alignItems: "flex-end",
   },
   avatarArea: {
     marginTop: 10,
@@ -540,13 +516,6 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: "600",
     color: color.textMain,
-  },
-  statusSubtext: {
-    fontSize: 11,
-    color: color.textSecondary,
-    fontWeight: "500",
-    marginTop: 2,
-    opacity: 0.7,
   },
   actionsSection: {
     paddingHorizontal: 20,
