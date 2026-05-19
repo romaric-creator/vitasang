@@ -344,6 +344,7 @@ const styles = StyleSheet.create({
   },
   avatarArea: {
     marginTop: 10,
+    alignItems: "center",
   },
   avatarWrapper: {
     position: "relative",
