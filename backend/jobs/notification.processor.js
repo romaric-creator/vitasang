@@ -58,6 +58,22 @@ const notificationProcessor = async (job) => {
     return { processed: 1 };
   }
 
+  // 2.5. GESTION DES NOTIFICATIONS INITIATEUR (Donneur a accepté)
+  if (job.name === "sendInitiatorNotification") {
+    const { initiatorId, alertId, donorName, groupe, message } = job.data;
+    const initiator = await Utilisateur.findByPk(initiatorId);
+    if (initiator && initiator.push_token) {
+      const pushMessage = expoNotifications.buildPushMessage({
+        to: initiator.push_token,
+        title: "Donneur engagé!",
+        body: message,
+        data: { type: "donor_accepted", alertId, donorName, groupe },
+      });
+      await expoNotifications.sendPushNotifications([pushMessage]);
+    }
+    return { processed: 1 };
+  }
+
   // 3. GESTION DES ALERTES D'URGENCE (Par défaut)
   const {
     alertId,

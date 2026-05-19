@@ -199,7 +199,17 @@ class AlertService {
         lieu: alerte.lieu,
         latitude: alerte.latitude,
         longitude: alerte.longitude,
-        urgence: alerte.degre_urgence
+        urgence: alerte.degre_urgence,
+        quantite_requise: alerte.quantite_requise,
+        description: alerte.description,
+        nom_patient: alerte.nom_patient,
+        telephone_contact: alerte.telephone_contact,
+        initiateur: alerte.initiateur ? {
+          id: alerte.initiateur.id_utilisateur,
+          nom: alerte.initiateur.nom,
+          prenom: alerte.initiateur.prenom,
+          telephone: alerte.initiateur.telephone,
+        } : null,
       },
       stats,
       details,
@@ -231,6 +241,36 @@ class AlertService {
           if (count >= alerte.quantite_requise) {
             alerte.statut = "resolu";
             await alerte.save({ transaction });
+          }
+        }
+
+        // Notify initiator when donor accepts
+        if (alerte && alerte.id_initiateur) {
+          try {
+            const donor = await Utilisateur.findByPk(userId, { transaction });
+            const initiator = await Utilisateur.findByPk(alerte.id_initiateur, { transaction });
+
+            if (initiator && initiator.push_token && donor) {
+              const donorName = `${donor.prenom} ${donor.nom}`;
+              await notificationQueue.add("sendInitiatorNotification", {
+                initiatorId: alerte.id_initiateur,
+                alertId: alertId,
+                donorName: donorName,
+                groupe: alerte.groupe_requis,
+                message: `${donorName} a accepté de donner du sang ${alerte.groupe_requis}`,
+              });
+              logger.info("[AlertService.respondToAlert] Initiator notification enqueued", {
+                alertId,
+                initiatorId: alerte.id_initiateur,
+                donorId: userId,
+              });
+            }
+          } catch (error) {
+            logger.error("[AlertService.respondToAlert] Failed to notify initiator", {
+              alertId,
+              initiatorId: alerte.id_initiateur,
+              error: error.message,
+            });
           }
         }
       }
