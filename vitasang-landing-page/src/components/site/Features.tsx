@@ -1,25 +1,25 @@
-import { Bell, Calendar, MessageSquare, Activity } from "lucide-react";
+import { Bell, Calendar, MessageSquare, MapPin } from "lucide-react";
 
 const features = [
   {
     icon: Bell,
-    title: "Alertes vitales",
-    desc: "Soyez notifié instantanément si une urgence nécessite votre groupe sanguin à proximité. Ne manquez jamais une occasion d'agir.",
+    title: "Alertes vitales en temps réel",
+    desc: "Reçois une notification push dès qu'une urgence sanguine nécessite ton groupe à moins de 15 km. Groupe A+, B-, O... l'alerte te trouve, toi.",
   },
   {
     icon: Calendar,
-    title: "Donnez sans attendre",
-    desc: "Fini les files d'attente interminables. Réservez votre créneau en 3 clics dans nos centres partenaires agréés.",
+    title: "Réservation de créneau",
+    desc: "Planifie ton don directement depuis l'app. Choisis ton centre partenaire, ton horaire, et reçois un rappel. Fini les déplacements inutiles.",
   },
   {
     icon: MessageSquare,
-    title: "Coordination Humaine",
-    desc: "Communiquez directement avec les familles et les centres pour une coordination fluide et sécurisée.",
+    title: "Chat direct famille/donneur",
+    desc: "Échange directement avec la famille ou le personnel soignant avant ton déplacement. Une coordination humaine, rapide et sécurisée.",
   },
   {
-    icon: Activity,
-    title: "Soin en temps réel",
-    desc: "Notre infrastructure est pensée pour la vitesse, permettant une réponse immédiate aux demandes critiques.",
+    icon: MapPin,
+    title: "Carte des centres proches",
+    desc: "Visualise les centres de santé partenaires autour de toi sur une carte interactive. Trouve le plus proche en un coup d'œil.",
   },
 ];
 

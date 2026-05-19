@@ -4,6 +4,7 @@ import { Hero } from "@/components/site/Hero";
 import { Problem } from "@/components/site/Problem";
 import { Features } from "@/components/site/Features";
 import { HowItWorks } from "@/components/site/HowItWorks";
+import { Centres } from "@/components/site/Centres";
 import { AboutUs } from "@/components/site/AboutUs";
 import { FAQ } from "@/components/site/FAQ";
 import { CtaFinal } from "@/components/site/CtaFinal";
@@ -42,6 +43,7 @@ function Index() {
         <Problem />
         <Features />
         <HowItWorks />
+        <Centres />
         <AboutUs />
         <FAQ />
         <CtaFinal />

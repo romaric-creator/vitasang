@@ -1,11 +1,12 @@
 import { Fragment } from "react";
-import { Megaphone, Bell, Heart, ArrowRight } from "lucide-react";
+import { Megaphone, Bell, Heart, Calendar, ArrowRight } from "lucide-react";
 import phoneImage from "@/assets/how-phone.jpg";
 
 const steps = [
-  { icon: Megaphone, title: "L'alerte est lancée", desc: "Dès qu'un besoin est détecté en hôpital, une alerte est diffusée." },
-  { icon: Bell, title: "Vous recevez l'appel", desc: "Si votre groupe est compatible, vous recevez une notification immédiate." },
-  { icon: Heart, title: "Vous sauvez une vie", desc: "Un geste simple, un impact immense pour une famille au Cameroun." },
+  { icon: Megaphone, title: "L'alerte est lancée", desc: "Un hôpital ou une famille signale un besoin urgent. L'alerte est validée et diffusée en quelques secondes." },
+  { icon: Bell, title: "Vous recevez l'appel", desc: "Si votre groupe sanguin est compatible et que vous êtes à proximité, une notification push vous alerte immédiatement." },
+  { icon: Calendar, title: "Vous réservez votre créneau", desc: "Choisissez votre heure de passage au centre partenaire directement dans l'app. Zéro file d'attente." },
+  { icon: Heart, title: "Vous sauvez une vie", desc: "Un geste de 20 minutes. Un impact immense pour une famille camerounaise." },
 ];
 
 export function HowItWorks() {
@@ -21,7 +22,7 @@ export function HowItWorks() {
             Le processus
           </span>
           <h2 id="how-title" className="reveal mt-3 text-4xl md:text-5xl font-bold text-foreground">
-            Le cercle de vie en 3 étapes
+            Le cercle de vie en 4 étapes
           </h2>
         </div>
 
@@ -39,7 +40,7 @@ export function HowItWorks() {
 
           <ol
             aria-label="Étapes du parcours VitaSang"
-            className="grid gap-8 md:grid-cols-[1fr_auto_1fr_auto_1fr] md:items-start"
+            className="grid gap-8 md:grid-cols-[1fr_auto_1fr_auto_1fr_auto_1fr] md:items-start"
           >
             {steps.map((s, i) => (
               <Fragment key={s.title}>

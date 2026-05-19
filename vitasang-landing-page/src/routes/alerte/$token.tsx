@@ -107,26 +107,15 @@ function AlertePage() {
         <FormulaireReponse token={token} alerte={alerte} shareText={shareText} />
 
         {/* Section téléchargement — secondaire */}
-        <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-5 flex flex-col gap-3">
-          <p className="text-center text-xs text-gray-400 font-medium">
-            Pour recevoir les futures alertes, téléchargez l'app
+        <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-5 flex flex-col items-center gap-3 text-center">
+          <span className="text-2xl">📲</span>
+          <p className="text-sm font-bold text-gray-800">L'app arrive bientôt</p>
+          <p className="text-xs text-gray-400 leading-relaxed">
+            VitaSang sera disponible sur Google Play et App Store très prochainement.
+            Laissez votre email sur{" "}
+            <Link to="/" className="text-[#9E2016] font-semibold underline">vitasang.cm</Link>
+            {" "}pour être prévenu en premier.
           </p>
-          <div className="flex flex-col gap-2">
-            <a
-              href="https://play.google.com/store/apps/details?id=com.vitasang"
-              className="flex items-center justify-center gap-2 bg-gray-900 text-white rounded-xl py-3 font-semibold hover:bg-gray-800 transition-colors text-xs"
-            >
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M3.18 23.76c.34.19.73.24 1.12.12l12.76-7.37-2.88-2.88L3.18 23.76zm-1.56-20.3C1.24 3.9 1 4.42 1 5.06v13.88c0 .64.24 1.16.62 1.6l.08.08 7.78-7.78v-.18L1.62 3.46zm18.1 8.54-2.62-1.52-3.24 3.24 3.24 3.24 2.64-1.52c.75-.43.75-1.01-.02-1.44zm-16.54 9.6 10.38-5.99-2.86-2.86L3.18 23.6z"/></svg>
-              Google Play
-            </a>
-            <a
-              href="https://apps.apple.com/app/vitasang"
-              className="flex items-center justify-center gap-2 bg-[#9E2016] text-white rounded-xl py-3 font-semibold hover:bg-[#7a1a10] transition-colors text-xs"
-            >
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
-              App Store
-            </a>
-          </div>
         </div>
 
         <p className="text-center text-xs text-gray-400 pb-4">
