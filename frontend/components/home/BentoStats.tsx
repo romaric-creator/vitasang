@@ -1,8 +1,11 @@
 import React from "react";
-import { StyleSheet, View, Text, TouchableOpacity } from "react-native";
-import { TabBarIcon } from "@/components/TabBarIcon";
+import { StyleSheet, View, Text, TouchableOpacity, Dimensions } from "react-native";
 import { color } from "@/constant/color";
 import { useRouter } from "expo-router";
+
+const { width } = Dimensions.get("window");
+
+const CARD_WIDTH = (width - 40 - 12) / 2;
 
 interface BentoStatsProps {
   userData: any;
@@ -12,44 +15,63 @@ interface BentoStatsProps {
 export const BentoStats = ({ userData, t }: BentoStatsProps) => {
   const router = useRouter();
 
+  const stats = [
+    {
+      label: t("home.myDonations") || "MES DONS",
+      value: userData?.donsCount || 0,
+      sub: t("home.totalCompleted") || "Total effectués",
+      color: color.primary,
+      onPress: () => router.push("/historique"),
+    },
+    {
+      label: t("home.nextDispo") || "PROCHAINE DISPO",
+      valueText: t("home.availableNow") || "Disponible maintenant",
+      color: color.secondary,
+      onPress: () => router.push("/notifications-settings"),
+    },
+    {
+      label: t("home.alertsSent") || "ALERTES ENVOYÉES",
+      value: userData?.alertsSentCount || 1,
+      sub: t("home.thisWeek") || "Cette semaine",
+      color: color.textMain,
+      onPress: () => router.push("/(tabs)/alertes"),
+    },
+    {
+      label: t("home.livesSaved") || "VIES SAUVÉES",
+      value: (userData?.donsCount || 0) * 3,
+      sub: t("home.impact") || "Impact total",
+      color: color.secondary,
+      onPress: () => {},
+    },
+  ];
+
+  // Cards 0 et 3 (index pair extrêmes) → secondaryGhost, cards 1 et 2 → primaryGhost
+  const getCardBg = (index: number) =>
+    index === 0 || index === 3 ? color.secondaryGhost : color.primaryGhost;
+
   return (
     <View style={styles.container}>
-      <TouchableOpacity
-        style={[styles.heroBlock]}
-        onPress={() => router.push("/historique")}
-        activeOpacity={0.9}
-      >
-        <View style={styles.heroHeader}>
-          <View style={styles.iconCircle}>
-            <TabBarIcon name="heart" size={24} color="white" />
-          </View>
-          <View style={styles.heroTextContainer}>
-            <Text style={styles.heroLabel}>{t("home.livesSaved")}</Text>
-            <Text style={styles.heroSub}>{t("history.empty")}</Text>
-          </View>
-        </View>
-        <Text style={styles.heroValue}>{userData?.donsCount || 0}</Text>
-      </TouchableOpacity>
-
-      <View style={styles.statsRow}>
-        <View style={[styles.statItem, styles.bloodBlock]}>
-          <Text style={styles.statLabel}>{t("home.bloodGroup")}</Text>
-          <Text style={styles.bloodValue}>
-            {userData?.groupe_sanguin || "--"}
-          </Text>
-        </View>
-
-        <TouchableOpacity
-          style={[styles.statItem, styles.nextBlock]}
-          onPress={() => router.push("/eligibility-test")}
-          activeOpacity={0.7}
-        >
-          <View style={styles.nextHeader}>
-            <TabBarIcon name="calendar" size={16} color={color.primary} />
-            <Text style={styles.statLabel}>{t("home.nextDonation")}</Text>
-          </View>
-          <Text style={styles.nextValue}>{t("home.available")}</Text>
-        </TouchableOpacity>
+      <View style={styles.grid}>
+        {stats.map((stat, index) => (
+          <TouchableOpacity
+            key={index}
+            style={[styles.statCard, { backgroundColor: getCardBg(index), width: CARD_WIDTH }]}
+            onPress={stat.onPress}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.cardLabel}>{stat.label}</Text>
+            <View style={styles.valueBlock}>
+              {stat.valueText ? (
+                <Text style={[styles.cardValueText, { color: stat.color }]}>
+                  {stat.valueText}
+                </Text>
+              ) : (
+                <Text style={[styles.cardValue, { color: stat.color }]}>{stat.value}</Text>
+              )}
+              {stat.sub && <Text style={styles.cardSub}>{stat.sub}</Text>}
+            </View>
+          </TouchableOpacity>
+        ))}
       </View>
     </View>
   );
@@ -57,103 +79,49 @@ export const BentoStats = ({ userData, t }: BentoStatsProps) => {
 
 const styles = StyleSheet.create({
   container: {
-    gap: 16,
-    marginBottom: 24,
+    marginBottom: 32,
+    marginTop: 8,
   },
-  heroBlock: {
-    backgroundColor: color.primary,
-    borderRadius: 32,
-    padding: 24,
-    shadowColor: color.primary,
-    shadowOffset: { width: 0, height: 12 },
-    shadowOpacity: 0.2,
-    shadowRadius: 20,
-    elevation: 10,
-  },
-  heroHeader: {
+  grid: {
     flexDirection: "row",
-    alignItems: "center",
-    gap: 16,
-    marginBottom: 4,
+    flexWrap: "wrap",
+    gap: 12,
   },
-  iconCircle: {
-    width: 52,
-    height: 52,
+  statCard: {
     borderRadius: 20,
-    backgroundColor: "rgba(255,255,255,0.25)",
-    justifyContent: "center",
-    alignItems: "center",
+    padding: 16,
+    minHeight: 120,
+    justifyContent: "space-between",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
   },
-  heroTextContainer: {
-    flex: 1,
-  },
-  heroLabel: {
-    fontSize: 18,
-    fontWeight: "900",
-    color: "white",
-    letterSpacing: 0.5,
-  },
-  heroSub: {
-    fontSize: 13,
-    color: "rgba(255,255,255,0.85)",
-    fontWeight: "600",
-  },
-  heroValue: {
-    fontSize: 68,
-    fontWeight: "950",
-    color: "white",
-    letterSpacing: -2,
-    marginTop: -4,
-  },
-  statsRow: {
-    flexDirection: "row",
-    gap: 16,
-  },
-  statItem: {
-    flex: 1,
-    backgroundColor: color.surface,
-    borderRadius: 28,
-    padding: 24,
-    borderWidth: 0,
-    shadowColor: color.secondary,
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.06,
-    shadowRadius: 15,
-    elevation: 3,
-  },
-  bloodBlock: {
-    alignItems: "flex-start",
-    backgroundColor: "white",
-  },
-  nextBlock: {
-    alignItems: "flex-start",
-    gap: 10,
-    backgroundColor: color.secondaryGhost,
-  },
-  nextHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-  },
-  statLabel: {
-    fontSize: 12,
+  cardLabel: {
+    fontSize: 10,
     fontWeight: "800",
     color: color.textSecondary,
     textTransform: "uppercase",
-    letterSpacing: 1,
+    letterSpacing: 1.5,
   },
-  bloodValue: {
-    fontSize: 40,
-    fontWeight: "950",
-    color: color.secondaryDark,
-    letterSpacing: -1,
-    marginTop: 6,
+  valueBlock: {
+    flexDirection: "column",
+    gap: 2,
   },
-  nextValue: {
-    fontSize: 16,
+  cardValue: {
+    fontSize: 32,
     fontWeight: "900",
-    color: color.secondary,
+    lineHeight: 36,
   },
-
+  cardValueText: {
+    fontSize: 14,
+    fontWeight: "700",
+    lineHeight: 20,
+  },
+  cardSub: {
+    fontSize: 12,
+    color: color.textSecondary,
+    fontWeight: "500",
+  },
 });
-

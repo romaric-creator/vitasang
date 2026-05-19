@@ -10,6 +10,7 @@ import {
   AppState,
   Alert as RNAlert,
   Platform,
+  StatusBar,
 } from "react-native";
 import { LoadingOverlay } from "@/components/LoadingOverlay";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -18,6 +19,7 @@ import { color } from "@/constant/color";
 import { getAlertStatus, confirmDonation } from "@/services/user.service";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/context/AuthContext";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 // Extracted Components
 import { PulseButton } from "@/components/tracking/PulseButton";
@@ -31,6 +33,7 @@ export default function AlertTracking() {
   const params = useLocalSearchParams();
   const { id } = params;
   const router = useRouter();
+  const insets = useSafeAreaInsets();
 
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -72,6 +75,28 @@ export default function AlertTracking() {
     }
   };
 
+  const handleShareWhatsApp = () => {
+    const alerte = data?.alerte;
+    if (!alerte) return;
+    const group = alerte.groupe_sanguin || alerte.groupe || alerte.groupe_requis || "?";
+    const message = t("alert.shareMessage", {
+      group,
+      location: alerte.lieu || "Hôpital proche",
+      phone: alerte.telephone_contact || alerte.telephone_initiateur || "",
+      latitude: alerte.latitude || "",
+      longitude: alerte.longitude || "",
+      urgency: alerte.urgence || "URGENT",
+      quantity: alerte.quantite_requise || "?",
+      id: alerte.id || id || "",
+    });
+    const url = `whatsapp://send?text=${encodeURIComponent(message)}`;
+    Linking.canOpenURL(url).then((supported) => {
+      Linking.openURL(
+        supported ? url : `https://wa.me/?text=${encodeURIComponent(message)}`,
+      );
+    });
+  };
+
   const handleConfirmDonation = async () => {
     RNAlert.alert(
       "Confirmation de don",
@@ -85,7 +110,7 @@ export default function AlertTracking() {
             try {
               await confirmDonation(Number(id));
               fetchStatus();
-              RNAlert.alert("Félicitations", "Merci pour votre don !");
+              RNAlert.alert("Félicitations 🎉", "Merci pour votre don ! Vous avez sauvé une vie.");
             } catch (e: any) {
               RNAlert.alert("Erreur", e.message);
             } finally {
@@ -108,13 +133,28 @@ export default function AlertTracking() {
   );
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { paddingTop: insets.top }]}>
+      <StatusBar barStyle="dark-content" backgroundColor={color.background} />
+
+      {/* ─── Header ─── */}
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
-          <TabBarIcon name="arrow-left" size={20} color="#1E293B" />
+        <TouchableOpacity
+          style={styles.backBtn}
+          onPress={() => router.back()}
+          activeOpacity={0.7}
+        >
+          <TabBarIcon name="arrow-left" size={18} color={color.textMain} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Suivi de l'Alerte</Text>
-        <TouchableOpacity style={styles.refreshBtn} onPress={fetchStatus}>
+
+        <Text style={styles.headerTitle}>
+          {t("alert.tracking.title") || "Suivi Alerte"}
+        </Text>
+
+        <TouchableOpacity
+          style={styles.refreshBtn}
+          onPress={fetchStatus}
+          activeOpacity={0.7}
+        >
           <TabBarIcon name="refresh" size={18} color={color.primary} />
         </TouchableOpacity>
       </View>
@@ -123,29 +163,36 @@ export default function AlertTracking() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
-        <AlertHeroCard alerte={alerte} handleItinerary={handleItinerary} />
+        {/* Hero Card */}
+        <AlertHeroCard
+          alerte={alerte}
+          handleItinerary={handleItinerary}
+          handleShare={handleShareWhatsApp}
+        />
 
+        {/* Stats */}
         <View style={styles.statsContainer}>
           <StatCard
-            label="Notifiés"
+            label={t("alert.tracking.stats.notified") || "Notifiés"}
             value={stats.total}
             icon="users"
-            iconColor="#64748B"
+            iconColor={color.textSecondary}
           />
           <StatCard
-            label="Lectures"
+            label={t("alert.tracking.stats.read") || "Lectures"}
             value={stats.lu}
             icon="eye"
             iconColor="#F59E0B"
           />
           <StatCard
-            label="Réponses"
+            label={t("alert.tracking.stats.accepted") || "Réponses"}
             value={stats.accepte}
             icon="heartbeat"
-            iconColor="#10B981"
+            iconColor={color.primary}
           />
         </View>
 
+        {/* Donneurs Section */}
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Engagements réels</Text>
           <View style={styles.badgeCount}>
@@ -159,12 +206,14 @@ export default function AlertTracking() {
           ))
         ) : (
           <View style={styles.emptyState}>
+            <TabBarIcon name="clock-o" size={32} color={color.textLight} />
             <Text style={styles.emptyText}>En attente de donneurs...</Text>
           </View>
         )}
       </ScrollView>
 
-      <View style={styles.footer}>
+      {/* Footer */}
+      <View style={[styles.footer, { paddingBottom: insets.bottom + 16 }]}>
         {showConfirmButton && (
           <PulseButton
             onPress={handleConfirmDonation}
@@ -175,8 +224,11 @@ export default function AlertTracking() {
         <TouchableOpacity
           style={styles.secondaryBtn}
           onPress={() => router.replace("/(tabs)")}
+          activeOpacity={0.7}
         >
-          <Text style={styles.secondaryBtnText}>Retour au menu</Text>
+          <Text style={styles.secondaryBtnText}>
+            {t("alert.tracking.backHome") || "Retour au menu"}
+          </Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -184,65 +236,111 @@ export default function AlertTracking() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#F8FAFC" },
+  container: {
+    flex: 1,
+    backgroundColor: color.background,
+  },
+  // ─── Header ───────────────────────────────────────────────────
   header: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     paddingHorizontal: 20,
-    paddingTop: Platform.OS === "ios" ? 60 : 40,
-    paddingBottom: 20,
-    backgroundColor: "white",
+    paddingVertical: 14,
+    backgroundColor: color.background,
+    borderBottomWidth: 1,
+    borderBottomColor: color.borderLight,
   },
   backBtn: {
     width: 40,
     height: 40,
     borderRadius: 12,
-    backgroundColor: "#F1F5F9",
+    backgroundColor: "white",
     justifyContent: "center",
     alignItems: "center",
+    borderWidth: 1,
+    borderColor: color.borderLight,
+    elevation: 1,
   },
-  headerTitle: { fontSize: 16, fontWeight: "800", color: "#1E293B" },
+  headerTitle: {
+    fontSize: 17,
+    fontWeight: "800",
+    color: color.textMain,
+  },
   refreshBtn: {
     width: 40,
     height: 40,
+    borderRadius: 12,
+    backgroundColor: color.primaryGhost,
     justifyContent: "center",
     alignItems: "center",
   },
-  scrollContent: { padding: 20, paddingBottom: 160 },
-  statsContainer: { flexDirection: "row", gap: 12, marginBottom: 30 },
+  // ─── Contenu ──────────────────────────────────────────────────
+  scrollContent: {
+    padding: 20,
+    paddingBottom: 160,
+  },
+  statsContainer: {
+    flexDirection: "row",
+    gap: 12,
+    marginBottom: 28,
+  },
   sectionHeader: {
     flexDirection: "row",
     alignItems: "center",
     gap: 10,
-    marginBottom: 15,
+    marginBottom: 14,
   },
   sectionTitle: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: "800",
-    color: "#94A3B8",
+    color: color.textSecondary,
     textTransform: "uppercase",
     letterSpacing: 1,
   },
   badgeCount: {
-    backgroundColor: "#CBD5E1",
+    backgroundColor: color.borderLight,
     paddingHorizontal: 8,
     paddingVertical: 2,
     borderRadius: 10,
   },
-  badgeCountText: { fontSize: 10, fontWeight: "700", color: "white" },
+  badgeCountText: {
+    fontSize: 11,
+    fontWeight: "700",
+    color: color.textMain,
+  },
+  emptyState: {
+    alignItems: "center",
+    paddingVertical: 40,
+    gap: 12,
+  },
+  emptyText: {
+    color: color.textLight,
+    fontSize: 14,
+    fontStyle: "italic",
+    fontWeight: "600",
+  },
+  // ─── Footer ───────────────────────────────────────────────────
   footer: {
     position: "absolute",
     bottom: 0,
     left: 0,
     right: 0,
-    padding: 20,
-    paddingBottom: Platform.OS === "ios" ? 40 : 25,
-    backgroundColor: "rgba(248, 250, 252, 0.95)",
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    backgroundColor: "rgba(248, 250, 252, 0.97)",
+    borderTopWidth: 1,
+    borderTopColor: color.borderLight,
     alignItems: "center",
   },
-  secondaryBtn: { marginTop: 15, padding: 10 },
-  secondaryBtnText: { color: "#94A3B8", fontWeight: "700", fontSize: 13 },
-  emptyState: { alignItems: "center", padding: 30 },
-  emptyText: { color: "#94A3B8", fontSize: 14, fontStyle: "italic" },
+  secondaryBtn: {
+    marginTop: 12,
+    paddingVertical: 8,
+    paddingHorizontal: 20,
+  },
+  secondaryBtnText: {
+    color: color.textSecondary,
+    fontWeight: "700",
+    fontSize: 14,
+  },
 });

@@ -17,6 +17,7 @@ const {
   alertLimiter,
 } = require("./middleware/rateLimiter");
 const { errorHandler, notFoundHandler } = require("./middleware/errorHandler");
+const { verifyToken, isAdmin } = require("./utils/auth.middleware");
 
 // Initialisation Sentry - vérifier si le package est bien chargé
 let sentryEnabled = false;
@@ -67,7 +68,7 @@ app.use(compression({
 }));
 app.use(express.json({ limit: "1mb" }));
 app.use(express.urlencoded({ limit: "1mb", extended: true }));
-app.use(morgan("dev"));
+app.use(morgan(process.env.NODE_ENV === "production" ? "combined" : "dev"));
 app.use("/uploads", express.static("uploads"));
 
 // Swagger API Documentation (désactivé en production)
@@ -124,8 +125,8 @@ app.get("/api/ping", (req, res) => {
   res.status(200).send("pong");
 });
 
-// Endpoint pour créer une alerte test
-app.post("/api/test/alert", async (req, res) => {
+// Endpoint pour créer une alerte test (admin only)
+app.post("/api/test/alert", verifyToken, isAdmin, async (req, res) => {
   const alertService = require("./services/alert.service");
 
   try {
@@ -150,8 +151,8 @@ app.post("/api/test/alert", async (req, res) => {
   }
 });
 
-// Test push notification endpoint
-app.post("/api/test/push", async (req, res) => {
+// Test push notification endpoint (admin only)
+app.post("/api/test/push", verifyToken, isAdmin, async (req, res) => {
   const { token, title, body, alertId, distance, groupe } = req.body;
   if (!token) {
     return res.status(400).json({ message: "Token requis" });

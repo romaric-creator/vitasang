@@ -120,11 +120,11 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="map"
+        name="messages/index"
         options={{
-          title: t("tabs.map"),
+          title: t("tabs.messages") || "Messages",
           tabBarIcon: ({ color }) => (
-            <TabBarIcon name="map" size={26} color={color} />
+            <TabBarIcon name="comment" size={26} color={color} />
           ),
         }}
       />
@@ -146,6 +146,10 @@ export default function TabLayout() {
           ),
         }}
       />
+      
+      {/* Onglets masqués */}
+      <Tabs.Screen name="map" options={{ href: null }} />
+      <Tabs.Screen name="messages/[id]" options={{ href: null }} />
     </Tabs>
   );
 }

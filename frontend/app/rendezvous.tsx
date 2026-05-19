@@ -6,7 +6,10 @@ import {
   TouchableOpacity,
   FlatList,
   RefreshControl,
+  StatusBar,
 } from "react-native";
+import { TabBarIcon } from "@/components/TabBarIcon";
+import { PrimaryButton } from "@/components/PrimaryButton";
 import { useRouter } from "expo-router";
 import { PageHeader } from "@/components/PageHeader";
 import { DataCard, DataCardRow } from "@/components/DataCard";
@@ -51,7 +54,7 @@ export default function RendezVousList() {
     } catch (error: any) {
       error(t("appointments.cancelGenericError"));
     }
-  }, [cancelMutation, show, t]);
+  }, [cancelMutation, error, t]);
 
   const formatDate = (dateString: string) => {
     try {
@@ -144,17 +147,26 @@ export default function RendezVousList() {
 
   return (
     <ThemedView style={styles.container}>
-      <PageHeader title={t("appointments.title")} />
+      <StatusBar barStyle="dark-content" />
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+          <TabBarIcon name="arrow-left" size={20} color={color.textMain} />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>{t("appointments.title") || "Mes rendez-vous"}</Text>
+        <View style={{ width: 40 }} />
+      </View>
 
-      {appointments.length === 0 ? (
+      {appointments.length === 0 && !isLoading ? (
         <View style={styles.centerContent}>
-          <Text style={styles.emptyText}>{t("appointments.empty")}</Text>
-          <TouchableOpacity
-            style={styles.button}
+          <View style={styles.emptyIconBox}>
+            <TabBarIcon name="calendar" size={48} color={color.textMuted} />
+          </View>
+          <Text style={styles.emptyText}>{t("appointments.empty") || "Vous n'avez pas de rendez-vous prévu."}</Text>
+          <PrimaryButton
+            title={t("appointments.book") || "Prendre rendez-vous"}
             onPress={() => router.push("/(tabs)/map")}
-          >
-            <Text style={styles.buttonText}>{t("appointments.book")}</Text>
-          </TouchableOpacity>
+            style={styles.emptyBtn}
+          />
         </View>
       ) : (
         <FlatList
@@ -164,9 +176,9 @@ export default function RendezVousList() {
           refreshControl={
             <RefreshControl refreshing={isRefetching} onRefresh={refetch} colors={[color.primary]} />
           }
-          scrollEnabled={true}
           contentContainerStyle={styles.listContent}
           showsVerticalScrollIndicator={false}
+          ListHeaderComponent={isLoading ? <SkeletonListLoader count={3} itemHeight={160} /> : null}
         />
       )}
     </ThemedView>
@@ -176,34 +188,58 @@ export default function RendezVousList() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingHorizontal: 16,
-    paddingTop: 8,
-    backgroundColor: color.screenBackground,
+    backgroundColor: color.background,
+  },
+  header: {
+    paddingTop: 60,
+    paddingBottom: 20,
+    paddingHorizontal: 20,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    backgroundColor: "white",
+    borderBottomWidth: 1,
+    borderBottomColor: color.borderLight,
+  },
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: "800",
+    color: color.textMain,
+  },
+  backBtn: {
+    width: 40,
+    height: 40,
+    justifyContent: "center",
+  },
+  listContent: {
+    padding: 16,
+    paddingBottom: 40,
   },
   centerContent: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
+    padding: 40,
   },
-  listContent: {
-    paddingBottom: 20,
+  emptyIconBox: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: "white",
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: color.borderLight,
   },
   emptyText: {
     fontSize: 15,
-    color: color.textLight,
+    color: color.textSecondary,
     textAlign: "center",
-    marginBottom: 20,
+    marginBottom: 32,
+    fontWeight: "600",
   },
-  button: {
-    backgroundColor: color.primary,
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 10,
-    alignItems: "center",
-  },
-  buttonText: {
-    color: "#fff",
-    fontSize: 14,
-    fontWeight: "700",
+  emptyBtn: {
+    width: "100%",
   },
 });

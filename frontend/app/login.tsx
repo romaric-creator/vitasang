@@ -8,8 +8,8 @@ import {
   KeyboardAvoidingView,
   Platform,
   StatusBar,
-  TextInput,
 } from "react-native";
+import { PrimaryButton } from "@/components/PrimaryButton";
 import { Formik } from "formik";
 import { router } from "expo-router";
 import { color } from "@/constant/color";
@@ -19,6 +19,7 @@ import { TabBarIcon } from "@/components/TabBarIcon";
 import { useTranslation } from "react-i18next";
 import ThemedView from "@/components/ThemedView";
 import { ErrorAlert } from "@/components/ErrorAlert";
+import FormField from "@/components/FormField";
 
 export default function LoginScreen() {
   const { t } = useTranslation();
@@ -71,10 +72,10 @@ export default function LoginScreen() {
           {/* Brand Header */}
           <View style={styles.header}>
             <View style={styles.logoCircle}>
-              <TabBarIcon name="tint" size={40} color="white" />
+              <TabBarIcon name="tint" size={42} color="white" />
             </View>
             <Text style={styles.brandName}>VitaSang</Text>
-            <Text style={styles.subTitle}>{t("login.welcomeBack") || "Bon retour parmi nous"}</Text>
+            <Text style={styles.subTitle}>{t("login.welcomeBack") || "Donnez, sauvez des vies"}</Text>
           </View>
 
           <Formik
@@ -92,62 +93,39 @@ export default function LoginScreen() {
             }) => (
               <View style={styles.form}>
                 {/* Telephone */}
-                <View style={styles.inputGroup}>
-                  <Text style={styles.label}>Téléphone</Text>
-                  <View style={[styles.inputWrapper, touched.telephone && errors.telephone && styles.inputError]}>
-                    <TabBarIcon name="phone" size={20} color={color.textSecondary} style={styles.inputIcon} />
-                    <TextInput
-                      style={styles.input}
-                      value={values.telephone}
-                      onChangeText={handleChange("telephone")}
-                      onBlur={handleBlur("telephone")}
-                      placeholder="Ex: +2376XXXXXXXX"
-                      placeholderTextColor={color.textMuted}
-                      keyboardType="phone-pad"
-                      autoComplete="tel"
-                    />
-                  </View>
-                  {touched.telephone && errors.telephone && (
-                    <Text style={styles.errorText}>{errors.telephone}</Text>
-                  )}
-                </View>
-
+                <FormField
+                  label={t("login.phone") || "Téléphone"}
+                  value={values.telephone}
+                  onChangeText={handleChange("telephone")}
+                  onBlur={handleBlur("telephone")}
+                  placeholder="Ex: +2376XXXXXXXX"
+                  keyboardType="phone-pad"
+                  leftIcon="phone"
+                  error={errors.telephone as string}
+                  touched={touched.telephone as boolean}
+                />
+                
                 {/* Mot de passe */}
-                <View style={styles.inputGroup}>
-                  <Text style={styles.label}>Mot de passe</Text>
-                  <View style={[styles.inputWrapper, touched.mot_de_passe && errors.mot_de_passe && styles.inputError]}>
-                    <TabBarIcon name="lock" size={20} color={color.textSecondary} style={styles.inputIcon} />
-                    <TextInput
-                      style={styles.input}
-                      value={values.mot_de_passe}
-                      onChangeText={handleChange("mot_de_passe")}
-                      onBlur={handleBlur("mot_de_passe")}
-                      placeholder="Votre mot de passe"
-                      placeholderTextColor={color.textMuted}
-                      secureTextEntry={!showPassword}
-                    />
-                    <TouchableOpacity
-                      onPress={() => setShowPassword(!showPassword)}
-                      style={styles.eyeIcon}
-                    >
-                      <TabBarIcon
-                        name={showPassword ? "eye" : "eye-slash"}
-                        size={20}
-                        color={showPassword ? color.primary : color.textMuted}
-                      />
-                    </TouchableOpacity>
-                  </View>
-                  {touched.mot_de_passe && errors.mot_de_passe && (
-                    <Text style={styles.errorText}>{errors.mot_de_passe}</Text>
-                  )}
-                </View>
+                <FormField
+                  label={t("login.password") || "Mot de passe"}
+                  value={values.mot_de_passe}
+                  onChangeText={handleChange("mot_de_passe")}
+                  onBlur={handleBlur("mot_de_passe")}
+                  placeholder="Votre mot de passe"
+                  secureTextEntry
+                  leftIcon="lock"
+                  error={errors.mot_de_passe as string}
+                  touched={touched.mot_de_passe as boolean}
+                />
 
                 {/* Lien Oublié */}
                 <TouchableOpacity
                   style={styles.forgotBtn}
                   onPress={() => router.push("/aide-et-conseil")}
+                  accessibilityLabel={t("login.forgotPassword") || "Mot de passe oublié ?"}
+                  accessibilityRole="button"
                 >
-                  <Text style={styles.forgotText}>Mot de passe oublié ?</Text>
+                  <Text style={styles.forgotText}>{t("login.forgotPassword") || "Mot de passe oublié ?"}</Text>
                 </TouchableOpacity>
 
                 {/* Erreur Générale */}
@@ -160,22 +138,23 @@ export default function LoginScreen() {
                 />
 
                 {/* Bouton Connexion */}
-                <TouchableOpacity
-                  style={[styles.loginBtn, loading && styles.disabledBtn]}
+                <PrimaryButton
+                  title={t("login.submit") || "SE CONNECTER"}
                   onPress={() => handleSubmit()}
+                  loading={loading}
                   disabled={loading}
-                  activeOpacity={0.8}
-                >
-                  <Text style={styles.loginBtnText}>
-                    {loading ? "CHARGEMENT..." : "SE CONNECTER"}
-                  </Text>
-                </TouchableOpacity>
+                  style={styles.loginBtn}
+                />
 
                 {/* Footer */}
                 <View style={styles.footer}>
-                  <Text style={styles.noAccountText}>Pas encore de compte ? </Text>
-                  <TouchableOpacity onPress={() => router.replace("/register")}>
-                    <Text style={styles.registerLink}>S'inscrire</Text>
+                  <Text style={styles.noAccountText}>{t("login.noAccount") || "Pas encore de compte ? "}</Text>
+                  <TouchableOpacity
+                    onPress={() => router.replace("/register")}
+                    accessibilityRole="link"
+                    accessibilityLabel={t("login.register") || "S'inscrire"}
+                  >
+                    <Text style={styles.registerLink}>{t("login.register") || "S'inscrire"}</Text>
                   </TouchableOpacity>
                 </View>
               </View>
@@ -200,130 +179,73 @@ const styles = StyleSheet.create({
   },
   header: {
     alignItems: "center",
-    marginBottom: 56,
+    marginBottom: 48,
   },
   logoCircle: {
-    width: 90,
-    height: 90,
-    borderRadius: 36,
-    backgroundColor: color.secondary, // Teal for Trust
+    width: 84,
+    height: 84,
+    borderRadius: 42,
+    backgroundColor: color.primary, // Red for Vitality
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: 24,
-    shadowColor: color.secondary,
-    shadowOffset: { width: 0, height: 12 },
-    shadowOpacity: 0.15,
-    shadowRadius: 20,
-    elevation: 10,
+    marginBottom: 20,
+    shadowColor: color.primary,
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.2,
+    shadowRadius: 15,
+    elevation: 8,
   },
   brandName: {
-    fontSize: 38,
-    fontWeight: "950",
-    color: color.text,
-    letterSpacing: -1.5,
+    fontSize: 34,
+    fontWeight: "900",
+    color: color.textMain,
+    letterSpacing: -1,
   },
   subTitle: {
-    fontSize: 16,
+    fontSize: 15,
     color: color.textSecondary,
-    fontWeight: "700",
-    marginTop: 8,
+    fontWeight: "600",
+    marginTop: 4,
+    opacity: 0.7,
   },
   form: {
-    gap: 20,
-  },
-  inputGroup: {
-    marginBottom: 8,
-  },
-  label: {
-    fontSize: 13,
-    fontWeight: "900",
-    color: color.secondaryDark,
-    marginBottom: 10,
-    textTransform: "uppercase",
-    letterSpacing: 1,
-    paddingLeft: 4,
-  },
-  inputWrapper: {
-    flexDirection: "row",
-    alignItems: "center",
-    height: 60,
-    backgroundColor: color.background,
-    borderRadius: 24,
-    paddingHorizontal: 20,
-    borderWidth: 1.5,
-    borderColor: "transparent",
-  },
-  inputIcon: {
-    marginRight: 12,
-    opacity: 0.6,
-  },
-  input: {
-    flex: 1,
-    fontSize: 16,
-    color: color.text,
-    height: "100%",
-    fontWeight: "700",
-  },
-  eyeIcon: {
-    padding: 8,
-  },
-  inputError: {
-    borderColor: color.error,
-    backgroundColor: color.errorLight,
+    gap: 16,
   },
   errorText: {
-    color: color.error,
+    color: color.primary,
     fontSize: 13,
-    marginTop: 8,
+    marginTop: -8,
     paddingLeft: 4,
     fontWeight: "600",
   },
   forgotBtn: {
     alignSelf: "flex-end",
-    paddingVertical: 8,
+    paddingVertical: 4,
   },
   forgotText: {
-    color: color.secondary,
-    fontWeight: "800",
-    fontSize: 15,
+    color: color.textSecondary,
+    fontWeight: "700",
+    fontSize: 14,
+    textDecorationLine: 'underline',
   },
   loginBtn: {
-    height: 64,
-    borderRadius: 24,
-    backgroundColor: color.secondary,
-    justifyContent: "center",
-    alignItems: "center",
-    marginTop: 16,
-    shadowColor: color.secondary,
-    shadowOffset: { width: 0, height: 12 },
-    shadowOpacity: 0.2,
-    shadowRadius: 20,
-    elevation: 8,
-  },
-  disabledBtn: {
-    backgroundColor: color.disabled,
-  },
-  loginBtnText: {
-    color: "white",
-    fontSize: 17,
-    fontWeight: "950",
-    letterSpacing: 1.5,
+    marginTop: 20,
   },
   footer: {
     flexDirection: "row",
     justifyContent: "center",
     alignItems: "center",
-    marginTop: 40,
+    marginTop: 48,
   },
   noAccountText: {
-    fontSize: 16,
+    fontSize: 15,
     color: color.textSecondary,
     fontWeight: "600",
   },
   registerLink: {
-    fontSize: 16,
-    color: color.secondary,
-    fontWeight: "900",
+    fontSize: 15,
+    color: color.primary,
+    fontWeight: "800",
   },
 });
 

@@ -87,15 +87,26 @@ exports.getUserRendezVous = async (req, res, next) => {
             'ville'
           ]
         },
-        { model: TypeDon, as: 'typeDon', attributes: ['id_type_don', ['libelle', 'libelle_type_don']] }
+        { model: TypeDon, as: 'typeDon', attributes: ['id_type_don', ['libelle', 'nom']] }
       ],
       order: [['date_heure_rdv', 'DESC']]
     });
 
+    // Transformer pour matcher le frontend (id, status, date)
+    const formattedRdvs = rdvs.map(rdv => ({
+      id: rdv.id_rdv,
+      date_rendezvous: rdv.date_heure_rdv,
+      heure_debut: new Date(rdv.date_heure_rdv).toLocaleTimeString([], { hour: '2h-digit', minute: '2-digit' }),
+      code_unique: rdv.code_unique,
+      status: rdv.statut_rdv,
+      centre: rdv.centre,
+      type_don: rdv.typeDon
+    }));
+
     res.status(200).json({
       success: true,
-      appointments: rdvs,
-      total: rdvs.length
+      appointments: formattedRdvs,
+      total: formattedRdvs.length
     });
   } catch (error) {
     logger.error('Error fetching rendez-vous', { error: error.message, userId: req.user.id });

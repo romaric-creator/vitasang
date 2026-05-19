@@ -17,6 +17,7 @@ import { color } from "@/constant/color";
 import { LoadingOverlay } from "@/components/LoadingOverlay";
 import { getCurrentPositionAsync } from "@/utils/location";
 import { useTranslation } from "react-i18next";
+import FormField from "@/components/FormField";
 import { DataCard, DataCardRow } from "@/components/DataCard";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAllCentres } from "@/hooks/useCentersAndAppointments";
@@ -111,19 +112,12 @@ export default function MapScreen() {
       },
     ];
 
-    const actionButton = {
-      text: t("appointments.book"),
-      onPress: () => router.push(`/book-appointment/${item.id_centre || item.id}`),
-      color: color.primary,
-    };
-
     return (
       <View style={{ marginHorizontal: 20, marginBottom: 12 }}>
         <DataCard
           title={item.nom}
           subtitle={item.ville}
           data={data}
-          actionButton={actionButton}
         />
       </View>
     );
@@ -134,24 +128,14 @@ export default function MapScreen() {
   return (
     <View style={styles.container}>
       <View style={[styles.headerLayer, { top: insets.top + 10 }]}>
-        <View style={styles.searchBar}>
-          <TabBarIcon name="search" size={16} color={color.textLight} />
-          <TextInput
-            style={styles.searchInput}
-            placeholder={t("centers.searchPlaceholder")}
+        <View style={{ flex: 1 }}>
+          <FormField
             value={searchQuery}
             onChangeText={handleSearch}
-            placeholderTextColor={color.textLight}
+            placeholder={t("centers.searchPlaceholder")}
+            leftIcon="search"
+            containerStyle={{ marginBottom: 0 }}
           />
-          {searchQuery !== "" && (
-            <TouchableOpacity onPress={() => handleSearch("")}>
-              <TabBarIcon
-                name="times-circle"
-                size={16}
-                color={color.textLight}
-              />
-            </TouchableOpacity>
-          )}
         </View>
 
         <TouchableOpacity
@@ -211,12 +195,7 @@ export default function MapScreen() {
                     </View>
                     <View style={styles.markerArrow} />
                   </View>
-                  <Callout
-                    tooltip
-                    onPress={() =>
-                      router.push(`/book-appointment/${centre.id_centre || centre.id}`)
-                    }
-                  >
+                  <Callout tooltip>
                     <View style={styles.calloutContainer}>
                       <Text style={styles.calloutTitle}>{centre.nom}</Text>
                       <Text style={styles.calloutText}>{centre.adresse}</Text>
@@ -283,15 +262,12 @@ const styles = StyleSheet.create({
     flex: 1,
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "white",
-    borderRadius: 12,
-    paddingHorizontal: 12,
+    backgroundColor: color.surfaceDark, // Gris léger comme WhatsApp/FB
+    borderRadius: 24, // Entièrement arrondi (pilule)
+    paddingHorizontal: 16,
     height: 48,
-    elevation: 4,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+    borderWidth: 1,
+    borderColor: "transparent",
   },
   searchInput: {
     flex: 1,
@@ -303,7 +279,7 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     backgroundColor: color.primary,
-    borderRadius: 12,
+    borderRadius: 24, // Pill/Circle
     justifyContent: "center",
     alignItems: "center",
     elevation: 4,

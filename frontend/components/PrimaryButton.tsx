@@ -132,25 +132,18 @@ export const PrimaryButton: React.FC<PrimaryButtonProps> = ({
 
 const styles = StyleSheet.create({
   mainButton: {
-    paddingVertical: 14,
-    paddingHorizontal: 24,
-    borderRadius: 12,
+    height: 54,
+    borderRadius: 27, // Pill (Figma style)
     alignItems: "center",
     justifyContent: "center",
-    // Soft UI Evolution: Ombres douces modernes
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.12,
-    shadowRadius: 4,
-    elevation: 2,
   },
   disabledButton: {
-    opacity: 0.6,
-    shadowOpacity: 0.08,
-    elevation: 1,
+    opacity: 0.5,
   },
   buttonText: {
-    fontWeight: "700",
-    fontSize: 15,
-    letterSpacing: 0.3,
+    fontWeight: "800",
+    fontSize: 16,
+    letterSpacing: 0.5,
+    textTransform: "uppercase",
   },
 });

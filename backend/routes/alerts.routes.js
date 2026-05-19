@@ -27,6 +27,7 @@ router.post(
 /**
  * PUBLIC ROUTE - Get a specific alert's status and details
  */
+router.get("/public/:token", cacheMiddleware(2 * 60), alertsController.getAlertByToken);
 router.get("/:id/status", alertsController.getAlertStatus);
 
 // --- PROTECTED ROUTES (Requires Token) ---

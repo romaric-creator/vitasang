@@ -241,6 +241,28 @@ class AlertService {
       throw error;
     }
   }
+
+  async getAlertByPublicToken(token) {
+    const alerte = await Alerte.findOne({
+      where: { public_token: token },
+      attributes: [
+        'public_token', 'groupe_requis', 'degre_urgence',
+        'lieu', 'statut', 'createdAt', 'quantite_requise',
+      ],
+    });
+    if (!alerte) throw ErrorTypes.RESOURCE_NOT_FOUND("Alerte");
+    return {
+      alerte: {
+        token: alerte.public_token,
+        groupe: alerte.groupe_requis,
+        urgence: alerte.degre_urgence,
+        lieu: alerte.lieu,
+        statut: alerte.statut,
+        date: alerte.createdAt,
+        quantite: alerte.quantite_requise,
+      }
+    };
+  }
 }
 
 module.exports = new AlertService();

@@ -69,6 +69,7 @@ exports.getLiveAlerts = async (req, res, next) => {
       success: true,
       alerts: alerts.map((a) => ({
         id: a.id_alerte,
+        public_token: a.public_token,
         groupe: a.groupe_requis,
         statut: a.statut,
         date: a.createdAt,
@@ -144,6 +145,7 @@ exports.getUserAlerts = async (req, res, next) => {
       success: true,
       alerts: alerts.map((a) => ({
         id: a.id_alerte,
+        public_token: a.public_token,
         groupe: a.groupe_requis,
         statut: a.statut,
         notifiedCount: a.notifications.length,
@@ -170,6 +172,15 @@ exports.respondToAlert = async (req, res, next) => {
   try {
     await alertService.respondToAlert(req.params.id, req.user.id, req.body.response);
     res.json({ success: true, message: "Réponse enregistrée" });
+  } catch (error) {
+    next(error);
+  }
+};
+
+exports.getAlertByToken = async (req, res, next) => {
+  try {
+    const data = await alertService.getAlertByPublicToken(req.params.token);
+    res.json({ success: true, ...data });
   } catch (error) {
     next(error);
   }

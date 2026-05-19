@@ -37,10 +37,17 @@ export default function AlertesScreen() {
     phone && Linking.openURL(`tel:${phone}`);
 
   const handleShareWhatsApp = (item: any) => {
+    // Champs : item peut utiliser `groupe` ou `groupe_sanguin` selon le endpoint
+    const group = item.groupe_sanguin || item.groupe || "inconnu";
     const message = t("alert.shareMessage", {
-      group: item.groupe,
+      group,
       location: item.lieu || "Hôpital proche",
-      phone: item.telephone_initiateur || "",
+      phone: item.telephone_contact || item.telephone_initiateur || "",
+      latitude: item.latitude || "",
+      longitude: item.longitude || "",
+      urgency: item.urgence || "URGENT",
+      quantity: item.quantite_requise || "?",
+      id: item.public_token || item.id || "",
     });
     const url = `whatsapp://send?text=${encodeURIComponent(message)}`;
     Linking.canOpenURL(url).then((supported) => {
@@ -56,11 +63,11 @@ export default function AlertesScreen() {
         return { color: color.primary, label: "En cours" };
       case "resolu":
       case "satisfaite":
-        return { color: "#10B981", label: "Terminé" };
+        return { color: color.secondary, label: "Terminé" };
       case "annule":
-        return { color: "#EF4444", label: "Annulé" };
+        return { color: color.error, label: "Annulé" };
       default:
-        return { color: "#64748B", label: statut };
+        return { color: color.textLight, label: statut };
     }
   };
 
@@ -101,15 +108,8 @@ export default function AlertesScreen() {
                 minute: "2-digit",
               })}
             </Text>
-            <View
-              style={[
-                styles.statusTag,
-                { backgroundColor: config.color + "15" },
-              ]}
-            >
-              <View
-                style={[styles.statusDot, { backgroundColor: config.color }]}
-              />
+            <View style={[styles.statusTag, { backgroundColor: config.color + "15" }]}>
+              <View style={[styles.statusDot, { backgroundColor: config.color }]} />
               <Text style={[styles.statusText, { color: config.color }]}>
                 {config.label.toUpperCase()}
               </Text>
@@ -127,8 +127,10 @@ export default function AlertesScreen() {
               <TouchableOpacity
                 style={styles.iconCircle}
                 onPress={() => handleShareWhatsApp(item)}
+                accessibilityRole="button"
+                accessibilityLabel="Partager sur WhatsApp"
               >
-                <TabBarIcon name="whatsapp" size={18} color="#25D366" />
+                <TabBarIcon name="whatsapp" size={18} color={color.whatsapp} />
               </TouchableOpacity>
             </View>
           ) : (
@@ -140,15 +142,19 @@ export default function AlertesScreen() {
                 <TouchableOpacity
                   style={styles.callButton}
                   onPress={() => handleCall(item.telephone_initiateur)}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Appeler ${item.initiateur || "le demandeur"}`}
                 >
-                  <TabBarIcon name="phone" size={12} color="white" />
-                  <Text style={styles.callButtonText}>Appeler</Text>
+                  <TabBarIcon name="phone" size={12} color={color.textWhite} />
+                  <Text style={styles.callButtonText}>{t("alert.call") || "Appeler"}</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={styles.whatsappAction}
                   onPress={() => handleShareWhatsApp(item)}
+                  accessibilityRole="button"
+                  accessibilityLabel="Partager sur WhatsApp"
                 >
-                  <TabBarIcon name="whatsapp" size={16} color="#25D366" />
+                  <TabBarIcon name="whatsapp" size={16} color={color.whatsapp} />
                 </TouchableOpacity>
               </View>
             </View>
@@ -175,7 +181,7 @@ export default function AlertesScreen() {
           <TouchableOpacity
             key={tab}
             style={[styles.tab, activeTab === tab && styles.activeTab]}
-            onPress={() => setActiveTab(tab as any)}
+            onPress={() => setActiveTab(tab as "sent" | "accepted")}
           >
             <Text
               style={[
@@ -233,7 +239,7 @@ export default function AlertesScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#F8FAFC",
+    backgroundColor: color.background,
     paddingHorizontal: 20,
     paddingTop: Platform.OS === "ios" ? 60 : 40,
   },
@@ -243,130 +249,137 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 25,
   },
-  welcomeText: { fontSize: 14, color: color.textSecondary, fontWeight: "500" },
+  welcomeText: { fontSize: 13, color: color.textSecondary, fontWeight: "600", textTransform: "uppercase", letterSpacing: 1 },
   title: {
     fontSize: 28,
     fontWeight: "900",
-    color: "#1E293B",
+    color: color.textMain,
     letterSpacing: -0.5,
   },
   refreshBtn: {
     padding: 10,
-    backgroundColor: "white",
+    backgroundColor: color.surface,
     borderRadius: 12,
+    borderWidth: 1,
+    borderColor: color.borderLight,
     elevation: 2,
+    shadowColor: "black",
     shadowOpacity: 0.05,
+    shadowRadius: 5,
   },
 
   tabContainer: {
     flexDirection: "row",
-    backgroundColor: "#E2E8F0",
+    backgroundColor: color.surfaceDark,
     borderRadius: 16,
-    padding: 5,
+    padding: 4,
     marginBottom: 25,
   },
-  tab: { flex: 1, paddingVertical: 12, alignItems: "center", borderRadius: 12 },
+  tab: { flex: 1, paddingVertical: 10, alignItems: "center", borderRadius: 12 },
   activeTab: {
-    backgroundColor: "white",
+    backgroundColor: color.surface,
     elevation: 4,
-    shadowColor: "#000",
-    shadowOpacity: 0.1,
+    shadowColor: "black",
+    shadowOpacity: 0.08,
     shadowRadius: 10,
   },
-  tabText: { fontSize: 14, fontWeight: "600", color: "#64748B" },
+  tabText: { fontSize: 13, fontWeight: "700", color: color.textSecondary },
   activeTabText: { color: color.primary },
 
   card: {
     flexDirection: "row",
-    backgroundColor: "white",
-    borderRadius: 24,
+    backgroundColor: color.surface,
+    borderRadius: 20,
     marginBottom: 16,
     overflow: "hidden",
-    elevation: 3,
-    shadowColor: "#64748B",
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
+    borderWidth: 1,
+    borderColor: color.borderLight,
+    shadowColor: "black",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.03,
+    shadowRadius: 10,
+    elevation: 2,
   },
-  indicatorContainer: { width: 75, alignItems: "center", paddingTop: 20 ,marginRight:10},
+  indicatorContainer: { width: 70, alignItems: "center", paddingTop: 20, marginRight: 5 },
   bloodBadge: {
-    width: 45,
-    height: 45,
-    borderRadius: 16,
+    width: 44,
+    height: 44,
+    borderRadius: 14,
     justifyContent: "center",
     alignItems: "center",
   },
   bloodText: { color: "white", fontWeight: "900", fontSize: 16 },
   verticalLine: {
-    width: 4,
+    width: 3,
     flex: 1,
-    marginTop: 15,
-    borderTopLeftRadius: 4,
-    borderTopRightRadius: 4,
-    opacity: 0.2,
+    marginTop: 12,
+    borderRadius: 2,
+    opacity: 0.15,
   },
 
-  cardContent: { flex: 1, padding: 20, paddingLeft: 0 },
+  cardContent: { flex: 1, padding: 16, paddingLeft: 0 },
   cardHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 15,
+    marginBottom: 12,
   },
-  dateText: { fontSize: 13, color: "#94A3B8", fontWeight: "500" },
+  dateText: { fontSize: 12, color: color.textMuted, fontWeight: "600" },
   statusTag: {
     flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal:10,
+    paddingHorizontal: 8,
     paddingVertical: 4,
-    borderRadius: 20,
+    borderRadius: 8,
   },
-  statusDot: { width: 6, height: 6, borderRadius: 30, marginRight: 6 },
-  statusText: { fontSize: 10, fontWeight: "800", letterSpacing: 0.5,paddingHorizontal:5 },
+  statusDot: { width: 6, height: 6, borderRadius: 3, marginRight: 6 },
+  statusText: { fontSize: 10, fontWeight: "800", letterSpacing: 0.5 },
 
   sentFooter: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
+    marginTop: 8,
   },
   pill: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#F1F5F9",
-    padding: 8,
-    borderRadius: 12,
+    backgroundColor: color.secondaryGhost,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 10,
     gap: 6,
   },
-  pillText: { fontSize: 12, color: "#475569", fontWeight: "600" },
+  pillText: { fontSize: 12, color: color.textSecondary, fontWeight: "600" },
   iconCircle: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: "#DCFCE7",
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: color.successLight,
     justifyContent: "center",
     alignItems: "center",
   },
 
-  acceptedFooter: { gap: 12 },
-  initiateur: { fontSize: 16, fontWeight: "700", color: "#1E293B" },
+  acceptedFooter: { gap: 10, marginTop: 4 },
+  initiateur: { fontSize: 15, fontWeight: "700", color: color.textMain },
   actionRow: { flexDirection: "row", gap: 10 },
   callButton: {
     flex: 1,
     flexDirection: "row",
-    backgroundColor: "#0F172A",
-    padding: 12,
-    borderRadius: 14,
+    backgroundColor: color.secondary,
+    paddingVertical: 10,
+    borderRadius: 12,
     justifyContent: "center",
     alignItems: "center",
     gap: 8,
   },
   callButtonText: { color: "white", fontWeight: "700", fontSize: 14 },
   whatsappAction: {
-    width: 45,
-    height: 45,
+    width: 48,
+    height: 48,
     borderWidth: 1.5,
-    borderColor: "#25D366",
-    borderRadius: 14,
+    borderColor: color.whatsapp,
+    borderRadius: 12,
     justifyContent: "center",
     alignItems: "center",
   },
@@ -376,15 +389,15 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: "#F1F5F9",
+    backgroundColor: color.surfaceDark,
     justifyContent: "center",
     alignItems: "center",
     marginBottom: 20,
   },
-  emptyTitle: { fontSize: 18, fontWeight: "800", color: "#1E293B" },
+  emptyTitle: { fontSize: 18, fontWeight: "800", color: color.textMain },
   emptySub: {
     fontSize: 14,
-    color: "#94A3B8",
+    color: color.textMuted,
     textAlign: "center",
     marginTop: 8,
     paddingHorizontal: 40,

@@ -1,5 +1,5 @@
 import React from "react";
-import { View, StyleSheet, Dimensions } from "react-native";
+import { View, Text, StyleSheet, Dimensions } from "react-native";
 import { color } from "@/constant/color";
 import { ModernSpinner } from "@/components/ModernSpinner";
 
@@ -16,8 +16,24 @@ export const LoadingSpinner = ({
   size = "large",
   color: spinnerColor = color.primary,
   accessible = true,
-  accessibilityLabel = "Loading",
+  accessibilityLabel = "Chargement en cours",
 }: LoadingSpinnerProps) => {
+  const [tipIndex, setTipIndex] = React.useState(0);
+  const tips = [
+    "Un don de sang peut sauver jusqu'à 3 vies.",
+    "Votre action compte. Merci de votre patience.",
+    "Vos données médicales sont sécurisées.",
+    "Traitement en cours, merci...",
+  ];
+
+  React.useEffect(() => {
+    if (!visible) return;
+    const interval = setInterval(() => {
+      setTipIndex((prev) => (prev + 1) % tips.length);
+    }, 3000);
+    return () => clearInterval(interval);
+  }, [visible]);
+
   if (!visible) {
     return null;
   }
@@ -35,6 +51,9 @@ export const LoadingSpinner = ({
           size={size === "small" ? "small" : "medium"}
           color={spinnerColor}
         />
+        {size === "large" && (
+          <Text style={styles.tipText}>{tips[tipIndex]}</Text>
+        )}
       </View>
     </View>
   );
@@ -66,5 +85,12 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.12,
     shadowRadius: 8,
     elevation: 4,
+  },
+  tipText: {
+    marginTop: 16,
+    color: color.textSecondary,
+    fontSize: 14,
+    fontWeight: "600",
+    textAlign: "center",
   },
 });

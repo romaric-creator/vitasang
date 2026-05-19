@@ -1,6 +1,7 @@
 import { Stack, useRouter, useSegments } from "expo-router";
 import { useEffect, useState } from "react";
 import Splash from "./Splash";
+import { StatusBar } from "expo-status-bar";
 
 import { PostHogProvider, usePostHog } from "posthog-react-native";
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
@@ -29,6 +30,12 @@ function RootLayoutNav() {
   useEffect(() => {
     const handleNotificationTap = async () => {
       try {
+        const Constants = require("expo-constants").default;
+        if (Constants.appOwnership === "expo") {
+          console.log("[ColdLaunch] Notifications skip (Expo Go)");
+          return;
+        }
+
         const Notifications = require("expo-notifications");
         if (typeof Notifications.getInitialNotification === 'function') {
           const response = await Notifications.getInitialNotification();
@@ -41,8 +48,6 @@ function RootLayoutNav() {
               );
             }
           }
-        } else {
-          console.log("[ColdLaunch] Notifications.getInitialNotification non disponible (Expo Go?)");
         }
       } catch (e) {
         console.log("[ColdLaunch] Error:", e);
@@ -114,20 +119,6 @@ function RootLayoutNav() {
           checkAlertsBackground,
         } = require("@/services/alertRetryService");
         checkAlertsBackground(showAlert);
-
-        // 5. Pré-chargement des centres (React Query)
-        const { queryClient: qc } = require("@/config/queryClient");
-        const { queryKeys } = require("@/config/reactQuery");
-        const {
-          getAllCentres: getCentres,
-        } = require("@/services/user.service");
-        qc.prefetchQuery({
-          queryKey: queryKeys.centres.list(),
-          queryFn: async () => {
-            const res = await getCentres();
-            return res.centres;
-          },
-        }).catch(() => {});
       } catch (e) {}
     };
 
@@ -168,32 +159,39 @@ function RootLayoutNav() {
   }
 
   return (
-    <Stack screenOptions={{ headerShown: false }}>
-      {/* Définition de tous les écrans de l'application */}
-      <Stack.Screen name="(tabs)" />
-      <Stack.Screen name="index" />
-      <Stack.Screen name="login" />
-      <Stack.Screen name="register" />
-      <Stack.Screen name="guest-alert" />
-      <Stack.Screen name="alert-confirmation" />
-      <Stack.Screen name="Splash" />
-      <Stack.Screen name="OnboardingCarousel" />
-      <Stack.Screen
-        name="create-alert/index"
-        options={{ presentation: "modal", title: "Lancer une alerte" }}
+    <>
+      <StatusBar 
+        style="dark" 
+        translucent 
+        backgroundColor="transparent" 
       />
-      <Stack.Screen name="alert-tracking/[id]" />
-      <Stack.Screen name="edit-profile" />
-      <Stack.Screen name="alert-response/[id]" />
-      <Stack.Screen name="book-appointment/[centreId]" />
-      <Stack.Screen name="historique" />
-      <Stack.Screen name="rendezvous" />
-      <Stack.Screen name="notifications-settings" />
-      <Stack.Screen name="language-settings" />
-      <Stack.Screen name="eligibility-test" />
-      <Stack.Screen name="aide-et-conseil" />
-      {__DEV__ && <Stack.Screen name="debug-api" />}
-    </Stack>
+      <Stack screenOptions={{ headerShown: false }}>
+        {/* Définition de tous les écrans de l'application */}
+        <Stack.Screen name="(tabs)" />
+        <Stack.Screen name="index" />
+        <Stack.Screen name="login" />
+        <Stack.Screen name="register" />
+        <Stack.Screen name="guest-alert" />
+        <Stack.Screen name="alert-confirmation" />
+        <Stack.Screen name="Splash" />
+        <Stack.Screen name="OnboardingCarousel" />
+        <Stack.Screen
+          name="create-alert/index"
+          options={{ presentation: "modal", title: "Lancer une alerte" }}
+        />
+        <Stack.Screen name="alert-tracking/[id]" />
+        <Stack.Screen name="edit-profile" />
+        <Stack.Screen name="alert-response/[id]" />
+        {/* <Stack.Screen name="book-appointment/[centreId]" /> */}
+        {/* <Stack.Screen name="historique" /> */}
+        {/* <Stack.Screen name="rendezvous" /> */}
+        <Stack.Screen name="notifications-settings" />
+        <Stack.Screen name="language-settings" />
+        {/* <Stack.Screen name="eligibility-test" /> */}
+        {/* <Stack.Screen name="aide-et-conseil" /> */}
+        {__DEV__ && <Stack.Screen name="debug-api" />}
+      </Stack>
+    </>
   );
 }
 

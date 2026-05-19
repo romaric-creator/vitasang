@@ -7,38 +7,60 @@ import {
   Alert,
   Image,
   StatusBar,
+  ActivityIndicator,
+  Switch,
 } from "react-native";
-import React from "react";
+import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
-import {
-  SkeletonLoader,
-  SkeletonListLoader,
-} from "@/components/SkeletonLoader";
+import { SkeletonLoader } from "@/components/SkeletonLoader";
 import { color } from "@/constant/color";
 import { useUserProfile } from "@/hooks/useAuth";
 import { useRouter } from "expo-router";
 import { useAuth } from "@/context/AuthContext";
 import Constants from "expo-constants";
-import ThemedView from "@/components/ThemedView";
 import { TabBarIcon } from "@/components/TabBarIcon";
+import { updateDonorProfile } from "@/services/user.service";
+import { useToast } from "@/context/ToastContext";
+import { PrimaryButton } from "@/components/PrimaryButton";
 
-const ProfileItem = ({
-  icon,
-  label,
-  onPress,
-}: {
+// --- Interfaces de Typage pour TypeScript ---
+interface InfoItemProps {
   icon: string;
   label: string;
-  onPress?: () => void;
-}) => (
-  <TouchableOpacity style={styles.menuItem} onPress={onPress} activeOpacity={0.7}>
-    <View style={styles.menuLeft}>
-      <View style={styles.iconContainer}>
-        <TabBarIcon name={icon as any} size={20} color={color.secondary} />
-      </View>
-      <Text style={styles.menuLabel}>{label}</Text>
+  value: string;
+  isLast?: boolean;
+}
+
+interface ActionItemProps {
+  icon: string;
+  label: string;
+  onPress: () => void;
+  isLast?: boolean;
+}
+
+const InfoItem = ({ icon, label, value, isLast }: InfoItemProps) => (
+  <View style={[styles.infoItem, isLast && { borderBottomWidth: 0 }]}>
+    <View style={styles.infoIconBox}>
+      <TabBarIcon name={icon} size={18} color={color.textSecondary} />
     </View>
-    <TabBarIcon name="chevron-right" size={16} color={color.textMuted} />
+    <View style={styles.infoTextBox}>
+      <Text style={styles.infoLabel}>{label}</Text>
+      <Text style={styles.infoValue}>{value}</Text>
+    </View>
+  </View>
+);
+
+const ActionItem = ({ icon, label, onPress, isLast }: ActionItemProps) => (
+  <TouchableOpacity 
+    style={[styles.actionItem, isLast && { borderBottomWidth: 0 }]} 
+    onPress={onPress}
+    activeOpacity={0.7}
+  >
+    <View style={styles.actionLeft}>
+      <TabBarIcon name={icon} size={18} color={color.textMain} />
+      <Text style={styles.actionLabel}>{label}</Text>
+    </View>
+    <TabBarIcon name="chevron-right" size={14} color={color.textLight} />
   </TouchableOpacity>
 );
 
@@ -46,11 +68,53 @@ export default function Profile() {
   const router = useRouter();
   const { t } = useTranslation();
   const { signOut, user: authUser } = useAuth();
+  const { success, error: showError } = useToast();
 
   const userId = authUser?.id_utilisateur ?? authUser?.id ?? null;
   const profileQuery = useUserProfile(userId as number, !!userId);
   const loading = !userId || (profileQuery.isLoading && !profileQuery.data);
   const userData = profileQuery.data?.user;
+
+  // ─── Toggle Disponibilité ─────────────────────────────────────
+  const [disponible, setDisponible] = useState<boolean>(
+    userData?.disponible ?? true
+  );
+  const [togglingAvailability, setTogglingAvailability] = useState(false);
+
+  // Sync l'état initial quand userData charge
+  React.useEffect(() => {
+    if (userData?.disponible !== undefined) {
+      setDisponible(!!userData.disponible);
+    }
+  }, [userData?.disponible]);
+
+  const handleToggleAvailability = async () => {
+    if (!userId || togglingAvailability) return;
+
+    const newValue = !disponible;
+
+    // Mise à jour optimiste (UX instantanée)
+    setDisponible(newValue);
+
+    setTogglingAvailability(true);
+    try {
+      await updateDonorProfile(userId as number, { disponible: newValue });
+      success(
+        newValue
+          ? t("profile.availabilityUpdated") || "Vous êtes maintenant disponible ✓"
+          : "Vous êtes maintenant indisponible"
+      );
+      // Rafraîchir les données du profil
+      profileQuery.refetch();
+    } catch (err) {
+      // Rollback en cas d'erreur
+      setDisponible(!newValue);
+      showError("Erreur lors de la mise à jour de la disponibilité");
+    } finally {
+      setTogglingAvailability(false);
+    }
+  };
+  // ──────────────────────────────────────────────────────────────
 
   const handleLogout = () => {
     Alert.alert(t("profile.logout"), t("profile.logoutConfirm"), [
@@ -68,22 +132,17 @@ export default function Profile() {
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
-        <View style={styles.profileHeaderSkeleton}>
-          <SkeletonLoader width={110} height={110} borderRadius={55} style={{ marginBottom: 16 }} />
-          <SkeletonLoader width="60%" height={24} style={{ marginBottom: 8 }} />
-          <SkeletonLoader width="40%" height={16} />
-        </View>
-        <View style={{ padding: 24 }}>
-          <SkeletonListLoader count={5} itemHeight={64} />
-        </View>
+        <SkeletonLoader width={110} height={110} borderRadius={55} style={{ marginBottom: 16 }} />
+        <SkeletonLoader width="60%" height={24} style={{ marginBottom: 8 }} />
+        <SkeletonLoader width="40%" height={16} />
       </View>
     );
   }
 
   const fullName = userData ? `${userData.prenom || ""} ${userData.nom || ""}`.trim() : t("profile.defaultUser");
-  const bloodType = userData?.groupe_sanguin || "—";
   const donsCount = userData?.donsCount ?? 0;
   const alertesCount = userData?.alertesCount ?? 0;
+  
   const profileImage = userData?.photo_profil
     ? {
         uri: userData.photo_profil.startsWith("http")
@@ -94,70 +153,173 @@ export default function Profile() {
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="dark-content" />
+      <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
-        <View style={styles.headerRow}>
-          <Text style={styles.title}>{t("profile.title")}</Text>
-          <TouchableOpacity onPress={() => router.push("/notifications-settings")} style={styles.headerBtn}>
-            <TabBarIcon name="bell-o" size={20} color={color.secondary} />
-          </TouchableOpacity>
-        </View>
+        
+        {/* Header Material Design 3 */}
+        <View style={styles.redHeader}>
+          <View style={styles.headerTop}>
+            <TouchableOpacity
+              onPress={() => router.back()}
+              style={styles.backBtn}
+              activeOpacity={0.7}
+              accessibilityLabel="Retour"
+            >
+              <TabBarIcon name="arrow-left" size={20} color={color.textWhite} />
+            </TouchableOpacity>
+            <Text style={styles.headerTitle}>{t("profile.title") || "Profil"}</Text>
+            <TouchableOpacity
+              style={styles.optionsBtn}
+              activeOpacity={0.7}
+              accessibilityLabel="Options du profil"
+            >
+              <TabBarIcon name="ellipsis-v" size={20} color={color.textWhite} />
+            </TouchableOpacity>
+          </View>
 
-        <View style={styles.profileCard}>
-          <View style={styles.avatarContainer}>
+          <View style={styles.avatarArea}>
             <View style={styles.avatarWrapper}>
               {profileImage ? (
                 <Image source={profileImage} style={styles.avatarImage} />
               ) : (
                 <View style={styles.avatarPlaceholder}>
-                  <TabBarIcon name="user" size={40} color={color.secondaryLight} />
+                  <Text style={styles.avatarInitial}>{fullName.charAt(0).toUpperCase()}</Text>
                 </View>
               )}
               <TouchableOpacity
                 style={styles.editBadge}
                 onPress={() => router.push("/edit-profile")}
+                activeOpacity={0.8}
+                accessibilityLabel="Modifier le profil"
               >
-                <TabBarIcon name="pencil" size={12} color="white" />
+                <TabBarIcon name="pencil" size={12} color={color.primary} />
               </TouchableOpacity>
             </View>
+            <Text style={styles.headerName}>{fullName}</Text>
+            <Text style={styles.headerRole}>
+              {userData?.role === "medecin"
+                ? t("profile.roleDoctor") || "Médecin"
+                : t("profile.roleDonor") || "Donneur"}
+            </Text>
+            {userData?.groupe_sanguin ? (
+              <View style={styles.bloodBadge}>
+                <Text style={styles.bloodBadgeText}>{userData.groupe_sanguin}</Text>
+              </View>
+            ) : null}
           </View>
+        </View>
 
-          <Text style={styles.userName}>{fullName}</Text>
-          <View style={styles.bloodBadge}>
-            <View style={styles.bloodIconCircle}>
-              <TabBarIcon name="tint" size={12} color="white" />
-            </View>
-            <Text style={styles.bloodText}>{bloodType}</Text>
-          </View>
-
-          <View style={styles.statsRow}>
+        {/* Stats Card flottante */}
+        <View style={styles.statsCardContainer}>
+          <View style={styles.statsCard}>
             <View style={styles.statBox}>
               <Text style={styles.statValue}>{donsCount}</Text>
-              <Text style={styles.statLabel}>{t("home.livesSaved")}</Text>
+              <Text style={styles.statLabel}>{t("profile.donations") || "Dons"}</Text>
             </View>
-            <View style={styles.statDivider} />
+            <View style={styles.statLine} />
             <View style={styles.statBox}>
               <Text style={styles.statValue}>{alertesCount}</Text>
-              <Text style={styles.statLabel}>{t("profile.alerts")}</Text>
+              <Text style={styles.statLabel}>{t("profile.alerts") || "Alertes"}</Text>
+            </View>
+            <View style={styles.statLine} />
+            <View style={styles.statBox}>
+              <Text style={styles.statValue}>{donsCount * 3}</Text>
+              <Text style={styles.statLabel}>{t("profile.livesSaved") || "Vies"}</Text>
             </View>
           </View>
         </View>
 
-        <Text style={styles.sectionTitle}>{t("profile.menu")}</Text>
-        <View style={styles.menuList}>
-          <ProfileItem icon="pencil" label={t("profile.edit")} onPress={() => router.push("/edit-profile")} />
-          <ProfileItem icon="history" label={t("profile.history")} onPress={() => router.push("/historique")} />
-          <ProfileItem icon="calendar" label={t("profile.appointments")} onPress={() => router.push("/rendezvous")} />
-          <ProfileItem icon="hospital-o" label={t("profile.centers")} onPress={() => router.push("/(tabs)/map")} />
-          <ProfileItem icon="globe" label={t("profile.language")} onPress={() => router.push("/language-settings")} />
+        {/* Informations Section */}
+        <View style={styles.infoSection}>
+          <Text style={styles.sectionHeading}>{t("profile.informations") || "Informations"}</Text>
+          <View style={styles.infoCard}>
+            <InfoItem 
+              icon="phone" 
+              label={t("profile.phone") || "TÉLÉPHONE"} 
+              value={userData?.telephone || t("common.notProvided") || "Non renseigné"} 
+            />
+            <InfoItem 
+              icon="envelope-o" 
+              label={t("profile.email") || "EMAIL"} 
+              value={userData?.email || t("common.notProvided") || "Non renseigné"} 
+            />
+            <InfoItem 
+              icon="tint" 
+              label={t("profile.bloodGroup") || "GROUPE SANGUIN"} 
+              value={userData?.groupe_sanguin || t("common.unknown") || "Inconnu"} 
+            />
+            <InfoItem 
+              icon="map-marker" 
+              label={t("profile.city") || "VILLE"} 
+              value={userData?.ville || userData?.region || "Cameroun"} 
+            />
+            <InfoItem 
+              icon="calendar-o" 
+              label={t("profile.memberSince") || "MEMBRE DEPUIS"} 
+              value={userData?.createdAt 
+                ? new Date(userData.createdAt).toLocaleDateString("fr-FR", { month: "long", year: "numeric" })
+                : t("profile.recentMember") || "Membre récent"} 
+              isLast 
+            />
+          </View>
         </View>
 
-        <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout} activeOpacity={0.8}>
-          <View style={styles.logoutIconCircle}>
-            <TabBarIcon name="sign-out" size={18} color="white" />
+        {/* Statut Disponibilité — Toggle natif */}
+        <View style={[styles.statusCard, togglingAvailability && { opacity: 0.7 }]}>
+          <View style={styles.statusLeft}>
+            <TabBarIcon
+              name={disponible ? "heart" : "heart-o"}
+              size={20}
+              color={disponible ? color.primary : color.textSecondary}
+            />
+            <View>
+              <Text style={[styles.statusText, !disponible && { color: color.textSecondary }]}>
+                {disponible
+                  ? t("profile.availableToDonate") || "Disponible pour donner"
+                  : t("profile.unavailableStatus") || "Indisponible"}
+              </Text>
+              <Text style={styles.statusSubtext}>
+                {disponible ? "Appuyez pour désactiver" : "Appuyez pour activer"}
+              </Text>
+            </View>
           </View>
-          <Text style={styles.logoutText}>{t("profile.logout")}</Text>
-        </TouchableOpacity>
+          {togglingAvailability ? (
+            <ActivityIndicator size="small" color={color.primary} />
+          ) : (
+            <Switch
+              value={disponible}
+              onValueChange={handleToggleAvailability}
+              disabled={togglingAvailability}
+              trackColor={{ false: color.borderLight, true: color.primary }}
+              thumbColor={color.surface}
+              accessibilityRole="switch"
+              accessibilityState={{ checked: disponible }}
+              accessibilityLabel={
+                disponible
+                  ? t("profile.availableToDonate") || "Disponible pour donner"
+                  : t("profile.unavailableStatus") || "Indisponible"
+              }
+            />
+          )}
+        </View>
+
+        {/* Actions Section */}
+        <View style={styles.actionsSection}>
+          <Text style={styles.sectionHeading}>{t("profile.actions") || "Actions"}</Text>
+          <View style={styles.actionsCard}>
+            <ActionItem icon="history" label={t("profile.donationHistory") || "Historique des dons"} onPress={() => router.push("/historique")} />
+            <ActionItem icon="bell-o" label={t("profile.notifications") || "Notifications"} onPress={() => router.push("/notifications-settings")} isLast />
+          </View>
+        </View>
+
+        {/* Bouton Déconnexion */}
+        <PrimaryButton
+          title={t("profile.logout")}
+          onPress={handleLogout}
+          type="danger"
+          style={styles.logoutBtn}
+          accessibilityLabel={t("profile.logout")}
+        />
       </ScrollView>
     </View>
   );
@@ -166,213 +328,260 @@ export default function Profile() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "white",
+    backgroundColor: color.background,
   },
   scrollContent: {
-    paddingHorizontal: 20,
-    paddingTop: 60,
     paddingBottom: 40,
   },
-  loadingContainer: {
-    flex: 1,
-    backgroundColor: "white",
-  },
-  profileHeaderSkeleton: {
+  redHeader: {
+    backgroundColor: color.primary,
+    paddingTop: 60,
+    paddingBottom: 32,
+    paddingHorizontal: 20,
     alignItems: "center",
-    paddingTop: 80,
-    marginBottom: 40,
+    borderBottomLeftRadius: 32,
+    borderBottomRightRadius: 32,
+    zIndex: 2,
   },
-  headerRow: {
+  headerTop: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 32,
+    width: "100%",
+    marginBottom: 20,
   },
-  title: {
-    fontSize: 28,
-    fontWeight: "950",
-    color: color.text,
-    letterSpacing: -0.5,
+  headerTitle: {
+    color: color.textWhite,
+    fontSize: 20,
+    fontWeight: "700",
   },
-  headerBtn: {
-    width: 48,
-    height: 48,
-    borderRadius: 16,
-    backgroundColor: color.secondaryGhost,
+  backBtn: {
+    width: 40,
+    height: 40,
     justifyContent: "center",
-    alignItems: "center",
   },
-  profileCard: {
-    backgroundColor: "white",
-    borderRadius: 32,
-    padding: 24,
-    alignItems: "center",
-    shadowColor: color.secondary,
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.08,
-    shadowRadius: 20,
-    elevation: 8,
-    marginBottom: 32,
-    borderWidth: 1,
-    borderColor: color.borderLight,
+  optionsBtn: {
+    width: 40,
+    height: 40,
+    justifyContent: "center",
+    alignItems: "flex-end",
   },
-  avatarContainer: {
-    marginBottom: 16,
+  avatarArea: {
+    marginTop: 10,
   },
   avatarWrapper: {
     position: "relative",
+    zIndex: 10, // 2️⃣ Double sécurité pour l'avatar
   },
   avatarImage: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    backgroundColor: color.secondaryGhost,
+    width: 96,
+    height: 96,
+    borderRadius: 48,
+    borderWidth: 3,
+    borderColor: color.surface,
   },
   avatarPlaceholder: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    backgroundColor: color.secondaryGhost,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  editBadge: {
-    position: "absolute",
-    bottom: 0,
-    right: 0,
-    backgroundColor: color.secondary,
-    width: 32,
-    height: 32,
-    borderRadius: 12,
+    width: 96,
+    height: 96,
+    borderRadius: 48,
+    backgroundColor: color.secondaryLight,
     justifyContent: "center",
     alignItems: "center",
     borderWidth: 3,
-    borderColor: "white",
+    borderColor: color.surface,
   },
-  userName: {
-    fontSize: 22,
-    fontWeight: "900",
-    color: color.text,
-    marginBottom: 12,
+  avatarInitial: {
+    fontSize: 36,
+    fontWeight: "bold",
+    color: color.textWhite,
+  },
+  headerName: {
+    color: color.textWhite,
+    fontSize: 20,
+    fontWeight: "700",
+    marginTop: 12,
+  },
+  headerRole: {
+    color: color.textWhite,
+    fontSize: 14,
+    fontWeight: "500",
+    opacity: 0.85,
+    marginTop: 2,
   },
   bloodBadge: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    backgroundColor: color.primaryGhost,
+    marginTop: 10,
+    backgroundColor: color.surface,
     paddingHorizontal: 16,
-    paddingVertical: 8,
+    paddingVertical: 4,
     borderRadius: 20,
-    marginBottom: 24,
   },
-  bloodIconCircle: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    backgroundColor: color.primary,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  bloodText: {
+  bloodBadgeText: {
     color: color.primary,
     fontWeight: "800",
     fontSize: 14,
   },
-  statsRow: {
-    flexDirection: "row",
+  editBadge: {
+    position: "absolute",
+    bottom: 5,
+    right: 5,
+    backgroundColor: color.surface,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    justifyContent: "center",
     alignItems: "center",
-    width: "100%",
-    paddingTop: 20,
-    borderTopWidth: 1.5,
-    borderTopColor: color.borderLight,
+    borderWidth: 1,
+    borderColor: color.border,
+    elevation: 4,
+    shadowColor: color.text,
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    zIndex: 20, // Assure que le bouton crayon reçoit bien l'action "onPress"
+  },
+  statsCardContainer: {
+    paddingHorizontal: 20,
+    marginTop: -24,
+    marginBottom: 24,
+    zIndex: 1,
+  },
+  statsCard: {
+    flexDirection: "row",
+    backgroundColor: color.surface,
+    borderRadius: 20,
+    paddingVertical: 24,
+    borderWidth: 1,
+    borderColor: color.borderLight,
+    shadowColor: color.text,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.05,
+    shadowRadius: 10,
+    elevation: 4,
   },
   statBox: {
     flex: 1,
     alignItems: "center",
   },
   statValue: {
-    fontSize: 24,
-    fontWeight: "950",
-    color: color.secondary,
+    fontSize: 20,
+    fontWeight: "800",
+    color: color.primary,
+    marginBottom: 4,
   },
   statLabel: {
     fontSize: 12,
     color: color.textSecondary,
-    fontWeight: "700",
-    textTransform: "uppercase",
-    marginTop: 2,
+    fontWeight: "600",
   },
-  statDivider: {
-    width: 1.5,
-    height: 40,
+  statLine: {
+    width: 1,
+    height: "60%",
     backgroundColor: color.borderLight,
+    alignSelf: "center",
   },
-  sectionTitle: {
-    fontSize: 14,
-    fontWeight: "800",
-    color: color.textSecondary,
-    marginBottom: 16,
-    textTransform: "uppercase",
-    letterSpacing: 1,
-    paddingLeft: 4,
+  infoSection: {
+    paddingHorizontal: 20,
+    marginBottom: 20,
   },
-  menuList: {
-    gap: 12,
-    marginBottom: 32,
+  sectionHeading: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: color.textMain,
+    marginBottom: 12,
   },
-  menuItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    backgroundColor: color.background,
+  infoCard: {
+    backgroundColor: color.surface,
+    borderRadius: 16,
     paddingHorizontal: 16,
-    paddingVertical: 18,
-    borderRadius: 20,
   },
-  menuLeft: {
+  infoItem: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 16,
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: color.borderLight,
   },
-  iconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
-    backgroundColor: "white",
+  infoIconBox: {
+    width: 36,
+    height: 36,
     justifyContent: "center",
     alignItems: "center",
-    shadowColor: color.secondary,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 5,
   },
-  menuLabel: {
-    fontSize: 16,
-    color: color.textMain,
+  infoTextBox: {
+    marginLeft: 12,
+  },
+  infoLabel: {
+    fontSize: 10,
     fontWeight: "700",
+    color: color.textSecondary,
+    marginBottom: 2,
+  },
+  infoValue: {
+    fontSize: 15,
+    fontWeight: "600",
+    color: color.textMain,
+  },
+  statusCard: {
+    marginHorizontal: 20,
+    backgroundColor: color.surface,
+    borderRadius: 16,
+    padding: 16,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 24,
+  },
+  statusLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    flex: 1,
+  },
+  statusText: {
+    fontSize: 15,
+    fontWeight: "600",
+    color: color.textMain,
+  },
+  statusSubtext: {
+    fontSize: 11,
+    color: color.textSecondary,
+    fontWeight: "500",
+    marginTop: 2,
+    opacity: 0.7,
+  },
+  actionsSection: {
+    paddingHorizontal: 20,
+    marginBottom: 24,
+  },
+  actionsCard: {
+    backgroundColor: color.surface,
+    borderRadius: 16,
+    paddingHorizontal: 16,
+  },
+  actionItem: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingVertical: 18,
+    borderBottomWidth: 1,
+    borderBottomColor: color.borderLight,
+  },
+  actionLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  actionLabel: {
+    fontSize: 15,
+    fontWeight: "700",
+    color: color.textMain,
   },
   logoutBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 12,
-    paddingVertical: 18,
-    backgroundColor: color.primaryGhost,
-    borderRadius: 24,
+    marginHorizontal: 20,
   },
-  logoutIconCircle: {
-    width: 32,
-    height: 32,
-    borderRadius: 10,
-    backgroundColor: color.primary,
+  loadingContainer: {
+    flex: 1,
+    backgroundColor: color.background,
     justifyContent: "center",
     alignItems: "center",
-  },
-  logoutText: {
-    color: color.primary,
-    fontWeight: "900",
-    fontSize: 16,
-    letterSpacing: 0.5,
   },
 });
-

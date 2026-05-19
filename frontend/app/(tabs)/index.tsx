@@ -3,6 +3,7 @@ import {
   ScrollView,
   StatusBar,
   RefreshControl,
+  View,
 } from "react-native";
 import React, { useCallback } from "react";
 import ThemedView from "@/components/ThemedView";
@@ -66,8 +67,6 @@ export default function Home() {
 
   return (
     <ThemedView style={styles.container}>
-      <StatusBar barStyle="dark-content" translucent backgroundColor="transparent" />
-
       <HomeHeader
         fullName={fullName}
         profileImage={profileImage}
@@ -82,18 +81,24 @@ export default function Home() {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            colors={[color.secondary]}
-            tintColor={color.secondary}
+            colors={[color.primary]}
+            tintColor={color.primary}
           />
         }
       >
-        <BentoStats userData={userData} t={t} />
-
         <LaunchAlertButton t={t} />
+
+        <View style={{ height: 16 }} />
 
         <UrgentAlertsSection activeAlerts={activeAlerts} t={t} />
 
         {activeAlerts.length > 0 && <AlertFatigueInsights visible={true} />}
+
+        <View style={{ height: 16 }} />
+
+        <BentoStats userData={userData} t={t} />
+
+        <View style={{ height: 8 }} />
 
         <AideSensibilisationSection t={t} />
       </ScrollView>
@@ -104,12 +109,12 @@ export default function Home() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "white", // Fond pur pour la fraîcheur
+    backgroundColor: color.background,
   },
   scrollContent: {
     paddingHorizontal: 20,
     paddingBottom: 40,
-    paddingTop: 8,
+    paddingTop: 12,
   },
 });
 

@@ -9,81 +9,70 @@ import {
   StatusBar,
   Image,
   TouchableOpacity as RNTouchableOpacity,
+  ActivityIndicator,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { Formik } from "formik";
 import { color } from "@/constant/color";
-import { getUserIdFromStorage, getData } from "@/utils/storage";
 import { useAuth } from "@/context/AuthContext";
-import { getUserProfile, updateUserProfile } from "@/services/user.service";
+import { getUserProfile, updateUserProfile, uploadProfilePicture } from "@/services/user.service";
 import { useToast } from "@/context/ToastContext";
 import { editProfileValidationSchema } from "@/validation/ValidationSchemas";
 import FormField from "@/components/FormField";
 import { BloodGroupSelector } from "@/components/BloodGroupSelector";
-import { PageHeader } from "@/components/PageHeader";
 import * as ImagePicker from "expo-image-picker";
-import { uploadProfilePicture } from "@/services/user.service";
 import { TabBarIcon } from "@/components/TabBarIcon";
 import Constants from "expo-constants";
 import { useTranslation } from "react-i18next";
-import { SkeletonLoader } from "@/components/SkeletonLoader";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function EditProfileScreen() {
   const { t } = useTranslation();
   const router = useRouter();
-  const { success, error, info } = useToast();
-  const { updateUser } = useAuth();
-  const [userData, setUserData] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+  const { success, error } = useToast();
+  const { updateUser, user: authUser } = useAuth();
+  const insets = useSafeAreaInsets();
+
+  // ✅ Pré-remplissage IMMÉDIAT depuis le cache AuthContext
+  const [userData, setUserData] = useState<any>(authUser || null);
+  const [refreshing, setRefreshing] = useState(false); // Chargement silencieux en arrière-plan
   const [saving, setSaving] = useState(false);
-  const [userId, setUserId] = useState<number | null>(null);
+  const [userId] = useState<number | null>(
+    authUser?.id_utilisateur ?? authUser?.id ?? null
+  );
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
-  const [currentImage, setCurrentImage] = useState<string | null>(null);
+  const [currentImage, setCurrentImage] = useState<string | null>(
+    authUser?.photo_profil
+      ? authUser.photo_profil.startsWith("http")
+        ? authUser.photo_profil
+        : (Constants.expoConfig?.extra?.env?.EXPO_PUBLIC_API_BASE_URL || "").replace("/api", "") + authUser.photo_profil
+      : null
+  );
 
+  // ✅ Rafraîchissement en arrière-plan (silencieux)
   useEffect(() => {
-    loadProfile();
-  }, []);
-
-  const loadProfile = async () => {
-    try {
-      setLoading(true);
-      const id = await getUserIdFromStorage();
-      if (!id) {
-        error("Session expirée. Veuillez vous reconnecter.");
-        router.replace("/login");
-        return;
-      }
-
-      setUserId(Number(id));
-      const res = await getUserProfile(Number(id));
-      
-      if (res && res.success) {
-        setUserData(res.user);
-        if (res.user.photo_profil) {
-          const photoUrl = res.user.photo_profil.startsWith("http")
-            ? res.user.photo_profil
-            : (Constants.expoConfig?.extra?.env?.EXPO_PUBLIC_API_BASE_URL || "").replace(
-                "/api",
-                "",
-              ) + res.user.photo_profil;
-          setCurrentImage(photoUrl);
+    if (!userId) return;
+    const refreshInBackground = async () => {
+      setRefreshing(true);
+      try {
+        const res = await getUserProfile(userId);
+        if (res?.success) {
+          setUserData(res.user);
+          if (res.user.photo_profil) {
+            const photoUrl = res.user.photo_profil.startsWith("http")
+              ? res.user.photo_profil
+              : (Constants.expoConfig?.extra?.env?.EXPO_PUBLIC_API_BASE_URL || "").replace("/api", "") + res.user.photo_profil;
+            setCurrentImage(photoUrl);
+          }
         }
-      } else {
-        const cachedUser = await getData("user");
-        if (cachedUser) {
-          setUserData(cachedUser);
-          info("Affichage des données hors-ligne.");
-        } else {
-          error(t("editProfile.loadError"));
-        }
+      } catch (err) {
+        // Silencieux — les données du cache sont déjà affichées
+      } finally {
+        setRefreshing(false);
       }
-    } catch (err) {
-      error(t("editProfile.loadError"));
-      console.error("Error loading profile:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
+    };
+    refreshInBackground();
+  }, [userId]);
 
   const pickImage = async () => {
     try {
@@ -93,7 +82,6 @@ export default function EditProfileScreen() {
         aspect: [1, 1],
         quality: 0.5,
       });
-
       if (!result.canceled) {
         setSelectedImage(result.assets[0].uri);
       }
@@ -104,25 +92,21 @@ export default function EditProfileScreen() {
 
   const handleUpdate = async (values: any) => {
     if (!userId) return;
-
     setSaving(true);
     try {
       if (selectedImage) {
         try {
           await uploadProfilePicture(userId, selectedImage);
         } catch (uploadErr) {
-          console.error("Image upload failed:", uploadErr);
           error(t("editProfile.image.error"));
         }
       }
-
       const response = await updateUserProfile(userId, values);
       if (response.success) {
         const updatedRes = await getUserProfile(userId);
-        if (updatedRes.success) {
+        if (updatedRes?.success) {
           await updateUser(updatedRes.user);
         }
-
         success(t("editProfile.success"));
         router.replace("/(tabs)/profile");
       } else {
@@ -130,22 +114,22 @@ export default function EditProfileScreen() {
       }
     } catch (err: any) {
       error(err?.message || t("editProfile.error"));
-      console.error("Error updating profile:", err);
     } finally {
       setSaving(false);
     }
   };
 
-  if (loading) {
+  // ✅ Si aucune donnée en cache non plus → état de chargement minimal
+  if (!userData) {
     return (
-      <View style={styles.loadingContainer}>
-        <PageHeader title={t("editProfile.title")} />
-        <View style={{ padding: 24, gap: 16 }}>
-          <SkeletonLoader width={100} height={100} borderRadius={50} />
-          <SkeletonLoader width="100%" height={60} style={{ marginTop: 24, borderRadius: 20 }} />
-          <SkeletonLoader width="100%" height={60} style={{ borderRadius: 20 }} />
-          <SkeletonLoader width="100%" height={60} style={{ borderRadius: 20 }} />
-        </View>
+      <View style={[styles.emptyContainer, { paddingTop: insets.top }]}>
+        <StatusBar barStyle="dark-content" />
+        <RNTouchableOpacity style={styles.headerBackBtn} onPress={() => router.back()}>
+          <TabBarIcon name="arrow-left" size={18} color={color.textMain} />
+          <Text style={styles.headerBackText}>Retour</Text>
+        </RNTouchableOpacity>
+        <ActivityIndicator size="large" color={color.primary} style={{ marginTop: 60 }} />
+        <Text style={styles.loadingText}>Chargement du profil...</Text>
       </View>
     );
   }
@@ -153,178 +137,229 @@ export default function EditProfileScreen() {
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === "ios" ? "padding" : "height"}
-      style={{ flex: 1 }}
+      style={{ flex: 1, backgroundColor: color.background }}
     >
-      <StatusBar barStyle="dark-content" />
+      <StatusBar barStyle="dark-content" backgroundColor={color.background} translucent={false} />
+
+      {/* ✅ Header fixe avec gestion StatusBar correcte */}
+      <View style={[styles.fixedHeader, { paddingTop: insets.top + 8 }]}>
+        <RNTouchableOpacity onPress={() => router.back()} style={styles.headerBackBtn} activeOpacity={0.7}>
+          <TabBarIcon name="chevron-left" size={20} color={color.primary} />
+          <Text style={styles.headerBackText}>Retour</Text>
+        </RNTouchableOpacity>
+        <Text style={styles.headerTitle}>{t("editProfile.title") || "Paramètres"}</Text>
+        {/* Indicateur de rafraîchissement silencieux */}
+        {refreshing ? (
+          <ActivityIndicator size="small" color={color.primary} style={{ width: 40 }} />
+        ) : (
+          <View style={{ width: 40 }} />
+        )}
+      </View>
+
       <ScrollView
-        contentContainerStyle={{ flexGrow: 1 }}
+        contentContainerStyle={styles.scrollContent}
         style={{ backgroundColor: color.background }}
         showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
       >
-        <View style={styles.container}>
-          <PageHeader title={t("editProfile.title")} />
-
-          <View style={styles.headerSection}>
-            <Text style={styles.title}>{t("editProfile.header")}</Text>
-            <Text style={styles.subtitle}>{t("editProfile.subtitle")}</Text>
-          </View>
-
-          <View style={styles.avatarSection}>
-            <RNTouchableOpacity
-              onPress={pickImage}
-              style={styles.avatarWrapper}
-              activeOpacity={0.8}
-            >
-              <View style={styles.avatarBorder}>
-                {selectedImage || currentImage ? (
-                  <Image
-                    source={{ uri: selectedImage || currentImage || "" }}
-                    style={styles.avatar}
-                  />
-                ) : (
-                  <View style={[styles.avatar, styles.avatarPlaceholder]}>
-                    <TabBarIcon
-                      name="user"
-                      size={48}
-                      color={color.secondaryLight}
-                    />
-                  </View>
-                )}
-              </View>
-              <View style={styles.cameraBtn}>
-                <TabBarIcon name="camera" size={16} color="white" />
-              </View>
-            </RNTouchableOpacity>
-          </View>
-
-          <Formik
-            initialValues={{
-              nom: userData.nom || "",
-              prenom: userData.prenom || "",
-              telephone: userData.telephone || "",
-              groupe_sanguin: userData.groupe_sanguin || "",
-              ville: userData.ville || "",
-            }}
-            validationSchema={editProfileValidationSchema}
-            onSubmit={handleUpdate}
-            enableReinitialize={true}
-          >
-            {({
-              values,
-              errors,
-              touched,
-              handleChange,
-              handleBlur,
-              handleSubmit,
-            }) => (
-              <View style={styles.form}>
-                <FormField
-                  label={t("editProfile.fields.lastName")}
-                  value={values.nom}
-                  onChangeText={handleChange("nom")}
-                  onBlur={handleBlur("nom")}
-                  placeholder={t("editProfile.placeholders.lastName")}
-                  error={errors.nom as any}
-                  touched={touched.nom as any}
-                  editable={!saving}
-                />
-
-                <FormField
-                  label={t("editProfile.fields.firstName")}
-                  value={values.prenom}
-                  onChangeText={handleChange("prenom")}
-                  onBlur={handleBlur("prenom")}
-                  placeholder={t("editProfile.placeholders.firstName")}
-                  error={errors.prenom as any}
-                  touched={touched.prenom as any}
-                  editable={!saving}
-                />
-
-                <FormField
-                  label={t("editProfile.fields.phone")}
-                  value={values.telephone}
-                  onChangeText={handleChange("telephone")}
-                  onBlur={handleBlur("telephone")}
-                  placeholder={t("editProfile.placeholders.phone")}
-                  error={errors.telephone as any}
-                  touched={touched.telephone as any}
-                  keyboardType="phone-pad"
-                  editable={!saving}
-                />
-
-                <FormField
-                  label={t("editProfile.fields.city")}
-                  value={values.ville}
-                  onChangeText={handleChange("ville")}
-                  onBlur={handleBlur("ville")}
-                  placeholder={t("editProfile.placeholders.city")}
-                  error={errors.ville as any}
-                  touched={touched.ville as any}
-                  editable={!saving}
-                />
-
-                <View style={styles.bloodSection}>
-                  <Text style={styles.fieldLabel}>Groupe Sanguin</Text>
-                  <BloodGroupSelector
-                    value={values.groupe_sanguin}
-                    onSelect={(group) => handleChange("groupe_sanguin")(group)}
-                    error={errors.groupe_sanguin as any}
-                    touched={touched.groupe_sanguin as any}
-                  />
-                </View>
-
-                <RNTouchableOpacity
-                  style={[styles.saveBtn, saving && styles.saveBtnDisabled]}
-                  onPress={() => handleSubmit()}
-                  disabled={saving}
-                  activeOpacity={0.8}
-                >
-                  <Text style={styles.saveBtnText}>
-                    {saving ? "ENREGISTREMENT..." : t("editProfile.save").toUpperCase()}
-                  </Text>
-                </RNTouchableOpacity>
-                
-                <RNTouchableOpacity
-                  style={styles.cancelBtn}
-                  onPress={() => router.back()}
-                  disabled={saving}
-                >
-                  <Text style={styles.cancelBtnText}>Annuler</Text>
-                </RNTouchableOpacity>
-              </View>
-            )}
-          </Formik>
+        {/* Section Titre */}
+        <View style={styles.headerSection}>
+          <Text style={styles.title}>{t("editProfile.header") || "Mon Profil"}</Text>
+          <Text style={styles.subtitle}>{t("editProfile.subtitle") || "Gardez vos informations vitales à jour"}</Text>
         </View>
+
+        {/* Avatar */}
+        <View style={styles.avatarSection}>
+          <RNTouchableOpacity onPress={pickImage} style={styles.avatarWrapper} activeOpacity={0.8}>
+            <View style={styles.avatarBorder}>
+              {selectedImage || currentImage ? (
+                <Image
+                  source={{ uri: selectedImage || currentImage || "" }}
+                  style={styles.avatar}
+                />
+              ) : (
+                <View style={[styles.avatar, styles.avatarPlaceholder]}>
+                  <TabBarIcon name="user" size={44} color="#CBD5E1" />
+                </View>
+              )}
+            </View>
+            <View style={styles.cameraBtn}>
+              <TabBarIcon name="camera" size={14} color="white" />
+            </View>
+          </RNTouchableOpacity>
+          <Text style={styles.changePhotoHint}>Appuyer pour changer la photo</Text>
+        </View>
+
+        {/* Formulaire */}
+        <Formik
+          initialValues={{
+            nom: userData?.nom || "",
+            prenom: userData?.prenom || "",
+            telephone: userData?.telephone || "",
+            groupe_sanguin: userData?.groupe_sanguin || "",
+            ville: userData?.ville || userData?.region || "",
+          }}
+          validationSchema={editProfileValidationSchema}
+          onSubmit={handleUpdate}
+          enableReinitialize={true}
+        >
+          {({ values, errors, touched, handleChange, handleBlur, handleSubmit, setFieldValue }) => (
+            <View style={styles.form}>
+              <FormField
+                label={t("editProfile.fields.lastName")}
+                value={values.nom}
+                onChangeText={handleChange("nom")}
+                onBlur={handleBlur("nom")}
+                placeholder={t("editProfile.placeholders.lastName")}
+                leftIcon="user"
+                error={errors.nom as any}
+                touched={touched.nom as any}
+                editable={!saving}
+              />
+
+              <FormField
+                label={t("editProfile.fields.firstName")}
+                value={values.prenom}
+                onChangeText={handleChange("prenom")}
+                onBlur={handleBlur("prenom")}
+                placeholder={t("editProfile.placeholders.firstName")}
+                leftIcon="user"
+                error={errors.prenom as any}
+                touched={touched.prenom as any}
+                editable={!saving}
+              />
+
+              <FormField
+                label={t("editProfile.fields.phone")}
+                value={values.telephone}
+                onChangeText={handleChange("telephone")}
+                onBlur={handleBlur("telephone")}
+                placeholder={t("editProfile.placeholders.phone")}
+                leftIcon="phone"
+                error={errors.telephone as any}
+                touched={touched.telephone as any}
+                keyboardType="phone-pad"
+                editable={!saving}
+              />
+
+              <FormField
+                label={t("editProfile.fields.city")}
+                value={values.ville}
+                onChangeText={handleChange("ville")}
+                onBlur={handleBlur("ville")}
+                placeholder={t("editProfile.placeholders.city")}
+                leftIcon="map-marker"
+                error={errors.ville as any}
+                touched={touched.ville as any}
+                editable={!saving}
+              />
+
+              <View style={styles.bloodSection}>
+                <Text style={styles.fieldLabel}>{t("common.bloodGroup") || "Groupe Sanguin"}</Text>
+                <BloodGroupSelector
+                  value={values.groupe_sanguin}
+                  onSelect={(group) => setFieldValue("groupe_sanguin", group)}
+                  error={errors.groupe_sanguin as any}
+                  touched={touched.groupe_sanguin as any}
+                />
+              </View>
+
+              {/* Bouton Sauvegarder */}
+              <RNTouchableOpacity
+                style={[styles.saveBtn, saving && styles.saveBtnDisabled]}
+                onPress={() => handleSubmit()}
+                disabled={saving}
+                activeOpacity={0.8}
+              >
+                {saving ? (
+                  <ActivityIndicator color="white" size="small" />
+                ) : (
+                  <Text style={styles.saveBtnText}>
+                    {t("editProfile.save")?.toUpperCase() || "ENREGISTRER"}
+                  </Text>
+                )}
+              </RNTouchableOpacity>
+
+              <RNTouchableOpacity
+                style={styles.cancelBtn}
+                onPress={() => router.back()}
+                disabled={saving}
+              >
+                <Text style={styles.cancelBtnText}>{t("common.cancel") || "Annuler"}</Text>
+              </RNTouchableOpacity>
+            </View>
+          )}
+        </Formik>
       </ScrollView>
     </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  // Loading state
+  emptyContainer: {
     flex: 1,
-    paddingHorizontal: 20,
-    paddingBottom: 40,
+    backgroundColor: color.background,
+    alignItems: "center",
   },
-  loadingContainer: {
+  loadingText: {
+    marginTop: 16,
+    fontSize: 15,
+    color: color.textSecondary,
+    fontWeight: "600",
+  },
+  // ✅ Header fixe avec padding StatusBar correct
+  fixedHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 16,
+    paddingBottom: 12,
+    backgroundColor: color.background,
+    borderBottomWidth: 1,
+    borderBottomColor: color.borderLight,
+  },
+  headerBackBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    padding: 4,
+    width: 80,
+  },
+  headerBackText: {
+    fontSize: 15,
+    color: color.primary,
+    fontWeight: "600",
+  },
+  headerTitle: {
+    fontSize: 17,
+    fontWeight: "700",
+    color: color.textMain,
     flex: 1,
-    backgroundColor: "white",
+    textAlign: "center",
+  },
+  // Contenu scrollable
+  scrollContent: {
+    padding: 20,
+    paddingBottom: 48,
   },
   headerSection: {
-    marginBottom: 24,
+    marginBottom: 28,
   },
   title: {
-    color: color.secondary,
+    color: color.textMain,
     fontWeight: "900",
-    fontSize: 28,
+    fontSize: 26,
     letterSpacing: -0.5,
-    marginBottom: 6,
+    marginBottom: 4,
   },
   subtitle: {
     fontWeight: "600",
     color: color.textSecondary,
-    fontSize: 15,
+    fontSize: 14,
+    opacity: 0.7,
   },
+  // Avatar
   avatarSection: {
     alignItems: "center",
     marginBottom: 32,
@@ -333,20 +368,20 @@ const styles = StyleSheet.create({
     position: "relative",
   },
   avatarBorder: {
-    padding: 4,
+    padding: 3,
     borderRadius: 60,
     backgroundColor: "white",
-    shadowColor: color.secondary,
-    shadowOffset: { width: 0, height: 8 },
+    shadowColor: "#64748B",
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
-    shadowRadius: 15,
-    elevation: 10,
+    shadowRadius: 8,
+    elevation: 4,
   },
   avatar: {
-    width: 110,
-    height: 110,
-    borderRadius: 55,
-    backgroundColor: color.secondaryGhost,
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: "#F1F5F9",
   },
   avatarPlaceholder: {
     justifyContent: "center",
@@ -354,43 +389,53 @@ const styles = StyleSheet.create({
   },
   cameraBtn: {
     position: "absolute",
-    bottom: 4,
-    right: 4,
+    bottom: 2,
+    right: 2,
     backgroundColor: color.primary,
-    width: 36,
-    height: 32,
-    borderRadius: 12,
+    width: 30,
+    height: 30,
+    borderRadius: 15,
     justifyContent: "center",
     alignItems: "center",
-    borderWidth: 3,
+    borderWidth: 2,
     borderColor: "white",
+    elevation: 5,
   },
+  changePhotoHint: {
+    marginTop: 10,
+    fontSize: 12,
+    color: color.textSecondary,
+    fontWeight: "600",
+    opacity: 0.6,
+  },
+  // Formulaire
   form: {
     gap: 16,
   },
   fieldLabel: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: "800",
-    color: color.secondary,
-    marginBottom: 10,
+    color: color.textMain,
+    marginBottom: 12,
     textTransform: "uppercase",
-    letterSpacing: 0.5,
+    letterSpacing: 1,
   },
   bloodSection: {
-    marginTop: 8,
+    marginTop: 4,
   },
+  // Boutons
   saveBtn: {
     height: 60,
-    borderRadius: 24,
-    backgroundColor: color.secondary,
+    borderRadius: 30,
+    backgroundColor: color.primary,
     justifyContent: "center",
     alignItems: "center",
-    marginTop: 24,
-    shadowColor: color.secondary,
-    shadowOffset: { width: 0, height: 10 },
+    marginTop: 20,
+    shadowColor: color.primary,
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
-    shadowRadius: 20,
-    elevation: 8,
+    shadowRadius: 8,
+    elevation: 3,
   },
   saveBtnDisabled: {
     backgroundColor: color.disabled,
@@ -398,14 +443,14 @@ const styles = StyleSheet.create({
   saveBtnText: {
     color: "white",
     fontSize: 16,
-    fontWeight: "900",
+    fontWeight: "800",
     letterSpacing: 1,
   },
   cancelBtn: {
-    height: 56,
+    height: 50,
     justifyContent: "center",
     alignItems: "center",
-    marginTop: 8,
+    marginTop: 4,
   },
   cancelBtnText: {
     color: color.textSecondary,

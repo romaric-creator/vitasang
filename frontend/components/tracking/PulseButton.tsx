@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from "react";
 import { StyleSheet, Text, TouchableOpacity, Animated } from "react-native";
 import { TabBarIcon } from "@/components/TabBarIcon";
+import { color } from "@/constant/color";
 
 interface PulseButtonProps {
   onPress: () => void;
@@ -35,6 +36,8 @@ export const PulseButton = ({ onPress, loading, title }: PulseButtonProps) => {
         style={[styles.primaryBtn, loading && { opacity: 0.7 }]}
         onPress={onPress}
         disabled={loading}
+        accessibilityRole="button"
+        accessibilityLabel={title}
       >
         <TabBarIcon name="check-circle" size={20} color="white" />
         <Text style={styles.primaryBtnText}>{title}</Text>
@@ -46,13 +49,13 @@ export const PulseButton = ({ onPress, loading, title }: PulseButtonProps) => {
 const styles = StyleSheet.create({
   primaryBtn: {
     flexDirection: "row",
-    backgroundColor: "#0F172A",
+    backgroundColor: color.primary,
     padding: 20,
-    borderRadius: 22,
+    borderRadius: color.radius.l,
     alignItems: "center",
     justifyContent: "center",
     gap: 12,
-    shadowColor: "#000",
+    shadowColor: color.primaryDark,
     shadowOpacity: 0.3,
     shadowRadius: 10,
     elevation: 8,

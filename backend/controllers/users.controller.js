@@ -213,9 +213,13 @@ exports.getUserProfile = async (req, res, next) => {
       disponible: user.profilDonneur?.disponible ?? true,
       lat: user.profilDonneur?.lat_actuelle,
       long: user.profilDonneur?.long_actuelle,
+      createdAt: user.createdAt,
+      region: user.region,
       donsCount,
       alertesCount,
-      rendezvousCount
+      alertsSentCount: alertesCount, // Alias pour le frontend BentoStats
+      rendezvousCount,
+      appointmentsCount: rendezvousCount, // Alias pour le frontend BentoStats
     };
 
     // Si l'utilisateur est rattaché à un centre, on inclut les infos du centre
@@ -360,16 +364,29 @@ exports.getUserHistory = async (req, res, next) => {
       return res.status(200).json(cachedData);
     }
 
-    const { count, rows: history } = await db.HistoriqueDon.findAndCountAll({
+    const { count, rows: rawHistory } = await db.HistoriqueDon.findAndCountAll({
       where: { id_donneur: id },
       include: [
-        { model: db.TypeDon, as: "typeDon" },
-        { model: db.Centre, as: "centre" },
+        { model: db.TypeDon, as: "typeDon", attributes: ['id_type_don', ['libelle', 'nom']] },
+        { 
+          model: db.Centre, 
+          as: "centre",
+          attributes: [['nom_centre', 'nom'], 'ville', 'contact_urgence', 'adresse']
+        },
       ],
       order: [["date_don", "DESC"]],
       limit,
       offset,
     });
+
+    // Transformer pour matcher le frontend
+    const history = rawHistory.map(item => ({
+      id: item.id_don,
+      date_don: item.date_don,
+      quantite: item.quantite,
+      type_don: item.typeDon?.nom,
+      centre: item.centre
+    }));
 
     const response = {
       success: true,

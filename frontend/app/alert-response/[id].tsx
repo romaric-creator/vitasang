@@ -10,8 +10,10 @@ import {
   Alert,
   Animated,
   Easing,
-  Dimensions
+  Dimensions,
+  Modal
 } from "react-native";
+import { PrimaryButton } from "@/components/PrimaryButton";
 import { LoadingOverlay } from "@/components/LoadingOverlay";
 import { ModernSpinner } from "@/components/ModernSpinner";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -56,6 +58,12 @@ export default function AlertResponse() {
   const [loading, setLoading] = useState(true);
   const [isResponding, setIsResponding] = useState(false);
   const [hasAccepted, setHasAccepted] = useState(false);
+  const [isEligibilityVisible, setIsEligibilityVisible] = useState(false);
+  const [answers, setAnswers] = useState<Record<string, boolean>>({
+    q1: false, q2: false, q3: false, q4: false, q5: false, q6: false,
+  });
+
+  const isEligible = !answers.q4 && !answers.q5 && !answers.q6 && answers.q1 && answers.q2 && answers.q3;
 
   useEffect(() => {
     const fetchAlert = async () => {
@@ -89,6 +97,7 @@ export default function AlertResponse() {
       await respondToAlert(Number(id), response);
       if (response === "accepte") {
         analyticsService.trackEvent(analyticsService.events.ALERT_ACCEPTED, { alertId: id });
+        setIsEligibilityVisible(false);
         const refreshed = await getAlertStatus(Number(id));
         if (refreshed?.alerte) setAlertData(refreshed.alerte);
         setHasAccepted(true);
@@ -196,12 +205,9 @@ export default function AlertResponse() {
                 <TouchableOpacity style={styles.ignoreBtn} onPress={() => handleResponse("ignore")}>
                   <Text style={styles.ignoreText}>Passer</Text>
                 </TouchableOpacity>
-                <TouchableOpacity 
+                 <TouchableOpacity 
                   style={styles.acceptBtn} 
-                  onPress={() => {
-                    if (params.confirmedEligibility === "true") handleResponse("accepte");
-                    else router.push({ pathname: "/alert-response/[id]/eligibility", params: { id } });
-                  }}
+                  onPress={() => setIsEligibilityVisible(true)}
                 >
                   {isResponding ? <ModernSpinner color="white" size="small" /> : (
                     <>
@@ -265,6 +271,60 @@ export default function AlertResponse() {
           </View>
         )}
       </ScrollView>
+
+      {/* MODAL D'ÉLIGIBILITÉ INTÉGRÉE (Simplification du flux) */}
+      <Modal visible={isEligibilityVisible} animationType="slide" transparent>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>{t("alert.response.eligibility.title") || "Vérification de sécurité"}</Text>
+              <TouchableOpacity onPress={() => setIsEligibilityVisible(false)}>
+                <TabBarIcon name="times" size={20} color="#64748B" />
+              </TouchableOpacity>
+            </View>
+            
+            <ScrollView showsVerticalScrollIndicator={false} style={{ maxHeight: 500 }}>
+              <Text style={styles.modalSubtitle}>{t("alert.response.eligibility.subtitle")}</Text>
+              
+              <View style={styles.questionsContainer}>
+                {[1, 2, 3, 4, 5, 6].map((num) => {
+                  const key = `q${num}`;
+                  const isNeg = num >= 4;
+                  return (
+                    <TouchableOpacity
+                      key={num}
+                      style={[styles.qCard, (isNeg ? answers[key] : !answers[key]) && styles.qCardActive]}
+                      onPress={() => setAnswers(prev => ({ ...prev, [key]: !prev[key] }))}
+                    >
+                      <Text style={[styles.qText, (isNeg ? answers[key] : !answers[key]) && styles.qTextActive]}>
+                        {t(`alert.response.eligibility.questions.q${num}.text`)}
+                      </Text>
+                      <View style={[styles.checkbox, answers[key] && styles.checkboxActive]}>
+                        {answers[key] && <TabBarIcon name="check" size={14} color="white" />}
+                      </View>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+
+              {!isEligible && (
+                <View style={styles.warningBox}>
+                  <TabBarIcon name="exclamation-triangle" size={18} color={color.error} />
+                  <Text style={styles.warningText}>{t("alert.response.eligibility.warning")}</Text>
+                </View>
+              )}
+            </ScrollView>
+
+            <PrimaryButton
+              title={t("alert.response.eligibility.confirmBtn") || "JE CONFIRME"}
+              onPress={() => handleResponse("accepte")}
+              disabled={!isEligible || isResponding}
+              loading={isResponding}
+              style={{ marginTop: 20 }}
+            />
+          </View>
+        </View>
+      </Modal>
     </ThemedView>
   );
 }
@@ -366,5 +426,21 @@ const styles = StyleSheet.create({
   gpsText: { fontSize: 13, fontWeight: "700", color: "#475569" },
 
   doneBtn: { marginTop: 30, padding: 15 },
-  doneText: { color: "#94A3B8", fontWeight: "700" }
+  doneText: { color: "#94A3B8", fontWeight: "700" },
+
+  // MODAL STYLES
+  modalOverlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.5)", justifyContent: "flex-end" },
+  modalContent: { backgroundColor: "white", borderTopLeftRadius: 30, borderTopRightRadius: 30, padding: 24, paddingBottom: Platform.OS === 'ios' ? 40 : 24 },
+  modalHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 16 },
+  modalTitle: { fontSize: 18, fontWeight: "900", color: "#1E293B" },
+  modalSubtitle: { fontSize: 13, color: "#64748B", marginBottom: 20, lineHeight: 18 },
+  questionsContainer: { gap: 10 },
+  qCard: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", padding: 14, backgroundColor: color.surface, borderRadius: 16, borderWidth: 1, borderColor: color.borderLight, gap: 12 },
+  qCardActive: { borderColor: color.primary, backgroundColor: color.primaryGhost },
+  qText: { fontSize: 13, color: color.textMain, flex: 1, fontWeight: "600" },
+  qTextActive: { color: color.primary },
+  checkbox: { width: 22, height: 22, borderRadius: 6, borderWidth: 2, borderColor: color.border, backgroundColor: "white", justifyContent: "center", alignItems: "center" },
+  checkboxActive: { borderColor: color.primary, backgroundColor: color.primary },
+  warningBox: { flexDirection: "row", alignItems: "center", backgroundColor: color.errorLight, padding: 14, borderRadius: 12, gap: 10, marginTop: 16 },
+  warningText: { flex: 1, fontSize: 12, color: color.error, fontWeight: "700" },
 });

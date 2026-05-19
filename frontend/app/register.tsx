@@ -11,6 +11,7 @@ import {
 } from "react-native";
 import { useAuth } from "@/context/AuthContext";
 import { analyticsService } from "@/services/analyticsService";
+import { PrimaryButton } from "@/components/PrimaryButton";
 
 import { Formik } from "formik";
 import { color } from "@/constant/color";
@@ -148,12 +149,12 @@ export default function RegisterScreen() {
               <View style={[styles.stepDot, step === 2 && styles.stepDotActive]} />
             </View>
             <Text style={styles.title}>
-              {step === 1 ? "Rejoignez-nous" : "Informations vitales"}
+              {step === 1 ? t("register.joinUs") || "Rejoignez-nous" : t("register.bloodGroup") || "Groupe Sanguin"}
             </Text>
             <Text style={styles.subtitle}>
               {step === 1
-                ? "Créez votre profil de donneur"
-                : "Aidez-nous à mieux vous connaître"}
+                ? t("register.createProfile") || "Créez votre profil de donneur"
+                : t("register.vitalInfo") || "Cette information est vitale"}
             </Text>
           </View>
 
@@ -185,13 +186,14 @@ export default function RegisterScreen() {
                     <View style={styles.row}>
                       <View style={{ flex: 1 }}>
                         <FormField
-                          label="Prénom"
+                          label={t("register.firstName") || "Prénom"}
                           value={values.prenom}
                           onChangeText={handleChange("prenom")}
                           onBlur={handleBlur("prenom")}
                           placeholder="Jean"
-                          error={errors.prenom}
-                          touched={touched.prenom}
+                          leftIcon="user"
+                          error={errors.prenom as any}
+                          touched={touched.prenom as any}
                         />
                       </View>
                       <View style={{ width: 16 }} />
@@ -202,8 +204,9 @@ export default function RegisterScreen() {
                           onChangeText={handleChange("nom")}
                           onBlur={handleBlur("nom")}
                           placeholder="Dupont"
-                          error={errors.nom}
-                          touched={touched.nom}
+                          leftIcon="user"
+                          error={errors.nom as any}
+                          touched={touched.nom as any}
                         />
                       </View>
                     </View>
@@ -215,8 +218,9 @@ export default function RegisterScreen() {
                       onBlur={handleBlur("telephone")}
                       placeholder="6 99 99 99 99"
                       keyboardType="phone-pad"
-                      error={errors.telephone}
-                      touched={touched.telephone}
+                      leftIcon="phone"
+                      error={errors.telephone as any}
+                      touched={touched.telephone as any}
                     />
 
                     <FormField
@@ -226,17 +230,16 @@ export default function RegisterScreen() {
                       onBlur={handleBlur("mot_de_passe")}
                       placeholder="8 caractères min."
                       secureTextEntry
-                      error={errors.mot_de_passe}
-                      touched={touched.mot_de_passe}
+                      leftIcon="lock"
+                      error={errors.mot_de_passe as any}
+                      touched={touched.mot_de_passe as any}
                     />
 
-                    <TouchableOpacity
-                      style={styles.primaryBtn}
+                    <PrimaryButton
+                      title={t("register.continue") || "CONTINUER"}
                       onPress={() => handleNextStep(validateForm, values, setTouched)}
-                      activeOpacity={0.8}
-                    >
-                      <Text style={styles.primaryBtnText}>CONTINUER</Text>
-                    </TouchableOpacity>
+                      style={styles.primaryBtn}
+                    />
                   </>
                 )}
 
@@ -244,7 +247,7 @@ export default function RegisterScreen() {
                   <>
                     <View style={styles.bloodSection}>
                       <Text style={styles.sectionLabel}>
-                        Quel est votre groupe sanguin ?
+                        {t("register.bloodGroupQuestion") || "Quel est votre groupe sanguin ?"}
                       </Text>
                       <BloodGroupSelector
                         value={values.groupe_sanguin}
@@ -261,6 +264,9 @@ export default function RegisterScreen() {
                         ]}
                         onPress={() => setFieldValue("groupe_sanguin", "INCONNU")}
                         activeOpacity={0.7}
+                        accessibilityRole="radio"
+                        accessibilityLabel={t("register.unknownBloodGroup") || "Je ne connais pas mon groupe sanguin"}
+                        accessibilityState={{ selected: values.groupe_sanguin === "INCONNU" || values.groupe_sanguin === "" }}
                       >
                         <TabBarIcon 
                           name="question-circle" 
@@ -274,7 +280,7 @@ export default function RegisterScreen() {
                               styles.unknownTextActive,
                           ]}
                         >
-                          Je ne connais pas mon groupe sanguin
+                          {t("register.unknownBloodGroup") || "Je ne connais pas mon groupe sanguin"}
                         </Text>
                       </TouchableOpacity>
                     </View>
@@ -289,19 +295,18 @@ export default function RegisterScreen() {
                       <TouchableOpacity
                         style={styles.backBtn}
                         onPress={() => setStep(1)}
+                        accessibilityRole="button"
+                        accessibilityLabel={t("common.back") || "Retour"}
                       >
-                        <Text style={styles.backBtnText}>Retour</Text>
+                        <Text style={styles.backBtnText}>{t("common.back") || "Retour"}</Text>
                       </TouchableOpacity>
 
-                      <TouchableOpacity
-                        style={[styles.primaryBtn, { flex: 1, marginTop: 0 }]}
+                      <PrimaryButton
+                        title={t("register.submit") || "S'INSCRIRE"}
                         onPress={() => handleSubmit()}
-                        activeOpacity={0.8}
-                      >
-                        <Text style={styles.primaryBtnText}>
-                          {loading ? "CRÉATION..." : "S'INSCRIRE"}
-                        </Text>
-                      </TouchableOpacity>
+                        loading={loading}
+                        style={{ flex: 1, marginTop: 0 }}
+                      />
                     </View>
                   </>
                 )}
@@ -309,10 +314,12 @@ export default function RegisterScreen() {
                 <TouchableOpacity
                   onPress={() => router.replace("/login")}
                   style={styles.loginFooter}
+                  accessibilityRole="link"
+                  accessibilityLabel={t("register.alreadyRegistered") || "Déjà inscrit ? Se connecter"}
                 >
                   <Text style={styles.loginText}>
-                    Déjà inscrit ?{" "}
-                    <Text style={styles.loginHighlight}>Se connecter</Text>
+                    {t("register.alreadyHaveAccount") || "Déjà inscrit ?"}{" "}
+                    <Text style={styles.loginHighlight}>{t("register.signIn") || "Se connecter"}</Text>
                   </Text>
                 </TouchableOpacity>
               </View>
@@ -341,41 +348,42 @@ const styles = StyleSheet.create({
   stepIndicator: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 24,
+    marginBottom: 20,
     gap: 8,
   },
   stepDot: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    backgroundColor: color.borderLight,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: color.border,
   },
   stepDotActive: {
-    backgroundColor: color.secondary,
+    backgroundColor: color.primary,
     width: 24,
   },
   stepLine: {
-    width: 40,
-    height: 3,
-    backgroundColor: color.borderLight,
-    borderRadius: 2,
+    width: 32,
+    height: 2,
+    backgroundColor: color.border,
+    borderRadius: 1,
   },
   stepLineActive: {
-    backgroundColor: color.secondary,
+    backgroundColor: color.primary,
   },
   title: {
-    fontSize: 32,
-    fontWeight: "950",
-    color: color.text,
-    letterSpacing: -1,
+    fontSize: 28,
+    fontWeight: "900",
+    color: color.textMain,
+    letterSpacing: -0.5,
     textAlign: "center",
   },
   subtitle: {
-    fontSize: 16,
+    fontSize: 15,
     color: color.textSecondary,
     textAlign: "center",
-    fontWeight: "700",
-    marginTop: 8,
+    fontWeight: "600",
+    marginTop: 4,
+    opacity: 0.7,
   },
   form: {
     flex: 1,
@@ -385,12 +393,12 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   bloodSection: {
-    marginBottom: 24,
+    marginBottom: 20,
   },
   sectionLabel: {
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: "800",
-    color: color.secondaryDark,
+    color: color.textMain,
     marginBottom: 24,
     textAlign: "center",
     textTransform: "uppercase",
@@ -400,22 +408,19 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 16,
-    padding: 22,
-    borderRadius: 24,
-    borderWidth: 0,
+    padding: 20,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: color.borderLight,
     marginTop: 20,
-    backgroundColor: color.background,
-    shadowColor: color.secondary,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.04,
-    shadowRadius: 10,
-    elevation: 2,
+    backgroundColor: color.secondaryGhost,
   },
   unknownCardActive: {
     backgroundColor: color.primaryGhost,
+    borderColor: color.primary,
   },
   unknownText: {
-    fontSize: 15,
+    fontSize: 14,
     color: color.textSecondary,
     fontWeight: "700",
   },
@@ -423,23 +428,7 @@ const styles = StyleSheet.create({
     color: color.primary,
   },
   primaryBtn: {
-    height: 64,
-    borderRadius: 24,
-    backgroundColor: color.secondary,
-    justifyContent: "center",
-    alignItems: "center",
     marginTop: 24,
-    shadowColor: color.secondary,
-    shadowOffset: { width: 0, height: 12 },
-    shadowOpacity: 0.2,
-    shadowRadius: 20,
-    elevation: 8,
-  },
-  primaryBtnText: {
-    color: "white",
-    fontSize: 16,
-    fontWeight: "900",
-    letterSpacing: 1,
   },
   buttonRow: {
     flexDirection: "row",
@@ -453,8 +442,8 @@ const styles = StyleSheet.create({
   },
   backBtnText: {
     color: color.textSecondary,
-    fontWeight: "800",
-    fontSize: 16,
+    fontWeight: "700",
+    fontSize: 15,
   },
   loginFooter: {
     marginTop: 40,
@@ -463,12 +452,12 @@ const styles = StyleSheet.create({
   },
   loginText: {
     color: color.textSecondary,
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: "600",
   },
   loginHighlight: {
-    color: color.secondary,
-    fontWeight: "900",
+    color: color.primary,
+    fontWeight: "800",
   },
 });
 

@@ -6,13 +6,15 @@ import {
   StyleSheet,
   TouchableOpacity,
   Animated,
+  StyleProp,
+  ViewStyle,
 } from "react-native";
 import { formStyles } from "@/styles/formStyles";
 import { TabBarIcon } from "@/components/TabBarIcon";
 import { color } from "@/constant/color";
 
 interface FormFieldProps {
-  label: string;
+  label?: string;
   value: string;
   onChangeText?: (text: string) => void;
   onBlur?: (e?: any) => void;
@@ -29,6 +31,9 @@ interface FormFieldProps {
   multiline?: boolean;
   numberOfLines?: number;
   accessibilityLabel?: string;
+  leftIcon?: string;
+  containerStyle?: StyleProp<ViewStyle>;
+  rightContent?: React.ReactNode;
 }
 
 export const FormField: React.FC<FormFieldProps> = ({
@@ -49,6 +54,9 @@ export const FormField: React.FC<FormFieldProps> = ({
   multiline = false,
   numberOfLines = 1,
   accessibilityLabel,
+  leftIcon,
+  containerStyle,
+  rightContent,
 }) => {
   const isError = touched && !!error;
   const [isSecure, setIsSecure] = useState(secureTextEntry);
@@ -78,14 +86,16 @@ export const FormField: React.FC<FormFieldProps> = ({
   };
 
   return (
-    <View style={formStyles.field}>
-      <Text
-        style={formStyles.label}
-        accessibilityLabel={`${label}${required ? " required" : ""}`}
-      >
-        {label}
-        {required && <Text style={{ color: color.primary }}> *</Text>}
-      </Text>
+    <View style={[formStyles.field, containerStyle]}>
+      {label && (
+        <Text
+          style={formStyles.label}
+          accessibilityLabel={`${label}${required ? " required" : ""}`}
+        >
+          {label}
+          {required && <Text style={{ color: color.primary }}> *</Text>}
+        </Text>
+      )}
       <View style={styles.inputWrapper}>
         <Animated.View
           style={[
@@ -104,6 +114,14 @@ export const FormField: React.FC<FormFieldProps> = ({
             }
           ]}
         >
+          {leftIcon && (
+            <TabBarIcon
+              name={leftIcon}
+              size={20}
+              color={isFocused ? color.primary : color.textMuted}
+              style={styles.leftIcon}
+            />
+          )}
           <TextInput
             style={[
               styles.textInput,
@@ -129,6 +147,8 @@ export const FormField: React.FC<FormFieldProps> = ({
               style={styles.eyeIcon}
               onPress={() => setIsSecure(!isSecure)}
               activeOpacity={0.6}
+              accessibilityRole="button"
+              accessibilityLabel={isSecure ? "Afficher le mot de passe" : "Masquer le mot de passe"}
             >
               <TabBarIcon
                 name={isSecure ? "eye-slash" : "eye"}
@@ -137,6 +157,7 @@ export const FormField: React.FC<FormFieldProps> = ({
               />
             </TouchableOpacity>
           )}
+          {rightContent}
         </Animated.View>
       </View>
       {error && isError && (
@@ -167,14 +188,20 @@ const styles = StyleSheet.create({
   },
   eyeIcon: {
     position: "absolute",
-    right: 16,
+    right: 8,
     height: "100%",
     justifyContent: "center",
+    minWidth: 44,
+    minHeight: 44,
+    alignItems: "center",
   },
   disabledInput: {
     backgroundColor: color.disabledBg,
     borderColor: color.border,
-    opacity: 0.7,
+    opacity: 0.5,
+  },
+  leftIcon: {
+    marginRight: 12,
   },
 });
 

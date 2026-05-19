@@ -11,6 +11,28 @@ interface UrgentAlertsSectionProps {
   t: (key: string) => string;
 }
 
+const getUrgencyStyle = (urgence: string) => {
+  if (urgence === "TRES_URGENT" || urgence === "TRES URGENT") {
+    return {
+      borderColor: color.error,
+      badgeBg: color.errorLight,
+      badgeText: color.error,
+    };
+  }
+  if (urgence === "URGENT") {
+    return {
+      borderColor: color.warning,
+      badgeBg: color.warningLight,
+      badgeText: color.warning,
+    };
+  }
+  return {
+    borderColor: color.accent,
+    badgeBg: color.accentLight,
+    badgeText: color.accent,
+  };
+};
+
 export const UrgentAlertsSection = ({ activeAlerts, t }: UrgentAlertsSectionProps) => {
   const router = useRouter();
 
@@ -18,11 +40,13 @@ export const UrgentAlertsSection = ({ activeAlerts, t }: UrgentAlertsSectionProp
     <View style={styles.section}>
       <View style={styles.sectionHeader}>
         <View style={styles.titleContainer}>
-          <View style={styles.titleIndicator} />
-          <Text style={styles.sectionTitle}>{t("home.urgentSection")}</Text>
+          <Text style={styles.sectionTitle}>{t("home.urgentSection") || "Alertes actives"}</Text>
+          <View style={styles.alertBadge}>
+            <Text style={styles.alertBadgeText}>{activeAlerts.length}</Text>
+          </View>
         </View>
         <TouchableOpacity onPress={() => router.push("/(tabs)/alertes")}>
-          <Text style={styles.seeAllText}>{t("common.seeAll")}</Text>
+          <Text style={styles.seeAllText}>{t("common.seeAll") || "Voir tout"}</Text>
         </TouchableOpacity>
       </View>
 
@@ -34,59 +58,72 @@ export const UrgentAlertsSection = ({ activeAlerts, t }: UrgentAlertsSectionProp
           decelerationRate="fast"
           contentContainerStyle={styles.scrollContent}
         >
-          {activeAlerts.map((alert: any, idx: number) => (
-            <TouchableOpacity
-              key={idx}
-              style={styles.urgentCard}
-              onPress={() =>
-                router.push({
-                  pathname: "/alert-response/[id]",
-                  params: { id: alert.id },
-                })
-              }
-              activeOpacity={0.9}
-            >
-              <View style={styles.urgentHeader}>
-                <View style={styles.bloodBadge}>
-                  <Text style={styles.bloodText}>{alert.groupe}</Text>
+          {activeAlerts.map((alert: any, idx: number) => {
+            const urgencyStyle = getUrgencyStyle(alert.urgence);
+            return (
+              <TouchableOpacity
+                key={idx}
+                style={[styles.urgentCard, { borderLeftColor: urgencyStyle.borderColor }]}
+                onPress={() =>
+                  router.push({
+                    pathname: "/alert-response/[id]",
+                    params: { id: alert.id },
+                  })
+                }
+                activeOpacity={0.9}
+              >
+                {/* Header: badge urgence + distance */}
+                <View style={styles.cardTop}>
+                  <View style={[styles.statusBadge, { backgroundColor: urgencyStyle.badgeBg }]}>
+                    <Text style={[styles.statusText, { color: urgencyStyle.badgeText }]}>
+                      {(alert.urgence || "NORMAL").toUpperCase()}
+                    </Text>
+                  </View>
+                  <View style={styles.locationInfo}>
+                    <TabBarIcon name="map-marker" size={13} color={color.textLight} />
+                    <Text style={styles.distanceText}>2.3 km</Text>
+                  </View>
                 </View>
-                <View style={styles.urgencyBadge}>
-                  <View style={styles.dot} />
-                  <Text style={styles.urgencyText}>
-                    {alert.urgence}
+
+                {/* Corps: groupe sanguin + infos hôpital */}
+                <View style={styles.cardMain}>
+                  <View style={styles.bloodBox}>
+                    <Text style={styles.bloodText}>{alert.groupe}</Text>
+                  </View>
+                  <View style={styles.hospitalInfo}>
+                    <Text style={styles.hospitalName} numberOfLines={2}>
+                      {alert.lieu}
+                    </Text>
+                    <Text style={styles.locationDetail}>Douala, Littoral</Text>
+                    {alert.quantite > 1 && (
+                      <Text style={styles.quantiteText}>{alert.quantite} poches requises</Text>
+                    )}
+                  </View>
+                </View>
+
+                {/* Bouton Répondre */}
+                <TouchableOpacity
+                  style={styles.primaryBtn}
+                  onPress={() =>
+                    router.push({ pathname: "/alert-response/[id]", params: { id: alert.id } })
+                  }
+                >
+                  <Text style={styles.primaryBtnText}>
+                    {t("home.respond") || "Répondre"} →
                   </Text>
-                </View>
-              </View>
-              
-              <Text style={styles.hospitalName} numberOfLines={1}>
-                {alert.lieu}
-              </Text>
-              
-              <View style={styles.urgentFooter}>
-                <View style={styles.locationInfo}>
-                  <TabBarIcon
-                    name="map-marker"
-                    size={14}
-                    color={color.textSecondary}
-                  />
-                  <Text style={styles.distanceText}>{t("home.nearby")}</Text>
-                </View>
-                <View style={styles.actionBtn}>
-                  <Text style={styles.actionText}>
-                    {t("home.donate")}
-                  </Text>
-                </View>
-              </View>
-            </TouchableOpacity>
-          ))}
+                </TouchableOpacity>
+              </TouchableOpacity>
+            );
+          })}
         </ScrollView>
       ) : (
         <View style={styles.emptyState}>
-          <View style={styles.emptyIconCircle}>
-            <TabBarIcon name="heart-o" size={28} color={color.success} />
+          <View style={styles.emptyIconWrapper}>
+            <TabBarIcon name="heart" size={32} color={color.success} />
           </View>
-          <Text style={styles.emptyText}>{t("home.noUrgentAlerts")}</Text>
-          <Text style={styles.emptySubText}>{t("alert.empty.sent")}</Text>
+          <Text style={styles.emptyText}>
+            {t("home.noUrgentAlerts") || "Aucune alerte urgente — Merci aux donneurs !"}
+          </Text>
         </View>
       )}
     </View>
@@ -102,162 +139,154 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
     marginBottom: 16,
-    paddingHorizontal: 4,
   },
   titleContainer: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 10,
-  },
-  titleIndicator: {
-    width: 4,
-    height: 20,
-    backgroundColor: color.secondary, // Teal pour le sérieux
-    borderRadius: 2,
+    gap: 8,
   },
   sectionTitle: {
-    fontSize: 20,
-    fontWeight: "900",
-    color: color.text,
-    letterSpacing: -0.5,
+    fontSize: 18,
+    fontWeight: "700",
+    color: color.textMain,
+  },
+  alertBadge: {
+    backgroundColor: color.errorLight,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 99,
+  },
+  alertBadgeText: {
+    color: color.error,
+    fontSize: 10,
+    fontWeight: "800",
   },
   seeAllText: {
-    color: color.secondary,
-    fontWeight: "700",
-    fontSize: 14,
+    color: color.primary,
+    fontWeight: "600",
+    fontSize: 12,
   },
   scrollContent: {
     paddingRight: 20,
-    paddingVertical: 12,
+    paddingBottom: 10,
   },
   urgentCard: {
     width: width * 0.78,
     backgroundColor: color.surface,
-    borderRadius: 28,
-    padding: 24,
+    borderRadius: 24,
+    borderLeftWidth: 4,
+    padding: 20,
     marginRight: 16,
-    borderWidth: 0, // NO BORDER
-    shadowColor: color.secondary,
-    shadowOffset: { width: 0, height: 10 },
+    shadowColor: "#2C3E50",
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.08,
-    shadowRadius: 20,
-    elevation: 5,
+    shadowRadius: 12,
+    elevation: 4,
   },
-  urgentHeader: {
+  cardTop: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 20,
+    marginBottom: 16,
   },
-  bloodBadge: {
-    width: 52,
-    height: 52,
-    borderRadius: 18,
-    backgroundColor: color.primaryGhost,
-    justifyContent: "center",
-    alignItems: "center",
+  statusBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 99,
   },
-  bloodText: {
-    fontSize: 20,
-    fontWeight: "900",
-    color: color.primary,
-  },
-  urgencyBadge: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 12,
-    backgroundColor: color.background,
-  },
-  dot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: color.primary,
-  },
-  urgencyText: {
-    fontSize: 12,
-    fontWeight: "800",
-    color: color.textMain,
+  statusText: {
+    fontSize: 11,
+    fontWeight: "700",
     textTransform: "uppercase",
     letterSpacing: 0.5,
-  },
-  hospitalName: {
-    fontSize: 19,
-    fontWeight: "900",
-    color: color.text,
-    marginBottom: 20,
-    letterSpacing: -0.2,
-  },
-  urgentFooter: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
   },
   locationInfo: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
+    gap: 4,
   },
   distanceText: {
+    fontSize: 11,
+    color: color.textSecondary,
+    fontWeight: "600",
+  },
+  cardMain: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 14,
+    marginBottom: 16,
+  },
+  bloodBox: {
+    width: 60,
+    height: 60,
+    backgroundColor: color.primaryGhost,
+    borderRadius: 16,
+    justifyContent: "center",
+    alignItems: "center",
+    flexShrink: 0,
+  },
+  bloodText: {
+    fontSize: 22,
+    fontWeight: "900",
+    color: color.primary,
+  },
+  hospitalInfo: {
+    flex: 1,
+  },
+  hospitalName: {
+    fontSize: 15,
+    fontWeight: "700",
+    color: color.textMain,
+    marginBottom: 2,
+  },
+  locationDetail: {
     fontSize: 13,
     color: color.textSecondary,
-    fontWeight: "700",
+    marginBottom: 2,
   },
-  actionBtn: {
-    backgroundColor: color.secondary,
-    paddingHorizontal: 18,
-    paddingVertical: 10,
-    borderRadius: 14,
-    shadowColor: color.secondary,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 4,
+  quantiteText: {
+    fontSize: 12,
+    color: color.accent,
+    fontWeight: "600",
+    marginTop: 2,
   },
-  actionText: {
-    color: "white",
+  primaryBtn: {
+    backgroundColor: color.primary,
+    height: 44,
+    borderRadius: 12,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  primaryBtnText: {
+    color: color.textWhite,
     fontSize: 13,
-    fontWeight: "900",
+    fontWeight: "700",
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
   },
   emptyState: {
-    backgroundColor: color.secondaryGhost,
-    borderRadius: 28,
-    padding: 40,
+    backgroundColor: color.surface,
+    borderRadius: 20,
+    padding: 32,
     alignItems: "center",
-    borderWidth: 2,
-    borderColor: color.secondaryLight,
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: color.borderLight,
     borderStyle: "dashed",
-    opacity: 0.8,
+    gap: 12,
   },
-  emptyIconCircle: {
+  emptyIconWrapper: {
     width: 64,
     height: 64,
     borderRadius: 32,
-    backgroundColor: "white",
+    backgroundColor: color.successLight,
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: 20,
-    shadowColor: color.secondary,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 10,
   },
   emptyText: {
-    fontSize: 20,
-    fontWeight: "900",
-    color: color.secondaryDark,
-    marginBottom: 8,
-  },
-  emptySubText: {
-    fontSize: 15,
-    color: color.secondary,
+    color: color.textSecondary,
+    fontSize: 14,
     fontWeight: "600",
     textAlign: "center",
-    lineHeight: 22,
   },
-
 });
-

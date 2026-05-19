@@ -13,9 +13,11 @@ import {
 } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useTranslation } from "react-i18next";
+import FormField from "@/components/FormField";
 import { color } from "@/constant/color";
 import ThemedView from "@/components/ThemedView";
 import { TabBarIcon } from "@/components/TabBarIcon";
+import { ModernSpinner } from "@/components/ModernSpinner";
 import {
     getConversation,
     sendMessage,
@@ -42,8 +44,10 @@ export default function ConversationScreen() {
     }, []);
 
     const fetchMessages = useCallback(async () => {
+        const partnerId = Number(id);
+        if (!id || isNaN(partnerId)) return;
         try {
-            const data = await getConversation(Number(id));
+            const data = await getConversation(partnerId);
             setMessages(data.messages || []);
         } catch (e) {
             console.error("Error fetching messages:", e);
@@ -66,10 +70,11 @@ export default function ConversationScreen() {
     );
 
     const handleSend = async () => {
-        if (!text.trim() || sending) return;
+        const partnerId = Number(id);
+        if (!text.trim() || sending || isNaN(partnerId)) return;
         setSending(true);
         try {
-            await sendMessage(Number(id), text.trim());
+            await sendMessage(partnerId, text.trim());
             setText("");
             await fetchMessages();
             setTimeout(() => flatListRef.current?.scrollToEnd({ animated: true }), 200);
@@ -90,22 +95,31 @@ export default function ConversationScreen() {
 
     if (loading) return <LoadingOverlay visible fullScreen />;
 
-    const renderItem = ({ item }: { item: MessageData }) => {
-        const isMe = item.id_expediteur === myUserId;
-        return (
-            <View style={[styles.bubble, isMe ? styles.bubbleMe : styles.bubbleOther]}>
-                <Text style={[styles.bubbleText, isMe && styles.bubbleTextMe]}>
-                    {item.contenu}
-                </Text>
-                <Text style={[styles.bubbleTime, isMe && styles.bubbleTimeMe]}>
-                    {new Date(item.createdAt).toLocaleTimeString("fr-FR", {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                    })}
-                </Text>
+  const renderItem = ({ item }: { item: MessageData }) => {
+    const isMe = item.id_expediteur === myUserId;
+    return (
+      <View style={[styles.bubbleWrapper, isMe ? { alignItems: 'flex-end' } : { alignItems: 'flex-start' }]}>
+        <View style={styles.bubbleContainer}>
+          <View style={[styles.bubble, isMe ? styles.bubbleMe : styles.bubbleOther]}>
+            <Text style={[styles.bubbleText, isMe && styles.bubbleTextMe]}>
+              {item.contenu}
+            </Text>
+            <View style={styles.bubbleFooter}>
+              <Text style={[styles.bubbleTime, isMe && styles.bubbleTimeMe]}>
+                {new Date(item.createdAt).toLocaleTimeString("fr-FR", {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}
+              </Text>
+              {isMe && (
+                <TabBarIcon name="check" size={10} color="rgba(255,255,255,0.7)" style={{ marginLeft: 4 }} />
+              )}
             </View>
-        );
-    };
+          </View>
+        </View>
+      </View>
+    );
+  };
 
     return (
         <ThemedView style={styles.container}>
@@ -142,23 +156,26 @@ export default function ConversationScreen() {
                     />
                 )}
 
-                <View style={styles.inputBar}>
-                    <TextInput
-                        style={styles.input}
-                        value={text}
-                        onChangeText={setText}
-                        placeholder={t("messages.typeMessage")}
-                        placeholderTextColor={color.textLight}
-                        multiline
-                    />
-                    <TouchableOpacity
-                        style={[styles.sendBtn, !text.trim() && { opacity: 0.4 }]}
-                        onPress={handleSend}
-                        disabled={!text.trim() || sending}
-                        testID="send-message-button"
-                    >
-                        <TabBarIcon name="send" size={18} color="white" />
-                    </TouchableOpacity>
+                <View style={styles.inputContainer}>
+                  <TextInput
+                    style={styles.textInput}
+                    value={text}
+                    onChangeText={setText}
+                    placeholder={t("messages.typeMessage") || "Écrire un message..."}
+                    multiline
+                    placeholderTextColor="#94A3B8"
+                  />
+                  <TouchableOpacity
+                    style={[styles.sendBtn, !text.trim() && { opacity: 0.5, backgroundColor: "#CBD5E1" }]}
+                    onPress={handleSend}
+                    disabled={!text.trim() || sending}
+                  >
+                    {sending ? (
+                      <ModernSpinner size="small" color="white" />
+                    ) : (
+                      <TabBarIcon name="send" size={18} color="white" />
+                    )}
+                  </TouchableOpacity>
                 </View>
             </KeyboardAvoidingView>
         </ThemedView>
@@ -179,62 +196,71 @@ const styles = StyleSheet.create({
         borderBottomColor: color.border,
     },
     headerTitle: {
-        fontSize: 16,
-        fontWeight: "800",
+        fontSize: 15,
+        fontWeight: "900",
         color: color.textMain,
         flex: 1,
         textAlign: "center",
         marginHorizontal: 10,
+        textTransform: 'uppercase',
+        letterSpacing: 1,
     },
-    listContent: { padding: 16, paddingBottom: 8 },
+    listContent: { padding: 16, paddingBottom: 20 },
+    bubbleWrapper: { width: '100%', marginBottom: 12 },
+    bubbleContainer: { maxWidth: '85%' },
     bubble: {
-        maxWidth: "78%",
-        padding: 12,
-        borderRadius: 16,
-        marginBottom: 8,
+        paddingHorizontal: 16,
+        paddingVertical: 10,
+        borderRadius: 22,
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.05,
+        shadowRadius: 5,
+        elevation: 1,
     },
     bubbleMe: {
         backgroundColor: color.primary,
-        alignSelf: "flex-end",
         borderBottomRightRadius: 4,
     },
     bubbleOther: {
         backgroundColor: "white",
-        alignSelf: "flex-start",
         borderBottomLeftRadius: 4,
         borderWidth: 1,
-        borderColor: color.border,
+        borderColor: "#F1F5F9",
     },
-    bubbleText: { fontSize: 14, color: color.textMain, lineHeight: 20 },
+    bubbleText: { fontSize: 14, color: "#334155", lineHeight: 20, fontWeight: '500' },
     bubbleTextMe: { color: "white" },
-    bubbleTime: { fontSize: 10, color: color.textLight, marginTop: 4, textAlign: "right" },
-    bubbleTimeMe: { color: "rgba(255,255,255,0.7)" },
-    inputBar: {
-        flexDirection: "row",
-        alignItems: "flex-end",
-        padding: 12,
-        backgroundColor: "white",
-        borderTopWidth: 1,
-        borderTopColor: color.border,
-        gap: 10,
-    },
-    input: {
-        flex: 1,
-        backgroundColor: color.background,
-        borderRadius: 20,
+    bubbleFooter: { flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', marginTop: 4 },
+    bubbleTime: { fontSize: 10, color: "#94A3B8", fontWeight: "600" },
+    bubbleTimeMe: { color: "rgba(255,255,255,0.8)" },
+    inputContainer: {
+        flexDirection: 'row',
+        alignItems: 'flex-end',
         paddingHorizontal: 16,
+        paddingVertical: 12,
+        backgroundColor: 'white',
+        borderTopWidth: 1,
+        borderTopColor: '#F1F5F9',
+        gap: 12,
+    },
+    textInput: {
+        flex: 1,
+        backgroundColor: '#F8FAFC',
+        borderRadius: 24,
+        paddingHorizontal: 20,
         paddingVertical: 10,
-        maxHeight: 100,
+        paddingTop: 10,
         fontSize: 14,
         color: color.textMain,
+        maxHeight: 120,
         borderWidth: 1,
-        borderColor: color.border,
+        borderColor: '#E2E8F0',
     },
     sendBtn: {
         backgroundColor: color.primary,
-        width: 40,
-        height: 40,
-        borderRadius: 20,
+        width: 48,
+        height: 48,
+        borderRadius: 24,
         justifyContent: "center",
         alignItems: "center",
     },
@@ -243,6 +269,7 @@ const styles = StyleSheet.create({
         justifyContent: "center",
         alignItems: "center",
         gap: 16,
+        opacity: 0.5,
     },
     emptyText: { fontSize: 14, color: color.textLight, fontWeight: "600" },
     center: { flex: 1, justifyContent: "center", alignItems: "center" },

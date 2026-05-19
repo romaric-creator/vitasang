@@ -7,7 +7,10 @@ import {
   FlatList,
   RefreshControl,
   Platform,
+  StatusBar,
 } from "react-native";
+import { TabBarIcon } from "@/components/TabBarIcon";
+import { PrimaryButton } from "@/components/PrimaryButton";
 import { SkeletonListLoader } from "@/components/SkeletonLoader";
 import { useRouter } from "expo-router";
 import { PageHeader } from "@/components/PageHeader";
@@ -96,17 +99,26 @@ export default function Historique() {
 
   return (
     <ThemedView style={styles.container}>
-      <PageHeader title={t("history.title")} />
+      <StatusBar barStyle="dark-content" />
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+          <TabBarIcon name="arrow-left" size={20} color={color.textMain} />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>{t("history.title") || "Historique des dons"}</Text>
+        <View style={{ width: 40 }} />
+      </View>
 
-      {donations.length === 0 ? (
+      {donations.length === 0 && !isLoading ? (
         <View style={styles.centerContent}>
-          <Text style={styles.emptyText}>{t("history.empty")}</Text>
-          <TouchableOpacity
-            style={styles.button}
+          <View style={styles.emptyIconBox}>
+            <TabBarIcon name="history" size={48} color={color.textMuted} />
+          </View>
+          <Text style={styles.emptyText}>{t("history.empty") || "Aucun don enregistré pour le moment."}</Text>
+          <PrimaryButton
+            title={t("history.createAlert") || "Lancer une alerte"}
             onPress={() => router.push("/(tabs)")}
-          >
-            <Text style={styles.buttonText}>{t("history.createAlert")}</Text>
-          </TouchableOpacity>
+            style={styles.emptyBtn}
+          />
         </View>
       ) : (
         <FlatList
@@ -116,13 +128,9 @@ export default function Historique() {
           refreshControl={
             <RefreshControl refreshing={isRefetching} onRefresh={refetch} colors={[color.primary]} />
           }
-          scrollEnabled={true}
           contentContainerStyle={styles.listContent}
           showsVerticalScrollIndicator={false}
-          initialNumToRender={8}
-          maxToRenderPerBatch={10}
-          windowSize={5}
-          removeClippedSubviews={Platform.OS === 'android'}
+          ListHeaderComponent={isLoading ? <SkeletonListLoader count={4} itemHeight={120} /> : null}
         />
       )}
     </ThemedView>
@@ -132,34 +140,58 @@ export default function Historique() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingHorizontal: 16,
-    paddingTop: 8,
-    backgroundColor: color.screenBackground,
+    backgroundColor: color.background,
+  },
+  header: {
+    paddingTop: 60,
+    paddingBottom: 20,
+    paddingHorizontal: 20,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    backgroundColor: "white",
+    borderBottomWidth: 1,
+    borderBottomColor: color.borderLight,
+  },
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: "800",
+    color: color.textMain,
+  },
+  backBtn: {
+    width: 40,
+    height: 40,
+    justifyContent: "center",
+  },
+  listContent: {
+    padding: 16,
+    paddingBottom: 40,
   },
   centerContent: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
+    padding: 40,
   },
-  listContent: {
-    paddingBottom: 20,
+  emptyIconBox: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: "white",
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: color.borderLight,
   },
   emptyText: {
     fontSize: 15,
-    color: color.textLight,
+    color: color.textSecondary,
     textAlign: "center",
-    marginBottom: 20,
+    marginBottom: 32,
+    fontWeight: "600",
   },
-  button: {
-    backgroundColor: color.primary,
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 10,
-    alignItems: "center",
-  },
-  buttonText: {
-    color: "#fff",
-    fontSize: 14,
-    fontWeight: "700",
+  emptyBtn: {
+    width: "100%",
   },
 });

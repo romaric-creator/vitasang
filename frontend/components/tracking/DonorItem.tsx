@@ -14,7 +14,7 @@ export const DonorItem = ({ item }: DonorItemProps) => {
     <View style={styles.donorItem}>
       <View style={styles.donorAvatar}>
         <Text style={styles.avatarText}>
-          {item.donneur.charAt(0)}
+          {item.donneur?.charAt(0)?.toUpperCase() || "?"}
         </Text>
       </View>
       <View style={styles.donorInfo}>
@@ -25,22 +25,15 @@ export const DonorItem = ({ item }: DonorItemProps) => {
             <>
               <Text style={styles.distanceDot}>•</Text>
               <View style={styles.distanceBadge}>
-                <TabBarIcon name="map-marker" size={10} color="#64748B" />
+                <TabBarIcon name="map-marker" size={10} color={color.textSecondary} />
                 <Text style={styles.distanceText}>{item.distance} km</Text>
               </View>
             </>
           )}
         </View>
       </View>
-      <View
-        style={[
-          styles.miniStatus,
-          { backgroundColor: itemUI.color + "15" },
-        ]}
-      >
-        <Text
-          style={[styles.miniStatusText, { color: itemUI.color }]}
-        >
+      <View style={[styles.miniStatus, { backgroundColor: itemUI.color + "15" }]}>
+        <Text style={[styles.miniStatusText, { color: itemUI.color }]}>
           {itemUI.label}
         </Text>
       </View>
@@ -54,8 +47,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
     backgroundColor: "white",
     padding: 14,
-    borderRadius: 22,
+    borderRadius: 20,
     marginBottom: 10,
+    borderWidth: 1,
+    borderColor: color.borderLight,
     shadowColor: "#000",
     shadowOpacity: 0.02,
     shadowRadius: 5,
@@ -64,25 +59,25 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 14,
-    backgroundColor: "#F1F5F9",
+    backgroundColor: color.primaryGhost,
     justifyContent: "center",
     alignItems: "center",
   },
-  avatarText: { fontWeight: "800", color: color.primary, fontSize: 16 },
-  donorInfo: { flex: 1, marginLeft: 15 },
-  donorName: { fontSize: 15, fontWeight: "700", color: "#1E293B" },
-  donorSub: { fontSize: 11, color: "#94A3B8", marginTop: 2 },
-  distanceDot: { color: "#CBD5E1", fontSize: 12 },
+  avatarText: { fontWeight: "800", color: color.primary, fontSize: 18 },
+  donorInfo: { flex: 1, marginLeft: 12 },
+  donorName: { fontSize: 15, fontWeight: "700", color: color.textMain },
+  donorSub: { fontSize: 11, color: color.textSecondary, marginTop: 2 },
+  distanceDot: { color: color.borderLight, fontSize: 12 },
   distanceBadge: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#F1F5F9",
+    backgroundColor: color.surfaceDark,
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 6,
     gap: 4,
   },
-  distanceText: { fontSize: 10, fontWeight: "700", color: "#64748B" },
+  distanceText: { fontSize: 10, fontWeight: "700", color: color.textSecondary },
   miniStatus: { paddingHorizontal: 10, paddingVertical: 5, borderRadius: 10 },
   miniStatusText: { fontSize: 10, fontWeight: "800" },
 });

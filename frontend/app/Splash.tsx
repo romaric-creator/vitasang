@@ -1,9 +1,10 @@
-import React, { useEffect } from "react";
-import { View, Text, Image, StyleSheet, TouchableOpacity } from "react-native";
+import React from "react";
+import { View, Text, Image, StyleSheet } from "react-native";
 import ThemedView from "@/components/ThemedView";
 import { color } from "@/constant/color";
 import { router } from "expo-router";
 import { useTranslation } from "react-i18next";
+import { PrimaryButton } from "@/components/PrimaryButton";
 
 export default function Splash({
   showButtons = true,
@@ -17,6 +18,7 @@ export default function Splash({
         <Image
           source={require("@/assets/images/logo.png")}
           style={styles.logo}
+          accessible={false}
         />
         <Text style={styles.appName}>VitaSang</Text>
         <Text style={styles.tagline}>{t("home.tagline")}</Text>
@@ -24,12 +26,10 @@ export default function Splash({
 
       {showButtons && (
         <View style={styles.buttonContainer}>
-          <TouchableOpacity
-            style={styles.primaryButton}
+          <PrimaryButton
+            title={t("common.actions.start")}
             onPress={() => router.push("/OnboardingCarousel")}
-          >
-            <Text style={styles.primaryButtonText}>{t("common.actions.start")}</Text>
-          </TouchableOpacity>
+          />
         </View>
       )}
     </ThemedView>
@@ -39,7 +39,7 @@ export default function Splash({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: color.primary,
+    backgroundColor: color.secondary,
     alignItems: "center",
     justifyContent: "space-between",
     paddingVertical: 60,
@@ -51,7 +51,7 @@ const styles = StyleSheet.create({
     marginTop: 40,
   },
   logo: {
-    height: 180,
+    height: 160,
     width: 160,
     resizeMode: "contain",
     marginBottom: 24,
@@ -59,55 +59,20 @@ const styles = StyleSheet.create({
   appName: {
     fontSize: 36,
     fontWeight: "800",
-    color: color.background,
+    color: color.textWhite,
     marginBottom: 12,
     letterSpacing: 0.5,
   },
   tagline: {
     fontSize: 14,
-    color: "rgba(255, 255, 255, 0.8)",
+    color: color.textWhite,
     fontWeight: "600",
     letterSpacing: 0.3,
+    opacity: 0.8,
   },
   buttonContainer: {
     width: "100%",
     paddingHorizontal: 24,
-    gap: 12,
     marginBottom: 20,
-  },
-  primaryButton: {
-    backgroundColor: color.background,
-    paddingHorizontal: 20,
-    borderRadius: 28,
-    paddingVertical: 16,
-    alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 6,
-    elevation: 6,
-  },
-  primaryButtonText: {
-    fontSize: 15,
-    color: color.primary,
-    fontWeight: "800",
-    letterSpacing: 0.4,
-    textTransform: "uppercase",
-  },
-  secondaryButton: {
-    backgroundColor: "transparent",
-    paddingHorizontal: 20,
-    borderRadius: 28,
-    paddingVertical: 16,
-    alignItems: "center",
-    borderColor: color.background,
-    borderWidth: 2,
-  },
-  secondaryButtonText: {
-    fontSize: 15,
-    color: color.background,
-    fontWeight: "800",
-    letterSpacing: 0.4,
-    textTransform: "uppercase",
   },
 });
