@@ -54,21 +54,21 @@ export function Hero() {
             L'application qui connecte instantanément les banques de sang, les familles et les donneurs bénévoles au Cameroun.
           </p>
 
-          <div className="reveal mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row md:justify-start">
+          <div className="reveal mt-10 flex flex-wrap items-center justify-center gap-3 md:justify-start">
             <a
               href="#download"
               aria-label="S'inscrire pour le lancement de VitaSang"
-              className="group relative inline-flex min-w-[260px] items-center justify-center gap-2 overflow-hidden rounded-full bg-primary px-10 py-4 text-base font-bold text-primary-foreground shadow-[var(--shadow-elegant)] transition-all hover:bg-primary-glow hover:scale-105 active:scale-95"
+              className="inline-flex items-center justify-center gap-2 rounded-full bg-primary px-8 py-4 text-base font-bold text-white shadow-lg transition-all hover:bg-primary/90 hover:scale-105 active:scale-95"
             >
-              <Bell size={20} className="stroke-[1.5]" />
+              <Bell size={18} className="stroke-[1.5]" />
               Rejoindre le mouvement
             </a>
             <a
               href="#problem"
               aria-label="Pourquoi VitaSang est indispensable ?"
-              className="inline-flex items-center gap-2 rounded-full border-2 border-primary/20 bg-white px-7 py-4 text-base font-bold text-primary transition-all hover:border-primary hover:shadow-md"
+              className="inline-flex items-center gap-2 rounded-full border-2 border-primary/30 bg-white px-7 py-4 text-base font-bold text-primary transition-all hover:border-primary hover:shadow-md"
             >
-              <Heart size={20} className="stroke-[1.5]" />
+              <Heart size={18} className="stroke-[1.5]" />
               Découvrir l'urgence
             </a>
           </div>

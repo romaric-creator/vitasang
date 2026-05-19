@@ -88,6 +88,7 @@ if (process.env.NODE_ENV !== "production") {
 const userRoute = require("./routes/users.routes");
 const alertRoute = require("./routes/alerts.routes");
 const messagesRoute = require("./routes/messages.routes");
+const waitlistRoute = require("./routes/waitlist.routes");
 
 // DISABLED ROUTES - Only alerts, messages, and profile management enabled
 // const rendezvousRoute = require("./routes/rendezvous.routes");
@@ -102,10 +103,11 @@ app.use("/api/users/login", authLimiter);
 // Global rate limiter
 app.use(globalLimiter);
 
-// ENABLED ROUTES: Users (Profile), Alerts, Messages
+// ENABLED ROUTES: Users (Profile), Alerts, Messages, Waitlist
 app.use("/api/users", userRoute);
 app.use("/api/alerts", alertRoute);
 app.use("/api/messages", messagesRoute);
+app.use("/api/waitlist", waitlistRoute);
 
 // DISABLED ROUTES
 // app.use("/api/rendez-vous", rendezvousRoute);
