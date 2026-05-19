@@ -77,7 +77,7 @@ export default function AideEtConseilScreen() {
       id: 4,
       title: t("helpAndAdvice.sectionWhoCanDonateTitle"),
       icon: "users",
-      color: color.info,
+      color: color.accent,
       items: [
         t("helpAndAdvice.sectionWhoCanDonateItem1"),
         t("helpAndAdvice.sectionWhoCanDonateItem2"),
@@ -163,7 +163,7 @@ export default function AideEtConseilScreen() {
         </TouchableOpacity>
 
         <View style={styles.infoBanner}>
-          <TabBarIcon name="info-circle" size={20} color={color.info} />
+          <TabBarIcon name="info-circle" size={20} color={color.accent} />
           <Text style={styles.infoText}>{t("helpAndAdvice.infoBanner")}</Text>
         </View>
       </ScrollView>
@@ -203,7 +203,7 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: "#FFF0F0",
+    backgroundColor: color.primaryGhost,
     justifyContent: "center",
     alignItems: "center",
     marginBottom: 16,
@@ -256,7 +256,7 @@ const styles = StyleSheet.create({
     fontWeight: "800",
   },
   infoBanner: {
-    backgroundColor: "#EFF6FF",
+    backgroundColor: color.accentLight,
     borderRadius: 14,
     padding: 14,
     flexDirection: "row",
@@ -264,12 +264,12 @@ const styles = StyleSheet.create({
     alignItems: "flex-start",
     marginBottom: 20,
     borderWidth: 1,
-    borderColor: color.info,
+    borderColor: color.accent,
   },
   infoText: {
     flex: 1,
     fontSize: 12,
-    color: color.info,
+    color: color.accent,
     fontWeight: "600",
     lineHeight: 16,
   },

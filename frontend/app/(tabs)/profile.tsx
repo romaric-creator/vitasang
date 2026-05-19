@@ -314,6 +314,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingBottom: 40,
+    zIndex: 0,
   },
   redHeader: {
     backgroundColor: color.primary,
@@ -323,7 +324,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     borderBottomLeftRadius: 32,
     borderBottomRightRadius: 32,
-    zIndex: 2,
   },
   headerTop: {
     flexDirection: "row",
@@ -419,7 +419,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     marginTop: -24,
     marginBottom: 24,
-    zIndex: 1,
+    zIndex: 3,
+    elevation: 6,
   },
   statsCard: {
     flexDirection: "row",

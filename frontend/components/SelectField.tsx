@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
 import { formStyles } from '../styles/formStyles';
+import { color } from '../constant/color';
 
 interface SelectOption {
   label: string;
@@ -34,12 +35,12 @@ export const SelectField: React.FC<SelectFieldProps> = ({
     <View style={formStyles.field}>
       <Text style={formStyles.label}>
         {label}
-        {required && <Text style={{ color: '#e74c3c' }}>*</Text>}
+        {required && <Text style={{ color: color.primary }}>*</Text>}
       </Text>
       <ScrollView 
         style={[
           formStyles.groupSegment,
-          isError && { borderColor: '#e74c3c' }
+          isError && { borderColor: color.primary }
         ]}
         scrollEnabled={false}
       >

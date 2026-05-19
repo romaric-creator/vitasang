@@ -1,25 +1,74 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     StyleSheet,
     Text,
     View,
     Switch,
     ScrollView,
-    TouchableOpacity
+    ActivityIndicator,
 } from 'react-native';
 import ThemedView from '@/components/ThemedView';
 import { PageHeader } from '@/components/PageHeader';
 import { color } from '@/constant/color';
 import { TabBarIcon } from '@/components/TabBarIcon';
-
 import { useTranslation } from 'react-i18next';
+import { useAuth } from '@/context/AuthContext';
+import { useUserProfile } from '@/hooks/useAuth';
+import { updateDonorProfile } from '@/services/user.service';
+import { useToast } from '@/context/ToastContext';
 
 export default function NotificationsSettings() {
     const { t } = useTranslation();
+    const { user: authUser } = useAuth();
+    const { success, error: showError } = useToast();
+    const userId = authUser?.id_utilisateur ?? authUser?.id ?? null;
+    const profileQuery = useUserProfile(userId as number, !!userId);
+    const userData = profileQuery.data?.user;
+
     const [pushEnabled, setPushEnabled] = useState(true);
+    const [emailEnabled, setEmailEnabled] = useState(false);
     const [smsEnabled, setSmsEnabled] = useState(false);
-    const [emailEnabled, setEmailEnabled] = useState(true);
     const [urgentOnly, setUrgentOnly] = useState(false);
+    const [saving, setSaving] = useState<string | null>(null);
+
+    useEffect(() => {
+        if (userData) {
+            setPushEnabled(userData.push_notifications ?? true);
+            setEmailEnabled(userData.email_notifications ?? false);
+            setSmsEnabled(userData.sms_notifications ?? false);
+            setUrgentOnly(userData.urgent_only ?? false);
+        }
+    }, [userData]);
+
+    const handleToggle = async (field: string, value: boolean, setter: (v: boolean) => void) => {
+        if (!userId || saving) return;
+        setter(value);
+        setSaving(field);
+        try {
+            await updateDonorProfile(userId as number, { [field]: value });
+            success(t('notifications.saved') || 'Préférences enregistrées');
+        } catch (err) {
+            setter(!value);
+            showError(t('notifications.error') || 'Erreur lors de la mise à jour');
+        } finally {
+            setSaving(null);
+        }
+    };
+
+    const renderSwitch = (field: string, value: boolean, setter: (v: boolean) => void) => {
+        if (saving === field) {
+            return <ActivityIndicator size="small" color={color.primary} />;
+        }
+        return (
+            <Switch
+                trackColor={{ false: color.borderLight, true: color.primary }}
+                thumbColor={color.surface}
+                onValueChange={(v) => handleToggle(field, v, setter)}
+                value={value}
+                disabled={!!saving}
+            />
+        );
+    };
 
     return (
         <ThemedView style={styles.container}>
@@ -32,60 +81,45 @@ export default function NotificationsSettings() {
                 <View style={styles.card}>
                     <View style={styles.settingRow}>
                         <View style={styles.settingLeft}>
-                            <View style={[styles.iconBox, { backgroundColor: '#E3F2FD' }]}>
-                                <TabBarIcon name="bell-o" size={18} color="#2196F3" />
+                            <View style={[styles.iconBox, { backgroundColor: color.accentLight }]}>
+                                <TabBarIcon name="bell-o" size={18} color={color.accent} />
                             </View>
-                            <View>
+                            <View style={{ flex: 1 }}>
                                 <Text style={styles.settingTitle}>{t('notifications.push.title')}</Text>
                                 <Text style={styles.settingDesc}>{t('notifications.push.desc')}</Text>
                             </View>
                         </View>
-                        <Switch
-                            trackColor={{ false: '#D1D5DB', true: color.primary }}
-                            thumbColor={'#ffffff'}
-                            onValueChange={setPushEnabled}
-                            value={pushEnabled}
-                        />
+                        {renderSwitch('push_notifications', pushEnabled, setPushEnabled)}
                     </View>
 
                     <View style={styles.divider} />
 
                     <View style={styles.settingRow}>
                         <View style={styles.settingLeft}>
-                            <View style={[styles.iconBox, { backgroundColor: '#E8F5E9' }]}>
-                                <TabBarIcon name="envelope-o" size={18} color="#4CAF50" />
+                            <View style={[styles.iconBox, { backgroundColor: color.successLight }]}>
+                                <TabBarIcon name="envelope-o" size={18} color={color.success} />
                             </View>
-                            <View>
+                            <View style={{ flex: 1 }}>
                                 <Text style={styles.settingTitle}>{t('notifications.email.title')}</Text>
                                 <Text style={styles.settingDesc}>{t('notifications.email.desc')}</Text>
                             </View>
                         </View>
-                        <Switch
-                            trackColor={{ false: '#D1D5DB', true: color.primary }}
-                            thumbColor={'#ffffff'}
-                            onValueChange={setEmailEnabled}
-                            value={emailEnabled}
-                        />
+                        {renderSwitch('email_notifications', emailEnabled, setEmailEnabled)}
                     </View>
 
                     <View style={styles.divider} />
 
                     <View style={styles.settingRow}>
                         <View style={styles.settingLeft}>
-                            <View style={[styles.iconBox, { backgroundColor: '#FFF3E0' }]}>
-                                <TabBarIcon name="commenting-o" size={18} color="#FF9800" />
+                            <View style={[styles.iconBox, { backgroundColor: color.warningLight }]}>
+                                <TabBarIcon name="commenting-o" size={18} color={color.warning} />
                             </View>
-                            <View>
+                            <View style={{ flex: 1 }}>
                                 <Text style={styles.settingTitle}>{t('notifications.sms.title')}</Text>
                                 <Text style={styles.settingDesc}>{t('notifications.sms.desc')}</Text>
                             </View>
                         </View>
-                        <Switch
-                            trackColor={{ false: '#D1D5DB', true: color.primary }}
-                            thumbColor={'#ffffff'}
-                            onValueChange={setSmsEnabled}
-                            value={smsEnabled}
-                        />
+                        {renderSwitch('sms_notifications', smsEnabled, setSmsEnabled)}
                     </View>
                 </View>
 
@@ -94,20 +128,15 @@ export default function NotificationsSettings() {
                 <View style={styles.card}>
                     <View style={styles.settingRow}>
                         <View style={styles.settingLeft}>
-                            <View style={[styles.iconBox, { backgroundColor: color.dangerLight }]}>
-                                <TabBarIcon name="exclamation-circle" size={18} color={color.primary} />
+                            <View style={[styles.iconBox, { backgroundColor: color.errorLight }]}>
+                                <TabBarIcon name="exclamation-circle" size={18} color={color.error} />
                             </View>
-                            <View>
+                            <View style={{ flex: 1 }}>
                                 <Text style={styles.settingTitle}>{t('notifications.urgentOnly.title')}</Text>
                                 <Text style={styles.settingDesc}>{t('notifications.urgentOnly.desc')}</Text>
                             </View>
                         </View>
-                        <Switch
-                            trackColor={{ false: '#D1D5DB', true: color.primary }}
-                            thumbColor={'#ffffff'}
-                            onValueChange={setUrgentOnly}
-                            value={urgentOnly}
-                        />
+                        {renderSwitch('urgent_only', urgentOnly, setUrgentOnly)}
                     </View>
                 </View>
 
@@ -140,22 +169,22 @@ const styles = StyleSheet.create({
         letterSpacing: 0.5,
     },
     card: {
-        backgroundColor: 'white',
+        backgroundColor: color.surface,
         borderRadius: 16,
         padding: 12,
-        shadowColor: '#000',
+        shadowColor: color.shadow,
         shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.05,
+        shadowOpacity: 1,
         shadowRadius: 8,
         elevation: 2,
         borderWidth: 1,
-        borderColor: color.border,
+        borderColor: color.borderLight,
     },
     settingRow: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        paddingVertical: 6,
+        paddingVertical: 8,
     },
     settingLeft: {
         flexDirection: 'row',
@@ -183,8 +212,8 @@ const styles = StyleSheet.create({
     },
     divider: {
         height: 1,
-        backgroundColor: color.border,
-        marginVertical: 10,
+        backgroundColor: color.borderLight,
+        marginVertical: 8,
     },
     infoText: {
         fontSize: 11,

@@ -58,6 +58,9 @@ export const color = {
   error: "#DC2626",
   errorLight: "#FEE2E2",
   danger: "#DC2626",
+  dangerLight: "#FEE2E2",
+  info: "#2563EB",
+  infoLight: "#EFF6FF",
 
   // Dark Mode (Optionnel)
   darkBg: "#0F172A",
