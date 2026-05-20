@@ -44,6 +44,7 @@ module.exports = (sequelize, DataTypes) => {
           "en_cours",
           "resolu",
           "annule",
+          "expire",
         ),
         defaultValue: "en_cours",
       },

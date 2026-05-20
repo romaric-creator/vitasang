@@ -64,6 +64,11 @@ router.post(
 router.get("/pending", isAdmin, alertsController.getPendingAlerts);
 
 /**
+ * Get alerts accepted by the current donor
+ */
+router.get("/accepted", alertsController.getAcceptedAlerts);
+
+/**
  * Get current user's created alerts
  */
 router.get("/my-alerts", alertsController.getUserAlerts);

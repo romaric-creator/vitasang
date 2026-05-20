@@ -63,6 +63,7 @@ function AlertePage() {
   if (error || !alerte) return <AlerteNotFound />;
   if (alerte.statut === "resolu") return <AlerteResolue groupe={alerte.groupe} />;
   if (alerte.statut === "annule") return <AlerteAnnulee />;
+  if (alerte.statut === "expire") return <AlerteExpiree />;
 
   const cfg = URGENCE_CONFIG[alerte.urgence] ?? URGENCE_CONFIG.URGENT;
   const timeAgo = getTimeAgo(alerte.date);
@@ -478,6 +479,22 @@ function AlerteAnnulee() {
       </div>
       <h1 className="text-2xl font-black text-gray-700">Alerte annulée</h1>
       <p className="text-gray-500 mt-2 text-sm">Cette demande a été annulée.</p>
+      <Link to="/" className="mt-6 text-[#9E2016] font-bold underline text-sm">Retour à l'accueil</Link>
+    </div>
+  );
+}
+
+function AlerteExpiree() {
+  return (
+    <div className="min-h-screen flex flex-col items-center justify-center p-8 bg-[#f8f8f8] text-center">
+      <div className="w-16 h-16 rounded-full bg-orange-50 flex items-center justify-center mb-4">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="10" />
+          <polyline points="12 6 12 12 16 14" />
+        </svg>
+      </div>
+      <h1 className="text-2xl font-black text-gray-700">Alerte expirée</h1>
+      <p className="text-gray-500 mt-2 text-sm max-w-xs">Cette demande date de plus de 72h et n'est plus active.</p>
       <Link to="/" className="mt-6 text-[#9E2016] font-bold underline text-sm">Retour à l'accueil</Link>
     </div>
   );

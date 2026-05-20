@@ -241,6 +241,20 @@ exports.respondToAlertByToken = async (req, res, next) => {
       }
     }
 
+    // Créer un message système pour l'initiateur (donneur invité via lien)
+    if (reponse === "accepte" && alerte.id_initiateur) {
+      try {
+        await db.Message.create({
+          id_expediteur: alerte.id_initiateur,
+          id_destinataire: alerte.id_initiateur,
+          contenu: `[SYSTÈME] Un donneur via lien a répondu : ${nom}, ${telephone}. Contactez-le sur WhatsApp.`,
+          est_lu: false,
+        });
+      } catch (err) {
+        logger.error("[respondToAlertByToken] Failed to create system message", { error: err.message });
+      }
+    }
+
     res.json({
       success: true,
       message: reponse === "accepte" ? "Merci ! L'équipe va vous contacter." : "Réponse enregistrée.",
@@ -249,6 +263,28 @@ exports.respondToAlertByToken = async (req, res, next) => {
   } catch (error) {
     next(error);
   }
+};
+
+exports.getAcceptedAlerts = async (req, res, next) => {
+  try {
+    const notifications = await LogNotification.findAll({
+      where: { id_utilisateur: req.user.id, statut_reception: "accepte" },
+      include: [{ model: db.Alerte, as: "alerte", include: [{ model: db.Utilisateur, as: "initiateur", attributes: ["id_utilisateur", "nom", "prenom", "telephone"] }] }],
+      order: [["date_envoi", "DESC"]],
+    });
+    const alertes = notifications.map(n => ({
+      id: n.alerte.id_alerte,
+      groupe: n.alerte.groupe_requis,
+      lieu: n.alerte.lieu,
+      urgence: n.alerte.degre_urgence,
+      statut: n.alerte.statut,
+      quantite_requise: n.alerte.quantite_requise,
+      createdAt: n.alerte.createdAt,
+      telephone_contact: n.alerte.telephone_contact,
+      initiateur: n.alerte.initiateur ? { id: n.alerte.initiateur.id_utilisateur, nom: n.alerte.initiateur.nom, prenom: n.alerte.initiateur.prenom, telephone: n.alerte.initiateur.telephone } : null,
+    }));
+    res.json({ success: true, alertes });
+  } catch (error) { next(error); }
 };
 
 exports.confirmDonation = async (req, res, next) => {

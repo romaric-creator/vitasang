@@ -23,4 +23,31 @@ cron.schedule('0 3 * * 0', async () => {
     }
 });
 
+// Expiration des alertes après 72h — toutes les heures
+cron.schedule('0 * * * *', async () => {
+    try {
+        logger.info("Running alert expiration job...");
+        const seventyTwoHoursAgo = new Date();
+        seventyTwoHoursAgo.setHours(seventyTwoHoursAgo.getHours() - 72);
+
+        const [updatedCount] = await db.Alerte.update(
+            { statut: "expire" },
+            {
+                where: {
+                    statut: "en_cours",
+                    createdAt: {
+                        [db.Sequelize.Op.lt]: seventyTwoHoursAgo
+                    }
+                }
+            }
+        );
+
+        if (updatedCount > 0) {
+            logger.info(`Alert expiration completed. Expired ${updatedCount} alerts.`);
+        }
+    } catch (err) {
+        logger.error("Alert expiration cron job failed:", err);
+    }
+});
+
 module.exports = cron;

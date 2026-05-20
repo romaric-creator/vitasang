@@ -278,6 +278,22 @@ class AlertService {
               error: error.message,
             });
           }
+
+          // Créer un message automatique dans la messagerie interne
+          try {
+            const donor = await Utilisateur.findByPk(userId, { transaction });
+            if (donor && alerte.id_initiateur) {
+              await db.Message.create({
+                id_expediteur: userId,
+                id_destinataire: alerte.id_initiateur,
+                contenu: `Bonjour, j'ai accepté votre demande de don de sang ${alerte.groupe_requis}. Je suis disponible pour donner.`,
+                est_lu: false,
+              }, { transaction });
+              logger.info("[AlertService.respondToAlert] Auto-message created", { alertId, donorId: userId, initiatorId: alerte.id_initiateur });
+            }
+          } catch (error) {
+            logger.error("[AlertService.respondToAlert] Failed to create auto-message", { alertId, error: error.message });
+          }
         }
       }
 
