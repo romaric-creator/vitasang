@@ -1,0 +1,21 @@
+{
+  "agentTeams": {
+    "vitasang": {
+      "name": "VitaSang - Équipe de développement",
+      "description": "Équipe d'ingénieurs spécialisés pour le projet de don de sang",
+      "agents": {
+        "orchestrator": { "path": ".claude/agents/orchestrator.md", "type": "coordinator" },
+        "backend-engineer": { "path": ".claude/agents/backend-engineer.md", "type": "developer" },
+        "frontend-mobile": { "path": ".claude/agents/frontend-mobile.md", "type": "developer" },
+        "web-landing": { "path": ".claude/agents/web-landing.md", "type": "developer" },
+        "devops": { "path": ".claude/agents/devops.md", "type": "infrastructure" },
+        "database": { "path": ".claude/agents/database.md", "type": "data" },
+        "security": { "path": ".claude/agents/security.md", "type": "security" },
+        "testing": { "path": ".claude/agents/testing.md", "type": "quality" },
+        "performance-scalability": { "path": ".claude/agents/performance-scalability.md", "type": "performance" },
+        "ui-ux-designer": { "path": ".claude/agents/ui-ux-designer.md", "type": "design" }
+      },
+      "defaultAgent": "orchestrator"
+    }
+  }
+}

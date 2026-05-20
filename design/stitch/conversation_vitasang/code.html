@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+
+<html class="light" lang="fr"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-primary-container": "#ffe5e1",
+                        "on-tertiary-fixed-variant": "#713700",
+                        "on-tertiary-fixed": "#301400",
+                        "on-surface-variant": "#59413d",
+                        "surface-tint": "#b02d21",
+                        "error-container": "#ffdad6",
+                        "on-error-container": "#93000a",
+                        "on-tertiary-container": "#ffe6d8",
+                        "on-error": "#ffffff",
+                        "surface-container": "#e3efff",
+                        "surface-container-lowest": "#ffffff",
+                        "primary-container": "#c0392b",
+                        "primary-fixed-dim": "#ffb4a9",
+                        "inverse-primary": "#ffb4a9",
+                        "tertiary-fixed-dim": "#ffb783",
+                        "surface-dim": "#c9dcf3",
+                        "on-secondary": "#ffffff",
+                        "on-background": "#091d2e",
+                        "secondary-fixed-dim": "#61de8a",
+                        "on-secondary-fixed": "#00210c",
+                        "error": "#ba1a1a",
+                        "surface-container-high": "#d9eaff",
+                        "surface-container-highest": "#d1e4fb",
+                        "on-primary-fixed": "#410000",
+                        "on-primary": "#ffffff",
+                        "tertiary": "#814000",
+                        "on-surface": "#091d2e",
+                        "outline-variant": "#e1bfb9",
+                        "background": "#f7f9ff",
+                        "surface": "#f7f9ff",
+                        "secondary": "#006d37",
+                        "secondary-fixed": "#7efba4",
+                        "outline": "#8d706c",
+                        "secondary-container": "#7bf8a1",
+                        "primary-fixed": "#ffdad5",
+                        "on-tertiary": "#ffffff",
+                        "on-primary-fixed-variant": "#8e130c",
+                        "surface-bright": "#f7f9ff",
+                        "primary": "#9e2016",
+                        "tertiary-container": "#a55400",
+                        "surface-container-low": "#edf4ff",
+                        "on-secondary-container": "#007239",
+                        "on-secondary-fixed-variant": "#005228",
+                        "inverse-surface": "#203243",
+                        "inverse-on-surface": "#e8f2ff",
+                        "surface-variant": "#d1e4fb",
+                        "tertiary-fixed": "#ffdcc5"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "stack-lg": "32px",
+                        "gutter": "16px",
+                        "stack-md": "24px",
+                        "container-margin": "20px",
+                        "base": "8px",
+                        "stack-sm": "12px"
+                    },
+                    "fontFamily": {
+                        "label-sm": ["Inter"],
+                        "screen-title": ["Inter"],
+                        "body-md": ["Inter"],
+                        "section-title": ["Inter"],
+                        "button-text": ["Inter"]
+                    },
+                    "fontSize": {
+                        "label-sm": ["12px", {"lineHeight": "16px", "fontWeight": "500"}],
+                        "screen-title": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                        "section-title": ["18px", {"lineHeight": "24px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                        "button-text": ["16px", {"lineHeight": "24px", "fontWeight": "600"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            display: inline-block;
+            line-height: 1;
+            text-transform: none;
+            letter-spacing: normal;
+            word-wrap: normal;
+            white-space: nowrap;
+            direction: ltr;
+        }
+        body { font-family: 'Inter', sans-serif; background-color: #f7f9ff; }
+        .chat-area { background-color: #F5F5F5; }
+        .message-received { border-radius: 16px 16px 16px 4px; }
+        .message-sent { border-radius: 16px 16px 4px 16px; background-color: #C0392B; }
+        .alert-banner { background-color: #FDECEA; }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="flex flex-col h-screen text-on-surface">
+<!-- TopAppBar -->
+<header class="flex items-center justify-between px-container-margin w-full fixed top-0 z-50 bg-surface-container-lowest border-b border-surface-container h-[56px]">
+<button class="active:opacity-70 transition-all text-primary">
+<span class="material-symbols-outlined">arrow_back</span>
+</button>
+<div class="flex flex-col items-center">
+<div class="flex items-center gap-2">
+<img alt="Dr. Sarah Mendy" class="w-8 h-8 rounded-full object-cover" data-alt="A professional close-up portrait of a female doctor with a warm, confident expression. She is wearing a clean white medical coat in a bright, modern clinic environment. The lighting is soft and clinical, reflecting a high-end medical professional atmosphere with the brand's clean-room aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBf2n2MlS9AWgT8nG6ktA1A5HJDDKP7h4goWgjES_5Tz9tMvyQOv6P-gq6x7YGP04lTXQhL9iZ_GQmDb_j_TCQDeqS1U1jqqjlnphKlsZJFqQCfsTm01WKesZqx5CGSfhoX5Mnlo3sfflEP9spwW7zPRL1lsYr1oXZaWxza0MOmHz-WtuBEbV25fz9m-cyPciTOSxd0vF1_MrTuj74McbxERx1Gc9PqoOYvuSAFO2KrFF0fDgJGonOFIznCQnAhvQ-4jMcUfs6lAbCm"/>
+<span class="font-section-title text-body-md font-bold text-on-surface">Dr. Sarah Mendy</span>
+</div>
+<span class="text-[10px] font-semibold text-primary uppercase tracking-wider">Alerte O+ · Douala</span>
+</div>
+<button class="active:opacity-70 transition-all text-primary">
+<span class="material-symbols-outlined">call</span>
+</button>
+</header>
+<main class="flex flex-col pt-[56px] pb-[80px] h-full">
+<!-- ALERT CONTEXT BANNER -->
+<div class="alert-banner px-container-margin py-3 flex items-center justify-between border-b border-red-100">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-[20px]" style="font-variation-settings: 'FILL' 1;">error</span>
+<p class="text-label-sm text-on-surface-variant leading-tight">
+<span class="font-bold">Alerte liée :</span> O+ urgent · Hôpital Général
+                </p>
+</div>
+<button class="border border-primary text-primary px-3 py-1 rounded-lg text-[12px] font-semibold active:scale-95 transition-transform">
+                Voir l'alerte
+            </button>
+</div>
+<!-- MESSAGE AREA (Scrollable) -->
+<section class="chat-area flex-1 overflow-y-auto p-container-margin flex flex-col gap-6">
+<!-- Date Separator -->
+<div class="flex justify-center">
+<span class="bg-surface-container-highest/30 px-3 py-1 rounded-full text-[11px] font-medium text-outline">Aujourd'hui</span>
+</div>
+<!-- Received Message -->
+<div class="flex flex-col items-start max-w-[85%]">
+<div class="message-received bg-white p-3 shadow-sm border border-black/5">
+<p class="text-body-md text-on-surface">Bonjour, je suis en route pour l'Hôpital Général. Je devrais arriver dans 15 minutes.</p>
+</div>
+<span class="text-[11px] text-outline mt-1 ml-1">10:42</span>
+</div>
+<!-- Sent Message -->
+<div class="flex flex-col items-end max-w-[85%] self-end">
+<div class="message-sent p-3 shadow-md">
+<p class="text-body-md text-white">C'est parfait, nous vous attendons au service des urgences.</p>
+</div>
+<div class="flex items-center gap-1 mt-1 mr-1">
+<span class="text-[11px] text-outline">10:45</span>
+<span class="material-symbols-outlined text-[14px] text-primary" style="font-variation-settings: 'FILL' 0, 'wght' 700;">done_all</span>
+</div>
+</div>
+</section>
+</main>
+<!-- INPUT BAR (Fixed Bottom) -->
+<footer class="fixed bottom-0 left-0 w-full bg-white border-t border-surface-container-low px-container-margin py-3 pb-8 flex items-center gap-3 z-50">
+<button class="text-outline active:opacity-70">
+<span class="material-symbols-outlined">add</span>
+</button>
+<div class="flex-1 bg-[#F5F5F5] border border-outline-variant/30 rounded-full px-4 py-2">
+<input class="bg-transparent border-none focus:ring-0 w-full text-body-md placeholder:text-outline p-0" placeholder="Écrire un message..." type="text"/>
+</div>
+<button class="bg-primary w-[40px] h-[40px] rounded-full flex items-center justify-center text-white active:scale-90 transition-transform shadow-lg shadow-primary/20">
+<span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'wght' 700;">arrow_upward</span>
+</button>
+</footer>
+</body></html>

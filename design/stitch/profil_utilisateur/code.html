@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+
+<html lang="fr"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface": "#f7f9ff",
+                        "on-secondary-fixed-variant": "#005228",
+                        "primary-container": "#c0392b",
+                        "primary-fixed-dim": "#ffb4a9",
+                        "tertiary-fixed-dim": "#ffb783",
+                        "primary": "#9e2016",
+                        "surface-container-low": "#edf4ff",
+                        "on-primary-fixed-variant": "#8e130c",
+                        "on-error": "#ffffff",
+                        "on-error-container": "#93000a",
+                        "on-primary": "#ffffff",
+                        "on-secondary": "#ffffff",
+                        "surface-container-highest": "#d1e4fb",
+                        "secondary-fixed-dim": "#61de8a",
+                        "secondary": "#006d37",
+                        "on-surface": "#091d2e",
+                        "on-primary-fixed": "#410000",
+                        "inverse-primary": "#ffb4a9",
+                        "inverse-on-surface": "#e8f2ff",
+                        "error-container": "#ffdad6",
+                        "on-tertiary-fixed": "#301400",
+                        "on-background": "#091d2e",
+                        "surface-container-high": "#d9eaff",
+                        "on-primary-container": "#ffe5e1",
+                        "on-secondary-container": "#007239",
+                        "on-secondary-fixed": "#00210c",
+                        "on-tertiary-fixed-variant": "#713700",
+                        "inverse-surface": "#203243",
+                        "primary-fixed": "#ffdad5",
+                        "background": "#f7f9ff",
+                        "surface-bright": "#f7f9ff",
+                        "outline": "#8d706c",
+                        "on-tertiary-container": "#ffe6d8",
+                        "tertiary-container": "#a55400",
+                        "outline-variant": "#e1bfb9",
+                        "on-tertiary": "#ffffff",
+                        "tertiary": "#814000",
+                        "surface-tint": "#b02d21",
+                        "surface-container-lowest": "#ffffff",
+                        "secondary-container": "#7bf8a1",
+                        "surface-container": "#e3efff",
+                        "on-surface-variant": "#59413d",
+                        "surface-variant": "#d1e4fb",
+                        "error": "#ba1a1a",
+                        "surface-dim": "#c9dcf3",
+                        "tertiary-fixed": "#ffdcc5",
+                        "secondary-fixed": "#7efba4"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "stack-sm": "12px",
+                        "stack-lg": "32px",
+                        "container-margin": "20px",
+                        "base": "8px",
+                        "stack-md": "24px",
+                        "gutter": "16px"
+                    },
+                    "fontFamily": {
+                        "screen-title": ["Inter"],
+                        "button-text": ["Inter"],
+                        "label-sm": ["Inter"],
+                        "section-title": ["Inter"],
+                        "body-md": ["Inter"]
+                    },
+                    "fontSize": {
+                        "screen-title": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "button-text": ["16px", {"lineHeight": "24px", "fontWeight": "600"}],
+                        "label-sm": ["12px", {"lineHeight": "16px", "fontWeight": "500"}],
+                        "section-title": ["18px", {"lineHeight": "24px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                        "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; background-color: #f5f5f5; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        .profile-shadow { shadow: 0px 4px 12px rgba(44, 62, 80, 0.08); }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="text-on-surface">
+<!-- TopAppBar -->
+<header class="flex items-center justify-between px-container-margin w-full fixed top-0 z-50 bg-primary-container h-[56px]">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-white cursor-pointer">arrow_back</span>
+<h1 class="font-screen-title text-[20px] text-white">Profil</h1>
+</div>
+<span class="material-symbols-outlined text-white cursor-pointer">more_vert</span>
+</header>
+<main class="pb-24">
+<!-- Header Background (Red) -->
+<div class="bg-primary-container h-[200px] w-full pt-[56px] flex flex-col items-center">
+<!-- Profile Photo Section -->
+<div class="relative mt-4">
+<div class="w-[90px] h-[90px] rounded-full border-[3px] border-white overflow-hidden bg-surface-container-highest">
+<img alt="Profile" class="w-full h-full object-cover" data-alt="A professional and friendly portrait of a man in his late 20s with a warm smile, set against a clean and minimalist photographic studio background. The lighting is soft and high-key, emphasizing a clinical and trustworthy atmosphere. The overall aesthetic is modern and corporate, aligned with a high-end medical application's visual language, featuring soft neutral tones and sharp focus." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBbw9R6hlUuWFIrxKqtQNLzNogwfbII1UYrBldooX0wIt6smQw6Kp5kN85pVYrBsu81vY4uJDITPjCnwv0GdRot2Jyr3QvVAMDUupzdy6Iq8S_7mV6ADwTizOV2NiwXd61wzrLZ07E1lebAgANe25wnUVAfIzHLrxMYZM0jzZ3S-wjbXawjuQcbp7WL7hkH2XqEWfIAUW2jqVLuk-MUZ4WcNoUxf12a-kCU3PMUUJVuJ-ourFW2L7mLZa7dZGE2AY5nAyoqGJWeHJAl"/>
+</div>
+<div class="absolute bottom-0 right-0 bg-white rounded-full p-1.5 shadow-md flex items-center justify-center">
+<span class="material-symbols-outlined text-primary text-[16px]">edit</span>
+</div>
+</div>
+<!-- User Info -->
+<div class="text-center mt-3">
+<h2 class="text-white font-bold text-[22px]">Jean Dupont</h2>
+<div class="flex gap-2 mt-2 justify-center">
+<span class="bg-white text-primary-container px-4 py-0.5 rounded-full text-[12px] font-bold">O+</span>
+<span class="bg-secondary-container/20 text-on-secondary-fixed-variant border border-secondary/20 px-3 py-0.5 rounded-full text-[12px] font-medium flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+                        Disponible
+                    </span>
+</div>
+</div>
+</div>
+<!-- Stats Bar (Floating Card) -->
+<div class="px-container-margin -mt-8 relative z-10">
+<div class="bg-white rounded-xl p-4 flex justify-between items-center shadow-[0px_4px_12px_rgba(44,62,80,0.08)]">
+<div class="flex-1 text-center">
+<p class="text-primary font-bold text-[18px]">3</p>
+<p class="text-on-surface-variant text-[12px]">Dons</p>
+</div>
+<div class="h-8 w-[1px] bg-outline-variant"></div>
+<div class="flex-1 text-center">
+<p class="text-primary font-bold text-[18px]">1</p>
+<p class="text-on-surface-variant text-[12px]">Alerte</p>
+</div>
+<div class="h-8 w-[1px] bg-outline-variant"></div>
+<div class="flex-1 text-center">
+<p class="text-primary font-bold text-[18px]">0</p>
+<p class="text-on-surface-variant text-[12px]">RDV</p>
+</div>
+</div>
+</div>
+<!-- Content Sections -->
+<div class="px-container-margin mt-stack-md space-y-stack-md">
+<!-- Informations Section -->
+<section>
+<h3 class="font-section-title text-on-surface mb-2 px-1">Informations</h3>
+<div class="bg-white rounded-xl shadow-[0px_4px_12px_rgba(44,62,80,0.08)] overflow-hidden">
+<div class="flex items-center gap-4 p-4 border-b border-surface">
+<span class="material-symbols-outlined text-outline">phone</span>
+<div>
+<p class="text-on-surface-variant text-[10px] uppercase tracking-wider font-bold">Téléphone</p>
+<p class="text-on-surface font-medium text-body-md">+237 6XX XXX XXX</p>
+</div>
+</div>
+<div class="flex items-center gap-4 p-4 border-b border-surface">
+<span class="material-symbols-outlined text-outline">mail</span>
+<div>
+<p class="text-on-surface-variant text-[10px] uppercase tracking-wider font-bold">Email</p>
+<p class="text-on-surface font-medium text-body-md">jean@email.com</p>
+</div>
+</div>
+<div class="flex items-center gap-4 p-4 border-b border-surface">
+<span class="material-symbols-outlined text-outline">location_on</span>
+<div>
+<p class="text-on-surface-variant text-[10px] uppercase tracking-wider font-bold">Ville</p>
+<p class="text-on-surface font-medium text-body-md">Douala</p>
+</div>
+</div>
+<div class="flex items-center gap-4 p-4">
+<span class="material-symbols-outlined text-outline">calendar_today</span>
+<div>
+<p class="text-on-surface-variant text-[10px] uppercase tracking-wider font-bold">Membre depuis</p>
+<p class="text-on-surface font-medium text-body-md">Janvier 2026</p>
+</div>
+</div>
+</div>
+</section>
+<!-- Disponibilité Section -->
+<section>
+<div class="bg-white rounded-xl shadow-[0px_4px_12px_rgba(44,62,80,0.08)] p-4 flex justify-between items-center">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-secondary">volunteer_activism</span>
+<span class="font-section-title text-[16px]">Disponible pour donner</span>
+</div>
+<!-- Toggle Switch -->
+<div class="w-12 h-6 bg-primary-container rounded-full relative flex items-center px-1">
+<div class="w-4 h-4 bg-white rounded-full absolute right-1"></div>
+</div>
+</div>
+</section>
+<!-- Actions Section -->
+<section>
+<h3 class="font-section-title text-on-surface mb-2 px-1">Actions</h3>
+<div class="bg-white rounded-xl shadow-[0px_4px_12px_rgba(44,62,80,0.08)] overflow-hidden">
+<button class="w-full flex items-center justify-between p-4 border-b border-surface active:bg-surface-container transition-colors">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-outline">history</span>
+<span class="text-on-surface font-medium">Historique des dons</span>
+</div>
+<span class="material-symbols-outlined text-outline">chevron_right</span>
+</button>
+<button class="w-full flex items-center justify-between p-4 border-b border-surface active:bg-surface-container transition-colors">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-outline">notifications</span>
+<span class="text-on-surface font-medium">Notifications</span>
+</div>
+<span class="material-symbols-outlined text-outline">chevron_right</span>
+</button>
+<button class="w-full flex items-center justify-between p-4 border-b border-surface active:bg-surface-container transition-colors">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-outline">settings</span>
+<span class="text-on-surface font-medium">Paramètres</span>
+</div>
+<span class="material-symbols-outlined text-outline">chevron_right</span>
+</button>
+<button class="w-full flex items-center p-4 active:bg-error-container transition-colors">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-primary">logout</span>
+<span class="text-primary font-bold">Déconnexion</span>
+</div>
+</button>
+</div>
+</section>
+</div>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center bg-surface-container-lowest h-[64px] border-t border-surface-container px-gutter pb-safe">
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:bg-surface-container-low transition-colors active:scale-95 transition-transform" href="#">
+<span class="material-symbols-outlined">home</span>
+<span class="font-label-sm text-label-sm">Accueil</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:bg-surface-container-low transition-colors active:scale-95 transition-transform" href="#">
+<span class="material-symbols-outlined">map</span>
+<span class="font-label-sm text-label-sm">Carte</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:bg-surface-container-low transition-colors active:scale-95 transition-transform" href="#">
+<span class="material-symbols-outlined">notifications</span>
+<span class="font-label-sm text-label-sm">Alertes</span>
+</a>
+<a class="flex flex-col items-center justify-center text-primary font-semibold hover:bg-surface-container-low transition-colors active:scale-95 transition-transform" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">person</span>
+<span class="font-label-sm text-label-sm">Profil</span>
+</a>
+</nav>
+</body></html>

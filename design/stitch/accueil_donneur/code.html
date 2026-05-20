@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+
+<html class="light" lang="fr"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #F5F5F5;
+        }
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "secondary": "#006d37",
+                        "on-surface-variant": "#59413d",
+                        "on-tertiary-fixed-variant": "#713700",
+                        "on-secondary-fixed": "#00210c",
+                        "surface": "#f7f9ff",
+                        "on-surface": "#091d2e",
+                        "secondary-fixed-dim": "#61de8a",
+                        "on-tertiary": "#ffffff",
+                        "surface-container-lowest": "#ffffff",
+                        "tertiary-container": "#a55400",
+                        "on-primary": "#ffffff",
+                        "on-primary-fixed-variant": "#8e130c",
+                        "background": "#f7f9ff",
+                        "surface-bright": "#f7f9ff",
+                        "outline-variant": "#e1bfb9",
+                        "on-primary-fixed": "#410000",
+                        "surface-container-high": "#d9eaff",
+                        "primary-fixed-dim": "#ffb4a9",
+                        "primary-container": "#c0392b",
+                        "on-tertiary-container": "#ffe6d8",
+                        "inverse-primary": "#ffb4a9",
+                        "primary-fixed": "#ffdad5",
+                        "primary": "#9e2016",
+                        "surface-container-low": "#edf4ff",
+                        "on-secondary-container": "#007239",
+                        "surface-container-highest": "#d1e4fb",
+                        "error": "#ba1a1a",
+                        "secondary-container": "#7bf8a1",
+                        "tertiary-fixed-dim": "#ffb783",
+                        "secondary-fixed": "#7efba4",
+                        "surface-variant": "#d1e4fb",
+                        "on-secondary": "#ffffff",
+                        "on-background": "#091d2e",
+                        "on-error-container": "#93000a",
+                        "error-container": "#ffdad6",
+                        "on-secondary-fixed-variant": "#005228",
+                        "outline": "#8d706c",
+                        "tertiary": "#814000",
+                        "on-primary-container": "#ffe5e1",
+                        "inverse-surface": "#203243",
+                        "tertiary-fixed": "#ffdcc5",
+                        "on-tertiary-fixed": "#301400",
+                        "surface-tint": "#b02d21",
+                        "on-error": "#ffffff",
+                        "surface-dim": "#c9dcf3",
+                        "surface-container": "#e3efff",
+                        "inverse-on-surface": "#e8f2ff"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "stack-md": "24px",
+                        "stack-lg": "32px",
+                        "gutter": "16px",
+                        "container-margin": "20px",
+                        "base": "8px",
+                        "stack-sm": "12px"
+                    },
+                    "fontFamily": {
+                        "body-md": ["Inter"],
+                        "section-title": ["Inter"],
+                        "button-text": ["Inter"],
+                        "screen-title": ["Inter"],
+                        "label-sm": ["Inter"]
+                    },
+                    "fontSize": {
+                        "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                        "section-title": ["18px", {"lineHeight": "24px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                        "button-text": ["16px", {"lineHeight": "24px", "fontWeight": "600"}],
+                        "screen-title": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "label-sm": ["12px", {"lineHeight": "16px", "fontWeight": "500"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-[#F5F5F5] min-h-screen pb-24">
+<!-- Top Navigation Shell -->
+<header class="flex items-center justify-between px-container-margin w-full fixed top-0 z-50 bg-surface-container-lowest dark:bg-surface-dim border-b border-surface-container dark:border-outline-variant h-[56px]">
+<div class="flex items-center gap-2">
+<span class="font-screen-title text-screen-title text-primary dark:text-primary-fixed-dim">VitaSang</span>
+</div>
+<div class="flex items-center gap-3">
+<button class="material-symbols-outlined text-on-surface-variant hover:bg-surface-container p-2 rounded-full transition-colors">search</button>
+<div class="relative">
+<img alt="Profile" class="w-10 h-10 rounded-full object-cover" data-alt="A professional close-up studio portrait of a young adult male with a friendly and reliable expression, set against a clean, minimalist light-gray background. The lighting is high-key and soft, creating a modern clinical aesthetic that conveys trust and calmness. The image quality is crisp with a shallow depth of field, focusing on his welcoming face, fitting for a medical or health-tech application user profile." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDESPRmEe8utdKis2Qooh3xKYG6Sqbzw2cWQsZxuBZ6X6ecYJ6kscmIjg_pesc56H_HiHL66TRm37P6TMPU7dWChr6HSoUJVtgYPlbIHYj6ZUCYjhuYrT1A61p1-4EQ5nw-iKYbI_Rmcz8MR8MBmM01kMOCoWM21x4F2yH_1u49Hlr8WLm1jvSLUZQn0TPGQGFsmdc3uTyCW7d5JJW8-wze4xygSVyi8fJskirZMd9R61T4KB5t7iww8vkWLUyHiRp5HU7E_vc-NuYY"/>
+<span class="absolute top-0 right-0 block h-3 w-3 rounded-full bg-primary ring-2 ring-white"></span>
+</div>
+</div>
+</header>
+<main class="mt-[56px] px-container-margin pt-stack-md space-y-stack-lg">
+<!-- Welcome Header -->
+<section class="flex flex-col gap-1">
+<h1 class="text-[20px] font-bold text-on-surface">Bonjour, Jean 👋</h1>
+<div class="flex items-center gap-2">
+<span class="text-body-md font-body-md text-on-surface-variant">Groupe O+ · Disponible</span>
+<span class="w-2 h-2 rounded-full bg-secondary"></span>
+</div>
+</section>
+<!-- Bento Stats Grid -->
+<section class="grid grid-cols-2 gap-stack-sm">
+<!-- Card 1 -->
+<div class="bg-white rounded-xl p-4 shadow-[0px_4px_12px_rgba(44,62,80,0.08)] flex flex-col justify-between h-[120px]">
+<span class="text-label-sm font-label-sm text-on-surface-variant uppercase tracking-wider">Mes dons</span>
+<div class="flex flex-col">
+<span class="text-screen-title font-screen-title text-primary">3</span>
+<span class="text-[10px] text-on-surface-variant">Total effectués</span>
+</div>
+</div>
+<!-- Card 2 -->
+<div class="bg-white rounded-xl p-4 shadow-[0px_4px_12px_rgba(44,62,80,0.08)] flex flex-col justify-between h-[120px]">
+<span class="text-label-sm font-label-sm text-on-surface-variant uppercase tracking-wider">Prochaine dispo</span>
+<span class="text-body-md font-body-md text-secondary font-semibold leading-tight">Disponible maintenant</span>
+</div>
+<!-- Card 3 -->
+<div class="bg-white rounded-xl p-4 shadow-[0px_4px_12px_rgba(44,62,80,0.08)] flex flex-col justify-between h-[120px]">
+<span class="text-label-sm font-label-sm text-on-surface-variant uppercase tracking-wider">Alertes envoyées</span>
+<div class="flex flex-col">
+<span class="text-screen-title font-screen-title text-on-surface">1</span>
+<span class="text-[10px] text-on-surface-variant">Cette semaine</span>
+</div>
+</div>
+<!-- Card 4 -->
+<div class="bg-white rounded-xl p-4 shadow-[0px_4px_12px_rgba(44,62,80,0.08)] flex flex-col justify-between h-[120px]">
+<span class="text-label-sm font-label-sm text-on-surface-variant uppercase tracking-wider">RDV à venir</span>
+<div class="flex flex-col">
+<span class="text-screen-title font-screen-title text-on-surface">0</span>
+<span class="text-[10px] text-on-surface-variant">Programmé</span>
+</div>
+</div>
+</section>
+<!-- Active Alerts Section -->
+<section class="space-y-stack-sm">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<h2 class="font-section-title text-section-title text-on-surface">🚨 Alertes actives</h2>
+<span class="bg-error-container text-on-error-container text-[10px] font-bold px-1.5 py-0.5 rounded-full">2</span>
+</div>
+<button class="text-primary font-semibold text-label-sm">Voir tout</button>
+</div>
+<div class="flex gap-4 overflow-x-auto hide-scrollbar -mx-container-margin px-container-margin pb-2">
+<!-- Alert Card 1 -->
+<div class="min-w-[280px] bg-white rounded-xl p-4 shadow-[0px_4px_12px_rgba(44,62,80,0.08)] border-l-4 border-error space-y-3">
+<div class="flex justify-between items-start">
+<span class="bg-[#E74C3C]/15 text-[#E74C3C] text-[10px] font-bold px-2 py-1 rounded-full uppercase">TRES URGENT</span>
+<div class="flex items-center gap-1 text-on-surface-variant">
+<span class="material-symbols-outlined text-[16px]">location_on</span>
+<span class="text-[12px]">2.3 km</span>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<div class="w-14 h-14 bg-error-container rounded-lg flex items-center justify-center">
+<span class="text-screen-title font-bold text-on-error-container">O+</span>
+</div>
+<div>
+<p class="font-semibold text-on-surface">Hôpital Général</p>
+<p class="text-label-sm text-on-surface-variant">Douala, Littoral</p>
+</div>
+</div>
+<button class="w-full bg-primary-container text-white py-2.5 rounded-lg font-button-text text-button-text active:opacity-70 transition-all">Répondre</button>
+</div>
+<!-- Alert Card 2 -->
+<div class="min-w-[280px] bg-white rounded-xl p-4 shadow-[0px_4px_12px_rgba(44,62,80,0.08)] border-l-4 border-[#E67E22] space-y-3">
+<div class="flex justify-between items-start">
+<span class="bg-[#E67E22]/15 text-[#E67E22] text-[10px] font-bold px-2 py-1 rounded-full uppercase">URGENT</span>
+<div class="flex items-center gap-1 text-on-surface-variant">
+<span class="material-symbols-outlined text-[16px]">location_on</span>
+<span class="text-[12px]">5.1 km</span>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<div class="w-14 h-14 bg-tertiary-fixed rounded-lg flex items-center justify-center">
+<span class="text-screen-title font-bold text-tertiary">B-</span>
+</div>
+<div>
+<p class="font-semibold text-on-surface">Clinique Bonanjo</p>
+<p class="text-label-sm text-on-surface-variant">Douala, Littoral</p>
+</div>
+</div>
+<button class="w-full bg-primary-container text-white py-2.5 rounded-lg font-button-text text-button-text active:opacity-70 transition-all">Répondre</button>
+</div>
+</div>
+</section>
+<!-- Helpful Tips Section -->
+<section class="space-y-stack-sm">
+<h2 class="font-section-title text-section-title text-on-surface">Conseils utiles</h2>
+<div class="bg-primary text-on-primary rounded-2xl p-5 overflow-hidden relative shadow-[0px_4px_12px_rgba(44,62,80,0.15)]">
+<!-- Abstract visual element -->
+<div class="absolute -right-10 -top-10 w-40 h-40 bg-on-primary-container/10 rounded-full"></div>
+<div class="relative z-10 space-y-3">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined">info</span>
+<h3 class="font-semibold text-lg">Pourquoi donner ?</h3>
+</div>
+<p class="text-sm opacity-90 leading-relaxed">Le saviez-vous ? Un seul don peut sauver jusqu'à trois vies. Pour les hommes, un délai de 42 jours est recommandé entre deux dons de sang total.</p>
+<button class="bg-white text-primary px-4 py-2 rounded-lg text-label-sm font-bold shadow-sm">En savoir plus</button>
+</div>
+</div>
+</section>
+<!-- Quick Actions List -->
+<section class="space-y-stack-sm">
+<h2 class="font-section-title text-section-title text-on-surface">Actions rapides</h2>
+<div class="space-y-3">
+<div class="bg-white p-4 rounded-xl flex items-center justify-between shadow-[0px_4px_12px_rgba(44,62,80,0.05)] border border-surface-container">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 bg-secondary/10 text-secondary rounded-lg flex items-center justify-center">
+<span class="material-symbols-outlined">event</span>
+</div>
+<div>
+<p class="font-semibold text-on-surface">Prendre RDV</p>
+<p class="text-[12px] text-on-surface-variant">Planifiez votre prochain don</p>
+</div>
+</div>
+<span class="material-symbols-outlined text-outline">chevron_right</span>
+</div>
+<div class="bg-white p-4 rounded-xl flex items-center justify-between shadow-[0px_4px_12px_rgba(44,62,80,0.05)] border border-surface-container">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 bg-primary/10 text-primary rounded-lg flex items-center justify-center">
+<span class="material-symbols-outlined">history</span>
+</div>
+<div>
+<p class="font-semibold text-on-surface">Historique</p>
+<p class="text-[12px] text-on-surface-variant">Consultez vos dons passés</p>
+</div>
+</div>
+<span class="material-symbols-outlined text-outline">chevron_right</span>
+</div>
+</div>
+</section>
+</main>
+<!-- Bottom Navigation Bar -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center bg-surface-container-lowest dark:bg-surface-dim px-gutter pb-safe h-[64px] border-t border-surface-container dark:border-outline-variant">
+<a class="flex flex-col items-center justify-center text-primary dark:text-primary-fixed-dim font-semibold hover:bg-surface-container-low dark:hover:bg-surface-container-high transition-colors active:scale-95" href="#">
+<span class="material-symbols-outlined" data-weight="fill">home</span>
+<span class="font-label-sm text-label-sm">Accueil</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-outline hover:bg-surface-container-low dark:hover:bg-surface-container-high transition-colors active:scale-95" href="#">
+<span class="material-symbols-outlined">map</span>
+<span class="font-label-sm text-label-sm">Carte</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-outline hover:bg-surface-container-low dark:hover:bg-surface-container-high transition-colors active:scale-95" href="#">
+<span class="material-symbols-outlined">notifications</span>
+<span class="font-label-sm text-label-sm">Alertes</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-outline hover:bg-surface-container-low dark:hover:bg-surface-container-high transition-colors active:scale-95" href="#">
+<span class="material-symbols-outlined">person</span>
+<span class="font-label-sm text-label-sm">Profil</span>
+</a>
+</nav>
+</body></html>

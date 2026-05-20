@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+
+<html class="light" lang="fr"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #F5F5F5;
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "on-primary-container": "#ffe5e1",
+                      "on-tertiary-fixed-variant": "#713700",
+                      "on-primary-fixed": "#410000",
+                      "surface-container-high": "#d9eaff",
+                      "on-error-container": "#93000a",
+                      "on-background": "#091d2e",
+                      "surface-container-lowest": "#ffffff",
+                      "tertiary-fixed": "#ffdcc5",
+                      "inverse-primary": "#ffb4a9",
+                      "primary-fixed-dim": "#ffb4a9",
+                      "surface-dim": "#c9dcf3",
+                      "secondary-fixed-dim": "#61de8a",
+                      "surface-container": "#e3efff",
+                      "on-tertiary-container": "#ffe6d8",
+                      "outline": "#8d706c",
+                      "tertiary-container": "#a55400",
+                      "surface-container-highest": "#d1e4fb",
+                      "on-tertiary": "#ffffff",
+                      "on-error": "#ffffff",
+                      "secondary-container": "#7bf8a1",
+                      "surface-container-low": "#edf4ff",
+                      "surface": "#f7f9ff",
+                      "primary-fixed": "#ffdad5",
+                      "on-secondary-fixed-variant": "#005228",
+                      "primary": "#9e2016",
+                      "on-primary": "#ffffff",
+                      "surface-tint": "#b02d21",
+                      "error-container": "#ffdad6",
+                      "inverse-surface": "#203243",
+                      "background": "#f7f9ff",
+                      "on-secondary-container": "#007239",
+                      "secondary": "#006d37",
+                      "outline-variant": "#e1bfb9",
+                      "on-surface-variant": "#59413d",
+                      "on-tertiary-fixed": "#301400",
+                      "surface-variant": "#d1e4fb",
+                      "tertiary": "#814000",
+                      "inverse-on-surface": "#e8f2ff",
+                      "error": "#ba1a1a",
+                      "primary-container": "#c0392b",
+                      "on-secondary-fixed": "#00210c",
+                      "tertiary-fixed-dim": "#ffb783",
+                      "on-secondary": "#ffffff",
+                      "secondary-fixed": "#7efba4",
+                      "on-surface": "#091d2e",
+                      "surface-bright": "#f7f9ff",
+                      "on-primary-fixed-variant": "#8e130c"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "gutter": "16px",
+                      "base": "8px",
+                      "stack-sm": "12px",
+                      "container-margin": "20px",
+                      "stack-md": "24px",
+                      "stack-lg": "32px"
+              },
+              "fontFamily": {
+                      "button-text": ["Inter"],
+                      "label-sm": ["Inter"],
+                      "section-title": ["Inter"],
+                      "body-md": ["Inter"],
+                      "screen-title": ["Inter"]
+              },
+              "fontSize": {
+                      "button-text": ["16px", {"lineHeight": "24px", "fontWeight": "600"}],
+                      "label-sm": ["12px", {"lineHeight": "16px", "fontWeight": "500"}],
+                      "section-title": ["18px", {"lineHeight": "24px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                      "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                      "screen-title": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.02em", "fontWeight": "700"}]
+              }
+            },
+          },
+        }
+    </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-[#F5F5F5] min-h-screen flex flex-col">
+<!-- HEADER (Transactional/Urgency - No SideNav/BottomNav as per rules) -->
+<header class="bg-primary-container h-[56px] fixed top-0 w-full z-50 flex items-center justify-between px-container-margin shadow-md">
+<button class="text-on-primary font-body-md text-body-md active:opacity-70">
+            Annuler
+        </button>
+<h1 class="text-white font-screen-title text-[20px] font-bold tracking-tight">
+            🚨 URGENCE SOS
+        </h1>
+<div class="w-[60px]"></div> <!-- Spacer for centering -->
+</header>
+<main class="flex-grow pt-[56px] pb-stack-lg">
+<!-- INFO BANNER -->
+<div class="bg-[#922B21] px-container-margin py-stack-sm text-center">
+<p class="text-white font-label-sm text-label-sm">
+                Cet écran est accessible SANS compte pour les urgences vitales
+            </p>
+</div>
+<div class="px-container-margin mt-stack-md space-y-stack-md">
+<!-- FORM SECTION -->
+<section class="bg-white rounded-xl p-stack-md shadow-[0px_4px_12px_rgba(44,62,80,0.08)] space-y-stack-md">
+<!-- Patient Name -->
+<div class="flex flex-col gap-base">
+<label class="text-on-surface font-section-title text-body-md font-semibold">Nom du patient *</label>
+<input class="h-[48px] border border-[#E0E0E0] rounded-lg px-4 focus:ring-2 focus:ring-primary-container focus:outline-none font-body-md text-body-md" placeholder="Ex: Jean Dupont" type="text"/>
+</div>
+<!-- Medical Contact -->
+<div class="flex flex-col gap-base">
+<label class="text-on-surface font-section-title text-body-md font-semibold">Contact médical *</label>
+<div class="flex items-center border border-[#E0E0E0] rounded-lg overflow-hidden focus-within:ring-2 focus-within:ring-primary-container">
+<span class="bg-surface-container-low px-4 h-full flex items-center border-r border-[#E0E0E0] text-on-surface-variant font-body-md">+237</span>
+<input class="flex-grow h-[48px] px-4 border-none focus:ring-0 font-body-md text-body-md" placeholder="6XX XXX XXX" type="tel"/>
+</div>
+</div>
+<!-- Blood Group Grid -->
+<div class="flex flex-col gap-base">
+<label class="text-on-surface font-section-title text-body-md font-semibold">Groupe sanguin</label>
+<div class="grid grid-cols-4 gap-2">
+<!-- A+ Active State Mockup -->
+<button class="h-[48px] rounded-lg border border-primary-container bg-primary-container text-white font-button-text text-body-md">A+</button>
+<button class="h-[48px] rounded-lg border border-[#E0E0E0] bg-white text-on-surface-variant font-button-text text-body-md active:bg-primary-container active:text-white transition-colors">A-</button>
+<button class="h-[48px] rounded-lg border border-[#E0E0E0] bg-white text-on-surface-variant font-button-text text-body-md active:bg-primary-container active:text-white transition-colors">B+</button>
+<button class="h-[48px] rounded-lg border border-[#E0E0E0] bg-white text-on-surface-variant font-button-text text-body-md active:bg-primary-container active:text-white transition-colors">B-</button>
+<button class="h-[48px] rounded-lg border border-[#E0E0E0] bg-white text-on-surface-variant font-button-text text-body-md active:bg-primary-container active:text-white transition-colors">AB+</button>
+<button class="h-[48px] rounded-lg border border-[#E0E0E0] bg-white text-on-surface-variant font-button-text text-body-md active:bg-primary-container active:text-white transition-colors">AB-</button>
+<button class="h-[48px] rounded-lg border border-[#E0E0E0] bg-white text-on-surface-variant font-button-text text-body-md active:bg-primary-container active:text-white transition-colors">O+</button>
+<button class="h-[48px] rounded-lg border border-[#E0E0E0] bg-white text-on-surface-variant font-button-text text-body-md active:bg-primary-container active:text-white transition-colors">O-</button>
+</div>
+<p class="text-[#7F8C8D] font-label-sm text-label-sm italic">Si inconnu, les donneurs O- universels seront alertés</p>
+</div>
+<!-- Emergency Location -->
+<div class="flex flex-col gap-base">
+<label class="text-on-surface font-section-title text-body-md font-semibold">Lieu de l'urgence *</label>
+<div class="flex gap-2">
+<div class="relative flex-grow">
+<input class="w-full h-[48px] border border-[#E0E0E0] rounded-lg px-4 focus:ring-2 focus:ring-primary-container focus:outline-none font-body-md text-body-md" placeholder="Hôpital, quartier..." type="text"/>
+</div>
+<button class="h-[48px] px-3 bg-primary-container text-white rounded-lg flex items-center gap-1 active:scale-95 transition-transform">
+<span class="material-symbols-outlined text-[18px]">location_on</span>
+<span class="font-button-text text-[12px] whitespace-nowrap">Ma position</span>
+</button>
+</div>
+</div>
+<!-- Description -->
+<div class="flex flex-col gap-base">
+<label class="text-on-surface font-section-title text-body-md font-semibold">Description rapide <span class="font-normal opacity-60 text-label-sm">(optionnel)</span></label>
+<textarea class="border border-[#E0E0E0] rounded-lg p-4 focus:ring-2 focus:ring-primary-container focus:outline-none font-body-md text-body-md resize-none" placeholder="Symptômes, besoins spécifiques..." rows="3"></textarea>
+</div>
+</section>
+<!-- Visual Context Image -->
+<div class="relative w-full h-[180px] rounded-xl overflow-hidden shadow-md">
+<img class="w-full h-full object-cover" data-alt="A clean, high-tech hospital emergency room environment with soft white overhead lighting and medical equipment visible in the background. The scene is sterile and professional, featuring a minimalist modern aesthetic with white walls and subtle red medical accents to convey a sense of biological urgency and reliability. The composition is calm but suggests a space ready for life-saving action." src="https://lh3.googleusercontent.com/aida-public/AB6AXuA9kInM_OEVGOSt4v9chKw7-G-JbJkJEdY8m7hZq64AXplYsne4Cv8vt0OjxCdsJj3sgllq_E9FqcifV9sXbk49nNRS2x7_zjNmtQfuhG91u_9UHsIh0bWwxRy8veYBbOBDBxEeNhk8F9rklCvZ1DW9b5MKlsZB3mmrGxFN2HPEOce38cei2Atn2Fo3oQca191NP6ghQi2h2habNjXB3FQgRERj92MZn1tIWFfWEyUnxs_t7AjgutvlUIdNVaKInwl5qVZisWurlBJf"/>
+<div class="absolute inset-0 bg-gradient-to-t from-primary/60 to-transparent flex items-end p-4">
+<p class="text-white font-button-text text-body-md">Votre alerte sera diffusée aux donneurs à proximité.</p>
+</div>
+</div>
+<!-- MAIN BUTTON -->
+<button class="w-full h-[60px] bg-[#922B21] text-white rounded-xl shadow-lg flex items-center justify-center gap-3 active:scale-[0.98] transition-all">
+<span class="text-white font-bold text-[18px] uppercase tracking-wide">🆘 ALERTER MAINTENANT</span>
+</button>
+<!-- FOOTER -->
+<div class="text-center py-stack-md">
+<p class="text-on-surface-variant font-body-md text-body-md">
+                    Vous avez un compte ? 
+                    <a class="text-primary-container font-semibold ml-1" href="#">Se connecter</a>
+</p>
+</div>
+</div>
+</main>
+<!-- Suppressed BottomNavBar as this is a focused Emergency Flow -->
+</body></html>

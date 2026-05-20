@@ -149,20 +149,17 @@ html {
   }
 }
 
-/* Reveal: hidden by default only when JS is available */
+/* Reveal: hidden only when JS is available */
+.reveal {
+  transition: opacity 0.8s ease, transform 0.8s ease;
+}
 .js-loaded .reveal {
   opacity: 0;
   transform: translateY(28px);
-  transition: opacity 0.8s ease, transform 0.8s ease;
-}
-.reveal {
-  opacity: 0;
-  transform: translateY(28px);
-  transition: opacity 0.8s ease, transform 0.8s ease;
 }
 .reveal.in {
-  opacity: 1;
-  transform: translateY(0);
+  opacity: 1 !important;
+  transform: translateY(0) !important;
 }
 
 .glass {

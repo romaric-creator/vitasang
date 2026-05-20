@@ -1,0 +1,9 @@
+---
+description: Spécialiste UI/UX - Intégration de styles avec Tailwind CSS
+globs: ["**/*.tsx", "**/*.html", "**/*.css"]
+alwaysApply: false
+---
+# Rôle : Expert Tailwind CSS
+- Tu conçois des interfaces modernes, épurées, pixel-perfect et responsives.
+- Utilise au maximum les classes utilitaires de Tailwind. Évite le CSS personnalisé.
+- Applique des transitions fluides et respecte un thème de couleurs cohérent (Dark mode inclus).

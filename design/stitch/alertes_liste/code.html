@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+
+<html class="light" lang="fr"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-surface-variant": "#59413d",
+                        "on-error": "#ffffff",
+                        "secondary-fixed": "#7efba4",
+                        "on-tertiary-fixed": "#301400",
+                        "background": "#f7f9ff",
+                        "tertiary-fixed-dim": "#ffb783",
+                        "surface-container-low": "#edf4ff",
+                        "surface-tint": "#b02d21",
+                        "tertiary-fixed": "#ffdcc5",
+                        "error": "#ba1a1a",
+                        "secondary-fixed-dim": "#61de8a",
+                        "primary": "#9e2016",
+                        "surface-container-high": "#d9eaff",
+                        "primary-container": "#c0392b",
+                        "tertiary-container": "#a55400",
+                        "on-error-container": "#93000a",
+                        "error-container": "#ffdad6",
+                        "primary-fixed": "#ffdad5",
+                        "primary-fixed-dim": "#ffb4a9",
+                        "outline": "#8d706c",
+                        "on-primary-container": "#ffe5e1",
+                        "outline-variant": "#e1bfb9",
+                        "on-secondary": "#ffffff",
+                        "surface-dim": "#c9dcf3",
+                        "surface": "#f7f9ff",
+                        "on-tertiary": "#ffffff",
+                        "on-tertiary-fixed-variant": "#713700",
+                        "on-surface": "#091d2e",
+                        "on-background": "#091d2e",
+                        "inverse-on-surface": "#e8f2ff",
+                        "secondary-container": "#7bf8a1",
+                        "on-secondary-fixed": "#00210c",
+                        "inverse-surface": "#203243",
+                        "on-secondary-fixed-variant": "#005228",
+                        "tertiary": "#814000",
+                        "surface-variant": "#d1e4fb",
+                        "secondary": "#006d37",
+                        "on-primary": "#ffffff",
+                        "on-primary-fixed": "#410000",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-container": "#e3efff",
+                        "on-tertiary-container": "#ffe6d8",
+                        "on-primary-fixed-variant": "#8e130c",
+                        "inverse-primary": "#ffb4a9",
+                        "surface-container-highest": "#d1e4fb",
+                        "surface-bright": "#f7f9ff",
+                        "on-secondary-container": "#007239"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "base": "8px",
+                        "stack-md": "24px",
+                        "container-margin": "20px",
+                        "stack-lg": "32px",
+                        "gutter": "16px",
+                        "stack-sm": "12px"
+                    },
+                    "fontFamily": {
+                        "section-title": ["Inter"],
+                        "label-sm": ["Inter"],
+                        "body-md": ["Inter"],
+                        "screen-title": ["Inter"],
+                        "button-text": ["Inter"]
+                    },
+                    "fontSize": {
+                        "section-title": ["18px", {"lineHeight": "24px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                        "label-sm": ["12px", {"lineHeight": "16px", "fontWeight": "500"}],
+                        "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                        "screen-title": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "button-text": ["16px", {"lineHeight": "24px", "fontWeight": "600"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body {
+            background-color: #F5F5F5;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="flex flex-col min-h-screen text-on-background">
+<!-- TopAppBar Component -->
+<header class="flex items-center justify-between px-container-margin w-full fixed top-0 z-50 bg-surface-container-lowest dark:bg-surface-dim border-b border-surface-container dark:border-outline-variant h-[56px]">
+<div class="flex items-center">
+<span class="material-symbols-outlined text-primary dark:text-primary-fixed-dim" data-icon="arrow_back">arrow_back</span>
+</div>
+<h1 class="font-screen-title text-screen-title text-primary dark:text-primary-fixed-dim absolute left-1/2 -translate-x-1/2">Alertes</h1>
+<div class="flex items-center">
+<span class="material-symbols-outlined text-primary dark:text-primary-fixed-dim p-2 hover:bg-surface-container transition-colors rounded-full" data-icon="filter_list">filter_list</span>
+</div>
+</header>
+<!-- Content Canvas -->
+<main class="flex-grow pt-[56px] pb-[80px]">
+<!-- Filter Tabs -->
+<div class="sticky top-[56px] z-40 bg-surface-container-lowest py-3 px-container-margin overflow-x-auto whitespace-nowrap scrollbar-hide flex gap-3 border-b border-surface-container">
+<button class="bg-primary-container text-white px-5 py-2 rounded-full font-label-sm text-label-sm active:scale-95 transition-transform">Toutes</button>
+<button class="text-on-surface-variant px-5 py-2 rounded-full font-label-sm text-label-sm hover:bg-surface-container transition-colors">Urgentes</button>
+<button class="text-on-surface-variant px-5 py-2 rounded-full font-label-sm text-label-sm hover:bg-surface-container transition-colors">Mes alertes</button>
+<button class="text-on-surface-variant px-5 py-2 rounded-full font-label-sm text-label-sm hover:bg-surface-container transition-colors">Résolues</button>
+</div>
+<!-- Alert List -->
+<section class="p-container-margin flex flex-col gap-4">
+<!-- Alert Card: TRES_URGENT -->
+<div class="bg-white rounded-[16px] shadow-[0px_4px_12px_rgba(44,62,80,0.08)] flex overflow-hidden active:scale-[0.98] transition-transform">
+<div class="w-2 bg-[#E74C3C]"></div>
+<div class="p-4 flex-grow relative">
+<div class="absolute top-4 right-4 bg-primary-container text-white w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm">O+</div>
+<h3 class="font-section-title text-section-title text-on-background mb-2 pr-12">Besoin urgent O+ · Hôpital Général</h3>
+<div class="flex flex-wrap items-center gap-x-4 gap-y-1 mb-3 text-on-surface-variant">
+<div class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px]" data-icon="location_on">location_on</span>
+<span class="font-body-md text-body-md">Douala, Akwa</span>
+</div>
+<div class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px]" data-icon="schedule">schedule</span>
+<span class="font-body-md text-body-md">il y a 5 min</span>
+</div>
+<div class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px]" data-icon="group">group</span>
+<span class="font-body-md text-body-md">12 notifiés</span>
+</div>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant mb-4 line-clamp-2">
+                        Accident sur la route nationale N3. Plusieurs blessés graves nécessitant une transfusion immédiate de sang O+.
+                    </p>
+<div class="flex items-center justify-between">
+<span class="bg-[#E74C3C]/15 text-[#E74C3C] px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider">Très Urgent</span>
+<button class="bg-primary-container text-white px-4 py-2 rounded-[12px] font-button-text text-button-text hover:opacity-90 active:scale-95 transition-all">Répondre</button>
+</div>
+</div>
+</div>
+<!-- Alert Card: URGENT -->
+<div class="bg-white rounded-[16px] shadow-[0px_4px_12px_rgba(44,62,80,0.08)] flex overflow-hidden active:scale-[0.98] transition-transform">
+<div class="w-2 bg-[#E67E22]"></div>
+<div class="p-4 flex-grow relative">
+<div class="absolute top-4 right-4 bg-primary-container text-white w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm">A-</div>
+<h3 class="font-section-title text-section-title text-on-background mb-2 pr-12">Besoin critique A- · Clinique Bonanjo</h3>
+<div class="flex flex-wrap items-center gap-x-4 gap-y-1 mb-3 text-on-surface-variant">
+<div class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px]" data-icon="location_on">location_on</span>
+<span class="font-body-md text-body-md">Douala, Bonanjo</span>
+</div>
+<div class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px]" data-icon="schedule">schedule</span>
+<span class="font-body-md text-body-md">il y a 22 min</span>
+</div>
+<div class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px]" data-icon="group">group</span>
+<span class="font-body-md text-body-md">8 notifiés</span>
+</div>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant mb-4 line-clamp-2">
+                        Opération chirurgicale programmée. Les réserves pour le groupe A- sont au plus bas.
+                    </p>
+<div class="flex items-center justify-between">
+<span class="bg-[#E67E22]/15 text-[#E67E22] px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider">Urgent</span>
+<button class="bg-primary-container text-white px-4 py-2 rounded-[12px] font-button-text text-button-text hover:opacity-90 active:scale-95 transition-all">Répondre</button>
+</div>
+</div>
+</div>
+<!-- Alert Card: NORMAL -->
+<div class="bg-white rounded-[16px] shadow-[0px_4px_12px_rgba(44,62,80,0.08)] flex overflow-hidden active:scale-[0.98] transition-transform">
+<div class="w-2 bg-[#27AE60]"></div>
+<div class="p-4 flex-grow relative">
+<div class="absolute top-4 right-4 bg-primary-container text-white w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm">B+</div>
+<h3 class="font-section-title text-section-title text-on-background mb-2 pr-12">Stock faible B+ · Centre Médical</h3>
+<div class="flex flex-wrap items-center gap-x-4 gap-y-1 mb-3 text-on-surface-variant">
+<div class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px]" data-icon="location_on">location_on</span>
+<span class="font-body-md text-body-md">Yaoundé, Bastos</span>
+</div>
+<div class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px]" data-icon="schedule">schedule</span>
+<span class="font-body-md text-body-md">il y a 2h</span>
+</div>
+<div class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px]" data-icon="group">group</span>
+<span class="font-body-md text-body-md">45 notifiés</span>
+</div>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant mb-4 line-clamp-2">
+                        Campagne de don régulière. Rejoignez-nous pour maintenir le niveau de stock de sécurité.
+                    </p>
+<div class="flex items-center justify-between">
+<span class="bg-[#27AE60]/15 text-[#27AE60] px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider">Normal</span>
+<button class="bg-primary-container text-white px-4 py-2 rounded-[12px] font-button-text text-button-text hover:opacity-90 active:scale-95 transition-all">Répondre</button>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- FAB: Floating Action Button -->
+<button class="fixed right-6 bottom-[88px] bg-primary-container text-white flex items-center gap-2 px-5 py-4 rounded-full shadow-lg active:scale-95 transition-all z-40">
+<span class="material-symbols-outlined" data-icon="add">add</span>
+<span class="font-button-text text-button-text">Nouvelle alerte</span>
+</button>
+<!-- BottomNavBar Component -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center bg-surface-container-lowest dark:bg-surface-dim px-gutter pb-safe h-[64px] border-t border-surface-container dark:border-outline-variant">
+<!-- Accueil -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-outline hover:bg-surface-container-low dark:hover:bg-surface-container-high transition-colors flex-1 h-full active:scale-95 transition-transform" href="#">
+<span class="material-symbols-outlined" data-icon="home">home</span>
+<span class="font-label-sm text-label-sm">Accueil</span>
+</a>
+<!-- Carte -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-outline hover:bg-surface-container-low dark:hover:bg-surface-container-high transition-colors flex-1 h-full active:scale-95 transition-transform" href="#">
+<span class="material-symbols-outlined" data-icon="map">map</span>
+<span class="font-label-sm text-label-sm">Carte</span>
+</a>
+<!-- Alertes (Active) -->
+<a class="flex flex-col items-center justify-center text-primary dark:text-primary-fixed-dim font-semibold hover:bg-surface-container-low dark:hover:bg-surface-container-high transition-colors flex-1 h-full active:scale-95 transition-transform" href="#">
+<span class="material-symbols-outlined" data-icon="notifications" style="font-variation-settings: 'FILL' 1;">notifications</span>
+<span class="font-label-sm text-label-sm">Alertes</span>
+</a>
+<!-- Profil -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-outline hover:bg-surface-container-low dark:hover:bg-surface-container-high transition-colors flex-1 h-full active:scale-95 transition-transform" href="#">
+<span class="material-symbols-outlined" data-icon="person">person</span>
+<span class="font-label-sm text-label-sm">Profil</span>
+</a>
+</nav>
+</body></html>

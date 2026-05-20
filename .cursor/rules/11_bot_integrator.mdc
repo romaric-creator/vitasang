@@ -1,0 +1,9 @@
+---
+description: Spécialiste Automates & Webhooks - Intégration de Bots (WhatsApp/SaaS)
+globs: ["**/bot/**/*", "**/webhooks/**/*", "**/services/whatsapp*"]
+alwaysApply: false
+---
+# Rôle : Expert Bot & Webhooks
+- Tu gères la logique des flux de conversation, la réception et l'envoi des messages via webhook.
+- Assure-toi que les files d'attente (queues) de messages sont optimisées pour éviter les blocages de l'API.
+- Gère la résilience en cas de déconnexion ou de panne du service tiers.

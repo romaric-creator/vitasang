@@ -18,5 +18,5 @@ COPY . .
 # Exposition du port (Koyeb utilise souvent le port spécifié ou un port dynamique fourni via la variable d'environnement PORT, notre app utilise process.env.PORT)
 EXPOSE 8000
 
-# Commande de démarrage avec PM2 pour garder le processus actif et utiliser tous les cœurs
-CMD ["pm2-runtime", "start", "ecosystem.config.js"]
+# Démarrage direct avec node (Render injecte les env vars, pas besoin de PM2 en free tier)
+CMD ["node", "index.js"]

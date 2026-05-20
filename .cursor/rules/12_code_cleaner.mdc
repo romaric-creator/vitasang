@@ -1,0 +1,9 @@
+---
+description: Clean Code Expert - Refactoring, Performance, Suppression de dette technique
+globs: ["**/*.tsx", "**/*.ts", "**/*.js"]
+alwaysApply: false
+---
+# Rôle : Expert Refactoring
+- Ton unique but est de simplifier le code existant sans changer son comportement.
+- Découpe les fonctions trop longues, supprime le code mort et renomme les variables ambiguës.
+- Améliore les performances (complexité algorithmique) partout où c'est possible.

@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+
+<html lang="fr"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "tertiary-container": "#a55400",
+                        "outline": "#8d706c",
+                        "surface-container-high": "#d9eaff",
+                        "surface-container": "#e3efff",
+                        "on-tertiary-fixed": "#301400",
+                        "surface-container-highest": "#d1e4fb",
+                        "error-container": "#ffdad6",
+                        "on-primary-fixed-variant": "#8e130c",
+                        "on-secondary-fixed": "#00210c",
+                        "surface-container-low": "#edf4ff",
+                        "on-surface": "#091d2e",
+                        "secondary": "#006d37",
+                        "on-secondary-fixed-variant": "#005228",
+                        "surface-dim": "#c9dcf3",
+                        "secondary-fixed": "#7efba4",
+                        "primary-fixed-dim": "#ffb4a9",
+                        "on-surface-variant": "#59413d",
+                        "surface-tint": "#b02d21",
+                        "background": "#f7f9ff",
+                        "on-primary-fixed": "#410000",
+                        "surface-container-lowest": "#ffffff",
+                        "on-tertiary-container": "#ffe6d8",
+                        "on-tertiary": "#ffffff",
+                        "surface-variant": "#d1e4fb",
+                        "primary-container": "#c0392b",
+                        "on-secondary-container": "#007239",
+                        "inverse-on-surface": "#e8f2ff",
+                        "secondary-container": "#7bf8a1",
+                        "on-primary": "#ffffff",
+                        "primary-fixed": "#ffdad5",
+                        "surface-bright": "#f7f9ff",
+                        "on-tertiary-fixed-variant": "#713700",
+                        "on-primary-container": "#ffe5e1",
+                        "tertiary-fixed": "#ffdcc5",
+                        "secondary-fixed-dim": "#61de8a",
+                        "error": "#ba1a1a",
+                        "on-error-container": "#93000a",
+                        "inverse-primary": "#ffb4a9",
+                        "on-background": "#091d2e",
+                        "surface": "#f7f9ff",
+                        "outline-variant": "#e1bfb9",
+                        "tertiary-fixed-dim": "#ffb783",
+                        "primary": "#9e2016",
+                        "on-error": "#ffffff",
+                        "on-secondary": "#ffffff",
+                        "tertiary": "#814000",
+                        "inverse-surface": "#203243"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "base": "8px",
+                        "stack-md": "24px",
+                        "stack-sm": "12px",
+                        "stack-lg": "32px",
+                        "container-margin": "20px",
+                        "gutter": "16px"
+                    },
+                    "fontFamily": {
+                        "section-title": ["Inter"],
+                        "screen-title": ["Inter"],
+                        "button-text": ["Inter"],
+                        "label-sm": ["Inter"],
+                        "body-md": ["Inter"]
+                    },
+                    "fontSize": {
+                        "section-title": ["18px", {"lineHeight": "24px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                        "screen-title": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "button-text": ["16px", {"lineHeight": "24px", "fontWeight": "600"}],
+                        "label-sm": ["12px", {"lineHeight": "16px", "fontWeight": "500"}],
+                        "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body { font-family: 'Inter', sans-serif; background-color: #f7f9ff; }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface-bright text-on-surface">
+<!-- Top Navigation Bar -->
+<header class="flex items-center justify-between px-container-margin w-full fixed top-0 z-50 bg-surface-container-lowest dark:bg-surface-dim h-[56px] border-b border-surface-container dark:border-outline-variant">
+<div class="flex items-center w-8">
+<span class="material-symbols-outlined text-primary text-[24px]">arrow_back</span>
+</div>
+<h1 class="font-screen-title text-[20px] font-bold text-on-surface">Messages</h1>
+<div class="flex items-center justify-end w-8">
+<span class="material-symbols-outlined text-primary-container text-[24px]">edit_square</span>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="pt-[56px] pb-[64px] min-h-screen">
+<!-- Search Bar Section -->
+<div class="px-container-margin mt-stack-md mb-stack-sm">
+<div class="relative flex items-center">
+<span class="material-symbols-outlined absolute left-4 text-outline">search</span>
+<input class="w-full h-[48px] pl-11 pr-4 bg-surface-container-low border-none rounded-full font-body-md text-on-surface placeholder:text-on-surface-variant focus:ring-2 focus:ring-primary-container outline-none" placeholder="Rechercher une conversation..." type="text"/>
+</div>
+</div>
+<!-- Conversation List -->
+<section class="bg-surface-container-lowest">
+<!-- Thread 1: Urgent Alert Linked -->
+<div class="flex items-start px-container-margin py-stack-sm border-b border-surface-container-low active:bg-surface-container-low transition-colors">
+<div class="relative">
+<img alt="" class="w-[52px] h-[52px] rounded-full object-cover" data-alt="A professional close-up studio portrait of a woman in her 30s with a kind expression, softly lit by natural side lighting against a minimalist gray background. The photographic style is clean, modern, and trustworthy, with high-definition clarity and subtle warm tones that align with a corporate medical healthcare application aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCXVTD7WXdY3JBINHas3fKz9N4vryV_wuImy1cojZKasDwteRCWJxAVqTI5dagim7o5pAub7zHaME-RLHWuyAnQLTFylNLwe0OnoYrPF1_OuFLcnpEnhK_PFFNl9p4DJPKaD5azSRTibBKdcu26u8F6L5j1j6a1eHtSpRSBX16-UM3kg5cA7vRGUZPD5BRgI6TAzYko7rDQLYpDLuj_Kh79UmZ8dzWGv7N4KA_qJpPI1ObFme2PaRhn_JJfF7KMvVGQuYFJ_Yq_4w2H"/>
+<div class="absolute bottom-0 right-0 w-3.5 h-3.5 bg-secondary border-2 border-surface-container-lowest rounded-full"></div>
+</div>
+<div class="ml-gutter flex-1 min-w-0">
+<div class="flex justify-between items-center mb-0.5">
+<h3 class="font-section-title text-[16px] text-on-surface truncate">Dr. Sarah Mendy</h3>
+<span class="font-label-sm text-outline">10:42</span>
+</div>
+<p class="font-body-md text-on-surface font-semibold truncate">C'est parfait, nous vous attendons demain.</p>
+<div class="mt-2 inline-flex items-center px-2 py-0.5 rounded-full bg-primary-container/10 border border-primary-container/20">
+<span class="font-label-sm text-primary-container text-[11px] font-bold">Re: Alerte O+ · Douala</span>
+</div>
+</div>
+<div class="ml-2 flex flex-col items-end justify-center">
+<div class="w-5 h-5 bg-primary-container rounded-full flex items-center justify-center">
+<span class="text-[10px] text-white font-bold">2</span>
+</div>
+</div>
+</div>
+<!-- Thread 2: Standard Message -->
+<div class="flex items-start px-container-margin py-stack-sm border-b border-surface-container-low active:bg-surface-container-low transition-colors">
+<div class="flex items-center justify-center w-[52px] h-[52px] rounded-full bg-surface-container-high text-on-surface-variant font-bold text-lg">
+                    MT
+                </div>
+<div class="ml-gutter flex-1 min-w-0">
+<div class="flex justify-between items-center mb-0.5">
+<h3 class="font-section-title text-[16px] text-on-surface truncate">Marc Talla</h3>
+<span class="font-label-sm text-outline">Hier</span>
+</div>
+<p class="font-body-md text-outline truncate">Merci beaucoup pour votre aide précieuse.</p>
+</div>
+</div>
+<!-- Thread 3: Urgent Alert Linked -->
+<div class="flex items-start px-container-margin py-stack-sm border-b border-surface-container-low active:bg-surface-container-low transition-colors">
+<img alt="" class="w-[52px] h-[52px] rounded-full object-cover" data-alt="A professional headshot of a male medical professional in a clean white coat, looking directly at the camera with a confident and helpful demeanor. The background is a soft-focus hospital interior with cool blue and white lighting, emphasizing a sterile yet caring environment. The image is crisp, using a shallow depth of field to keep the focus sharp on the subject." src="https://lh3.googleusercontent.com/aida-public/AB6AXuC3X6WYSZoiTFEEc5qMQNTxSU_SbsDeEjGkInJgFXfOGr-cLgx-GKYkCcDQng1CXI7SF-LXS0pcpapcu8vwRzOUxXc3gCrR0hJPF49uWUy5XWpTKs4-1R4PI7Q_b0SbpMWvnv3PuB-XdKbaTlnS5rWJnVP3JP7swYR_PvuPpy_NurBEjtojid3IBCD-INPLHWssY2bLcIH7c4h4rlmQch7CfUkA91bfefePaK3370E9QTjimiIk6WoCoxpxs8fi4LHz-Kv24zEUnTQk"/>
+<div class="ml-gutter flex-1 min-w-0">
+<div class="flex justify-between items-center mb-0.5">
+<h3 class="font-section-title text-[16px] text-on-surface truncate">Centre National</h3>
+<span class="font-label-sm text-outline">22 Oct.</span>
+</div>
+<p class="font-body-md text-outline truncate">Votre don a été validé avec succès.</p>
+<div class="mt-2 inline-flex items-center px-2 py-0.5 rounded-full bg-primary-container/10 border border-primary-container/20">
+<span class="font-label-sm text-primary-container text-[11px] font-bold">Re: Alerte B- · Yaoundé</span>
+</div>
+</div>
+</div>
+<!-- Thread 4: Regular User -->
+<div class="flex items-start px-container-margin py-stack-sm border-b border-surface-container-low active:bg-surface-container-low transition-colors">
+<img alt="" class="w-[52px] h-[52px] rounded-full object-cover" data-alt="A portrait of a cheerful young woman with a warm, authentic smile, positioned in a bright, outdoor urban environment with soft afternoon sunlight. The image has a vibrant but professional color profile with natural skin tones and a clean, high-end photography aesthetic that promotes a friendly and accessible community atmosphere within the app." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCrHsTrnm-QbxtoXPorwpVG4hmOounXD71AMfpiQKtZaopPuJ-1nYcu25UAruTAI2rJ8oFxzdSGLfi8mICFPTG9kMvLuWUMFv0JOBBw5MgSFX5H-3mOf6Sei5dtG7Egyf9kCHhLtqSj5ns7RhxXvnWyi8SXhrGOFRBkHNlzP0Cv48PwwB59JXOe0VcyDbf9HlOL_rK4ckbVE3BOM0Ukqp82n7p9o37kkDtrl7Z7MibGohAoSkzjHTnfVq8oPjbsMlXNTzoJ7imwApfQ"/>
+<div class="ml-gutter flex-1 min-w-0">
+<div class="flex justify-between items-center mb-0.5">
+<h3 class="font-section-title text-[16px] text-on-surface truncate">Alice Njoh</h3>
+<span class="font-label-sm text-outline">15 Oct.</span>
+</div>
+<p class="font-body-md text-outline truncate">On se retrouve au centre de don à 14h ?</p>
+</div>
+</div>
+<!-- Thread 5: Group / Multiple -->
+<div class="flex items-start px-container-margin py-stack-sm border-b border-surface-container-low active:bg-surface-container-low transition-colors">
+<div class="flex items-center justify-center w-[52px] h-[52px] rounded-full bg-surface-container text-on-surface-variant font-bold text-lg">
+<span class="material-symbols-outlined text-[28px]">group</span>
+</div>
+<div class="ml-gutter flex-1 min-w-0">
+<div class="flex justify-between items-center mb-0.5">
+<h3 class="font-section-title text-[16px] text-on-surface truncate">Équipe Bénévoles G1</h3>
+<span class="font-label-sm text-outline">12 Oct.</span>
+</div>
+<p class="font-body-md text-outline truncate">Paul: Quelqu'un est disponible ce weekend ?</p>
+</div>
+</div>
+</section>
+</main>
+<!-- Bottom Navigation Bar -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center bg-surface-container-lowest dark:bg-surface-dim h-[64px] border-t border-surface-container dark:border-outline-variant px-gutter pb-safe">
+<button class="flex flex-col items-center justify-center text-on-surface-variant dark:text-outline hover:bg-surface-container-low dark:hover:bg-surface-container-high transition-colors active:scale-95 w-full">
+<span class="material-symbols-outlined">home</span>
+<span class="font-label-sm text-label-sm">Accueil</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant dark:text-outline hover:bg-surface-container-low dark:hover:bg-surface-container-high transition-colors active:scale-95 w-full">
+<span class="material-symbols-outlined">map</span>
+<span class="font-label-sm text-label-sm">Carte</span>
+</button>
+<button class="flex flex-col items-center justify-center text-primary dark:text-primary-fixed-dim font-semibold hover:bg-surface-container-low dark:hover:bg-surface-container-high transition-colors active:scale-95 w-full relative">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">notifications</span>
+<span class="font-label-sm text-label-sm">Alertes</span>
+<div class="absolute top-1 right-6 w-2 h-2 bg-primary-container rounded-full"></div>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant dark:text-outline hover:bg-surface-container-low dark:hover:bg-surface-container-high transition-colors active:scale-95 w-full">
+<span class="material-symbols-outlined">person</span>
+<span class="font-label-sm text-label-sm">Profil</span>
+</button>
+</nav>
+</body></html>

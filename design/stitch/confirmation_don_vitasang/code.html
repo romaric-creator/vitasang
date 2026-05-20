@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+
+<html class="light" lang="fr"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "tertiary-fixed-dim": "#ffb783",
+                        "on-primary": "#ffffff",
+                        "primary-container": "#c0392b",
+                        "on-surface-variant": "#59413d",
+                        "inverse-on-surface": "#e8f2ff",
+                        "inverse-primary": "#ffb4a9",
+                        "surface-container-low": "#edf4ff",
+                        "secondary-container": "#7bf8a1",
+                        "surface-dim": "#c9dcf3",
+                        "primary-fixed": "#ffdad5",
+                        "background": "#f7f9ff",
+                        "error-container": "#ffdad6",
+                        "on-primary-fixed": "#410000",
+                        "on-tertiary-fixed-variant": "#713700",
+                        "on-primary-fixed-variant": "#8e130c",
+                        "primary-fixed-dim": "#ffb4a9",
+                        "on-background": "#091d2e",
+                        "surface-container-highest": "#d1e4fb",
+                        "tertiary": "#814000",
+                        "on-secondary": "#ffffff",
+                        "on-error-container": "#93000a",
+                        "inverse-surface": "#203243",
+                        "primary": "#9e2016",
+                        "on-surface": "#091d2e",
+                        "on-tertiary-container": "#ffe6d8",
+                        "on-tertiary-fixed": "#301400",
+                        "on-secondary-container": "#007239",
+                        "on-secondary-fixed-variant": "#005228",
+                        "error": "#ba1a1a",
+                        "tertiary-fixed": "#ffdcc5",
+                        "tertiary-container": "#a55400",
+                        "surface-container": "#e3efff",
+                        "surface-tint": "#b02d21",
+                        "surface": "#f7f9ff",
+                        "surface-variant": "#d1e4fb",
+                        "secondary-fixed-dim": "#61de8a",
+                        "outline-variant": "#e1bfb9",
+                        "on-error": "#ffffff",
+                        "surface-bright": "#f7f9ff",
+                        "surface-container-high": "#d9eaff",
+                        "surface-container-lowest": "#ffffff",
+                        "on-tertiary": "#ffffff",
+                        "secondary": "#006d37",
+                        "outline": "#8d706c",
+                        "secondary-fixed": "#7efba4",
+                        "on-primary-container": "#ffe5e1",
+                        "on-secondary-fixed": "#00210c"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "card": "16px",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "stack-sm": "12px",
+                        "stack-lg": "32px",
+                        "base": "8px",
+                        "stack-md": "24px",
+                        "gutter": "16px",
+                        "container-margin": "20px"
+                    },
+                    "fontFamily": {
+                        "label-sm": ["Inter"],
+                        "button-text": ["Inter"],
+                        "section-title": ["Inter"],
+                        "body-md": ["Inter"],
+                        "screen-title": ["Inter"]
+                    },
+                    "fontSize": {
+                        "label-sm": ["12px", {"lineHeight": "16px", "fontWeight": "500"}],
+                        "button-text": ["16px", {"lineHeight": "24px", "fontWeight": "600"}],
+                        "section-title": ["18px", {"lineHeight": "24px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                        "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                        "screen-title": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.02em", "fontWeight": "700"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 48;
+        }
+        .confetti-pattern {
+            background-image: radial-gradient(#c0392b 1px, transparent 1px), radial-gradient(#27ae60 1px, transparent 1px), radial-gradient(#f1c40f 1px, transparent 1px);
+            background-size: 24px 24px;
+            background-position: 0 0, 12px 12px, 8px 16px;
+            opacity: 0.1;
+        }
+        @keyframes heart-pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+        .animate-pulse-heart {
+            animation: heart-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface-container-lowest font-body-md text-on-surface">
+<!-- Top Navigation Anchor (Suppressed Shell as per Transactional rule, but showing Brand Identity) -->
+<header class="flex items-center justify-center px-container-margin w-full fixed top-0 z-50 bg-surface-container-lowest h-[56px]">
+<h1 class="font-screen-title text-screen-title text-primary">VitaSang</h1>
+</header>
+<!-- Main Canvas -->
+<main class="min-h-screen flex items-center justify-center px-container-margin pt-[56px] relative overflow-hidden">
+<!-- Background Confetti Layer -->
+<div class="absolute inset-0 confetti-pattern pointer-events-none"></div>
+<!-- Success Modal / Card -->
+<div class="relative z-10 w-full max-w-[400px] bg-surface-container-lowest rounded-card p-stack-lg flex flex-col items-center text-center shadow-[0px_4px_12px_rgba(44,62,80,0.08)]">
+<!-- Pulsing Heart Icon -->
+<div class="w-24 h-24 mb-stack-md flex items-center justify-center bg-primary-container/10 rounded-full animate-pulse-heart">
+<span class="material-symbols-outlined text-primary text-[80px]" style="font-variation-settings: 'FILL' 1;">
+                    favorite
+                </span>
+</div>
+<!-- Title -->
+<h2 class="font-screen-title text-screen-title text-primary-container mb-base">
+                Vous avez sauvé une vie ! 🩸
+            </h2>
+<!-- Message -->
+<p class="font-body-md text-on-surface-variant mb-stack-lg">
+                Votre don a été enregistré dans votre historique
+            </p>
+<!-- Stats Section (Bento style highlight) -->
+<div class="grid grid-cols-2 gap-gutter w-full mb-stack-lg">
+<div class="bg-surface-container-low p-stack-sm rounded-xl flex flex-col items-center justify-center border border-outline-variant/30">
+<span class="text-secondary font-bold text-lg">+1 Don</span>
+<span class="font-label-sm text-on-surface-variant uppercase tracking-wider">Aujourd'hui</span>
+</div>
+<div class="bg-surface-container-low p-stack-sm rounded-xl flex flex-col items-center justify-center border border-outline-variant/30">
+<span class="text-primary font-bold text-lg">4 dons</span>
+<span class="font-label-sm text-on-surface-variant uppercase tracking-wider">Total</span>
+</div>
+</div>
+<!-- Primary Action -->
+<button class="w-full h-[52px] bg-primary-container text-on-primary font-button-text text-button-text rounded-xl active:opacity-70 transition-all shadow-lg shadow-primary-container/20">
+                Retour à l'accueil
+            </button>
+<!-- Secondary Decorative Elements -->
+<div class="mt-stack-lg flex items-center gap-base opacity-40">
+<span class="material-symbols-outlined text-sm">verified</span>
+<span class="font-label-sm">Don sécurisé et authentifié</span>
+</div>
+</div>
+<!-- Background Image for context (Subtle atmosphere) -->
+<div class="fixed inset-0 -z-10 bg-gradient-to-br from-white via-surface-container-low to-white"></div>
+</main>
+<!-- Bottom Navigation Suppressed for Transactional/Success Flow as per Shell Visibility Rule -->
+<!-- Decorative Illustration Placeholder -->
+<div class="fixed bottom-0 left-0 w-full opacity-10 pointer-events-none flex justify-center translate-y-1/2">
+<img class="w-full max-w-2xl object-contain" data-alt="A professional and clinical close-up of a modern medical laboratory environment with clean white surfaces and soft natural lighting. The scene evokes a sense of sterile efficiency and trust, featuring high-tech equipment blurred in the background. The color palette is dominated by pristine whites and soft grays with subtle clinical accents. This artistic photography represents the safety and medical excellence of a premium blood donation center." src="https://lh3.googleusercontent.com/aida-public/AB6AXuATFYbjDxLGWD1TKAMYBR8r39Nbjvt2M_kZ-66nRR5PxylLKv82pwVQJlCQCh5PibCZwxgJXxM5jPliDC07SmYj4TyEgkoWAkncP2tDzNulugHoVOhoE-RX4vh14Y18lBRs6SjqLVqpInGFGzyPT0OrJjOQ6BdCr-xIIO1_wX__SII-Q3jT28dThwS2eFTKY7zQvSJxjwaqbN9wjlJ2ncb3-kJ7mFzO2SPixaUTsDab4U2EKrVkWNkGgw0e51W42fJBr7RA0--Aul5L"/>
+</div>
+</body></html>

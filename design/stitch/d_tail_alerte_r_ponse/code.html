@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+
+<html class="light" lang="fr"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-tertiary-fixed-variant": "#713700",
+                        "on-secondary-fixed-variant": "#005228",
+                        "tertiary-container": "#a55400",
+                        "surface-container-lowest": "#ffffff",
+                        "on-primary-container": "#ffe5e1",
+                        "outline": "#8d706c",
+                        "secondary-container": "#7bf8a1",
+                        "secondary-fixed": "#7efba4",
+                        "tertiary-fixed": "#ffdcc5",
+                        "surface-container": "#e3efff",
+                        "on-error-container": "#93000a",
+                        "surface-tint": "#b02d21",
+                        "surface-bright": "#f7f9ff",
+                        "surface-variant": "#d1e4fb",
+                        "primary-container": "#c0392b",
+                        "primary": "#9e2016",
+                        "outline-variant": "#e1bfb9",
+                        "on-tertiary": "#ffffff",
+                        "surface": "#f7f9ff",
+                        "inverse-primary": "#ffb4a9",
+                        "tertiary-fixed-dim": "#ffb783",
+                        "on-background": "#091d2e",
+                        "inverse-surface": "#203243",
+                        "on-primary-fixed": "#410000",
+                        "on-secondary-container": "#007239",
+                        "surface-container-low": "#edf4ff",
+                        "on-tertiary-container": "#ffe6d8",
+                        "on-primary": "#ffffff",
+                        "on-error": "#ffffff",
+                        "inverse-on-surface": "#e8f2ff",
+                        "surface-dim": "#c9dcf3",
+                        "surface-container-high": "#d9eaff",
+                        "secondary": "#006d37",
+                        "primary-fixed-dim": "#ffb4a9",
+                        "on-surface-variant": "#59413d",
+                        "secondary-fixed-dim": "#61de8a",
+                        "on-secondary-fixed": "#00210c",
+                        "on-secondary": "#ffffff",
+                        "error-container": "#ffdad6",
+                        "on-primary-fixed-variant": "#8e130c",
+                        "error": "#ba1a1a",
+                        "background": "#f7f9ff",
+                        "primary-fixed": "#ffdad5",
+                        "tertiary": "#814000",
+                        "on-tertiary-fixed": "#301400",
+                        "surface-container-highest": "#d1e4fb",
+                        "on-surface": "#091d2e"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "gutter": "16px",
+                        "base": "8px",
+                        "stack-sm": "12px",
+                        "stack-lg": "32px",
+                        "container-margin": "20px",
+                        "stack-md": "24px"
+                    },
+                    "fontFamily": {
+                        "screen-title": ["Inter"],
+                        "label-sm": ["Inter"],
+                        "body-md": ["Inter"],
+                        "button-text": ["Inter"],
+                        "section-title": ["Inter"]
+                    },
+                    "fontSize": {
+                        "screen-title": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "label-sm": ["12px", {"lineHeight": "16px", "fontWeight": "500"}],
+                        "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                        "button-text": ["16px", {"lineHeight": "24px", "fontWeight": "600"}],
+                        "section-title": ["18px", {"lineHeight": "24px", "letterSpacing": "-0.01em", "fontWeight": "600"}]
+                    }
+                },
+            },
+        }
+    </script>
+</head>
+<body class="bg-surface-container-low text-on-surface min-h-screen pb-32">
+<!-- Top App Bar -->
+<header class="flex items-center justify-between px-container-margin w-full fixed top-0 z-50 bg-surface-container-lowest border-b border-surface-container h-[56px]">
+<button class="text-primary active:opacity-70 transition-all">
+<span class="material-symbols-outlined text-[24px]">arrow_back</span>
+</button>
+<h1 class="font-screen-title text-[18px] text-on-surface font-bold">Détail de l'alerte</h1>
+<div class="px-3 py-1 bg-[#E74C3C] bg-opacity-15 rounded-full">
+<span class="text-[#E74C3C] text-[10px] font-bold">TRÈS URGENT</span>
+</div>
+</header>
+<main class="mt-[56px] px-container-margin pt-stack-md space-y-stack-md">
+<!-- Hero Card Section -->
+<section class="bg-primary-container rounded-[16px] p-container-margin text-center shadow-lg">
+<h2 class="text-[48px] font-bold text-on-primary mb-1">O+</h2>
+<p class="text-on-primary font-semibold text-body-md mb-stack-sm">Besoin urgent · 3 poches</p>
+<div class="flex items-center justify-center text-on-primary space-x-1 mb-1">
+<span class="material-symbols-outlined text-[18px]">location_on</span>
+<span class="text-body-md">Hôpital Général de Douala</span>
+</div>
+<p class="text-on-primary text-opacity-80 text-label-sm">Il y a 5 minutes</p>
+</section>
+<!-- Mini Map Section -->
+<section class="relative h-[180px] rounded-[16px] overflow-hidden shadow-sm group">
+<img alt="Map showing hospital location" class="w-full h-full object-cover" data-location="Douala" src="https://lh3.googleusercontent.com/aida/ADBb0uj0I8u5g01l5WMyZRf-qorjnGhiImSJC6gNstNpIHxbpc-oxk1le-yiVHnyRzFjTARk-PmCqRbagpapB4sw1iHiG_tKN8esfE1BSzxzQSwDFNDKijPoo9GGx55Atj1tr0yvK_vmLxx-c2STXSWFMFB9J77wSiEew1hTskbiaqwZctb2ypjPNewaKaws240SyvqM4FioJTukOiNQS5v_ShLS9KZkf9D5Of2nQgBRkKX4utgdoE9tpiCWLV2z"/>
+<div class="absolute inset-0 bg-black/10 flex items-center justify-center">
+<button class="bg-surface-container-lowest/90 border-2 border-primary text-primary px-4 py-2 rounded-lg font-button-text text-sm flex items-center space-x-2 active:scale-95 transition-transform">
+<span class="material-symbols-outlined text-[18px]">directions</span>
+<span>Ouvrir dans Maps</span>
+</button>
+</div>
+</section>
+<!-- Statistics Section -->
+<section class="bg-surface-container-lowest rounded-[16px] p-container-margin shadow-sm">
+<div class="flex flex-wrap gap-2 mb-stack-sm">
+<span class="text-on-surface-variant text-label-sm">12 donneurs notifiés</span>
+<span class="text-on-surface-variant text-label-sm">·</span>
+<span class="text-secondary font-semibold text-label-sm">3 ont accepté</span>
+<span class="text-on-surface-variant text-label-sm">·</span>
+<span class="text-on-surface-variant text-label-sm">2 confirmés</span>
+</div>
+<div class="w-full bg-surface-container h-2 rounded-full overflow-hidden">
+<div class="bg-primary-container h-full w-[25%] transition-all duration-500"></div>
+</div>
+</section>
+<!-- Donor Response Section -->
+<section class="space-y-stack-sm">
+<h3 class="font-section-title text-section-title text-on-surface">Votre réponse</h3>
+<button class="w-full h-[56px] bg-secondary text-on-secondary rounded-[12px] font-button-text flex items-center justify-center space-x-2 active:scale-[0.98] transition-transform">
+<span class="material-symbols-outlined">check_circle</span>
+<span>Je suis disponible</span>
+</button>
+<button class="w-full h-[52px] border border-outline text-on-surface-variant rounded-[12px] font-button-text flex items-center justify-center space-x-2 active:bg-surface-container transition-colors">
+<span class="material-symbols-outlined">cancel</span>
+<span>Pas disponible maintenant</span>
+</button>
+</section>
+<!-- Contact Info -->
+<section class="bg-surface-container-low rounded-[16px] p-container-margin flex items-center justify-between">
+<div class="flex flex-col">
+<span class="text-on-surface-variant text-label-sm">Contact direct</span>
+<span class="text-on-surface font-semibold">+237 6XX XXX XXX</span>
+</div>
+<button class="px-4 py-2 border border-primary text-primary rounded-lg font-button-text text-sm active:bg-primary/5 transition-colors">
+                Appeler
+            </button>
+</section>
+</main>
+<!-- Bottom Nav Bar -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center bg-surface-container-lowest border-t border-surface-container px-gutter pb-safe h-[64px]">
+<button class="flex flex-col items-center justify-center text-on-surface-variant hover:bg-surface-container-low transition-colors active:scale-95">
+<span class="material-symbols-outlined">home</span>
+<span class="font-label-sm text-label-sm">Accueil</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant hover:bg-surface-container-low transition-colors active:scale-95">
+<span class="material-symbols-outlined">map</span>
+<span class="font-label-sm text-label-sm">Carte</span>
+</button>
+<button class="flex flex-col items-center justify-center text-primary font-semibold hover:bg-surface-container-low transition-colors active:scale-95">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">notifications</span>
+<span class="font-label-sm text-label-sm">Alertes</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant hover:bg-surface-container-low transition-colors active:scale-95">
+<span class="material-symbols-outlined">person</span>
+<span class="font-label-sm text-label-sm">Profil</span>
+</button>
+</nav>
+</body></html>

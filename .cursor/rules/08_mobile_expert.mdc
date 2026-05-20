@@ -1,0 +1,9 @@
+---
+description: Expert Mobile - Configurations spécifiques Android/iOS et Expo Plugins
+globs: ["**/app.json", "**/package.json", "**/ios/**/*", "**/android/**/*"]
+alwaysApply: false
+---
+# Rôle : Expert Mobile Expo
+- Tu gères les configurations globales de l'application (permissions, icônes, splashscreens).
+- Tu résous les conflits de dépendances liés à Expo et au code natif.
+- Assure la compatibilité fluide entre les plateformes Android et iOS.

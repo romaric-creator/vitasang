@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+
+<html class="light" lang="fr"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "tertiary-fixed-dim": "#ffb783",
+                        "on-primary": "#ffffff",
+                        "primary-container": "#c0392b",
+                        "on-surface-variant": "#59413d",
+                        "inverse-on-surface": "#e8f2ff",
+                        "inverse-primary": "#ffb4a9",
+                        "surface-container-low": "#edf4ff",
+                        "secondary-container": "#7bf8a1",
+                        "surface-dim": "#c9dcf3",
+                        "primary-fixed": "#ffdad5",
+                        "background": "#f7f9ff",
+                        "error-container": "#ffdad6",
+                        "on-primary-fixed": "#410000",
+                        "on-tertiary-fixed-variant": "#713700",
+                        "on-primary-fixed-variant": "#8e130c",
+                        "primary-fixed-dim": "#ffb4a9",
+                        "on-background": "#091d2e",
+                        "surface-container-highest": "#d1e4fb",
+                        "tertiary": "#814000",
+                        "on-secondary": "#ffffff",
+                        "on-error-container": "#93000a",
+                        "inverse-surface": "#203243",
+                        "primary": "#9e2016",
+                        "on-surface": "#091d2e",
+                        "on-tertiary-container": "#ffe6d8",
+                        "on-tertiary-fixed": "#301400",
+                        "on-secondary-container": "#007239",
+                        "on-secondary-fixed-variant": "#005228",
+                        "error": "#ba1a1a",
+                        "tertiary-fixed": "#ffdcc5",
+                        "tertiary-container": "#a55400",
+                        "surface-container": "#e3efff",
+                        "surface-tint": "#b02d21",
+                        "surface": "#f7f9ff",
+                        "surface-variant": "#d1e4fb",
+                        "secondary-fixed-dim": "#61de8a",
+                        "outline-variant": "#e1bfb9",
+                        "on-error": "#ffffff",
+                        "surface-bright": "#f7f9ff",
+                        "surface-container-high": "#d9eaff",
+                        "surface-container-lowest": "#ffffff",
+                        "on-tertiary": "#ffffff",
+                        "secondary": "#006d37",
+                        "outline": "#8d706c",
+                        "secondary-fixed": "#7efba4",
+                        "on-primary-container": "#ffe5e1",
+                        "on-secondary-fixed": "#00210c"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "stack-sm": "12px",
+                        "stack-lg": "32px",
+                        "base": "8px",
+                        "stack-md": "24px",
+                        "gutter": "16px",
+                        "container-margin": "20px"
+                    },
+                    "fontFamily": {
+                        "label-sm": ["Inter"],
+                        "button-text": ["Inter"],
+                        "section-title": ["Inter"],
+                        "body-md": ["Inter"],
+                        "screen-title": ["Inter"]
+                    },
+                    "fontSize": {
+                        "label-sm": ["12px", {"lineHeight": "16px", "fontWeight": "500"}],
+                        "button-text": ["16px", {"lineHeight": "24px", "fontWeight": "600"}],
+                        "section-title": ["18px", {"lineHeight": "24px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                        "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                        "screen-title": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.02em", "fontWeight": "700"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background min-h-screen flex flex-col items-center justify-center p-gutter">
+<!-- Top Navigation Anchor (Shared Component Execution) -->
+<header class="flex items-center justify-between px-container-margin w-full fixed top-0 z-50 bg-surface-container-lowest dark:bg-surface-dim h-[56px] border-b border-surface-container dark:border-outline-variant">
+<button class="flex items-center justify-center text-on-surface-variant hover:bg-surface-container transition-colors p-2 rounded-full">
+<span class="material-symbols-outlined">arrow_back</span>
+</button>
+<h1 class="font-screen-title text-screen-title text-primary dark:text-primary-fixed-dim">VitaSang</h1>
+<div class="w-10"></div> <!-- Balance spacer -->
+</header>
+<!-- Main Content Canvas (Centered Modal Design) -->
+<main class="max-w-[375px] w-full mt-[56px] mb-8 bg-surface-container-lowest rounded-xl shadow-[0px_4px_12px_rgba(44,62,80,0.08)] overflow-hidden flex flex-col items-center px-container-margin py-stack-lg">
+<!-- Success Visual Anchor -->
+<div class="w-20 h-20 bg-secondary-fixed text-on-secondary-fixed flex items-center justify-center rounded-full mb-stack-md">
+<span class="material-symbols-outlined !text-[48px]" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+</div>
+<!-- Headline & Messaging -->
+<div class="text-center mb-stack-lg">
+<h2 class="font-screen-title text-screen-title text-on-surface mb-stack-sm">Merci pour votre réponse !</h2>
+<p class="font-body-md text-body-md text-on-surface-variant">L'équipe médicale a été notifiée de votre disponibilité.</p>
+</div>
+<!-- Summary Card (Tonal Layer Level 1) -->
+<div class="w-full bg-surface-container-low rounded-xl p-gutter space-y-stack-sm mb-stack-lg">
+<div class="flex justify-between items-center">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">Groupe Requis</span>
+<span class="font-section-title text-section-title text-primary">O+</span>
+</div>
+<div class="flex items-start gap-2 border-t border-outline-variant/30 pt-stack-sm">
+<span class="material-symbols-outlined text-primary text-[20px]">location_on</span>
+<div>
+<span class="block font-label-sm text-label-sm text-on-surface-variant">Lieu du don</span>
+<span class="block font-body-md text-body-md text-on-surface font-semibold">Hôpital Général de Douala</span>
+</div>
+</div>
+<div class="flex items-center gap-2 border-t border-outline-variant/30 pt-stack-sm">
+<span class="material-symbols-outlined text-secondary text-[20px]" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+<div>
+<span class="block font-label-sm text-label-sm text-on-surface-variant">Votre Statut</span>
+<span class="block font-body-md text-body-md text-secondary font-bold">✓ Disponible</span>
+</div>
+</div>
+</div>
+<!-- Interaction Context Area -->
+<div class="w-full space-y-stack-sm">
+<button class="w-full h-[52px] bg-primary-container text-on-primary font-button-text text-button-text rounded-xl active:scale-95 transition-transform shadow-md">
+                Confirmer le don effectué
+            </button>
+<button class="w-full h-[52px] bg-transparent border border-outline text-primary font-button-text text-button-text rounded-xl active:opacity-70 transition-all">
+                Retour aux alertes
+            </button>
+</div>
+</main>
+<!-- Contextual Context Illustration -->
+<div class="w-full max-w-[375px] px-container-margin">
+<div class="relative w-full aspect-video rounded-xl overflow-hidden shadow-sm">
+<img alt="Clinical blood bank interior" class="w-full h-full object-cover grayscale-[0.2]" data-alt="A clean-room clinical environment showing a professional blood bank facility with modern medical equipment. The lighting is bright and high-key, creating a sterile yet trustworthy atmosphere. Soft white surfaces contrast with the deep professional red of laboratory accents. The visual style is modern, minimalist, and corporate, emphasizing reliability and biological urgency through sharp focus and clean lines." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAumksCVL-cbFzDAiWJTyrwzrNwpXwFR3ewTl202uPoT8zqp70ECh162i11WmjkY6U-aY_d7vHTvdVW--6Kukk1Z67c0M8ycO6N_Wkvy8cke9Pe1E0VwA3KVynHe2A7o4nWXdLEOE5g2Eyc9QaKBtcF0tSfEKgPMHMSzVA8bhyiMn4pN5Zj-b3N06b8OIKQk-qN8vl6vMju3gPZi6ddPoYLpGuNXHk9hUloNJPwKlJgfHvMB-ORfS7ep7JLdFHVa-kTj3nZOIpN9ls5"/>
+<div class="absolute inset-0 bg-gradient-to-t from-background/80 to-transparent"></div>
+</div>
+</div>
+<!-- Secondary Navigation Logic (Suppressed as per "Task Focused" Rule) -->
+<!-- BottomNavBar is excluded to focus the user on the confirmation task -->
+</body></html>

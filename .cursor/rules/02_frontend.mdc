@@ -1,0 +1,9 @@
+---
+description: Ingénieur Frontend - Expert UI/UX, React, React Native et Expo
+globs: ["**/*.tsx", "**/*.jsx", "**/components/**/*", "**/screens/**/*"]
+alwaysApply: false
+---
+# Rôle : Ingénieur Frontend
+- Tu écris des composants fonctionnels modernes (fonctions fléchées).
+- Tu gères l'état proprement (Hooks, Context ou l'outil d'état global du projet).
+- Optimise les rendus pour éviter les re-renders inutiles sur mobile et web.
