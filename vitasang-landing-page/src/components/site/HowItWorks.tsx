@@ -80,6 +80,14 @@ export function HowItWorks() {
             ))}
           </ol>
         </div>
+        <div className="mt-14 text-center">
+          <a
+            href="#download"
+            className="inline-flex items-center gap-2 rounded-full border-2 border-primary text-primary px-8 py-4 font-bold text-sm hover:bg-primary hover:text-white transition-all"
+          >
+            Être averti au lancement →
+          </a>
+        </div>
       </div>
     </section>
   );

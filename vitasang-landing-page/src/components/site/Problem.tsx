@@ -66,6 +66,14 @@ export function Problem() {
             </div>
           ))}
         </div>
+        <div className="mt-14 text-center">
+          <a
+            href="#download"
+            className="inline-flex items-center gap-2 rounded-full bg-primary px-8 py-4 font-bold text-white text-sm hover:bg-primary/90 transition-all"
+          >
+            Je veux faire partie de la solution →
+          </a>
+        </div>
       </div>
     </section>
   );

@@ -1,23 +1,36 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { CheckCircle2, Loader2, Send } from "lucide-react";
 
 const API_URL = import.meta.env.VITE_API_URL ?? "https://vitasang.onrender.com";
+
+// Ping silencieux au chargement pour réveiller Render (plan gratuit dort après 15 min)
+function usePingBackend() {
+  useEffect(() => {
+    fetch(`${API_URL}/api/ping`, { method: "GET" }).catch(() => {});
+  }, []);
+}
 
 export function CtaFinal() {
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [message, setMessage] = useState("");
 
+  usePingBackend();
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email || status === "loading") return;
     setStatus("loading");
     try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 20000);
       const res = await fetch(`${API_URL}/api/waitlist`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email }),
+        signal: controller.signal,
       });
+      clearTimeout(timeout);
       const data = await res.json();
       if (res.ok && data.success) {
         setStatus("success");
@@ -25,9 +38,13 @@ export function CtaFinal() {
       } else {
         throw new Error(data.message || "Erreur");
       }
-    } catch {
+    } catch (err: any) {
       setStatus("error");
-      setMessage("Une erreur s'est produite. Réessayez.");
+      if (err?.name === "AbortError") {
+        setMessage("Le serveur met du temps à répondre. Réessayez dans quelques secondes.");
+      } else {
+        setMessage("Une erreur s'est produite. Réessayez.");
+      }
     }
   };
 
@@ -95,7 +112,7 @@ export function CtaFinal() {
               ) : (
                 <Send size={20} className="stroke-[1.5]" />
               )}
-              {status === "loading" ? "Envoi..." : "Rejoindre le mouvement"}
+              {status === "loading" ? "Connexion au serveur..." : "Rejoindre le mouvement"}
             </button>
           </form>
         )}

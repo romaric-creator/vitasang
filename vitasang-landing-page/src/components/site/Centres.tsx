@@ -43,6 +43,14 @@ export function Centres() {
         <p className="reveal mt-8 text-center text-sm text-muted-foreground">
           + d'autres centres en cours d'intégration à Bafoussam, Buea et Ngaoundéré.
         </p>
+        <div className="reveal mt-10 text-center">
+          <a
+            href="#download"
+            className="inline-flex items-center gap-2 rounded-full bg-primary px-8 py-4 font-bold text-white text-sm hover:bg-primary/90 transition-all"
+          >
+            Rejoindre VitaSang →
+          </a>
+        </div>
       </div>
     </section>
   );
