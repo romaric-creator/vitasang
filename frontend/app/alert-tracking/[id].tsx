@@ -87,7 +87,7 @@ export default function AlertTracking() {
       longitude: alerte.longitude || "",
       urgency: alerte.urgence || "URGENT",
       quantity: alerte.quantite_requise || "?",
-      id: alerte.id || id || "",
+      id: alerte.public_token || alerte.id || id || "",
     });
     const url = `whatsapp://send?text=${encodeURIComponent(message)}`;
     Linking.canOpenURL(url).then((supported) => {
@@ -99,20 +99,20 @@ export default function AlertTracking() {
 
   const handleConfirmDonation = async () => {
     RNAlert.alert(
-      "Confirmation de don",
-      "Confirmez-vous avoir effectué ce don ? Votre geste héroïque sera enregistré.",
+      t("alertTracking.confirmTitle"),
+      t("alertTracking.confirmMessage"),
       [
-        { text: "Annuler", style: "cancel" },
+        { text: t("common.cancel"), style: "cancel" },
         {
-          text: "Oui, je confirme",
+          text: t("alertTracking.confirmYes"),
           onPress: async () => {
             setConfirming(true);
             try {
               await confirmDonation(Number(id));
               fetchStatus();
-              RNAlert.alert("Félicitations 🎉", "Merci pour votre don ! Vous avez sauvé une vie.");
+              RNAlert.alert(t("alertTracking.congratsTitle"), t("alertTracking.congratsMessage"));
             } catch (e: any) {
-              RNAlert.alert("Erreur", e.message);
+              RNAlert.alert(t("common.error"), e.message);
             } finally {
               setConfirming(false);
             }
@@ -194,7 +194,7 @@ export default function AlertTracking() {
 
         {/* Donneurs Section */}
         <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Engagements réels</Text>
+          <Text style={styles.sectionTitle}>{t("alertTracking.realEngagements")}</Text>
           <View style={styles.badgeCount}>
             <Text style={styles.badgeCountText}>{details.length}</Text>
           </View>
@@ -207,7 +207,7 @@ export default function AlertTracking() {
         ) : (
           <View style={styles.emptyState}>
             <TabBarIcon name="clock-o" size={32} color={color.textLight} />
-            <Text style={styles.emptyText}>En attente de donneurs...</Text>
+            <Text style={styles.emptyText}>{t("alertTracking.waitingDonors")}</Text>
           </View>
         )}
       </ScrollView>
@@ -218,7 +218,7 @@ export default function AlertTracking() {
           <PulseButton
             onPress={handleConfirmDonation}
             loading={confirming}
-            title={confirming ? "EN COURS..." : "J'AI EFFECTUÉ LE DON"}
+            title={confirming ? t("alertTracking.inProgress") : t("alertTracking.donationDone")}
           />
         )}
         <TouchableOpacity

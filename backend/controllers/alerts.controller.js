@@ -5,6 +5,7 @@ const LogNotification = db.LogNotification;
 const { haversineSQL } = require("../utils/geoHelpers");
 const { ErrorTypes } = require("../utils/errorHandler");
 const alertService = require("../services/alert.service");
+const cacheService = require("../services/cache.service");
 
 exports.createAlert = async (req, res, next) => {
   try {
@@ -165,6 +166,7 @@ exports.deleteAlert = async (req, res, next) => {
     }
     alerte.statut = "annule";
     await alerte.save();
+    await cacheService.del('api-cache:/api/alerts/public');
     res.json({ success: true, message: "Alerte annulée" });
   } catch (error) {
     next(error);

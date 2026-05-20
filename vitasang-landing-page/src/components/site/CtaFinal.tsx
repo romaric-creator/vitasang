@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { CheckCircle2, Loader2, Send } from "lucide-react";
 
-const API_URL = import.meta.env.VITE_API_URL ?? "https://vitasang.christiantendainfo2006.workers.dev";
+const API_URL = import.meta.env.VITE_API_URL ?? "https://vitasang.onrender.com";
 
 export function CtaFinal() {
   const [email, setEmail] = useState("");
@@ -67,13 +67,19 @@ export function CtaFinal() {
         ) : (
           <form
             onSubmit={handleSubmit}
+            aria-label="Formulaire d'inscription à la liste d'attente VitaSang"
             className="reveal mx-auto mt-10 flex max-w-lg flex-col gap-3 rounded-2xl bg-white p-2 shadow-2xl sm:flex-row"
           >
+            <label htmlFor="beta-email" className="sr-only">
+              Votre adresse e-mail
+            </label>
             <input
               id="beta-email"
               type="email"
               required
+              autoComplete="email"
               placeholder="votre@email.com"
+              aria-describedby={status === "error" ? "cta-error" : undefined}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               disabled={status === "loading"}
@@ -95,7 +101,7 @@ export function CtaFinal() {
         )}
 
         {status === "error" && (
-          <p className="mt-3 text-sm text-white/80">{message}</p>
+          <p id="cta-error" role="alert" className="mt-3 text-sm text-white/80">{message}</p>
         )}
       </div>
     </section>

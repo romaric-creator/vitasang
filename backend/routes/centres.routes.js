@@ -66,6 +66,7 @@ router.get("/", cacheMiddleware(15 * 60), controller.getAllCentres);
  */
 router.get(
   "/search",
+  cacheMiddleware(10 * 60),
   validateRequest(schemas.searchCentres),
   controller.searchCentresNearby,
 );
@@ -89,7 +90,7 @@ router.get(
  *       404:
  *         description: Not found
  */
-router.get("/:id", controller.getCentreDetail);
+router.get("/:id", cacheMiddleware(30 * 60), controller.getCentreDetail);
 
 /**
  * @swagger
@@ -108,7 +109,7 @@ router.get("/:id", controller.getCentreDetail);
  *       200:
  *         description: Available time slots
  */
-router.get("/:id/availability", controller.getCentreAvailability);
+router.get("/:id/availability", cacheMiddleware(5 * 60), controller.getCentreAvailability);
 
 /**
  * @swagger

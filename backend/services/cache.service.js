@@ -70,6 +70,32 @@ class CacheService {
       logger.error(`Cache DEL error for key ${key}:`, error);
     }
   }
+
+  // Invalide toutes les clés matchant un préfixe (SCAN safe pour Upstash)
+  async invalidatePattern(pattern) {
+    if (!this.redis) return;
+    try {
+      let cursor = '0';
+      do {
+        const [nextCursor, keys] = await this.redis.scan(cursor, 'MATCH', pattern, 'COUNT', 100);
+        cursor = nextCursor;
+        if (keys.length > 0) {
+          await this.redis.del(...keys);
+        }
+      } while (cursor !== '0');
+    } catch (error) {
+      logger.error(`Cache SCAN/DEL error for pattern ${pattern}:`, error);
+    }
+  }
+
+  // Get from cache or compute and store
+  async getOrSet(key, fn, ttlSeconds = 300) {
+    const cached = await this.get(key);
+    if (cached !== null) return cached;
+    const value = await fn();
+    await this.set(key, value, ttlSeconds);
+    return value;
+  }
 }
 
 module.exports = new CacheService();

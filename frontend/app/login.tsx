@@ -16,6 +16,7 @@ import { color } from "@/constant/color";
 import { loginValidationSchema } from "@/validation/ValidationSchemas";
 import { useAuth } from "@/context/AuthContext";
 import { TabBarIcon } from "@/components/TabBarIcon";
+import { BloodDropMascot } from "@/components/BloodDropMascot";
 import { useTranslation } from "react-i18next";
 import ThemedView from "@/components/ThemedView";
 import { ErrorAlert } from "@/components/ErrorAlert";
@@ -71,11 +72,9 @@ export default function LoginScreen() {
         >
           {/* Brand Header */}
           <View style={styles.header}>
-            <View style={styles.logoCircle}>
-              <TabBarIcon name="tint" size={42} color="white" />
-            </View>
+            <BloodDropMascot expression="happy" accentColor={color.primary} />
             <Text style={styles.brandName}>VitaSang</Text>
-            <Text style={styles.subTitle}>{t("login.welcomeBack") || "Donnez, sauvez des vies"}</Text>
+            <Text style={styles.subTitle}>{t("login.subtitle")}</Text>
           </View>
 
           <Formik
@@ -94,7 +93,7 @@ export default function LoginScreen() {
               <View style={styles.form}>
                 {/* Telephone */}
                 <FormField
-                  label={t("login.phone") || "Téléphone"}
+                  label={t("login.fields.phone")}
                   value={values.telephone}
                   onChangeText={handleChange("telephone")}
                   onBlur={handleBlur("telephone")}
@@ -107,7 +106,7 @@ export default function LoginScreen() {
                 
                 {/* Mot de passe */}
                 <FormField
-                  label={t("login.password") || "Mot de passe"}
+                  label={t("login.fields.password")}
                   value={values.mot_de_passe}
                   onChangeText={handleChange("mot_de_passe")}
                   onBlur={handleBlur("mot_de_passe")}
@@ -121,11 +120,11 @@ export default function LoginScreen() {
                 {/* Lien Oublié */}
                 <TouchableOpacity
                   style={styles.forgotBtn}
-                  onPress={() => router.push("/aide-et-conseil")}
+                  onPress={() => router.push("/reset-password")}
                   accessibilityLabel={t("login.forgotPassword") || "Mot de passe oublié ?"}
                   accessibilityRole="button"
                 >
-                  <Text style={styles.forgotText}>{t("login.forgotPassword") || "Mot de passe oublié ?"}</Text>
+                  <Text style={styles.forgotText}>{t("login.forgotPassword")}</Text>
                 </TouchableOpacity>
 
                 {/* Erreur Générale */}
@@ -139,7 +138,7 @@ export default function LoginScreen() {
 
                 {/* Bouton Connexion */}
                 <PrimaryButton
-                  title={t("login.submit") || "SE CONNECTER"}
+                  title={t("login.submit")}
                   onPress={() => handleSubmit()}
                   loading={loading}
                   disabled={loading}
@@ -148,13 +147,13 @@ export default function LoginScreen() {
 
                 {/* Footer */}
                 <View style={styles.footer}>
-                  <Text style={styles.noAccountText}>{t("login.noAccount") || "Pas encore de compte ? "}</Text>
+                  <Text style={styles.noAccountText}>{t("login.noAccount")} </Text>
                   <TouchableOpacity
                     onPress={() => router.replace("/register")}
                     accessibilityRole="link"
-                    accessibilityLabel={t("login.register") || "S'inscrire"}
+                    accessibilityLabel={t("login.registerLink")}
                   >
-                    <Text style={styles.registerLink}>{t("login.register") || "S'inscrire"}</Text>
+                    <Text style={styles.registerLink}>{t("login.registerLink")}</Text>
                   </TouchableOpacity>
                 </View>
               </View>
@@ -180,20 +179,6 @@ const styles = StyleSheet.create({
   header: {
     alignItems: "center",
     marginBottom: 48,
-  },
-  logoCircle: {
-    width: 84,
-    height: 84,
-    borderRadius: 42,
-    backgroundColor: color.primary, // Red for Vitality
-    justifyContent: "center",
-    alignItems: "center",
-    marginBottom: 20,
-    shadowColor: color.primary,
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.2,
-    shadowRadius: 15,
-    elevation: 8,
   },
   brandName: {
     fontSize: 34,

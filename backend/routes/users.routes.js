@@ -124,6 +124,13 @@ router.post(
   controller.login,
 );
 
+router.post(
+  "/reset-password",
+  normalizePhoneNumber,
+  validateRequest(schemas.resetPassword),
+  controller.resetPassword,
+);
+
 /**
  * @swagger
  * /api/users:

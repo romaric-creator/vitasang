@@ -15,80 +15,169 @@ import { color } from "@/constant/color";
 import { TabBarIcon } from "@/components/TabBarIcon";
 import { storeData } from "@/utils/storage";
 
-const { width: VW } = Dimensions.get("window");
+const { width: VW, height: VH } = Dimensions.get("window");
 
+// ─── Données slides ───────────────────────────────────────────────────────────
 const SLIDES = [
   {
     id: "1",
     bgColor: "#FFF1F2",
+    bgCircle: "#FECDD3",
     accentColor: color.primary,
-    title: "Sauvez une vie\nen un clic",
-    description:
-      "Répondez aux alertes de sang urgentes et devenez un héros pour votre communauté.",
     expression: "normal" as const,
+    title: "Une vie à sauver\nen 30 secondes",
+    description: "Signalez un besoin de sang urgent depuis n'importe où. L'alerte part immédiatement aux donneurs compatibles autour de vous.",
+    badge: "SOS",
+    badgeBg: color.primary,
+    icons: [
+      { name: "exclamation-triangle" as const, x: -90, y: -30, size: 28, bg: "#FFF1F2", border: "#FECDD3" },
+      { name: "tint"                as const, x:  80, y: -50, size: 22, bg: "#FFF1F2", border: "#FECDD3" },
+      { name: "map-marker"          as const, x: -70, y:  60, size: 20, bg: "#FFF1F2", border: "#FECDD3" },
+    ],
   },
   {
     id: "2",
-    bgColor: "#FFF7ED",
-    accentColor: "#F97316",
-    title: "L'urgence\nn'attend pas",
-    description:
-      "Chaque minute compte. VitaSang connecte les donneurs aux hôpitaux en temps réel.",
+    bgColor: "#F0F9FF",
+    bgCircle: "#BAE6FD",
+    accentColor: "#0284C7",
     expression: "surprised" as const,
+    title: "Le bon donneur,\nau bon endroit",
+    description: "Géolocalisation + groupe sanguin compatible. Chaque donneur reçoit une notification push en temps réel dès qu'une urgence le concerne.",
+    badge: "O+",
+    badgeBg: "#0284C7",
+    icons: [
+      { name: "bell"         as const, x: -85, y: -40, size: 26, bg: "#F0F9FF", border: "#BAE6FD" },
+      { name: "map-marker"   as const, x:  75, y: -30, size: 24, bg: "#F0F9FF", border: "#BAE6FD" },
+      { name: "mobile"       as const, x:  65, y:  65, size: 22, bg: "#F0F9FF", border: "#BAE6FD" },
+    ],
   },
   {
     id: "3",
     bgColor: "#F0FDF4",
+    bgCircle: "#BBF7D0",
     accentColor: "#16A34A",
-    title: "Rejoignez\nle mouvement",
-    description:
-      "Plus de 1 000 donneurs au Cameroun. Ensemble, nous construisons un réseau de vie.",
     expression: "happy" as const,
+    title: "Chaque don\nlaisse une trace",
+    description: "Historique complet, confirmations de don, messagerie directe avec les familles. Votre engagement, documenté.",
+    badge: "✓",
+    badgeBg: "#16A34A",
+    icons: [
+      { name: "check-circle" as const, x: -80, y: -45, size: 28, bg: "#F0FDF4", border: "#BBF7D0" },
+      { name: "comment"      as const, x:  78, y: -35, size: 24, bg: "#F0FDF4", border: "#BBF7D0" },
+      { name: "history"      as const, x: -65, y:  65, size: 22, bg: "#F0FDF4", border: "#BBF7D0" },
+    ],
   },
 ] as const;
 
 type Expression = "normal" | "surprised" | "happy";
 
-// ─── Tailles ──────────────────────────────────────────────────────────────────
-const HEAD = 130;   // diamètre de la tête / corps principal
-const EYE_W = 22;   // largeur d'un oeil blanc
-const EYE_H = 26;   // hauteur d'un oeil blanc (normal)
-const PUPIL = 14;   // diamètre pupille
-const ARM_W = 22;
-const ARM_H = 52;
+// ─── Constantes mascotte ──────────────────────────────────────────────────────
+const HEAD   = 118;
+const EYE_W  = 20;
+const EYE_H  = 24;
+const PUPIL  = 13;
+const ARM_W  = 20;
+const ARM_H  = 48;
 
-// ─── Mascotte ────────────────────────────────────────────────────────────────
+// ─── Icônes flottantes autour de la mascotte ──────────────────────────────────
+const FloatingIcons: React.FC<{
+  icons: typeof SLIDES[0]["icons"];
+  accentColor: string;
+  visible: boolean;
+}> = ({ icons, accentColor, visible }) => {
+  const anims = useRef(icons.map(() => new Animated.Value(0))).current;
+
+  useEffect(() => {
+    if (visible) {
+      Animated.stagger(80, anims.map(a =>
+        Animated.spring(a, { toValue: 1, useNativeDriver: true, speed: 14, bounciness: 10 })
+      )).start();
+    } else {
+      anims.forEach(a => a.setValue(0));
+    }
+  }, [visible]);
+
+  return (
+    <>
+      {icons.map((icon, i) => (
+        <Animated.View
+          key={i}
+          style={[
+            styles.floatIcon,
+            {
+              left: VW / 2 + icon.x - 20,
+              top: VH * 0.38 + icon.y,
+              backgroundColor: icon.bg,
+              borderColor: icon.border,
+              transform: [
+                { scale: anims[i] },
+                { translateY: anims[i].interpolate({ inputRange: [0, 1], outputRange: [10, 0] }) },
+              ],
+              opacity: anims[i],
+            },
+          ]}
+        >
+          <TabBarIcon name={icon.name} size={icon.size} color={accentColor} />
+        </Animated.View>
+      ))}
+    </>
+  );
+};
+
+// ─── Badge groupe sanguin ─────────────────────────────────────────────────────
+const SlideBadge: React.FC<{ label: string; bg: string; visible: boolean }> = ({ label, bg, visible }) => {
+  const anim = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    Animated.spring(anim, {
+      toValue: visible ? 1 : 0,
+      useNativeDriver: true,
+      speed: 18,
+      bounciness: 12,
+    }).start();
+  }, [visible]);
+
+  return (
+    <Animated.View
+      style={[
+        styles.badge,
+        { backgroundColor: bg, transform: [{ scale: anim }], opacity: anim },
+      ]}
+    >
+      <Text style={styles.badgeText}>{label}</Text>
+    </Animated.View>
+  );
+};
+
+// ─── Mascotte ─────────────────────────────────────────────────────────────────
 const BloodDropMascot: React.FC<{
   expression: Expression;
   accentColor: string;
   isLastSlide: boolean;
 }> = ({ expression, accentColor, isLastSlide }) => {
-  const floatY     = useRef(new Animated.Value(0)).current;
-  const blinkY     = useRef(new Animated.Value(1)).current;
-  const squeezeX   = useRef(new Animated.Value(1)).current;
-  const squeezeY   = useRef(new Animated.Value(1)).current;
-  const wobble     = useRef(new Animated.Value(0)).current;
-  const armL       = useRef(new Animated.Value(0)).current;
-  const armR       = useRef(new Animated.Value(0)).current;
-  const shadowSc   = useRef(new Animated.Value(1)).current;
-  const prevExpr   = useRef<Expression>(expression);
-  const blinkRef   = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const floatY   = useRef(new Animated.Value(0)).current;
+  const blinkY   = useRef(new Animated.Value(1)).current;
+  const squeezeX = useRef(new Animated.Value(1)).current;
+  const squeezeY = useRef(new Animated.Value(1)).current;
+  const wobble   = useRef(new Animated.Value(0)).current;
+  const armL     = useRef(new Animated.Value(0)).current;
+  const armR     = useRef(new Animated.Value(0)).current;
+  const shadowSc = useRef(new Animated.Value(1)).current;
+  const prevExpr = useRef<Expression>(expression);
+  const blinkRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Flottement doux
   useEffect(() => {
     const anim = Animated.loop(
       Animated.sequence([
-        Animated.timing(floatY,   { toValue: -10, duration: 1000, useNativeDriver: true }),
-        Animated.timing(shadowSc, { toValue: 0.8, duration: 1000, useNativeDriver: true }),
-        Animated.timing(floatY,   { toValue: 0,   duration: 1000, useNativeDriver: true }),
-        Animated.timing(shadowSc, { toValue: 1,   duration: 1000, useNativeDriver: true }),
+        Animated.timing(floatY,   { toValue: -10, duration: 1100, useNativeDriver: true }),
+        Animated.timing(shadowSc, { toValue: 0.8, duration: 1100, useNativeDriver: true }),
+        Animated.timing(floatY,   { toValue: 0,   duration: 1100, useNativeDriver: true }),
+        Animated.timing(shadowSc, { toValue: 1,   duration: 1100, useNativeDriver: true }),
       ])
     );
     anim.start();
     return () => anim.stop();
   }, []);
 
-  // Clignement des yeux
   useEffect(() => {
     const scheduleBlink = () => {
       blinkRef.current = setTimeout(() => {
@@ -103,7 +192,6 @@ const BloodDropMascot: React.FC<{
     return () => { if (blinkRef.current) clearTimeout(blinkRef.current); };
   }, []);
 
-  // Squash-and-stretch au changement d'expression
   useEffect(() => {
     if (prevExpr.current === expression) return;
     prevExpr.current = expression;
@@ -117,19 +205,14 @@ const BloodDropMascot: React.FC<{
         Animated.timing(squeezeY, { toValue: 0.88, duration: 100, useNativeDriver: true }),
       ]),
       Animated.parallel([
-        Animated.timing(squeezeX, { toValue: 1,    duration: 90,  useNativeDriver: true }),
-        Animated.timing(squeezeY, { toValue: 1,    duration: 90,  useNativeDriver: true }),
+        Animated.timing(squeezeX, { toValue: 1, duration: 90, useNativeDriver: true }),
+        Animated.timing(squeezeY, { toValue: 1, duration: 90, useNativeDriver: true }),
       ]),
     ]).start();
   }, [expression]);
 
-  // Bras
   useEffect(() => {
-    const targets = {
-      normal:    [30, -30],   // léger repos (degrés interpolés 0→30, 0→-30)
-      surprised: [80, -80],   // levés
-      happy:     [50, -50],   // en V victoire
-    };
+    const targets = { normal: [30, -30], surprised: [80, -80], happy: [50, -50] };
     const [l, r] = targets[expression];
     Animated.parallel([
       Animated.spring(armL, { toValue: l, useNativeDriver: true, speed: 14, bounciness: 8 }),
@@ -137,17 +220,16 @@ const BloodDropMascot: React.FC<{
     ]).start();
   }, [expression]);
 
-  // Wobble sur dernier slide
   useEffect(() => {
     if (isLastSlide) {
       const loop = Animated.loop(
         Animated.sequence([
-          Animated.timing(wobble, { toValue: -9, duration: 160, useNativeDriver: true }),
-          Animated.timing(wobble, { toValue:  9, duration: 160, useNativeDriver: true }),
-          Animated.timing(wobble, { toValue: -9, duration: 160, useNativeDriver: true }),
-          Animated.timing(wobble, { toValue:  9, duration: 160, useNativeDriver: true }),
-          Animated.timing(wobble, { toValue:  0, duration: 160, useNativeDriver: true }),
-          Animated.delay(700),
+          Animated.timing(wobble, { toValue: -8, duration: 150, useNativeDriver: true }),
+          Animated.timing(wobble, { toValue:  8, duration: 150, useNativeDriver: true }),
+          Animated.timing(wobble, { toValue: -8, duration: 150, useNativeDriver: true }),
+          Animated.timing(wobble, { toValue:  8, duration: 150, useNativeDriver: true }),
+          Animated.timing(wobble, { toValue:  0, duration: 150, useNativeDriver: true }),
+          Animated.delay(800),
         ])
       );
       loop.start();
@@ -157,41 +239,35 @@ const BloodDropMascot: React.FC<{
     }
   }, [isLastSlide]);
 
-  const wobbleDeg = wobble.interpolate({ inputRange: [-9, 9], outputRange: ["-9deg", "9deg"] });
+  const wobbleDeg = wobble.interpolate({ inputRange: [-8, 8], outputRange: ["-8deg", "8deg"] });
+  const armLDeg   = armL.interpolate({ inputRange: [0, 80],  outputRange: ["30deg",  "-60deg"] });
+  const armRDeg   = armR.interpolate({ inputRange: [-80, 0], outputRange: ["60deg",  "-30deg"] });
 
-  // Interpolation des bras (valeur 0–80 → degrés de rotation du bras)
-  const armLDeg = armL.interpolate({ inputRange: [0, 80], outputRange: ["30deg", "-60deg"] });
-  const armRDeg = armR.interpolate({ inputRange: [-80, 0], outputRange: ["60deg", "-30deg"] });
-
-  // ── Visage ────────────────────────────────────────────────────────────────
-  const eyeHCurrent = expression === "surprised" ? 30 : EYE_H;
+  const eyeHCurrent = expression === "surprised" ? 28 : EYE_H;
   const eyeWCurrent = expression === "surprised" ? EYE_W - 2 : EYE_W;
 
   const renderEyes = () => {
     if (expression === "happy") {
-      // Yeux fermés en arc (^-^)
       return (
-        <View style={s.eyesRow}>
-          <Animated.View style={[s.eyeHappyClip, { transform: [{ scaleY: blinkY }] }]}>
-            <View style={s.eyeHappyArc} />
+        <View style={ms.eyesRow}>
+          <Animated.View style={[ms.eyeHappyClip, { transform: [{ scaleY: blinkY }] }]}>
+            <View style={ms.eyeHappyArc} />
           </Animated.View>
-          <Animated.View style={[s.eyeHappyClip, { transform: [{ scaleY: blinkY }] }]}>
-            <View style={s.eyeHappyArc} />
+          <Animated.View style={[ms.eyeHappyClip, { transform: [{ scaleY: blinkY }] }]}>
+            <View style={ms.eyeHappyArc} />
           </Animated.View>
         </View>
       );
     }
     return (
-      <View style={s.eyesRow}>
-        {/* Oeil gauche */}
-        <Animated.View style={[s.eyeWhite, { width: eyeWCurrent, height: eyeHCurrent, transform: [{ scaleY: blinkY }] }]}>
-          <View style={[s.pupil, expression === "surprised" && s.pupilLarge]} />
-          <View style={s.eyeShine} />
+      <View style={ms.eyesRow}>
+        <Animated.View style={[ms.eyeWhite, { width: eyeWCurrent, height: eyeHCurrent, transform: [{ scaleY: blinkY }] }]}>
+          <View style={[ms.pupil, expression === "surprised" && ms.pupilLarge]} />
+          <View style={ms.eyeShine} />
         </Animated.View>
-        {/* Oeil droit */}
-        <Animated.View style={[s.eyeWhite, { width: eyeWCurrent, height: eyeHCurrent, transform: [{ scaleY: blinkY }] }]}>
-          <View style={[s.pupil, expression === "surprised" && s.pupilLarge]} />
-          <View style={s.eyeShine} />
+        <Animated.View style={[ms.eyeWhite, { width: eyeWCurrent, height: eyeHCurrent, transform: [{ scaleY: blinkY }] }]}>
+          <View style={[ms.pupil, expression === "surprised" && ms.pupilLarge]} />
+          <View style={ms.eyeShine} />
         </Animated.View>
       </View>
     );
@@ -200,23 +276,21 @@ const BloodDropMascot: React.FC<{
   const renderMouth = () => {
     if (expression === "happy") {
       return (
-        <View style={s.smileClip}>
-          <View style={s.smileCircle} />
+        <View style={ms.smileClip}>
+          <View style={ms.smileCircle} />
         </View>
       );
     }
-    if (expression === "surprised") {
-      return <View style={s.mouthO} />;
-    }
-    return <View style={s.mouthNeutral} />;
+    if (expression === "surprised") return <View style={ms.mouthO} />;
+    return <View style={ms.mouthNeutral} />;
   };
 
   const renderCheeks = () => {
     if (expression !== "happy") return null;
     return (
       <>
-        <View style={[s.cheek, { left: 12 }]} />
-        <View style={[s.cheek, { right: 12 }]} />
+        <View style={[ms.cheek, { left: 10 }]} />
+        <View style={[ms.cheek, { right: 10 }]} />
       </>
     );
   };
@@ -224,18 +298,19 @@ const BloodDropMascot: React.FC<{
   const renderBrows = () => {
     if (expression === "surprised") {
       return (
-        <View style={s.browsRow}>
-          <View style={[s.brow, { transform: [{ rotate: "-15deg" }, { translateY: -3 }] }]} />
-          <View style={[s.brow, { transform: [{ rotate: "15deg" },  { translateY: -3 }] }]} />
+        <View style={ms.browsRow}>
+          <View style={[ms.brow, { transform: [{ rotate: "-15deg" }, { translateY: -3 }] }]} />
+          <View style={[ms.brow, { transform: [{ rotate: "15deg"  }, { translateY: -3 }] }]} />
         </View>
       );
     }
     return null;
   };
 
+  const armColor = accentColor + "E0";
+
   return (
-    <View style={s.mascotWrap}>
-      {/* Corps animé */}
+    <View style={ms.mascotWrap}>
       <Animated.View
         style={{
           alignItems: "center",
@@ -247,47 +322,67 @@ const BloodDropMascot: React.FC<{
           ],
         }}
       >
-        {/* Bras gauche — derrière le corps */}
-        <Animated.View style={[s.arm, s.armLeft, { transform: [{ rotate: armLDeg }] }]} />
-
-        {/* ─── Forme goutte ─────────────────────────────────────────────────── */}
-        <View style={s.dropContainer}>
-          {/* Pointe en haut (inversé : la goutte a la pointe en haut sur ce design) */}
-          {/* Corps rond */}
-          <View style={[s.head, { backgroundColor: accentColor }]}>
-            {/* Brillance principale */}
-            <View style={s.shine} />
-            {/* Brillance secondaire */}
-            <View style={s.shine2} />
-
+        <Animated.View style={[ms.arm, ms.armLeft,  { backgroundColor: armColor, transform: [{ translateY: -(ARM_H / 2) }, { rotate: armLDeg }] }]} />
+        <View style={ms.dropContainer}>
+          <View style={[ms.head, { backgroundColor: accentColor }]}>
+            <View style={ms.shine} />
+            <View style={ms.shine2} />
             {renderCheeks()}
-
-            {/* Visage centré */}
-            <View style={s.face}>
+            <View style={ms.face}>
               {renderBrows()}
               {renderEyes()}
-              <View style={s.mouthWrap}>{renderMouth()}</View>
+              <View style={ms.mouthWrap}>{renderMouth()}</View>
             </View>
           </View>
-
-          {/* Pointe bas de la goutte */}
-          <View style={[s.tipWrapper, { backgroundColor: accentColor }]}>
-            <View style={[s.tipInner, { backgroundColor: accentColor }]} />
+          <View style={[ms.tipWrapper, { backgroundColor: accentColor }]}>
+            <View style={[ms.tipInner, { backgroundColor: accentColor }]} />
           </View>
         </View>
-
-        {/* Bras droit — devant le corps */}
-        <Animated.View style={[s.arm, s.armRight, { transform: [{ rotate: armRDeg }] }]} />
+        <Animated.View style={[ms.arm, ms.armRight, { backgroundColor: armColor, transform: [{ translateY: -(ARM_H / 2) }, { rotate: armRDeg }] }]} />
       </Animated.View>
-
-      {/* Ombre au sol */}
-      <Animated.View style={[s.shadow, { transform: [{ scaleX: shadowSc }] }]} />
+      <Animated.View style={[ms.shadow, { transform: [{ scaleX: shadowSc }] }]} />
     </View>
   );
 };
 
-// ─── Écran principal ──────────────────────────────────────────────────────────
+// ─── Slide ────────────────────────────────────────────────────────────────────
+const Slide: React.FC<{
+  item: typeof SLIDES[number];
+  index: number;
+  isActive: boolean;
+}> = ({ item, index, isActive }) => (
+  <View style={[styles.slide, { backgroundColor: item.bgColor, width: VW }]}>
+    {/* Cercle décoratif en arrière-plan */}
+    <View style={[styles.bgCircle, { backgroundColor: item.bgCircle }]} />
 
+    {/* Zone mascotte avec icônes */}
+    <View style={styles.mascotArea}>
+      <BloodDropMascot
+        expression={item.expression}
+        accentColor={item.accentColor}
+        isLastSlide={index === SLIDES.length - 1}
+      />
+      <SlideBadge label={item.badge} bg={item.badgeBg} visible={isActive} />
+    </View>
+
+    {/* Icônes flottantes */}
+    <FloatingIcons icons={item.icons} accentColor={item.accentColor} visible={isActive} />
+
+    {/* Texte */}
+    <View style={styles.textBlock}>
+      {/* Numéro d'étape */}
+      <View style={[styles.stepPill, { backgroundColor: item.accentColor + "20" }]}>
+        <Text style={[styles.stepText, { color: item.accentColor }]}>
+          {index + 1} / {SLIDES.length}
+        </Text>
+      </View>
+      <Text style={[styles.slideTitle, { color: "#0F172A" }]}>{item.title}</Text>
+      <Text style={styles.slideDesc}>{item.description}</Text>
+    </View>
+  </View>
+);
+
+// ─── Écran principal ──────────────────────────────────────────────────────────
 export default function OnboardingCarousel() {
   const [activeSlide, setActiveSlide] = useState(0);
   const flatListRef = useRef<FlatList>(null);
@@ -310,46 +405,31 @@ export default function OnboardingCarousel() {
   }, []);
 
   const renderItem = useCallback(
-    ({ item, index }: { item: (typeof SLIDES)[number]; index: number }) => (
-      <View style={[s.slide, { backgroundColor: item.bgColor }]}>
-        {/* Zone mascotte */}
-        <View style={s.mascotArea}>
-          <BloodDropMascot
-            expression={item.expression}
-            accentColor={item.accentColor}
-            isLastSlide={index === SLIDES.length - 1}
-          />
-        </View>
-
-        {/* Texte */}
-        <View style={s.textBlock}>
-          <Text style={[s.slideTitle, { color: "#1E293B" }]}>{item.title}</Text>
-          <Text style={s.slideDesc}>{item.description}</Text>
-        </View>
-      </View>
+    ({ item, index }: { item: typeof SLIDES[number]; index: number }) => (
+      <Slide item={item} index={index} isActive={activeSlide === index} />
     ),
-    []
+    [activeSlide]
   );
 
-  const currentAccent = SLIDES[activeSlide].accentColor;
+  const currentSlide = SLIDES[activeSlide];
 
   return (
-    <View style={s.container}>
+    <View style={styles.container}>
       <StatusBar barStyle="dark-content" translucent backgroundColor="transparent" />
 
       {/* Passer */}
       <TouchableOpacity
-        style={s.skipBtn}
+        style={styles.skipBtn}
         onPress={() => router.replace("/login")}
         hitSlop={{ top: 16, bottom: 16, left: 16, right: 16 }}
       >
-        <Text style={s.skipText}>Passer</Text>
+        <Text style={styles.skipText}>Passer</Text>
       </TouchableOpacity>
 
       {/* Carousel */}
       <Animated.FlatList
         ref={flatListRef}
-        data={SLIDES as unknown as (typeof SLIDES)[number][]}
+        data={SLIDES as unknown as typeof SLIDES[number][]}
         renderItem={renderItem}
         keyExtractor={(item) => item.id}
         horizontal
@@ -366,7 +446,7 @@ export default function OnboardingCarousel() {
       />
 
       {/* Dots */}
-      <View style={s.dotsRow}>
+      <View style={styles.dotsRow}>
         {SLIDES.map((_, i) => {
           const range = [(i - 1) * VW, i * VW, (i + 1) * VW];
           return (
@@ -379,12 +459,12 @@ export default function OnboardingCarousel() {
             >
               <Animated.View
                 style={[
-                  s.dot,
-                  { backgroundColor: currentAccent },
+                  styles.dot,
+                  { backgroundColor: currentSlide.accentColor },
                   {
                     width: scrollX.interpolate({
                       inputRange: range,
-                      outputRange: [7, 24, 7],
+                      outputRange: [7, 26, 7],
                       extrapolate: "clamp",
                     }),
                     opacity: scrollX.interpolate({
@@ -401,24 +481,26 @@ export default function OnboardingCarousel() {
       </View>
 
       {/* Footer */}
-      <View style={s.footer}>
+      <View style={styles.footer}>
         <TouchableOpacity
-          style={[s.primaryBtn, { backgroundColor: currentAccent }]}
+          style={[styles.primaryBtn, { backgroundColor: currentSlide.accentColor }]}
           onPress={handleNext}
           activeOpacity={0.85}
         >
-          <Text style={s.primaryBtnText}>
-            {activeSlide === SLIDES.length - 1 ? "Commencer" : "Suivant"}
+          <Text style={styles.primaryBtnText}>
+            {activeSlide === SLIDES.length - 1 ? "Commencer →" : "Suivant"}
           </Text>
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={[s.sosBtn, { borderColor: currentAccent }]}
+          style={[styles.sosBtn, { borderColor: currentSlide.accentColor + "60" }]}
           onPress={() => router.push("/guest-alert")}
           activeOpacity={0.8}
         >
-          <TabBarIcon name="exclamation-triangle" size={15} color={currentAccent} />
-          <Text style={[s.sosBtnText, { color: currentAccent }]}>Urgence : Lancer une alerte</Text>
+          <TabBarIcon name="exclamation-triangle" size={14} color={currentSlide.accentColor} />
+          <Text style={[styles.sosBtnText, { color: currentSlide.accentColor }]}>
+            Urgence — Lancer une alerte sans compte
+          </Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -426,12 +508,9 @@ export default function OnboardingCarousel() {
 }
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
+const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: "#FFF1F2" },
 
-const s = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#FFF1F2",
-  },
   skipBtn: {
     position: "absolute",
     top: Platform.OS === "ios" ? 58 : 36,
@@ -440,41 +519,156 @@ const s = StyleSheet.create({
     paddingVertical: 6,
     paddingHorizontal: 14,
     borderRadius: 20,
-    backgroundColor: "rgba(255,255,255,0.8)",
+    backgroundColor: "rgba(255,255,255,0.85)",
   },
-  skipText: {
-    fontSize: 13,
-    fontWeight: "700",
-    color: "#64748B",
-  },
+  skipText: { fontSize: 13, fontWeight: "700", color: "#64748B" },
 
-  // ── Slide ─────────────────────────────────────────────────────────────────
   slide: {
-    width: VW,
     flex: 1,
     paddingTop: Platform.OS === "ios" ? 70 : 50,
     paddingHorizontal: 28,
     paddingBottom: 8,
     alignItems: "center",
+    overflow: "hidden",
   },
 
-  // ── Mascotte ──────────────────────────────────────────────────────────────
+  bgCircle: {
+    position: "absolute",
+    width: VW * 1.2,
+    height: VW * 1.2,
+    borderRadius: VW * 0.6,
+    top: -VW * 0.35,
+    left: -VW * 0.1,
+    opacity: 0.35,
+  },
+
   mascotArea: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
   },
-  mascotWrap: {
+
+  // Badge groupe sanguin positionné en haut-droite de la mascotte
+  badge: {
+    position: "absolute",
+    top: -16,
+    right: -18,
+    minWidth: 38,
+    height: 38,
+    borderRadius: 19,
+    justifyContent: "center",
     alignItems: "center",
+    paddingHorizontal: 8,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 6,
+  },
+  badgeText: {
+    color: "#FFF",
+    fontSize: 14,
+    fontWeight: "900",
+    letterSpacing: -0.5,
   },
 
-  // ── Forme goutte ──────────────────────────────────────────────────────────
-  dropContainer: {
+  // Icônes flottantes autour de la mascotte
+  floatIcon: {
+    position: "absolute",
+    width: 44,
+    height: 44,
+    borderRadius: 14,
+    borderWidth: 1.5,
+    justifyContent: "center",
     alignItems: "center",
-    // Pas de overflow hidden ici — laisse les bras dépasser
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+    elevation: 3,
   },
 
-  // Tête / corps rond
+  textBlock: {
+    width: "100%",
+    paddingBottom: 8,
+    alignItems: "flex-start",
+  },
+  stepPill: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+    marginBottom: 12,
+    alignSelf: "flex-start",
+  },
+  stepText: {
+    fontSize: 11,
+    fontWeight: "800",
+    letterSpacing: 0.5,
+    textTransform: "uppercase",
+  },
+  slideTitle: {
+    fontSize: 30,
+    fontWeight: "900",
+    letterSpacing: -0.8,
+    lineHeight: 36,
+    marginBottom: 12,
+    textAlign: "left",
+  },
+  slideDesc: {
+    fontSize: 15,
+    color: "#475569",
+    lineHeight: 24,
+    fontWeight: "500",
+    textAlign: "left",
+  },
+
+  dotsRow: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    gap: 6,
+    paddingVertical: 14,
+  },
+  dot: { height: 7, borderRadius: 4 },
+
+  footer: {
+    paddingHorizontal: 22,
+    paddingBottom: Platform.OS === "ios" ? 46 : 28,
+    gap: 10,
+  },
+  primaryBtn: {
+    borderRadius: 28,
+    paddingVertical: 16,
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.18,
+    shadowRadius: 10,
+    elevation: 5,
+  },
+  primaryBtnText: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontWeight: "800",
+    letterSpacing: 0.3,
+  },
+  sosBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    paddingVertical: 13,
+    borderRadius: 28,
+    borderWidth: 1.5,
+    backgroundColor: "rgba(255,255,255,0.8)",
+  },
+  sosBtnText: { fontSize: 13, fontWeight: "700" },
+});
+
+// ─── Styles mascotte ──────────────────────────────────────────────────────────
+const ms = StyleSheet.create({
+  mascotWrap: { alignItems: "center" },
+  dropContainer: { alignItems: "center" },
   head: {
     width: HEAD,
     height: HEAD,
@@ -483,16 +677,14 @@ const s = StyleSheet.create({
     justifyContent: "center",
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.25,
-    shadowRadius: 18,
+    shadowOpacity: 0.22,
+    shadowRadius: 16,
     elevation: 12,
   },
-
-  // Pointe bas de la goutte (triangle arrondi via View carrée tournée)
   tipWrapper: {
-    width: 40,
-    height: 40,
-    marginTop: -26,
+    width: 38,
+    height: 38,
+    marginTop: -24,
     zIndex: -1,
     alignItems: "center",
     justifyContent: "center",
@@ -500,67 +692,44 @@ const s = StyleSheet.create({
     borderRadius: 6,
     transform: [{ rotate: "45deg" }],
   },
-  tipInner: {
-    width: 40,
-    height: 40,
-  },
-
-  // ── Brillances ────────────────────────────────────────────────────────────
+  tipInner: { width: 38, height: 38 },
   shine: {
     position: "absolute",
     top: 14,
-    left: 18,
-    width: 26,
-    height: 16,
-    borderRadius: 12,
-    backgroundColor: "rgba(255,255,255,0.35)",
+    left: 16,
+    width: 24,
+    height: 14,
+    borderRadius: 10,
+    backgroundColor: "rgba(255,255,255,0.32)",
     transform: [{ rotate: "-25deg" }],
   },
   shine2: {
     position: "absolute",
     top: 20,
-    left: 28,
-    width: 10,
-    height: 7,
-    borderRadius: 5,
-    backgroundColor: "rgba(255,255,255,0.20)",
+    left: 26,
+    width: 9,
+    height: 6,
+    borderRadius: 4,
+    backgroundColor: "rgba(255,255,255,0.18)",
     transform: [{ rotate: "-25deg" }],
   },
-
-  // ── Joues ─────────────────────────────────────────────────────────────────
   cheek: {
     position: "absolute",
-    bottom: 28,
-    width: 20,
-    height: 13,
-    borderRadius: 10,
-    backgroundColor: "rgba(255,180,180,0.50)",
+    bottom: 26,
+    width: 18,
+    height: 12,
+    borderRadius: 9,
+    backgroundColor: "rgba(255,180,180,0.48)",
   },
-
-  // ── Visage ────────────────────────────────────────────────────────────────
-  face: {
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 6,
-  },
-  browsRow: {
-    flexDirection: "row",
-    gap: 22,
-    marginBottom: 2,
-  },
+  face: { alignItems: "center", justifyContent: "center", gap: 5 },
+  browsRow: { flexDirection: "row", gap: 20, marginBottom: 2 },
   brow: {
-    width: 20,
+    width: 18,
     height: 5,
     borderRadius: 3,
     backgroundColor: "rgba(255,255,255,0.95)",
   },
-
-  // Yeux normaux
-  eyesRow: {
-    flexDirection: "row",
-    gap: 16,
-    alignItems: "center",
-  },
+  eyesRow: { flexDirection: "row", gap: 14, alignItems: "center" },
   eyeWhite: {
     width: EYE_W,
     height: EYE_H,
@@ -576,164 +745,61 @@ const s = StyleSheet.create({
     borderRadius: PUPIL / 2,
     backgroundColor: "#1C1C2E",
   },
-  pupilLarge: {
-    width: PUPIL + 2,
-    height: PUPIL + 2,
-    borderRadius: (PUPIL + 2) / 2,
-  },
+  pupilLarge: { width: PUPIL + 2, height: PUPIL + 2, borderRadius: (PUPIL + 2) / 2 },
   eyeShine: {
     position: "absolute",
-    top: 4,
-    right: 4,
-    width: 6,
-    height: 6,
+    top: 3,
+    right: 3,
+    width: 5,
+    height: 5,
     borderRadius: 3,
     backgroundColor: "rgba(255,255,255,0.75)",
   },
-
-  // Yeux heureux (arcs ^)
-  eyeHappyClip: {
-    width: 22,
-    height: 13,
-    overflow: "hidden",
-  },
+  eyeHappyClip: { width: 20, height: 12, overflow: "hidden" },
   eyeHappyArc: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
     borderWidth: 4,
     borderColor: "#FFFFFF",
     backgroundColor: "transparent",
     marginTop: 4,
   },
-
-  // ── Bouche ────────────────────────────────────────────────────────────────
-  mouthWrap: {
-    alignItems: "center",
-  },
+  mouthWrap: { alignItems: "center" },
   mouthNeutral: {
-    width: 26,
+    width: 24,
     height: 5,
     borderRadius: 3,
     backgroundColor: "rgba(255,255,255,0.80)",
   },
   mouthO: {
-    width: 18,
-    height: 22,
-    borderRadius: 11,
+    width: 16,
+    height: 20,
+    borderRadius: 10,
     backgroundColor: "rgba(255,255,255,0.90)",
   },
-  smileClip: {
-    width: 42,
-    height: 21,
-    overflow: "hidden",
-    alignItems: "center",
-  },
+  smileClip: { width: 40, height: 20, overflow: "hidden", alignItems: "center" },
   smileCircle: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     borderWidth: 5,
     borderColor: "rgba(255,255,255,0.95)",
     backgroundColor: "transparent",
   },
-
-  // ── Bras ──────────────────────────────────────────────────────────────────
   arm: {
     position: "absolute",
     width: ARM_W,
     height: ARM_H,
     borderRadius: ARM_W / 2,
   },
-  armLeft: {
-    left: -(ARM_W * 0.5),
-    top: HEAD * 0.25,
-    // transformOrigin n'est pas supporté universellement, on simule via translateY
-    transform: [{ translateY: -(ARM_H / 2) }],
-  },
-  armRight: {
-    right: -(ARM_W * 0.5),
-    top: HEAD * 0.25,
-    transform: [{ translateY: -(ARM_H / 2) }],
-  },
-
-  // Ombre au sol
+  armLeft:  { left:  -(ARM_W * 0.5), top: HEAD * 0.28 },
+  armRight: { right: -(ARM_W * 0.5), top: HEAD * 0.28 },
   shadow: {
-    width: 72,
-    height: 14,
-    borderRadius: 7,
-    backgroundColor: "rgba(0,0,0,0.12)",
+    width: 68,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: "rgba(0,0,0,0.10)",
     marginTop: 8,
-  },
-
-  // ── Texte ─────────────────────────────────────────────────────────────────
-  textBlock: {
-    width: "100%",
-    paddingBottom: 8,
-  },
-  slideTitle: {
-    fontSize: 28,
-    fontWeight: "900",
-    letterSpacing: -0.6,
-    lineHeight: 34,
-    marginBottom: 12,
-    textAlign: "center",
-  },
-  slideDesc: {
-    fontSize: 15,
-    color: "#475569",
-    lineHeight: 24,
-    fontWeight: "500",
-    textAlign: "center",
-  },
-
-  // ── Dots ──────────────────────────────────────────────────────────────────
-  dotsRow: {
-    flexDirection: "row",
-    justifyContent: "center",
-    alignItems: "center",
-    gap: 6,
-    paddingVertical: 14,
-  },
-  dot: {
-    height: 7,
-    borderRadius: 4,
-  },
-
-  // ── Footer ────────────────────────────────────────────────────────────────
-  footer: {
-    paddingHorizontal: 22,
-    paddingBottom: Platform.OS === "ios" ? 46 : 28,
-    gap: 10,
-  },
-  primaryBtn: {
-    borderRadius: 28,
-    paddingVertical: 16,
-    alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 10,
-    elevation: 5,
-  },
-  primaryBtnText: {
-    color: "#FFFFFF",
-    fontSize: 16,
-    fontWeight: "800",
-    letterSpacing: 0.3,
-  },
-  sosBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 9,
-    paddingVertical: 13,
-    borderRadius: 28,
-    borderWidth: 1.5,
-    backgroundColor: "rgba(255,255,255,0.85)",
-  },
-  sosBtnText: {
-    fontSize: 14,
-    fontWeight: "700",
   },
 });

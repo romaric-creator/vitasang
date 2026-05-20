@@ -197,6 +197,22 @@ const schemas = {
     telephone: Joi.string().min(8).max(20).required(),
     reponse: Joi.string().valid("accepte", "refuse").required(),
   }),
+
+  resetPassword: Joi.object({
+    telephone: Joi.string().min(8).max(20).required().messages({
+      "string.empty": "Le numéro de téléphone est requis",
+    }),
+    nom: Joi.string().min(2).max(100).required().messages({
+      "string.empty": "Le nom est requis",
+    }),
+    prenom: Joi.string().min(2).max(100).required().messages({
+      "string.empty": "Le prénom est requis",
+    }),
+    nouveau_mot_de_passe: Joi.string().min(8).required().messages({
+      "string.empty": "Le nouveau mot de passe est requis",
+      "string.min": "Le mot de passe doit contenir au moins 8 caractères",
+    }),
+  }),
 };
 
 module.exports = schemas;

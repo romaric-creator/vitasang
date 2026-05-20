@@ -43,15 +43,18 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     });
 
     const checkAuthStatus = async () => {
+      const timeout = new Promise<null>((resolve) => setTimeout(() => resolve(null), 3000));
       try {
-        const token = await getData('token');
-        const user = await getData('user');
+        const [token, user] = await Promise.all([
+          Promise.race([getData('token'), timeout]),
+          Promise.race([getData('user'), timeout]),
+        ]);
         if (token && user) {
-          setAuthToken(token);
-          posthog?.identify(user.id_utilisateur?.toString(), {
-            nom: user.nom,
-            prenom: user.prenom,
-            role: user.role
+          setAuthToken(token as string);
+          posthog?.identify((user as any).id_utilisateur?.toString(), {
+            nom: (user as any).nom,
+            prenom: (user as any).prenom,
+            role: (user as any).role
           });
           setUser(user);
           setIsAuth(true);

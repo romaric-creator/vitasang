@@ -18,7 +18,7 @@ export function Footer() {
             </p>
             <div className="mt-4 flex items-center gap-3">
               <a
-                href="mailto:contact@vitasang.cm"
+                href="mailto:christiantendainfo2006@gmail.com"
                 aria-label="Envoyer un e-mail à l'équipe VitaSang"
                 className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/10 text-dark-foreground/80 hover:border-primary/50 hover:text-primary-glow transition-colors"
               >
@@ -42,7 +42,10 @@ export function Footer() {
             <a href="#faq" className="text-dark-foreground/85 hover:text-primary-glow transition-colors">
               FAQ
             </a>
-            <a href="#" className="text-dark-foreground/85 hover:text-primary-glow transition-colors">
+            <a
+              href="mailto:christiantendainfo2006@gmail.com?subject=Politique%20de%20confidentialité%20VitaSang"
+              className="text-dark-foreground/85 hover:text-primary-glow transition-colors"
+            >
               Politique de confidentialité
             </a>
           </nav>

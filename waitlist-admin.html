@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>VitaSang — Waitlist Admin</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #f5f5f5;
+      color: #1a1a2e;
+      min-height: 100vh;
+    }
+
+    header {
+      background: #e53935;
+      color: white;
+      padding: 20px 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    }
+
+    header h1 { font-size: 20px; font-weight: 700; }
+    header span { font-size: 13px; opacity: 0.85; }
+
+    .login-wrap {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: calc(100vh - 64px);
+    }
+
+    .login-card {
+      background: white;
+      border-radius: 16px;
+      padding: 40px 36px;
+      width: 100%;
+      max-width: 380px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+      text-align: center;
+    }
+
+    .login-card h2 { font-size: 22px; margin-bottom: 8px; }
+    .login-card p  { color: #666; font-size: 14px; margin-bottom: 24px; }
+
+    input[type="password"], input[type="text"] {
+      width: 100%;
+      padding: 12px 16px;
+      border: 1.5px solid #e0e0e0;
+      border-radius: 10px;
+      font-size: 15px;
+      margin-bottom: 14px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    input:focus { border-color: #e53935; }
+
+    button {
+      width: 100%;
+      padding: 13px;
+      background: #e53935;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    button:hover { background: #c62828; }
+    button:disabled { background: #ccc; cursor: not-allowed; }
+
+    .error-msg {
+      color: #e53935;
+      font-size: 13px;
+      margin-top: 10px;
+    }
+
+    .main-wrap { padding: 32px; max-width: 900px; margin: 0 auto; }
+
+    .stats-row {
+      display: flex;
+      gap: 16px;
+      margin-bottom: 28px;
+      flex-wrap: wrap;
+    }
+
+    .stat-card {
+      background: white;
+      border-radius: 12px;
+      padding: 20px 28px;
+      flex: 1;
+      min-width: 140px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+      text-align: center;
+    }
+
+    .stat-card .num { font-size: 36px; font-weight: 800; color: #e53935; }
+    .stat-card .lbl { font-size: 12px; color: #888; font-weight: 600; text-transform: uppercase; margin-top: 4px; }
+
+    .toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .toolbar h2 { font-size: 16px; font-weight: 700; }
+
+    .btn-export {
+      width: auto;
+      padding: 8px 18px;
+      font-size: 13px;
+      background: #1a1a2e;
+      border-radius: 8px;
+    }
+
+    .btn-export:hover { background: #2d2d4e; }
+
+    .search-input {
+      width: 240px;
+      padding: 8px 14px;
+      margin-bottom: 0;
+      font-size: 13px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    }
+
+    thead tr { background: #fafafa; border-bottom: 1.5px solid #f0f0f0; }
+    th { padding: 13px 16px; text-align: left; font-size: 11px; font-weight: 700; color: #888; text-transform: uppercase; letter-spacing: 0.5px; }
+    td { padding: 13px 16px; font-size: 14px; border-bottom: 1px solid #f5f5f5; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: #fef9f9; }
+
+    .badge {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 700;
+      background: #fce4e4;
+      color: #e53935;
+    }
+
+    .badge.app { background: #e8f5e9; color: #2e7d32; }
+
+    .empty { text-align: center; padding: 48px; color: #aaa; font-size: 15px; }
+
+    .spinner {
+      display: inline-block;
+      width: 20px; height: 20px;
+      border: 3px solid rgba(255,255,255,0.4);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      vertical-align: middle;
+      margin-right: 6px;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .pagination {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 8px;
+      margin-top: 20px;
+    }
+
+    .page-btn {
+      width: auto;
+      padding: 6px 14px;
+      font-size: 13px;
+      background: white;
+      color: #1a1a2e;
+      border: 1.5px solid #e0e0e0;
+      border-radius: 8px;
+      font-weight: 600;
+    }
+
+    .page-btn:hover { background: #f5f5f5; }
+    .page-btn.active { background: #e53935; color: white; border-color: #e53935; }
+    .page-info { font-size: 13px; color: #888; }
+
+    #app { display: none; }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>🩸 VitaSang — Waitlist Admin</h1>
+  <span id="header-info"></span>
+</header>
+
+<!-- Login -->
+<div class="login-wrap" id="login">
+  <div class="login-card">
+    <h2>Accès Admin</h2>
+    <p>Entrez la clé d'administration et l'URL de l'API</p>
+    <input type="text" id="api-url" placeholder="https://vitasang.onrender.com" value="https://vitasang.onrender.com" />
+    <input type="password" id="admin-key" placeholder="Clé admin" />
+    <button id="login-btn" onclick="doLogin()">Se connecter</button>
+    <p class="error-msg" id="login-error"></p>
+  </div>
+</div>
+
+<!-- Dashboard -->
+<div id="app">
+  <div class="main-wrap">
+
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="num" id="stat-total">—</div>
+        <div class="lbl">Emails inscrits</div>
+      </div>
+      <div class="stat-card">
+        <div class="num" id="stat-today">—</div>
+        <div class="lbl">Aujourd'hui</div>
+      </div>
+      <div class="stat-card">
+        <div class="num" id="stat-week">—</div>
+        <div class="lbl">Cette semaine</div>
+      </div>
+    </div>
+
+    <div class="toolbar">
+      <h2>Liste des inscrits</h2>
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+        <input type="text" class="search-input" id="search" placeholder="🔍 Rechercher un email..." oninput="renderTable()" />
+        <button class="btn-export" onclick="exportCSV()">⬇ Exporter CSV</button>
+        <button class="btn-export" onclick="loadData()" style="background:#555">↻ Actualiser</button>
+      </div>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Email</th>
+          <th>Source</th>
+          <th>Date d'inscription</th>
+        </tr>
+      </thead>
+      <tbody id="table-body"></tbody>
+    </table>
+
+    <div class="pagination" id="pagination"></div>
+
+  </div>
+</div>
+
+<script>
+  let allData = [];
+  let currentPage = 1;
+  const perPage = 20;
+  let apiBase = "";
+  let adminKey = "";
+
+  async function doLogin() {
+    const btn = document.getElementById("login-btn");
+    const err = document.getElementById("login-error");
+    apiBase = document.getElementById("api-url").value.trim().replace(/\/$/, "");
+    adminKey = document.getElementById("admin-key").value.trim();
+
+    if (!apiBase || !adminKey) { err.textContent = "Remplissez tous les champs."; return; }
+
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span>Connexion...';
+    err.textContent = "";
+
+    try {
+      const res = await fetch(`${apiBase}/api/waitlist?key=${encodeURIComponent(adminKey)}`);
+      if (res.status === 401) throw new Error("Clé invalide");
+      if (!res.ok) throw new Error("Erreur serveur " + res.status);
+      const json = await res.json();
+      allData = json.data || [];
+      document.getElementById("login").style.display = "none";
+      document.getElementById("app").style.display = "block";
+      document.getElementById("header-info").textContent = `Connecté · ${allData.length} inscrits`;
+      computeStats();
+      renderTable();
+    } catch (e) {
+      err.textContent = e.message;
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = "Se connecter";
+    }
+  }
+
+  async function loadData() {
+    try {
+      const res = await fetch(`${apiBase}/api/waitlist?key=${encodeURIComponent(adminKey)}`);
+      const json = await res.json();
+      allData = json.data || [];
+      document.getElementById("header-info").textContent = `Connecté · ${allData.length} inscrits`;
+      computeStats();
+      renderTable();
+    } catch(e) { alert("Erreur: " + e.message); }
+  }
+
+  function computeStats() {
+    document.getElementById("stat-total").textContent = allData.length;
+    const now = new Date();
+    const todayStr = now.toISOString().slice(0, 10);
+    const weekAgo = new Date(now - 7 * 86400000);
+    const today = allData.filter(r => r.createdAt?.slice(0, 10) === todayStr).length;
+    const week  = allData.filter(r => new Date(r.createdAt) >= weekAgo).length;
+    document.getElementById("stat-today").textContent = today;
+    document.getElementById("stat-week").textContent  = week;
+  }
+
+  function renderTable() {
+    const q = document.getElementById("search").value.toLowerCase();
+    const filtered = allData.filter(r => r.email.toLowerCase().includes(q));
+    const totalPages = Math.max(1, Math.ceil(filtered.length / perPage));
+    if (currentPage > totalPages) currentPage = 1;
+
+    const slice = filtered.slice((currentPage - 1) * perPage, currentPage * perPage);
+    const tbody = document.getElementById("table-body");
+
+    if (filtered.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="4" class="empty">Aucun résultat</td></tr>`;
+    } else {
+      tbody.innerHTML = slice.map((r, i) => `
+        <tr>
+          <td style="color:#aaa;font-size:12px">${(currentPage - 1) * perPage + i + 1}</td>
+          <td><strong>${escHtml(r.email)}</strong></td>
+          <td><span class="badge ${r.source === 'app' ? 'app' : ''}">${escHtml(r.source || "landing_page")}</span></td>
+          <td>${formatDate(r.createdAt)}</td>
+        </tr>
+      `).join("");
+    }
+
+    renderPagination(totalPages);
+  }
+
+  function renderPagination(total) {
+    const pag = document.getElementById("pagination");
+    if (total <= 1) { pag.innerHTML = ""; return; }
+    let html = `<button class="page-btn" onclick="goPage(${currentPage - 1})" ${currentPage === 1 ? "disabled" : ""}>‹</button>`;
+    for (let p = 1; p <= total; p++) {
+      if (total > 7 && p > 2 && p < total - 1 && Math.abs(p - currentPage) > 1) {
+        if (p === 3 || p === total - 2) html += `<span class="page-info">…</span>`;
+        continue;
+      }
+      html += `<button class="page-btn ${p === currentPage ? 'active' : ''}" onclick="goPage(${p})">${p}</button>`;
+    }
+    html += `<button class="page-btn" onclick="goPage(${currentPage + 1})" ${currentPage === total ? "disabled" : ""}>›</button>`;
+    pag.innerHTML = html;
+  }
+
+  function goPage(p) { currentPage = p; renderTable(); }
+
+  function exportCSV() {
+    const q = document.getElementById("search").value.toLowerCase();
+    const filtered = allData.filter(r => r.email.toLowerCase().includes(q));
+    const rows = [["#", "Email", "Source", "Date"]];
+    filtered.forEach((r, i) => rows.push([i + 1, r.email, r.source || "landing_page", formatDate(r.createdAt)]));
+    const csv = rows.map(r => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(",")).join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = `vitasang-waitlist-${new Date().toISOString().slice(0,10)}.csv`;
+    a.click();
+  }
+
+  function formatDate(d) {
+    if (!d) return "—";
+    return new Date(d).toLocaleString("fr-FR", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
+  }
+
+  function escHtml(s) {
+    return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+  }
+
+  document.getElementById("admin-key").addEventListener("keydown", e => { if (e.key === "Enter") doLogin(); });
+</script>
+
+</body>
+</html>

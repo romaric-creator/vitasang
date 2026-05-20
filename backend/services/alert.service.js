@@ -1,6 +1,7 @@
 const db = require("../models");
 const { Alerte, Utilisateur, LogNotification } = db;
 const logger = require("../config/logger");
+const cacheService = require('./cache.service');
 const { haversineSQL, calculateDistance } = require("../utils/geoHelpers");
 const { notificationQueue } = require("../jobs/notification.queue");
 const { ErrorTypes } = require("../utils/errorHandler");
@@ -110,6 +111,8 @@ class AlertService {
 
       const isAutoValidated = await this.attemptAutoValidation(alerte);
 
+      await cacheService.del('api-cache:/api/alerts/public');
+
       return { alerte, isAutoValidated };
     } catch (error) {
       logger.error("[AlertService.create] Failed to create alert", { error: error.message });
@@ -130,6 +133,8 @@ class AlertService {
 
     alerte.statut = "en_cours";
     await alerte.save();
+
+    await cacheService.del('api-cache:/api/alerts/public');
 
     await this.enqueueNotification(alerte, validatorId);
 

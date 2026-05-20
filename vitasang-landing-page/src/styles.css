@@ -149,6 +149,12 @@ html {
   }
 }
 
+/* Reveal: hidden by default only when JS is available */
+.js-loaded .reveal {
+  opacity: 0;
+  transform: translateY(28px);
+  transition: opacity 0.8s ease, transform 0.8s ease;
+}
 .reveal {
   opacity: 0;
   transform: translateY(28px);

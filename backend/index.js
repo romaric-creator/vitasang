@@ -55,13 +55,16 @@ require("./jobs/notification.queue");
 
 const app = express();
 
-const corsOrigins = process.env.CORS_ORIGIN
-  ? process.env.CORS_ORIGIN.split(",").map(o => o.trim())
-  : ["http://localhost:3000", "http://localhost:8081"];
+const corsOriginEnv = process.env.CORS_ORIGIN || "";
+const corsOrigins = corsOriginEnv === "*"
+  ? true
+  : corsOriginEnv
+    ? corsOriginEnv.split(",").map(o => o.trim())
+    : ["http://localhost:3000", "http://localhost:8081"];
 
 app.use(cors({
   origin: corsOrigins,
-  credentials: true,
+  credentials: corsOrigins !== true,
 }));
 
 // Sentry request handler (doit être le premier)
@@ -132,16 +135,25 @@ app.get("/", (req, res) => {
 });
 
 app.get("/api/health", async (req, res) => {
+  const cacheService = require('./services/cache.service');
+  const checks = {
+    db: "disconnected",
+    redis: cacheService.redis ? "connected" : "unavailable",
+    uptime: process.uptime(),
+    timestamp: new Date().toISOString(),
+  };
   try {
     await db.sequelize.authenticate();
-    res.json({ status: "OK", db: "connected", timestamp: new Date().toISOString() });
+    checks.db = "connected";
+    res.json({ status: "OK", ...checks });
   } catch (error) {
-    res.status(503).json({ status: "ERROR", db: "disconnected", timestamp: new Date().toISOString() });
+    res.status(503).json({ status: "ERROR", ...checks });
   }
 });
 
 app.get("/api/ping", (req, res) => {
-  res.status(200).send("pong");
+  res.setHeader('Cache-Control', 'no-cache');
+  res.status(200).json({ pong: true, ts: Date.now() });
 });
 
 // Endpoint pour créer une alerte test (admin only)

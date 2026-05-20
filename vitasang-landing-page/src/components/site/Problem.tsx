@@ -35,7 +35,11 @@ export function Problem() {
              <div className="absolute inset-0 bg-primary/20 blur-[100px] rounded-full" />
              <img
               src={problemImage}
-              alt="Hôpital au Cameroun"
+              alt="Couloir d'un hôpital camerounais illustrant l'urgence médicale quotidienne faute de sang disponible"
+              width={800}
+              height={600}
+              loading="lazy"
+              decoding="async"
               className="relative aspect-[4/3] w-full rounded-3xl object-cover shadow-2xl grayscale hover:grayscale-0 transition-all duration-700"
             />
           </div>
@@ -56,6 +60,7 @@ export function Problem() {
                 {s.value}
               </div>
               <p className="mt-4 text-dark-foreground/70 leading-relaxed text-sm uppercase tracking-wide font-bold">
+                <span className="sr-only">{s.value} — </span>
                 {s.label}
               </p>
             </div>

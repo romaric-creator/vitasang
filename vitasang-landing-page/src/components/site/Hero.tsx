@@ -116,7 +116,11 @@ export function Hero() {
             <div className="relative h-full w-full overflow-hidden rounded-[2rem] bg-white">
               <img
                 src={heroImage}
-                alt="Interface de l'application VitaSang"
+                alt="Écran de l'application VitaSang affichant les urgences de don de sang à proximité"
+                width={700}
+                height={875}
+                fetchPriority="high"
+                decoding="sync"
                 className="h-full w-full object-cover transition-transform duration-700 hover:scale-105"
               />
               {/* Overlay elements to simulate app UI */}

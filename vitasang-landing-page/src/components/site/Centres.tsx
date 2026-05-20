@@ -23,12 +23,12 @@ export function Centres() {
 
         <div className="reveal grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
           {centres.map((c) => (
-            <div key={c.nom} className="rounded-2xl border border-border bg-card p-6 shadow-sm hover:shadow-md hover:border-primary/20 transition-all">
+            <div key={c.nom} role="article" aria-label={`${c.nom}, ${c.ville}`} className="rounded-2xl border border-border bg-card p-6 shadow-sm hover:shadow-md hover:border-primary/20 transition-all">
               <div className="flex items-start justify-between gap-2 mb-4">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-red-50">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-red-50" aria-hidden="true">
                   <MapPin size={20} className="text-primary" />
                 </div>
-                <span className="text-[10px] font-black uppercase tracking-wider text-primary bg-red-50 px-2 py-1 rounded-full">{c.badge}</span>
+                <span className="text-[10px] font-black uppercase tracking-wider text-white bg-primary px-2 py-1 rounded-full">{c.badge}</span>
               </div>
               <h3 className="font-bold text-foreground leading-tight">{c.nom}</h3>
               <p className="mt-1 text-sm text-muted-foreground font-medium">{c.ville}</p>

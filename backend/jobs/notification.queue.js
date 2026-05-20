@@ -1,54 +1,32 @@
 const logger = require("../config/logger");
 const notificationProcessor = require("./notification.processor");
 
-let notificationQueue = { 
+let notificationQueue = {
   add: async (name, data) => {
-    logger.warn(`[NotificationQueue] Job skipped: '${name}'. Redis not configured or connection failed.`, { 
-      jobData: { ...data, contenu: data?.contenu ? data.contenu.substring(0, 20) + "..." : undefined } 
+    logger.warn(`[NotificationQueue] Job skipped: '${name}'. Redis not available.`, {
+      jobData: { ...data, contenu: data?.contenu ? data.contenu.substring(0, 20) + "..." : undefined },
     });
-  } 
+  },
 };
 
 const isRedisConfigured = () => {
   const redisUrl = process.env.REDIS_URL;
   if (!redisUrl) return false;
-  return redisUrl.startsWith('rediss://') || redisUrl.startsWith('redis://');
+  return redisUrl.startsWith("rediss://") || redisUrl.startsWith("redis://");
 };
 
-const redisUrl = process.env.REDIS_URL;
-let redisConnectionFailed = false;
-
-// Utiliser Redis seulement si configuré correctement
 if (isRedisConfigured() && process.env.NODE_ENV !== "test") {
-  try {
-    const { Queue, Worker } = require("bullmq");
-    const IORedis = require("ioredis");
+  const { Queue, Worker } = require("bullmq");
+  const IORedis = require("ioredis");
 
-    const connection = new IORedis(redisUrl, {
-      maxRetriesPerRequest: 1,
-      retryStrategy: () => null,
-      connectTimeout: 5000,
-      lazyConnect: true,
-    });
+  const connection = new IORedis(process.env.REDIS_URL, {
+    maxRetriesPerRequest: null,
+    retryStrategy: (times) => (times > 3 ? null : 500),
+    connectTimeout: 5000,
+  });
 
-    let errorLogged = false;
-    connection.on("error", (err) => {
-      if (!errorLogged) {
-        logger.warn("Redis Connection Error:", { message: err.message });
-        errorLogged = true;
-      }
-      redisConnectionFailed = true;
-    });
-
-    connection.connect().catch((err) => {
-      if (!errorLogged) {
-        logger.warn("Redis non disponible pour la queue", { message: err.message });
-        errorLogged = true;
-      }
-      redisConnectionFailed = true;
-    });
-
-    if (!redisConnectionFailed) {
+  connection.once("ready", () => {
+    try {
       notificationQueue = new Queue("notifications", {
         connection,
         defaultJobOptions: {
@@ -59,24 +37,28 @@ if (isRedisConfigured() && process.env.NODE_ENV !== "test") {
         },
       });
 
-      const worker = new Worker("notifications", notificationProcessor, { 
+      const worker = new Worker("notifications", notificationProcessor, {
         connection,
-        concurrency: 5 
+        concurrency: 5,
       });
 
       worker.on("failed", (job, err) => {
-        logger.error(`Job ${job.id} failed`, err);
+        logger.error(`Job ${job?.id} failed`, err);
       });
 
       worker.on("completed", (job) => {
-        logger.info(`Job ${job.id} completed`);
+        logger.info(`Job ${job?.id} completed`);
       });
-      
+
       logger.info("Notification queue initialized with Redis");
+    } catch (err) {
+      logger.warn("BullMQ init failed", { message: err.message });
     }
-  } catch (err) {
-    logger.warn("Redis non disponible, fallback mémoire");
-  }
+  });
+
+  connection.on("error", (err) => {
+    logger.warn("Redis non disponible, fallback mémoire", { message: err.message });
+  });
 } else {
   logger.warn("Redis non configuré, notifications synchrones (sans queue)");
 }

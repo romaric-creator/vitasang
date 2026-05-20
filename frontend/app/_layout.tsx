@@ -11,6 +11,7 @@ import { AuthProvider, useAuth } from "@/context/AuthContext";
 import { NotificationProvider } from "@/context/NotificationContext";
 import { ToastProvider } from "@/context/ToastContext";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { NetworkBanner } from "@/components/NetworkBanner";
 import { queryClient } from "@/config/queryClient";
 import { getUserIdFromStorage } from "@/utils/storage";
 
@@ -142,10 +143,11 @@ function RootLayoutNav() {
     // Petit délai pour permettre au state de se stabiliser complètement
     const timer = setTimeout(() => {
       if (isAuth) {
-        // Utilisateur authentifié → App principale
         router.replace("/(tabs)");
+      } else if (isAuth === false) {
+        // Déconnexion explicite → login
+        router.replace("/login");
       }
-      // Si non authentifié : index.tsx gère la logique onboarding/login
     }, 50);
 
     return () => clearTimeout(timer);
@@ -155,11 +157,12 @@ function RootLayoutNav() {
 
   return (
     <>
-      <StatusBar 
-        style="dark" 
-        translucent 
-        backgroundColor="transparent" 
+      <StatusBar
+        style="dark"
+        translucent
+        backgroundColor="transparent"
       />
+      <NetworkBanner />
       <Stack screenOptions={{ headerShown: false }}>
         {/* Définition de tous les écrans de l'application */}
         <Stack.Screen name="(tabs)" />
@@ -185,6 +188,7 @@ function RootLayoutNav() {
         <Stack.Screen name="language-settings" />
         <Stack.Screen name="eligibility-test" />
         <Stack.Screen name="aide-et-conseil" />
+        <Stack.Screen name="reset-password" />
         {__DEV__ && <Stack.Screen name="debug-api" />}
       </Stack>
     </>
@@ -193,6 +197,7 @@ function RootLayoutNav() {
 
 const asyncStoragePersister = createAsyncStoragePersister({
   storage: AsyncStorage,
+  key: "VITASANG_QUERY_CACHE",
 });
 
 // Le RootLayout principal qui fournit les contextes d'authentification, notifications et React Query
@@ -200,22 +205,16 @@ export default function RootLayout() {
   const posthogKey = process.env.EXPO_PUBLIC_POSTHOG_KEY as string;
   const hasPostHog = posthogKey && posthogKey.trim().length > 0;
 
-  const providers = (
-    <ErrorBoundary>
-      <AuthProvider>
-        <NotificationProvider>
-          <ToastProvider>
-            <RootLayoutNav />
-          </ToastProvider>
-        </NotificationProvider>
-      </AuthProvider>
-    </ErrorBoundary>
-  );
-
   return (
     <PersistQueryClientProvider
       client={queryClient}
-      persistOptions={{ persister: asyncStoragePersister }}
+      persistOptions={{
+        persister: asyncStoragePersister,
+        maxAge: 1000 * 60 * 60 * 2,
+        dehydrateOptions: {
+          shouldDehydrateQuery: (query) => query.state.status === "success",
+        },
+      }}
     >
       <PostHogProvider
         apiKey={posthogKey || "no-key"}
@@ -226,7 +225,15 @@ export default function RootLayout() {
           disabled: !hasPostHog,
         }}
       >
-        {providers}
+        <ErrorBoundary>
+          <AuthProvider>
+            <NotificationProvider>
+              <ToastProvider>
+                <RootLayoutNav />
+              </ToastProvider>
+            </NotificationProvider>
+          </AuthProvider>
+        </ErrorBoundary>
       </PostHogProvider>
     </PersistQueryClientProvider>
   );

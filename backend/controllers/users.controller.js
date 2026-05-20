@@ -55,6 +55,34 @@ exports.addUser = async (req, res, next) => {
   }
 };
 
+exports.resetPassword = async (req, res, next) => {
+  try {
+    const { telephone, nom, prenom, nouveau_mot_de_passe } = req.body;
+    const Utilisateur = require("../models").Utilisateur;
+
+    const user = await Utilisateur.findOne({
+      where: {
+        telephone,
+        nom: nom.trim(),
+        prenom: prenom.trim(),
+      },
+    });
+
+    if (!user) {
+      return res.status(404).json({
+        message: "Aucun compte trouvé avec ces informations. Vérifiez votre numéro, nom et prénom.",
+      });
+    }
+
+    user.mot_de_passe = await bcrypt.hash(nouveau_mot_de_passe, 10);
+    await user.save();
+
+    res.json({ success: true, message: "Mot de passe réinitialisé avec succès." });
+  } catch (error) {
+    next(error);
+  }
+};
+
 exports.login = async (req, res, next) => {
   try {
     const { telephone, mot_de_passe } = req.body;
