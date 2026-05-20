@@ -56,11 +56,20 @@ require("./jobs/notification.queue");
 const app = express();
 
 const corsOriginEnv = process.env.CORS_ORIGIN || "";
+const DEFAULT_ORIGINS = [
+  "http://localhost:3000",
+  "http://localhost:5173",
+  "http://localhost:8081",
+  "http://127.0.0.1:5500",
+  "http://localhost:5500",
+  "https://vitasangs.netlify.app",
+  "https://vitasang.netlify.app",
+];
 const corsOrigins = corsOriginEnv === "*"
   ? true
   : corsOriginEnv
     ? corsOriginEnv.split(",").map(o => o.trim())
-    : ["http://localhost:3000", "http://localhost:8081"];
+    : DEFAULT_ORIGINS;
 
 app.use(cors({
   origin: corsOrigins,
