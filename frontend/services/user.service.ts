@@ -352,7 +352,7 @@ export const confirmDonation = async (alertId: number) => {
 
 export const getAcceptedAlerts = async () => {
   try {
-    const res = await apiClient.get(`alerts/accepted`);
+    const res = await apiClient.get(`alerts/my-alerts`);
 
     return res.data;
   } catch (error: any) {

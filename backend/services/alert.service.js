@@ -182,9 +182,10 @@ class AlertService {
         );
       }
       return {
-        donneur: n.destinataire ? `${n.destinataire.prenom} ${n.destinataire.nom}` : "Utilisateur Inconnu",
+        donneur: n.destinataire ? `${n.destinataire.prenom} ${n.destinataire.nom}` : (n.nom_guest || "Invité"),
         statut: n.statut_reception,
-        telephone: n.destinataire ? n.destinataire.telephone : null,
+        telephone: n.destinataire ? n.destinataire.telephone : (n.telephone_guest || null),
+        isGuest: !n.destinataire,
         distance: distance !== null ? distance.toFixed(1) : null
       };
     });

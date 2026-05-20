@@ -6,6 +6,7 @@ import { Features } from "@/components/site/Features";
 import { AppMockups } from "@/components/site/AppMockups";
 import { Testimonials } from "@/components/site/Testimonials";
 import { HowItWorks } from "@/components/site/HowItWorks";
+import { Centres } from "@/components/site/Centres";
 import { AboutUs } from "@/components/site/AboutUs";
 import { FAQ } from "@/components/site/FAQ";
 import { CtaFinal } from "@/components/site/CtaFinal";
@@ -31,6 +32,7 @@ function Index() {
         <AppMockups />
         <Testimonials />
         <HowItWorks />
+        <Centres />
         <AboutUs />
         <FAQ />
         <CtaFinal />

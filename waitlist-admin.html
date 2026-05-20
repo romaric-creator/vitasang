@@ -27,61 +27,6 @@
     header h1 { font-size: 20px; font-weight: 700; }
     header span { font-size: 13px; opacity: 0.85; }
 
-    .login-wrap {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      min-height: calc(100vh - 64px);
-    }
-
-    .login-card {
-      background: white;
-      border-radius: 16px;
-      padding: 40px 36px;
-      width: 100%;
-      max-width: 380px;
-      box-shadow: 0 4px 24px rgba(0,0,0,0.08);
-      text-align: center;
-    }
-
-    .login-card h2 { font-size: 22px; margin-bottom: 8px; }
-    .login-card p  { color: #666; font-size: 14px; margin-bottom: 24px; }
-
-    input[type="password"], input[type="text"] {
-      width: 100%;
-      padding: 12px 16px;
-      border: 1.5px solid #e0e0e0;
-      border-radius: 10px;
-      font-size: 15px;
-      margin-bottom: 14px;
-      outline: none;
-      transition: border-color 0.2s;
-    }
-
-    input:focus { border-color: #e53935; }
-
-    button {
-      width: 100%;
-      padding: 13px;
-      background: #e53935;
-      color: white;
-      border: none;
-      border-radius: 10px;
-      font-size: 15px;
-      font-weight: 700;
-      cursor: pointer;
-      transition: background 0.2s;
-    }
-
-    button:hover { background: #c62828; }
-    button:disabled { background: #ccc; cursor: not-allowed; }
-
-    .error-msg {
-      color: #e53935;
-      font-size: 13px;
-      margin-top: 10px;
-    }
-
     .main-wrap { padding: 32px; max-width: 900px; margin: 0 auto; }
 
     .stats-row {
@@ -121,6 +66,10 @@
       font-size: 13px;
       background: #1a1a2e;
       border-radius: 8px;
+      color: white;
+      border: none;
+      cursor: pointer;
+      transition: background 0.2s;
     }
 
     .btn-export:hover { background: #2d2d4e; }
@@ -130,7 +79,11 @@
       padding: 8px 14px;
       margin-bottom: 0;
       font-size: 13px;
+      border: 1.5px solid #e0e0e0;
+      border-radius: 10px;
+      outline: none;
     }
+    .search-input:focus { border-color: #e53935; }
 
     table {
       width: 100%;
@@ -161,19 +114,6 @@
 
     .empty { text-align: center; padding: 48px; color: #aaa; font-size: 15px; }
 
-    .spinner {
-      display: inline-block;
-      width: 20px; height: 20px;
-      border: 3px solid rgba(255,255,255,0.4);
-      border-top-color: white;
-      border-radius: 50%;
-      animation: spin 0.7s linear infinite;
-      vertical-align: middle;
-      margin-right: 6px;
-    }
-
-    @keyframes spin { to { transform: rotate(360deg); } }
-
     .pagination {
       display: flex;
       justify-content: center;
@@ -191,35 +131,24 @@
       border: 1.5px solid #e0e0e0;
       border-radius: 8px;
       font-weight: 600;
+      cursor: pointer;
     }
 
     .page-btn:hover { background: #f5f5f5; }
     .page-btn.active { background: #e53935; color: white; border-color: #e53935; }
     .page-info { font-size: 13px; color: #888; }
 
-    #app { display: none; }
+    #app { display: block; }
   </style>
 </head>
 <body>
 
 <header>
   <h1>🩸 VitaSang — Waitlist Admin</h1>
-  <span id="header-info"></span>
+  <span id="header-info">Chargement...</span>
 </header>
 
-<!-- Login -->
-<div class="login-wrap" id="login">
-  <div class="login-card">
-    <h2>Accès Admin</h2>
-    <p>Entrez la clé d'administration et l'URL de l'API</p>
-    <input type="text" id="api-url" placeholder="https://vitasang.onrender.com" value="https://vitasang.onrender.com" />
-    <input type="password" id="admin-key" placeholder="Clé admin" />
-    <button id="login-btn" onclick="doLogin()">Se connecter</button>
-    <p class="error-msg" id="login-error"></p>
-  </div>
-</div>
-
-<!-- Dashboard -->
+<!-- Dashboard affiché directement -->
 <div id="app">
   <div class="main-wrap">
 
@@ -268,49 +197,27 @@
   let allData = [];
   let currentPage = 1;
   const perPage = 20;
-  let apiBase = "";
-  let adminKey = "";
 
-  async function doLogin() {
-    const btn = document.getElementById("login-btn");
-    const err = document.getElementById("login-error");
-    apiBase = document.getElementById("api-url").value.trim().replace(/\/$/, "");
-    adminKey = document.getElementById("admin-key").value.trim();
-
-    if (!apiBase || !adminKey) { err.textContent = "Remplissez tous les champs."; return; }
-
-    btn.disabled = true;
-    btn.innerHTML = '<span class="spinner"></span>Connexion...';
-    err.textContent = "";
-
-    try {
-      const res = await fetch(`${apiBase}/api/waitlist?key=${encodeURIComponent(adminKey)}`);
-      if (res.status === 401) throw new Error("Clé invalide");
-      if (!res.ok) throw new Error("Erreur serveur " + res.status);
-      const json = await res.json();
-      allData = json.data || [];
-      document.getElementById("login").style.display = "none";
-      document.getElementById("app").style.display = "block";
-      document.getElementById("header-info").textContent = `Connecté · ${allData.length} inscrits`;
-      computeStats();
-      renderTable();
-    } catch (e) {
-      err.textContent = e.message;
-    } finally {
-      btn.disabled = false;
-      btn.innerHTML = "Se connecter";
-    }
-  }
+  // Configuration de l'API (Remplir directement ici)
+  const apiBase = "https://vitasang.onrender.com";
+  const adminKey = "vitasang-admin-2026";
 
   async function loadData() {
+    document.getElementById("header-info").textContent = "Actualisation...";
     try {
       const res = await fetch(`${apiBase}/api/waitlist?key=${encodeURIComponent(adminKey)}`);
+      if (res.status === 401) throw new Error("Clé d'administration invalide");
+      if (!res.ok) throw new Error("Erreur serveur " + res.status);
+
       const json = await res.json();
       allData = json.data || [];
       document.getElementById("header-info").textContent = `Connecté · ${allData.length} inscrits`;
       computeStats();
       renderTable();
-    } catch(e) { alert("Erreur: " + e.message); }
+    } catch(e) {
+      document.getElementById("header-info").textContent = "Erreur de connexion";
+      alert("Erreur: " + e.message);
+    }
   }
 
   function computeStats() {
@@ -388,7 +295,8 @@
     return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
   }
 
-  document.getElementById("admin-key").addEventListener("keydown", e => { if (e.key === "Enter") doLogin(); });
+  // Lancement automatique du chargement des données dès que la page est prête
+  window.addEventListener("DOMContentLoaded", loadData);
 </script>
 
 </body>
