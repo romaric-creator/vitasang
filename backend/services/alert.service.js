@@ -293,9 +293,16 @@ class AlertService {
       attributes: [
         'public_token', 'groupe_requis', 'degre_urgence',
         'lieu', 'statut', 'createdAt', 'quantite_requise',
+        'telephone_contact',
+      ],
+      include: [
+        { model: Utilisateur, as: 'initiateur', attributes: ['telephone'] },
       ],
     });
     if (!alerte) throw ErrorTypes.RESOURCE_NOT_FOUND("Alerte");
+    const telephone = alerte.telephone_contact || alerte.initiateur?.telephone || null;
+    // Formater pour WhatsApp : retirer le + et les espaces
+    const whatsapp = telephone ? telephone.replace(/[^0-9]/g, '') : null;
     return {
       alerte: {
         token: alerte.public_token,
@@ -305,6 +312,7 @@ class AlertService {
         statut: alerte.statut,
         date: alerte.createdAt,
         quantite: alerte.quantite_requise,
+        whatsapp,
       }
     };
   }

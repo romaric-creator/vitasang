@@ -6,6 +6,8 @@ const { haversineSQL } = require("../utils/geoHelpers");
 const { ErrorTypes } = require("../utils/errorHandler");
 const alertService = require("../services/alert.service");
 const cacheService = require("../services/cache.service");
+const { notificationQueue } = require("../jobs/notification.queue");
+const logger = require("../utils/logger");
 
 exports.createAlert = async (req, res, next) => {
   try {
@@ -207,7 +209,43 @@ exports.respondToAlertByToken = async (req, res, next) => {
       nom_guest: nom,
       telephone_guest: telephone,
     });
-    res.json({ success: true, message: reponse === "accepte" ? "Merci ! L'équipe va vous contacter." : "Réponse enregistrée." });
+
+    // Envoyer une push notification à l'initiateur si le donneur invité accepte
+    let whatsappInitiateur = null;
+    if (reponse === "accepte" && alerte.id_initiateur) {
+      try {
+        const initiator = await Utilisateur.findByPk(alerte.id_initiateur);
+        if (initiator && initiator.push_token) {
+          await notificationQueue.add("sendInitiatorNotification", {
+            initiatorId: alerte.id_initiateur,
+            alertId: alerte.id_alerte,
+            donorName: `${nom} (invité)`,
+            groupe: alerte.groupe_requis,
+            message: `${nom} (invité) peut donner du sang. Son numéro : ${telephone}`,
+            title: "Un donneur a répondu !",
+          });
+          logger.info("[respondToAlertByToken] Initiator notification enqueued", {
+            alertId: alerte.id_alerte,
+            initiatorId: alerte.id_initiateur,
+          });
+        }
+        // Numéro WhatsApp de l'initiateur (chiffres seulement)
+        const rawTel = alerte.telephone_contact || initiator?.telephone || "";
+        whatsappInitiateur = rawTel.replace(/\D/g, "");
+      } catch (err) {
+        logger.error("[respondToAlertByToken] Failed to notify initiator", {
+          alertId: alerte.id_alerte,
+          initiatorId: alerte.id_initiateur,
+          error: err.message,
+        });
+      }
+    }
+
+    res.json({
+      success: true,
+      message: reponse === "accepte" ? "Merci ! L'équipe va vous contacter." : "Réponse enregistrée.",
+      ...(reponse === "accepte" && whatsappInitiateur ? { whatsapp_initiateur: whatsappInitiateur } : {}),
+    });
   } catch (error) {
     next(error);
   }
