@@ -69,11 +69,11 @@ export function CtaFinal() {
           id="cta-title"
           className="reveal text-4xl md:text-6xl font-extrabold leading-tight"
         >
-          Soyez averti dès <br /> que nous serons prêts.
+          Rejoignez le mouvement <br /> dès maintenant.
         </h2>
         <p className="reveal mx-auto mt-6 max-w-xl text-lg text-white/90 leading-relaxed">
-          Soyez parmi les premiers à aider. Laissez votre email pour recevoir{" "}
-          <br className="hidden md:block" /> votre invitation exclusive lors du lancement officiel.
+          Inscrivez-vous pour recevoir votre accès prioritaire et être parmi les premiers donneurs
+          <br className="hidden md:block" /> à sauver des vies avec VitaSang au Cameroun.
         </p>
 
         {status === "success" ? (

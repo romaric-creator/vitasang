@@ -1,12 +1,12 @@
 import { Fragment } from "react";
-import { Megaphone, Bell, Heart, Calendar, ArrowRight } from "lucide-react";
+import { Megaphone, Bell, Heart, ArrowRight } from "lucide-react";
 import phoneImage from "@/assets/how-phone.jpg";
 
 const steps = [
-  { icon: Megaphone, title: "L'alerte est lancée", desc: "Un hôpital ou une famille signale un besoin urgent. L'alerte est validée et diffusée en quelques secondes." },
-  { icon: Bell, title: "Vous recevez l'appel", desc: "Si votre groupe sanguin est compatible et que vous êtes à proximité, une notification push vous alerte immédiatement." },
-  { icon: Calendar, title: "Vous réservez votre créneau", desc: "Choisissez votre heure de passage au centre partenaire directement dans l'app. Zéro file d'attente." },
-  { icon: Heart, title: "Vous sauvez une vie", desc: "Un geste de 20 minutes. Un impact immense pour une famille camerounaise." },
+  { icon: Megaphone, title: "L'alerte est lancée", desc: "Une famille ou un proche signale un besoin urgent de sang dans l'app. L'alerte est validée automatiquement et diffusée en quelques secondes." },
+  { icon: Bell, title: "Les donneurs sont alertés", desc: "Tous les donneurs compatibles à proximité reçoivent une notification push. Le lien est aussi partagé sur WhatsApp dans les groupes locaux." },
+  { icon: Heart, title: "Un donneur accepte", desc: "Le donneur confirme sa disponibilité en un clic. Une conversation s'ouvre avec la famille pour coordonner le déplacement." },
+  { icon: Heart, title: "La vie est sauvée", desc: "Le donneur se rend au centre de santé. Un geste de 20 minutes. Un impact immense pour une famille camerounaise." },
 ];
 
 export function HowItWorks() {

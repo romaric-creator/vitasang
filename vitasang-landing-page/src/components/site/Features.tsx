@@ -1,25 +1,25 @@
-import { Bell, Calendar, MessageSquare, MapPin } from "lucide-react";
+import { Bell, MessageSquare, MapPin, Share2 } from "lucide-react";
 
 const features = [
   {
     icon: Bell,
     title: "Alertes vitales en temps réel",
-    desc: "Reçois une notification push dès qu'une urgence sanguine nécessite ton groupe à moins de 15 km. Groupe A+, B-, O... l'alerte te trouve, toi.",
+    desc: "Notification push dès qu'une urgence nécessite ton groupe sanguin à proximité. L'alerte cible les donneurs compatibles dans un rayon de 20 km.",
   },
   {
-    icon: Calendar,
-    title: "Réservation de créneau",
-    desc: "Planifie ton don directement depuis l'app. Choisis ton centre partenaire, ton horaire, et reçois un rappel. Fini les déplacements inutiles.",
+    icon: Share2,
+    title: "Partage WhatsApp intelligent",
+    desc: "Un lien unique généré pour chaque alerte. Partagez-le dans vos groupes WhatsApp — n'importe qui peut répondre sans télécharger l'app.",
   },
   {
     icon: MessageSquare,
-    title: "Chat direct famille/donneur",
-    desc: "Échange directement avec la famille ou le personnel soignant avant ton déplacement. Une coordination humaine, rapide et sécurisée.",
+    title: "Messagerie intégrée",
+    desc: "Dès qu'un donneur accepte votre alerte, une conversation s'ouvre automatiquement. Coordonnez le don directement dans l'app.",
   },
   {
     icon: MapPin,
-    title: "Carte des centres proches",
-    desc: "Visualise les centres de santé partenaires autour de toi sur une carte interactive. Trouve le plus proche en un coup d'œil.",
+    title: "Carte des centres partenaires",
+    desc: "Visualisez les centres de santé et hôpitaux agréés MINSANTE autour de vous. Trouvez le plus proche et lancez l'itinéraire en un clic.",
   },
 ];
 

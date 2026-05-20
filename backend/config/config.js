@@ -8,11 +8,9 @@ module.exports = {
         host: process.env.HOST || "localhost",
         port: process.env.DB_PORT || 3306,
         dialect: "mysql",
-        dialectOptions: {
-            ssl: {
-                rejectUnauthorized: false
-            }
-        }
+        dialectOptions: process.env.HOST && process.env.HOST.includes("tidbcloud") ? {
+            ssl: { rejectUnauthorized: true }
+        } : undefined
     },
     production: {
         username: process.env.DB_USER,

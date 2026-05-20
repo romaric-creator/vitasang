@@ -51,7 +51,7 @@ export function Hero() {
           </h1>
 
           <p className="reveal mt-6 max-w-xl text-lg text-muted-foreground md:text-xl leading-relaxed">
-            L'application qui connecte instantanément les banques de sang, les familles et les donneurs bénévoles au Cameroun.
+            Lancez une alerte, partagez le lien sur WhatsApp, et trouvez un donneur compatible à proximité en quelques minutes. Gratuit et 100% bénévole.
           </p>
 
           <div className="reveal mt-10 flex flex-wrap items-center justify-center gap-3 md:justify-start">
