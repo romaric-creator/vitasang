@@ -1,6 +1,5 @@
 import { Stack, useRouter, useSegments } from "expo-router";
 import { useEffect, useState } from "react";
-import Splash from "./Splash";
 import { StatusBar } from "expo-status-bar";
 
 import { PostHogProvider, usePostHog } from "posthog-react-native";
@@ -11,6 +10,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { AuthProvider, useAuth } from "@/context/AuthContext";
 import { NotificationProvider } from "@/context/NotificationContext";
 import { ToastProvider } from "@/context/ToastContext";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { queryClient } from "@/config/queryClient";
 import { getUserIdFromStorage } from "@/utils/storage";
 
@@ -144,19 +144,14 @@ function RootLayoutNav() {
       if (isAuth) {
         // Utilisateur authentifié → App principale
         router.replace("/(tabs)");
-      } else {
-        // Utilisateur non authentifié → Onboarding
-        router.replace("/OnboardingCarousel");
       }
+      // Si non authentifié : index.tsx gère la logique onboarding/login
     }, 50);
 
     return () => clearTimeout(timer);
   }, [isAuth, isLoading, appReady]);
 
-  // Afficher l'écran de Splash pendant le chargement initial
-  if (isLoading || !appReady) {
-    return <Splash showButtons={false} />;
-  }
+  if (isLoading || !appReady) return null;
 
   return (
     <>
@@ -183,13 +178,13 @@ function RootLayoutNav() {
         <Stack.Screen name="edit-profile" />
         <Stack.Screen name="alert-response/[id]" />
         <Stack.Screen name="alert-public/[token]" />
-        {/* <Stack.Screen name="book-appointment/[centreId]" /> */}
-        {/* <Stack.Screen name="historique" /> */}
-        {/* <Stack.Screen name="rendezvous" /> */}
+        <Stack.Screen name="book-appointment/[centreId]" />
+        <Stack.Screen name="historique" />
+        <Stack.Screen name="rendezvous" />
         <Stack.Screen name="notifications-settings" />
         <Stack.Screen name="language-settings" />
-        {/* <Stack.Screen name="eligibility-test" /> */}
-        {/* <Stack.Screen name="aide-et-conseil" /> */}
+        <Stack.Screen name="eligibility-test" />
+        <Stack.Screen name="aide-et-conseil" />
         {__DEV__ && <Stack.Screen name="debug-api" />}
       </Stack>
     </>
@@ -206,13 +201,15 @@ export default function RootLayout() {
   const hasPostHog = posthogKey && posthogKey.trim().length > 0;
 
   const providers = (
-    <AuthProvider>
-      <NotificationProvider>
-        <ToastProvider>
-          <RootLayoutNav />
-        </ToastProvider>
-      </NotificationProvider>
-    </AuthProvider>
+    <ErrorBoundary>
+      <AuthProvider>
+        <NotificationProvider>
+          <ToastProvider>
+            <RootLayoutNav />
+          </ToastProvider>
+        </NotificationProvider>
+      </AuthProvider>
+    </ErrorBoundary>
   );
 
   return (
@@ -224,7 +221,7 @@ export default function RootLayout() {
         apiKey={posthogKey || "no-key"}
         options={{
           host: "https://us.i.posthog.com",
-          enableSessionReplay: true,
+          enableSessionReplay: false,
           persistence: "memory",
           disabled: !hasPostHog,
         }}

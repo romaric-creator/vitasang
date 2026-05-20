@@ -20,10 +20,8 @@ const { width: VW } = Dimensions.get("window");
 const SLIDES = [
   {
     id: "1",
-    counter: "01",
-    total: "03",
     bgColor: "#FFF1F2",
-    accentColor: "#FECDD3",
+    accentColor: color.primary,
     title: "Sauvez une vie\nen un clic",
     description:
       "Répondez aux alertes de sang urgentes et devenez un héros pour votre communauté.",
@@ -31,10 +29,8 @@ const SLIDES = [
   },
   {
     id: "2",
-    counter: "02",
-    total: "03",
     bgColor: "#FFF7ED",
-    accentColor: "#FED7AA",
+    accentColor: "#F97316",
     title: "L'urgence\nn'attend pas",
     description:
       "Chaque minute compte. VitaSang connecte les donneurs aux hôpitaux en temps réel.",
@@ -42,10 +38,8 @@ const SLIDES = [
   },
   {
     id: "3",
-    counter: "03",
-    total: "03",
     bgColor: "#F0FDF4",
-    accentColor: "#BBF7D0",
+    accentColor: "#16A34A",
     title: "Rejoignez\nle mouvement",
     description:
       "Plus de 1 000 donneurs au Cameroun. Ensemble, nous construisons un réseau de vie.",
@@ -55,171 +49,154 @@ const SLIDES = [
 
 type Expression = "normal" | "surprised" | "happy";
 
-// ─── Mascotte ────────────────────────────────────────────────────────────────
+// ─── Tailles ──────────────────────────────────────────────────────────────────
+const HEAD = 130;   // diamètre de la tête / corps principal
+const EYE_W = 22;   // largeur d'un oeil blanc
+const EYE_H = 26;   // hauteur d'un oeil blanc (normal)
+const PUPIL = 14;   // diamètre pupille
+const ARM_W = 22;
+const ARM_H = 52;
 
+// ─── Mascotte ────────────────────────────────────────────────────────────────
 const BloodDropMascot: React.FC<{
   expression: Expression;
+  accentColor: string;
   isLastSlide: boolean;
-}> = ({ expression, isLastSlide }) => {
-  const bounceY   = useRef(new Animated.Value(0)).current;
-  const squeezeX  = useRef(new Animated.Value(1)).current;
-  const squeezeY  = useRef(new Animated.Value(1)).current;
-  const danceRot  = useRef(new Animated.Value(0)).current;
-  const blinkAnim = useRef(new Animated.Value(1)).current;
-  const armLAnim  = useRef(new Animated.Value(0)).current;
-  const armRAnim  = useRef(new Animated.Value(0)).current;
-  const shadowScale = useRef(new Animated.Value(1)).current;
-  const prevExpr  = useRef<Expression>(expression);
+}> = ({ expression, accentColor, isLastSlide }) => {
+  const floatY     = useRef(new Animated.Value(0)).current;
+  const blinkY     = useRef(new Animated.Value(1)).current;
+  const squeezeX   = useRef(new Animated.Value(1)).current;
+  const squeezeY   = useRef(new Animated.Value(1)).current;
+  const wobble     = useRef(new Animated.Value(0)).current;
+  const armL       = useRef(new Animated.Value(0)).current;
+  const armR       = useRef(new Animated.Value(0)).current;
+  const shadowSc   = useRef(new Animated.Value(1)).current;
+  const prevExpr   = useRef<Expression>(expression);
+  const blinkRef   = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Bounce + ombre synchronisée
+  // Flottement doux
   useEffect(() => {
-    const bounce = Animated.loop(
+    const anim = Animated.loop(
       Animated.sequence([
-        Animated.parallel([
-          Animated.timing(bounceY,     { toValue: -12, duration: 800, useNativeDriver: true }),
-          Animated.timing(shadowScale, { toValue: 0.75, duration: 800, useNativeDriver: true }),
-        ]),
-        Animated.parallel([
-          Animated.timing(bounceY,     { toValue: 0, duration: 800, useNativeDriver: true }),
-          Animated.timing(shadowScale, { toValue: 1, duration: 800, useNativeDriver: true }),
-        ]),
+        Animated.timing(floatY,   { toValue: -10, duration: 1000, useNativeDriver: true }),
+        Animated.timing(shadowSc, { toValue: 0.8, duration: 1000, useNativeDriver: true }),
+        Animated.timing(floatY,   { toValue: 0,   duration: 1000, useNativeDriver: true }),
+        Animated.timing(shadowSc, { toValue: 1,   duration: 1000, useNativeDriver: true }),
       ])
     );
-    bounce.start();
-    return () => bounce.stop();
+    anim.start();
+    return () => anim.stop();
   }, []);
 
-  // Clignement des yeux toutes les 3s
+  // Clignement des yeux
   useEffect(() => {
-    const blink = () => {
-      Animated.sequence([
-        Animated.timing(blinkAnim, { toValue: 0.05, duration: 80,  useNativeDriver: true }),
-        Animated.timing(blinkAnim, { toValue: 1,    duration: 80,  useNativeDriver: true }),
-      ]).start(() => {
-        setTimeout(blink, 2800 + Math.random() * 1200);
-      });
+    const scheduleBlink = () => {
+      blinkRef.current = setTimeout(() => {
+        Animated.sequence([
+          Animated.timing(blinkY, { toValue: 0.05, duration: 70,  useNativeDriver: true }),
+          Animated.delay(40),
+          Animated.timing(blinkY, { toValue: 1,    duration: 80,  useNativeDriver: true }),
+        ]).start(() => scheduleBlink());
+      }, 2200 + Math.random() * 1500);
     };
-    const t = setTimeout(blink, 1500);
-    return () => clearTimeout(t);
+    scheduleBlink();
+    return () => { if (blinkRef.current) clearTimeout(blinkRef.current); };
   }, []);
 
-  // Squeeze élastique au changement d'expression
+  // Squash-and-stretch au changement d'expression
   useEffect(() => {
-    if (prevExpr.current !== expression) {
-      prevExpr.current = expression;
-      Animated.sequence([
-        Animated.parallel([
-          Animated.timing(squeezeX, { toValue: 0.75, duration: 130, useNativeDriver: true }),
-          Animated.timing(squeezeY, { toValue: 1.15, duration: 130, useNativeDriver: true }),
-        ]),
-        Animated.parallel([
-          Animated.timing(squeezeX, { toValue: 1.1,  duration: 120, useNativeDriver: true }),
-          Animated.timing(squeezeY, { toValue: 0.9,  duration: 120, useNativeDriver: true }),
-        ]),
-        Animated.parallel([
-          Animated.timing(squeezeX, { toValue: 1,    duration: 100, useNativeDriver: true }),
-          Animated.timing(squeezeY, { toValue: 1,    duration: 100, useNativeDriver: true }),
-        ]),
-      ]).start();
-    }
+    if (prevExpr.current === expression) return;
+    prevExpr.current = expression;
+    Animated.sequence([
+      Animated.parallel([
+        Animated.timing(squeezeX, { toValue: 0.82, duration: 110, useNativeDriver: true }),
+        Animated.timing(squeezeY, { toValue: 1.18, duration: 110, useNativeDriver: true }),
+      ]),
+      Animated.parallel([
+        Animated.timing(squeezeX, { toValue: 1.12, duration: 100, useNativeDriver: true }),
+        Animated.timing(squeezeY, { toValue: 0.88, duration: 100, useNativeDriver: true }),
+      ]),
+      Animated.parallel([
+        Animated.timing(squeezeX, { toValue: 1,    duration: 90,  useNativeDriver: true }),
+        Animated.timing(squeezeY, { toValue: 1,    duration: 90,  useNativeDriver: true }),
+      ]),
+    ]).start();
   }, [expression]);
 
-  // Bras selon expression
+  // Bras
   useEffect(() => {
-    if (expression === "normal") {
-      // Bras au repos
-      Animated.parallel([
-        Animated.timing(armLAnim, { toValue: 0,   duration: 300, useNativeDriver: true }),
-        Animated.timing(armRAnim, { toValue: 0,   duration: 300, useNativeDriver: true }),
-      ]).start();
-    } else if (expression === "surprised") {
-      // Bras levés (surprise)
-      Animated.parallel([
-        Animated.timing(armLAnim, { toValue: -50, duration: 350, useNativeDriver: true }),
-        Animated.timing(armRAnim, { toValue: -50, duration: 350, useNativeDriver: true }),
-      ]).start();
-    } else {
-      // Bras en V victoire
-      Animated.parallel([
-        Animated.timing(armLAnim, { toValue: -35, duration: 300, useNativeDriver: true }),
-        Animated.timing(armRAnim, { toValue: -35, duration: 300, useNativeDriver: true }),
-      ]).start();
-    }
+    const targets = {
+      normal:    [30, -30],   // léger repos (degrés interpolés 0→30, 0→-30)
+      surprised: [80, -80],   // levés
+      happy:     [50, -50],   // en V victoire
+    };
+    const [l, r] = targets[expression];
+    Animated.parallel([
+      Animated.spring(armL, { toValue: l, useNativeDriver: true, speed: 14, bounciness: 8 }),
+      Animated.spring(armR, { toValue: r, useNativeDriver: true, speed: 14, bounciness: 8 }),
+    ]).start();
   }, [expression]);
 
-  // Danse + saut sur le dernier slide
+  // Wobble sur dernier slide
   useEffect(() => {
     if (isLastSlide) {
-      const dance = Animated.loop(
+      const loop = Animated.loop(
         Animated.sequence([
-          Animated.timing(danceRot, { toValue: -8,  duration: 180, useNativeDriver: true }),
-          Animated.timing(danceRot, { toValue: 8,   duration: 180, useNativeDriver: true }),
-          Animated.timing(danceRot, { toValue: -8,  duration: 180, useNativeDriver: true }),
-          Animated.timing(danceRot, { toValue: 8,   duration: 180, useNativeDriver: true }),
-          Animated.timing(danceRot, { toValue: 0,   duration: 180, useNativeDriver: true }),
-          Animated.delay(600),
+          Animated.timing(wobble, { toValue: -9, duration: 160, useNativeDriver: true }),
+          Animated.timing(wobble, { toValue:  9, duration: 160, useNativeDriver: true }),
+          Animated.timing(wobble, { toValue: -9, duration: 160, useNativeDriver: true }),
+          Animated.timing(wobble, { toValue:  9, duration: 160, useNativeDriver: true }),
+          Animated.timing(wobble, { toValue:  0, duration: 160, useNativeDriver: true }),
+          Animated.delay(700),
         ])
       );
-      dance.start();
-      return () => dance.stop();
+      loop.start();
+      return () => loop.stop();
     } else {
-      Animated.timing(danceRot, { toValue: 0, duration: 200, useNativeDriver: true }).start();
+      Animated.timing(wobble, { toValue: 0, duration: 180, useNativeDriver: true }).start();
     }
   }, [isLastSlide]);
 
-  const danceRotDeg = danceRot.interpolate({
-    inputRange: [-8, 8],
-    outputRange: ["-8deg", "8deg"],
-  });
-  const armLDeg = armLAnim.interpolate({
-    inputRange: [-50, 0],
-    outputRange: ["-80deg", "25deg"],
-  });
-  const armRDeg = armRAnim.interpolate({
-    inputRange: [-50, 0],
-    outputRange: ["80deg", "-25deg"],
-  });
+  const wobbleDeg = wobble.interpolate({ inputRange: [-9, 9], outputRange: ["-9deg", "9deg"] });
 
-  // ── Yeux ──────────────────────────────────────────────────────────────────
+  // Interpolation des bras (valeur 0–80 → degrés de rotation du bras)
+  const armLDeg = armL.interpolate({ inputRange: [0, 80], outputRange: ["30deg", "-60deg"] });
+  const armRDeg = armR.interpolate({ inputRange: [-80, 0], outputRange: ["60deg", "-30deg"] });
+
+  // ── Visage ────────────────────────────────────────────────────────────────
+  const eyeHCurrent = expression === "surprised" ? 30 : EYE_H;
+  const eyeWCurrent = expression === "surprised" ? EYE_W - 2 : EYE_W;
+
   const renderEyes = () => {
     if (expression === "happy") {
+      // Yeux fermés en arc (^-^)
       return (
         <View style={s.eyesRow}>
-          {/* Yeux arc */}
-          <View style={s.eyeHappyWrap}>
-            <Animated.View style={[s.eyeHappyArc, { transform: [{ scaleY: blinkAnim }] }]} />
-          </View>
-          {/* Joue gauche */}
-          <View style={[s.cheek, { left: 8 }]} />
-          <View style={s.eyeHappyWrap}>
-            <Animated.View style={[s.eyeHappyArc, { transform: [{ scaleY: blinkAnim }] }]} />
-          </View>
-          {/* Joue droite */}
-          <View style={[s.cheek, { right: 8 }]} />
+          <Animated.View style={[s.eyeHappyClip, { transform: [{ scaleY: blinkY }] }]}>
+            <View style={s.eyeHappyArc} />
+          </Animated.View>
+          <Animated.View style={[s.eyeHappyClip, { transform: [{ scaleY: blinkY }] }]}>
+            <View style={s.eyeHappyArc} />
+          </Animated.View>
         </View>
       );
     }
-    const eyeH  = expression === "surprised" ? 18 : 14;
-    const pupH  = expression === "surprised" ? 10 : 8;
-    const pupW  = expression === "surprised" ? 10 : 7;
     return (
       <View style={s.eyesRow}>
         {/* Oeil gauche */}
-        <Animated.View style={[s.eyeOuter, { height: eyeH, transform: [{ scaleY: blinkAnim }] }]}>
-          <View style={[s.pupil, { width: pupW, height: pupH }]} />
-          {/* Reflet */}
-          <View style={s.pupilReflect} />
+        <Animated.View style={[s.eyeWhite, { width: eyeWCurrent, height: eyeHCurrent, transform: [{ scaleY: blinkY }] }]}>
+          <View style={[s.pupil, expression === "surprised" && s.pupilLarge]} />
+          <View style={s.eyeShine} />
         </Animated.View>
         {/* Oeil droit */}
-        <Animated.View style={[s.eyeOuter, { height: eyeH, transform: [{ scaleY: blinkAnim }] }]}>
-          <View style={[s.pupil, { width: pupW, height: pupH }]} />
-          <View style={s.pupilReflect} />
+        <Animated.View style={[s.eyeWhite, { width: eyeWCurrent, height: eyeHCurrent, transform: [{ scaleY: blinkY }] }]}>
+          <View style={[s.pupil, expression === "surprised" && s.pupilLarge]} />
+          <View style={s.eyeShine} />
         </Animated.View>
       </View>
     );
   };
 
-  // ── Bouche ────────────────────────────────────────────────────────────────
   const renderMouth = () => {
     if (expression === "happy") {
       return (
@@ -231,24 +208,25 @@ const BloodDropMascot: React.FC<{
     if (expression === "surprised") {
       return <View style={s.mouthO} />;
     }
-    return <View style={s.mouthLine} />;
+    return <View style={s.mouthNeutral} />;
   };
 
-  // ── Sourcils ──────────────────────────────────────────────────────────────
+  const renderCheeks = () => {
+    if (expression !== "happy") return null;
+    return (
+      <>
+        <View style={[s.cheek, { left: 12 }]} />
+        <View style={[s.cheek, { right: 12 }]} />
+      </>
+    );
+  };
+
   const renderBrows = () => {
     if (expression === "surprised") {
       return (
         <View style={s.browsRow}>
-          <View style={[s.brow, { transform: [{ rotate: "-12deg" }, { translateY: -2 }] }]} />
-          <View style={[s.brow, { transform: [{ rotate: "12deg" },  { translateY: -2 }] }]} />
-        </View>
-      );
-    }
-    if (expression === "happy") {
-      return (
-        <View style={s.browsRow}>
-          <View style={[s.brow, { transform: [{ rotate: "8deg" }],  opacity: 0.7 }]} />
-          <View style={[s.brow, { transform: [{ rotate: "-8deg" }], opacity: 0.7 }]} />
+          <View style={[s.brow, { transform: [{ rotate: "-15deg" }, { translateY: -3 }] }]} />
+          <View style={[s.brow, { transform: [{ rotate: "15deg" },  { translateY: -3 }] }]} />
         </View>
       );
     }
@@ -257,36 +235,34 @@ const BloodDropMascot: React.FC<{
 
   return (
     <View style={s.mascotWrap}>
-      {/* Corps + animation */}
+      {/* Corps animé */}
       <Animated.View
         style={{
+          alignItems: "center",
           transform: [
-            { translateY: bounceY },
+            { translateY: floatY },
             { scaleX: squeezeX },
             { scaleY: squeezeY },
-            { rotate: danceRotDeg },
+            { rotate: wobbleDeg },
           ],
-          alignItems: "center",
         }}
       >
-        {/* Bras gauche */}
-        <Animated.View
-          style={[s.arm, s.armL, { transform: [{ rotate: armLDeg }] }]}
-        />
+        {/* Bras gauche — derrière le corps */}
+        <Animated.View style={[s.arm, s.armLeft, { transform: [{ rotate: armLDeg }] }]} />
 
-        {/* Corps goutte */}
-        <View style={s.bodyWrap}>
-          {/* Cercle principal */}
-          <View style={s.bodyCircle}>
-            {/* Brillances */}
-            <View style={s.shine1} />
+        {/* ─── Forme goutte ─────────────────────────────────────────────────── */}
+        <View style={s.dropContainer}>
+          {/* Pointe en haut (inversé : la goutte a la pointe en haut sur ce design) */}
+          {/* Corps rond */}
+          <View style={[s.head, { backgroundColor: accentColor }]}>
+            {/* Brillance principale */}
+            <View style={s.shine} />
+            {/* Brillance secondaire */}
             <View style={s.shine2} />
 
-            {/* Croix médicale */}
-            <View style={s.crossH} />
-            <View style={s.crossV} />
+            {renderCheeks()}
 
-            {/* Visage */}
+            {/* Visage centré */}
             <View style={s.face}>
               {renderBrows()}
               {renderEyes()}
@@ -294,22 +270,18 @@ const BloodDropMascot: React.FC<{
             </View>
           </View>
 
-          {/* Pointe bas */}
-          <View style={s.tipOuter}>
-            <View style={s.tip} />
+          {/* Pointe bas de la goutte */}
+          <View style={[s.tipWrapper, { backgroundColor: accentColor }]}>
+            <View style={[s.tipInner, { backgroundColor: accentColor }]} />
           </View>
         </View>
 
-        {/* Bras droit */}
-        <Animated.View
-          style={[s.arm, s.armR, { transform: [{ rotate: armRDeg }] }]}
-        />
+        {/* Bras droit — devant le corps */}
+        <Animated.View style={[s.arm, s.armRight, { transform: [{ rotate: armRDeg }] }]} />
       </Animated.View>
 
       {/* Ombre au sol */}
-      <Animated.View
-        style={[s.shadow, { transform: [{ scaleX: shadowScale }] }]}
-      />
+      <Animated.View style={[s.shadow, { transform: [{ scaleX: shadowSc }] }]} />
     </View>
   );
 };
@@ -340,31 +312,26 @@ export default function OnboardingCarousel() {
   const renderItem = useCallback(
     ({ item, index }: { item: (typeof SLIDES)[number]; index: number }) => (
       <View style={[s.slide, { backgroundColor: item.bgColor }]}>
-        {/* Compteur */}
-        <View style={s.counterRow}>
-          <Text style={s.counterCurrent}>{item.counter}</Text>
-          <Text style={s.counterSep}> / </Text>
-          <Text style={s.counterTotal}>{item.total}</Text>
-        </View>
-
         {/* Zone mascotte */}
         <View style={s.mascotArea}>
           <BloodDropMascot
             expression={item.expression}
+            accentColor={item.accentColor}
             isLastSlide={index === SLIDES.length - 1}
           />
         </View>
 
-        {/* Carte texte */}
-        <View style={[s.textCard, { borderColor: item.accentColor }]}>
-          <View style={[s.textCardAccent, { backgroundColor: item.accentColor }]} />
-          <Text style={s.slideTitle}>{item.title}</Text>
+        {/* Texte */}
+        <View style={s.textBlock}>
+          <Text style={[s.slideTitle, { color: "#1E293B" }]}>{item.title}</Text>
           <Text style={s.slideDesc}>{item.description}</Text>
         </View>
       </View>
     ),
     []
   );
+
+  const currentAccent = SLIDES[activeSlide].accentColor;
 
   return (
     <View style={s.container}>
@@ -413,10 +380,11 @@ export default function OnboardingCarousel() {
               <Animated.View
                 style={[
                   s.dot,
+                  { backgroundColor: currentAccent },
                   {
                     width: scrollX.interpolate({
                       inputRange: range,
-                      outputRange: [7, 22, 7],
+                      outputRange: [7, 24, 7],
                       extrapolate: "clamp",
                     }),
                     opacity: scrollX.interpolate({
@@ -435,7 +403,7 @@ export default function OnboardingCarousel() {
       {/* Footer */}
       <View style={s.footer}>
         <TouchableOpacity
-          style={s.primaryBtn}
+          style={[s.primaryBtn, { backgroundColor: currentAccent }]}
           onPress={handleNext}
           activeOpacity={0.85}
         >
@@ -445,12 +413,12 @@ export default function OnboardingCarousel() {
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={s.sosBtn}
+          style={[s.sosBtn, { borderColor: currentAccent }]}
           onPress={() => router.push("/guest-alert")}
           activeOpacity={0.8}
         >
-          <TabBarIcon name="exclamation-triangle" size={15} color={color.primary} />
-          <Text style={s.sosBtnText}>Urgence : Lancer une alerte</Text>
+          <TabBarIcon name="exclamation-triangle" size={15} color={currentAccent} />
+          <Text style={[s.sosBtnText, { color: currentAccent }]}>Urgence : Lancer une alerte</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -459,18 +427,11 @@ export default function OnboardingCarousel() {
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
 
-const BODY_SIZE   = 118;
-const ARM_W       = 20;
-const ARM_H       = 44;
-const ARM_RADIUS  = 10;
-
 const s = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#FFF1F2",
   },
-
-  // ── Bouton passer ─────────────────────────────────────────────────────────
   skipBtn: {
     position: "absolute",
     top: Platform.OS === "ios" ? 58 : 36,
@@ -479,307 +440,251 @@ const s = StyleSheet.create({
     paddingVertical: 6,
     paddingHorizontal: 14,
     borderRadius: 20,
-    backgroundColor: "rgba(255,255,255,0.75)",
+    backgroundColor: "rgba(255,255,255,0.8)",
   },
   skipText: {
     fontSize: 13,
     fontWeight: "700",
-    color: color.textSecondary,
+    color: "#64748B",
   },
 
   // ── Slide ─────────────────────────────────────────────────────────────────
   slide: {
     width: VW,
     flex: 1,
-    paddingTop: Platform.OS === "ios" ? 76 : 56,
-    paddingHorizontal: 24,
-    paddingBottom: 12,
-  },
-  counterRow: {
-    flexDirection: "row",
-    alignItems: "baseline",
-    marginBottom: 20,
-  },
-  counterCurrent: {
-    fontSize: 22,
-    fontWeight: "900",
-    color: color.primary,
-    letterSpacing: -0.5,
-  },
-  counterSep: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: color.textLight,
-    marginHorizontal: 2,
-  },
-  counterTotal: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: color.textLight,
+    paddingTop: Platform.OS === "ios" ? 70 : 50,
+    paddingHorizontal: 28,
+    paddingBottom: 8,
+    alignItems: "center",
   },
 
   // ── Mascotte ──────────────────────────────────────────────────────────────
   mascotArea: {
-    height: 220,
-    justifyContent: "flex-end",
+    flex: 1,
+    justifyContent: "center",
     alignItems: "center",
-    marginBottom: 20,
   },
   mascotWrap: {
     alignItems: "center",
   },
 
-  // Ombre au sol
-  shadow: {
-    width: 70,
-    height: 12,
-    borderRadius: 6,
-    backgroundColor: "rgba(158,32,22,0.15)",
-    marginTop: 6,
-  },
-
-  // Corps
-  bodyWrap: {
+  // ── Forme goutte ──────────────────────────────────────────────────────────
+  dropContainer: {
     alignItems: "center",
-  },
-  bodyCircle: {
-    width: BODY_SIZE,
-    height: BODY_SIZE,
-    borderRadius: BODY_SIZE / 2,
-    backgroundColor: color.primary,
-    overflow: "hidden",
-    shadowColor: color.primary,
-    shadowOffset: { width: 0, height: 12 },
-    shadowOpacity: 0.45,
-    shadowRadius: 22,
-    elevation: 14,
+    // Pas de overflow hidden ici — laisse les bras dépasser
   },
 
-  // Brillances
-  shine1: {
+  // Tête / corps rond
+  head: {
+    width: HEAD,
+    height: HEAD,
+    borderRadius: HEAD / 2,
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.25,
+    shadowRadius: 18,
+    elevation: 12,
+  },
+
+  // Pointe bas de la goutte (triangle arrondi via View carrée tournée)
+  tipWrapper: {
+    width: 40,
+    height: 40,
+    marginTop: -26,
+    zIndex: -1,
+    alignItems: "center",
+    justifyContent: "center",
+    overflow: "hidden",
+    borderRadius: 6,
+    transform: [{ rotate: "45deg" }],
+  },
+  tipInner: {
+    width: 40,
+    height: 40,
+  },
+
+  // ── Brillances ────────────────────────────────────────────────────────────
+  shine: {
     position: "absolute",
     top: 14,
-    left: 16,
-    width: 28,
-    height: 18,
-    borderRadius: 14,
-    backgroundColor: "rgba(255,255,255,0.32)",
-    transform: [{ rotate: "-22deg" }],
+    left: 18,
+    width: 26,
+    height: 16,
+    borderRadius: 12,
+    backgroundColor: "rgba(255,255,255,0.35)",
+    transform: [{ rotate: "-25deg" }],
   },
   shine2: {
     position: "absolute",
-    top: 22,
-    left: 24,
+    top: 20,
+    left: 28,
     width: 10,
-    height: 6,
+    height: 7,
     borderRadius: 5,
-    backgroundColor: "rgba(255,255,255,0.18)",
-    transform: [{ rotate: "-22deg" }],
+    backgroundColor: "rgba(255,255,255,0.20)",
+    transform: [{ rotate: "-25deg" }],
   },
 
-  // Croix médicale (derrière le visage, semi-transparente)
-  crossH: {
+  // ── Joues ─────────────────────────────────────────────────────────────────
+  cheek: {
     position: "absolute",
-    top: "50%",
-    left: "50%",
-    width: 32,
-    height: 10,
-    marginTop: -20,
-    marginLeft: -16,
-    backgroundColor: "rgba(255,255,255,0.10)",
-    borderRadius: 3,
-  },
-  crossV: {
-    position: "absolute",
-    top: "50%",
-    left: "50%",
-    width: 10,
-    height: 32,
-    marginTop: -31,
-    marginLeft: -5,
-    backgroundColor: "rgba(255,255,255,0.10)",
-    borderRadius: 3,
+    bottom: 28,
+    width: 20,
+    height: 13,
+    borderRadius: 10,
+    backgroundColor: "rgba(255,180,180,0.50)",
   },
 
-  // Pointe goutte
-  tipOuter: {
-    overflow: "hidden",
-    width: 50,
-    height: 28,
-    marginTop: -14,
-    alignItems: "center",
-  },
-  tip: {
-    width: 46,
-    height: 46,
-    borderRadius: 6,
-    backgroundColor: color.primary,
-    transform: [{ rotate: "45deg" }],
-    marginTop: -24,
-    shadowColor: color.primary,
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.15,
-    shadowRadius: 3,
-  },
-
-  // Bras
-  arm: {
-    position: "absolute",
-    width: ARM_W,
-    height: ARM_H,
-    backgroundColor: color.primary,
-    borderRadius: ARM_RADIUS,
-  },
-  armL: {
-    left: -ARM_W + 4,
-    top: BODY_SIZE * 0.3,
-    transformOrigin: "50% 0%",
-  },
-  armR: {
-    right: -ARM_W + 4,
-    top: BODY_SIZE * 0.3,
-    transformOrigin: "50% 0%",
-  },
-
-  // Visage
+  // ── Visage ────────────────────────────────────────────────────────────────
   face: {
-    flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    paddingTop: 18,
+    gap: 6,
   },
   browsRow: {
     flexDirection: "row",
-    gap: 18,
-    marginBottom: 5,
+    gap: 22,
+    marginBottom: 2,
   },
   brow: {
-    width: 18,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: "rgba(255,255,255,0.92)",
+    width: 20,
+    height: 5,
+    borderRadius: 3,
+    backgroundColor: "rgba(255,255,255,0.95)",
   },
 
-  // Yeux normaux/surpris
+  // Yeux normaux
   eyesRow: {
     flexDirection: "row",
-    gap: 14,
+    gap: 16,
     alignItems: "center",
-    marginBottom: 7,
   },
-  eyeOuter: {
-    width: 13,
-    borderRadius: 7,
+  eyeWhite: {
+    width: EYE_W,
+    height: EYE_H,
+    borderRadius: EYE_W / 2,
     backgroundColor: "#FFFFFF",
     alignItems: "center",
     justifyContent: "center",
     overflow: "hidden",
   },
   pupil: {
-    borderRadius: 99,
-    backgroundColor: "#1a1a2e",
+    width: PUPIL,
+    height: PUPIL,
+    borderRadius: PUPIL / 2,
+    backgroundColor: "#1C1C2E",
   },
-  pupilReflect: {
+  pupilLarge: {
+    width: PUPIL + 2,
+    height: PUPIL + 2,
+    borderRadius: (PUPIL + 2) / 2,
+  },
+  eyeShine: {
     position: "absolute",
-    top: 2,
-    right: 2,
-    width: 4,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: "rgba(255,255,255,0.7)",
+    top: 4,
+    right: 4,
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: "rgba(255,255,255,0.75)",
   },
 
-  // Yeux heureux (arc)
-  eyeHappyWrap: {
-    width: 16,
-    height: 10,
+  // Yeux heureux (arcs ^)
+  eyeHappyClip: {
+    width: 22,
+    height: 13,
     overflow: "hidden",
   },
   eyeHappyArc: {
-    width: 16,
-    height: 16,
-    borderRadius: 8,
-    borderWidth: 3.5,
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    borderWidth: 4,
     borderColor: "#FFFFFF",
     backgroundColor: "transparent",
-    marginTop: 3,
-  },
-  // Joues roses
-  cheek: {
-    position: "absolute",
-    bottom: -2,
-    width: 14,
-    height: 9,
-    borderRadius: 7,
-    backgroundColor: "rgba(255,200,200,0.55)",
+    marginTop: 4,
   },
 
-  // Bouche neutre
+  // ── Bouche ────────────────────────────────────────────────────────────────
   mouthWrap: {
     alignItems: "center",
   },
-  mouthLine: {
-    width: 24,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: "rgba(255,255,255,0.75)",
+  mouthNeutral: {
+    width: 26,
+    height: 5,
+    borderRadius: 3,
+    backgroundColor: "rgba(255,255,255,0.80)",
   },
-  // Bouche surprise
   mouthO: {
-    width: 15,
-    height: 19,
-    borderRadius: 10,
-    backgroundColor: "rgba(255,255,255,0.88)",
-    borderWidth: 2,
-    borderColor: "rgba(255,255,255,0.4)",
+    width: 18,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: "rgba(255,255,255,0.90)",
   },
-  // Sourire
   smileClip: {
-    width: 36,
-    height: 18,
+    width: 42,
+    height: 21,
     overflow: "hidden",
-    marginTop: 2,
+    alignItems: "center",
   },
   smileCircle: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    borderWidth: 4,
-    borderColor: "rgba(255,255,255,0.92)",
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    borderWidth: 5,
+    borderColor: "rgba(255,255,255,0.95)",
     backgroundColor: "transparent",
   },
 
-  // ── Carte texte ───────────────────────────────────────────────────────────
-  textCard: {
-    backgroundColor: "rgba(255,255,255,0.82)",
-    borderRadius: 24,
-    borderWidth: 1.5,
-    padding: 20,
-    paddingLeft: 24,
-    overflow: "hidden",
-  },
-  textCardAccent: {
+  // ── Bras ──────────────────────────────────────────────────────────────────
+  arm: {
     position: "absolute",
-    left: 0,
-    top: 0,
-    bottom: 0,
-    width: 5,
-    borderTopLeftRadius: 24,
-    borderBottomLeftRadius: 24,
+    width: ARM_W,
+    height: ARM_H,
+    borderRadius: ARM_W / 2,
+  },
+  armLeft: {
+    left: -(ARM_W * 0.5),
+    top: HEAD * 0.25,
+    // transformOrigin n'est pas supporté universellement, on simule via translateY
+    transform: [{ translateY: -(ARM_H / 2) }],
+  },
+  armRight: {
+    right: -(ARM_W * 0.5),
+    top: HEAD * 0.25,
+    transform: [{ translateY: -(ARM_H / 2) }],
+  },
+
+  // Ombre au sol
+  shadow: {
+    width: 72,
+    height: 14,
+    borderRadius: 7,
+    backgroundColor: "rgba(0,0,0,0.12)",
+    marginTop: 8,
+  },
+
+  // ── Texte ─────────────────────────────────────────────────────────────────
+  textBlock: {
+    width: "100%",
+    paddingBottom: 8,
   },
   slideTitle: {
-    fontSize: 25,
+    fontSize: 28,
     fontWeight: "900",
-    color: "#1E293B",
-    letterSpacing: -0.5,
-    lineHeight: 31,
-    marginBottom: 10,
+    letterSpacing: -0.6,
+    lineHeight: 34,
+    marginBottom: 12,
+    textAlign: "center",
   },
   slideDesc: {
-    fontSize: 14,
+    fontSize: 15,
     color: "#475569",
-    lineHeight: 22,
+    lineHeight: 24,
     fontWeight: "500",
+    textAlign: "center",
   },
 
   // ── Dots ──────────────────────────────────────────────────────────────────
@@ -793,25 +698,23 @@ const s = StyleSheet.create({
   dot: {
     height: 7,
     borderRadius: 4,
-    backgroundColor: color.primary,
   },
 
   // ── Footer ────────────────────────────────────────────────────────────────
   footer: {
     paddingHorizontal: 22,
-    paddingBottom: Platform.OS === "ios" ? 46 : 26,
+    paddingBottom: Platform.OS === "ios" ? 46 : 28,
     gap: 10,
   },
   primaryBtn: {
-    backgroundColor: color.primary,
     borderRadius: 28,
     paddingVertical: 16,
     alignItems: "center",
-    shadowColor: color.primary,
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.3,
-    shadowRadius: 12,
-    elevation: 6,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 10,
+    elevation: 5,
   },
   primaryBtnText: {
     color: "#FFFFFF",
@@ -827,11 +730,9 @@ const s = StyleSheet.create({
     paddingVertical: 13,
     borderRadius: 28,
     borderWidth: 1.5,
-    borderColor: color.primary,
-    backgroundColor: "rgba(255,255,255,0.8)",
+    backgroundColor: "rgba(255,255,255,0.85)",
   },
   sosBtnText: {
-    color: color.primary,
     fontSize: 14,
     fontWeight: "700",
   },
