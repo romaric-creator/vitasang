@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { DeviceEventEmitter } from 'react-native';
 import { getData, storeData, removeData } from '@/utils/storage';
-import { loginUser as apiLoginUser, sendAlert } from '@/services/user.service'; // Renommer pour éviter le conflit
+import { loginUser as apiLoginUser, sendAlert, getUserProfile } from '@/services/user.service'; // Renommer pour éviter le conflit
 import { usePostHog } from 'posthog-react-native';
 import { setAuthToken } from '@/config/axiosConfig';
 import { ANALYTICS_EVENT, AnalyticsEvent } from '@/services/analyticsService';
@@ -51,13 +51,25 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         ]);
         if (token && user) {
           setAuthToken(token as string);
-          posthog?.identify((user as any).id_utilisateur?.toString(), {
-            nom: (user as any).nom,
-            prenom: (user as any).prenom,
-            role: (user as any).role
-          });
-          setUser(user);
-          setIsAuth(true);
+          try {
+            // Valider le token en BD — détecte token expiré, user supprimé, mauvaise session
+            const freshUser = await getUserProfile((user as any).id_utilisateur);
+            const userToStore = { ...(user as any), ...freshUser };
+            await storeData('user', userToStore);
+            posthog?.identify(userToStore.id_utilisateur?.toString(), {
+              nom: userToStore.nom,
+              prenom: userToStore.prenom,
+              role: userToStore.role
+            });
+            setUser(userToStore);
+            setIsAuth(true);
+          } catch {
+            // Token invalide ou user introuvable → déconnexion propre
+            setAuthToken(null);
+            await removeData('token');
+            await removeData('user');
+            setIsAuth(false);
+          }
         } else {
           setIsAuth(false);
         }

@@ -79,10 +79,11 @@ export default function AlertTracking() {
     const alerte = data?.alerte;
     if (!alerte) return;
     const group = alerte.groupe_sanguin || alerte.groupe || alerte.groupe_requis || "?";
+    const phone = alerte.telephone_contact || alerte.telephone_initiateur || alerte.initiateur?.telephone || "";
     const message = t("alert.shareMessage", {
       group,
       location: alerte.lieu || "Hôpital proche",
-      phone: alerte.telephone_contact || alerte.telephone_initiateur || "",
+      phone,
       latitude: alerte.latitude || "",
       longitude: alerte.longitude || "",
       urgency: alerte.urgence || "URGENT",
