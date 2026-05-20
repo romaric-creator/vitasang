@@ -8,7 +8,7 @@ interface AideSensibilisationSectionProps {
   t: (key: string) => string;
 }
 
-export const AideSensibilisationSection = ({ t }: AideSensibilisationSectionProps) => {
+export const AideSensibilisationSection = React.memo(({ t }: AideSensibilisationSectionProps) => {
   const router = useRouter();
 
   return (
@@ -19,7 +19,7 @@ export const AideSensibilisationSection = ({ t }: AideSensibilisationSectionProp
     >
       <View style={styles.aideSectionLeft}>
         <View style={styles.aideSectionIcon}>
-          <TabBarIcon name="heart" size={28} color={color.primary} />
+          <TabBarIcon name="heart" size={22} color={color.primary} />
         </View>
         <View style={styles.aideSectionText}>
           <Text style={styles.aideSectionTitle}>
@@ -32,13 +32,13 @@ export const AideSensibilisationSection = ({ t }: AideSensibilisationSectionProp
       </View>
       <TabBarIcon
         name="chevron-right"
-        size={24}
-        color={color.primary}
+        size={18}
+        color={color.textLight}
         family="fontawesome"
       />
     </TouchableOpacity>
   );
-};
+});
 
 const styles = StyleSheet.create({
   aideSection: {
@@ -46,16 +46,11 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     backgroundColor: color.surface,
-    borderRadius: 20,
-    padding: 18,
-    marginBottom: 30,
+    borderRadius: color.radius.l,
+    padding: color.spacing.m,
+    marginBottom: color.spacing.l,
     borderWidth: 1,
     borderColor: color.borderLight,
-    shadowColor: "black",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.03,
-    shadowRadius: 4,
-    elevation: 1,
   },
   aideSectionLeft: {
     flexDirection: "row",
@@ -64,10 +59,10 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   aideSectionIcon: {
-    width: 52,
-    height: 52,
-    borderRadius: 16,
-    backgroundColor: "#FFF0F0",
+    width: 42,
+    height: 42,
+    borderRadius: 12,
+    backgroundColor: color.primaryGhost,
     justifyContent: "center",
     alignItems: "center",
     flexShrink: 0,
@@ -76,14 +71,14 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   aideSectionTitle: {
-    fontSize: 15,
-    fontWeight: "800",
+    fontSize: 14,
+    fontWeight: "700",
     color: color.textMain,
     marginBottom: 2,
   },
   aideSectionDesc: {
     fontSize: 12,
-    color: color.textSecondary,
-    fontWeight: "600",
+    color: color.textLight,
+    fontWeight: "500",
   },
 });

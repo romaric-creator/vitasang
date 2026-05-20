@@ -83,14 +83,13 @@ export const DataCard: React.FC<DataCardProps> = ({
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: "white",
-    borderRadius: 20,
-    padding: 20,
-    marginBottom: 16,
-    // Soft UI Evolution
-    shadowColor: "rgba(44, 62, 80, 1)",
+    backgroundColor: color.surface,
+    borderRadius: color.radius.xl,
+    padding: color.spacing.l,
+    marginBottom: color.spacing.m,
+    shadowColor: color.shadowMedium,
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
+    shadowOpacity: 1,
     shadowRadius: 12,
     elevation: 3,
     borderWidth: 1,
@@ -167,95 +166,3 @@ const styles = StyleSheet.create({
   },
 });
 
-// const styles = StyleSheet.create({
-//   card: {
-//     backgroundColor: color.surface,
-//     borderRadius: 24,
-//     padding: 24,
-//     marginBottom: 20,
-//     shadowColor: color.shadow,
-//     shadowOffset: { width: 0, height: 8 },
-//     shadowOpacity: 1,
-//     shadowRadius: 16,
-//     elevation: 4,
-//     borderWidth: 1,
-//     borderColor: color.border,
-//   },
-//   header: {
-//     flexDirection: "row",
-//     justifyContent: "space-between",
-//     alignItems: "flex-start",
-//     marginBottom: 16,
-//   },
-//   titleContainer: {
-//     flex: 1,
-//     marginRight: 12,
-//   },
-//   title: {
-//     fontSize: 18,
-//     fontWeight: "800",
-//     color: color.textMain,
-//     letterSpacing: -0.5,
-//   },
-//   subtitle: {
-//     fontSize: 13,
-//     color: color.textSecondary,
-//     marginTop: 4,
-//     fontWeight: "600",
-//   },
-//   badge: {
-//     paddingHorizontal: 14,
-//     paddingVertical: 8,
-//     borderRadius: 12,
-//     justifyContent: "center",
-//     alignItems: "center",
-//   },
-//   badgeText: {
-//     color: color.textWhite,
-//     fontSize: 12,
-//     fontWeight: "800",
-//   },
-//   divider: {
-//     height: 1.5,
-//     backgroundColor: color.divider,
-//     marginBottom: 20,
-//   },
-//   content: {
-//     gap: 12,
-//   },
-//   row: {
-//     flexDirection: "row",
-//     justifyContent: "space-between",
-//     alignItems: "center",
-//     paddingVertical: 4,
-//   },
-//   label: {
-//     fontSize: 14,
-//     color: color.textSecondary,
-//     fontWeight: "600",
-//     flex: 1,
-//   },
-//   value: {
-//     fontSize: 14,
-//     color: color.textMain,
-//     fontWeight: "700",
-//     flex: 1.5,
-//     textAlign: "right",
-//   },
-//   actionButton: {
-//     paddingVertical: 14,
-//     borderRadius: 14,
-//     alignItems: "center",
-//     marginTop: 20,
-//     shadowColor: color.shadow,
-//     shadowOffset: { width: 0, height: 4 },
-//     shadowOpacity: 0.2,
-//     shadowRadius: 8,
-//     elevation: 3,
-//   },
-//   actionButtonText: {
-//     color: color.textWhite,
-//     fontSize: 14,
-//     fontWeight: "800",
-//   },
-// });

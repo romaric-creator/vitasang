@@ -145,8 +145,7 @@ function RootLayoutNav() {
       if (isAuth) {
         router.replace("/(tabs)");
       } else if (isAuth === false) {
-        // Déconnexion explicite → login
-        router.replace("/login");
+        router.replace("/");
       }
     }, 50);
 

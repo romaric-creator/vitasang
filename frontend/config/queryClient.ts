@@ -19,8 +19,8 @@ export const createQueryClient = () =>
         refetchOnWindowFocus: false,
         // Don't refetch when component remounts if data is fresh
         refetchOnMount: false,
-        // Don't refetch on reconnect (manual control better for mobile)
-        refetchOnReconnect: false,
+        // Refetch on reconnect to reload fresh data after network recovery
+        refetchOnReconnect: true,
         // Retry failed requests 1 time with exponential backoff
         retry: 1,
         retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),

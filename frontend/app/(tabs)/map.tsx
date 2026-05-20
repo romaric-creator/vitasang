@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef, useMemo } from "react";
+import React, { useEffect, useState, useRef, useMemo, useCallback } from "react";
 import {
   StyleSheet,
   View,
@@ -6,7 +6,6 @@ import {
   TouchableOpacity,
   FlatList,
   RefreshControl,
-  TextInput,
   Platform,
 } from "react-native";
 import MapView, { Marker, PROVIDER_GOOGLE, Callout } from "react-native-maps";
@@ -102,7 +101,7 @@ export default function MapScreen() {
     });
   }, [filteredCentres]);
 
-  const renderCentreItem = ({ item }: { item: any }) => {
+  const renderCentreItem = useCallback(({ item }: { item: any }) => {
     const data: DataCardRow[] = [
       { label: t("centers.address"), value: item.adresse },
       {
@@ -118,10 +117,14 @@ export default function MapScreen() {
           title={item.nom}
           subtitle={item.ville}
           data={data}
+          actionButton={{
+            text: t("centers.bookAppointment") || "Prendre rendez-vous",
+            onPress: () => router.push(`/book-appointment/${item.id_centre || item.id}`),
+          }}
         />
       </View>
     );
-  };
+  }, [t, router]);
 
   const loading = isLoading && !data;
 
@@ -169,17 +172,15 @@ export default function MapScreen() {
                 userLocation
                   ? {
                     ...userLocation,
-                    latitudeDelta: 0.1,
-                    longitudeDelta: 0.1,
+                    latitudeDelta: 0.08,
+                    longitudeDelta: 0.08,
                   }
-                  : {
-                    ...doualaRegion,
-                    latitudeDelta: 0.1,
-                    longitudeDelta: 0.1,
-                  }
+                  : doualaRegion
               }
               showsUserLocation={true}
               showsMyLocationButton={true}
+              moveOnMarkerPress={false}
+              loadingEnabled={true}
             >
               {mappableCentres.map((centre: any) => (
                 <Marker
@@ -188,18 +189,22 @@ export default function MapScreen() {
                     latitude: Number(centre.latitude),
                     longitude: Number(centre.longitude),
                   }}
+                  tracksViewChanges={false}
+                  pinColor={color.primary}
+                  title={centre.nom}
+                  description={centre.adresse}
                 >
-                  <View style={styles.markerContainer}>
-                    <View style={styles.markerPin}>
-                      <TabBarIcon name="hospital-o" size={14} color="white" />
-                    </View>
-                    <View style={styles.markerArrow} />
-                  </View>
-                  <Callout tooltip>
+                  <Callout
+                    tooltip
+                    onPress={() => router.push(`/book-appointment/${centre.id_centre || centre.id}`)}
+                  >
                     <View style={styles.calloutContainer}>
                       <Text style={styles.calloutTitle}>{centre.nom}</Text>
                       <Text style={styles.calloutText}>{centre.adresse}</Text>
                       <Text style={styles.calloutPhone}>{centre.telephone}</Text>
+                      <View style={styles.calloutBtn}>
+                        <Text style={styles.calloutBtnText}>{t("centers.bookAppointment") || "Prendre RDV"}</Text>
+                      </View>
                     </View>
                   </Callout>
                 </Marker>
@@ -258,23 +263,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     gap: 12,
   },
-  searchBar: {
-    flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: color.surfaceDark, // Gris léger comme WhatsApp/FB
-    borderRadius: 24, // Entièrement arrondi (pilule)
-    paddingHorizontal: 16,
-    height: 48,
-    borderWidth: 1,
-    borderColor: "transparent",
-  },
-  searchInput: {
-    flex: 1,
-    marginLeft: 8,
-    fontSize: 14,
-    color: color.textMain,
-  },
   toggleBtn: {
     width: 48,
     height: 48,
@@ -287,35 +275,11 @@ const styles = StyleSheet.create({
   mapContainer: { flex: 1 },
   map: { ...StyleSheet.absoluteFillObject },
   listContent: { paddingBottom: 100, paddingHorizontal: 0 },
-  markerContainer: { alignItems: "center" },
-  markerPin: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: color.primary,
-    justifyContent: "center",
-    alignItems: "center",
-    borderWidth: 2,
-    borderColor: "white",
-  },
-  markerArrow: {
-    width: 0,
-    height: 0,
-    backgroundColor: "transparent",
-    borderStyle: "solid",
-    borderLeftWidth: 6,
-    borderRightWidth: 6,
-    borderTopWidth: 8,
-    borderLeftColor: "transparent",
-    borderRightColor: "transparent",
-    borderTopColor: color.primary,
-    marginTop: -1,
-  },
   calloutContainer: {
-    backgroundColor: "white",
-    borderRadius: 12,
+    backgroundColor: color.surface,
+    borderRadius: color.radius.m,
     padding: 12,
-    width: 180,
+    width: 200,
     borderWidth: 1,
     borderColor: color.border,
   },
@@ -326,7 +290,15 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   calloutText: { fontSize: 11, color: color.textSecondary, marginBottom: 4 },
-  calloutPhone: { fontSize: 11, fontWeight: "700", color: color.primary },
+  calloutPhone: { fontSize: 11, fontWeight: "700", color: color.primary, marginBottom: 8 },
+  calloutBtn: {
+    backgroundColor: color.primary,
+    borderRadius: color.radius.s,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    alignItems: "center",
+  },
+  calloutBtnText: { color: color.textWhite, fontSize: 11, fontWeight: "700" },
   emptyContainer: { marginTop: 100, alignItems: "center" },
   emptyText: { marginTop: 10, color: color.textSecondary, fontWeight: "600", textAlign: 'center' },
   loaderArea: {

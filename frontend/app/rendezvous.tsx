@@ -75,11 +75,11 @@ export default function RendezVousList() {
   const getStatusColor = (status: string) => {
     switch (status) {
       case "CONFIRMED":
-        return "#2ecc71";
+        return color.success;
       case "COMPLETED":
-        return "#3498db";
+        return color.accent;
       case "CANCELLED":
-        return "#e74c3c";
+        return color.error;
       default:
         return color.primary;
     }
@@ -120,7 +120,7 @@ export default function RendezVousList() {
         ? {
           text: t("appointments.cancel"),
           onPress: () => handleCancel(item.id),
-          color: "#e74c3c",
+          color: color.error,
         }
         : undefined;
 

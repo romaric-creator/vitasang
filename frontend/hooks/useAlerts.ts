@@ -16,6 +16,7 @@ export const useActiveAlerts = () => {
     staleTime: 1000 * 60 * 5, // 5 minutes
     gcTime: 1000 * 60 * 10, // 10 minutes
     refetchInterval: 1000 * 60 * 2, // Auto-refetch every 2 minutes
+    refetchOnReconnect: true, // Critical data: always reload on network recovery
   });
 };
 

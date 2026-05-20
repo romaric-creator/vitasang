@@ -29,23 +29,23 @@ export const AlertFatigueInsights: React.FC<AlertFatigueInsightsProps> = ({
       if (stats.totalAlertsToday === 0) {
         setMessage(t("alert.fatigue.noAlerts"));
         setIcon("bell-off");
-        setBgColor("#F0F9FF");
+        setBgColor(color.accentLight);
       } else if (stats.isFatigued) {
         setMessage(t("alert.fatigue.isFatigued"));
         setIcon("alert");
-        setBgColor("#FEF2F2");
+        setBgColor(color.errorLight);
       } else if (stats.acceptanceRate > 70) {
         setMessage(t("alert.fatigue.highEngagement"));
         setIcon("heart");
-        setBgColor("#F0FDF4");
+        setBgColor(color.successLight);
       } else if (stats.acceptanceRate > 30) {
         setMessage(t("alert.fatigue.regularParticipation"));
         setIcon("star");
-        setBgColor("#FFFBEB");
+        setBgColor(color.warningLight);
       } else {
         setMessage(t("alert.fatigue.explore"));
         setIcon("help-circle");
-        setBgColor("#F5F3FF");
+        setBgColor(color.secondaryLight);
       }
     } catch (error) {
       console.error("Error loading engagement status:", error);
@@ -78,7 +78,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 18,
     marginBottom: 20,
     borderWidth: 1,
-    borderColor: "rgba(225, 29, 72, 0.15)",
+    borderColor: color.borderLight,
   },
   content: {
     flexDirection: "row",

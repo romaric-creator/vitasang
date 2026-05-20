@@ -177,5 +177,6 @@ export const useUserProfile = (userId: number, enabled: boolean = true) => {
       apiClient.get(`users/${userId}/profile`).then((r) => r.data),
     enabled: enabled && !!userId,
     staleTime: 1000 * 60 * 10, // 10 minutes for static profiles
+    refetchOnReconnect: true,
   });
 };

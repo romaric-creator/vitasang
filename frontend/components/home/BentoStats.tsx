@@ -1,127 +1,115 @@
 import React from "react";
-import { StyleSheet, View, Text, TouchableOpacity, Dimensions } from "react-native";
+import { StyleSheet, View, Text, TouchableOpacity, ScrollView, useWindowDimensions } from "react-native";
 import { color } from "@/constant/color";
 import { useRouter } from "expo-router";
-
-const { width } = Dimensions.get("window");
-
-const CARD_WIDTH = (width - 40 - 12) / 2;
 
 interface BentoStatsProps {
   userData: any;
   t: (key: string) => string;
 }
 
-export const BentoStats = ({ userData, t }: BentoStatsProps) => {
+export const BentoStats = React.memo(({ userData, t }: BentoStatsProps) => {
   const router = useRouter();
+  const { width } = useWindowDimensions();
+  const isSmall = width < 380;
 
   const stats = [
     {
       label: t("home.myDonations") || "MES DONS",
       value: userData?.donsCount || 0,
-      sub: t("home.totalCompleted") || "Total effectués",
-      color: color.primary,
+      sub: t("home.totalCompleted") || "Total",
+      accent: color.primary,
+      bg: color.primaryGhost,
       onPress: () => router.push("/historique"),
     },
     {
-      label: t("home.nextDispo") || "PROCHAINE DISPO",
-      valueText: t("home.availableNow") || "Disponible maintenant",
-      color: color.secondary,
-      onPress: () => router.push("/notifications-settings"),
+      label: t("home.livesSaved") || "VIES SAUVEES",
+      value: (userData?.donsCount || 0) * 3,
+      sub: t("home.impact") || "Impact",
+      accent: color.success,
+      bg: color.successLight,
+      onPress: () => {},
     },
     {
-      label: t("home.alertsSent") || "ALERTES ENVOYÉES",
+      label: t("home.alertsSent") || "ALERTES",
       value: userData?.alertsSentCount || 1,
-      sub: t("home.thisWeek") || "Cette semaine",
-      color: color.textMain,
+      sub: t("home.thisWeek") || "Semaine",
+      accent: color.secondary,
+      bg: color.secondaryGhost,
       onPress: () => router.push("/(tabs)/alertes"),
     },
     {
-      label: t("home.livesSaved") || "VIES SAUVÉES",
-      value: (userData?.donsCount || 0) * 3,
-      sub: t("home.impact") || "Impact total",
-      color: color.secondary,
-      onPress: () => {},
+      label: t("home.nextDispo") || "DISPO",
+      valueText: t("home.availableNow") || "Maintenant",
+      accent: color.accent,
+      bg: color.accentLight,
+      onPress: () => router.push("/notifications-settings"),
     },
   ];
 
-  // Cards 0 et 3 (index pair extrêmes) → secondaryGhost, cards 1 et 2 → primaryGhost
-  const getCardBg = (index: number) =>
-    index === 0 || index === 3 ? color.secondaryGhost : color.primaryGhost;
+  const cardWidth = isSmall ? 130 : 140;
 
   return (
     <View style={styles.container}>
-      <View style={styles.grid}>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContent}
+      >
         {stats.map((stat, index) => (
           <TouchableOpacity
             key={index}
-            style={[styles.statCard, { backgroundColor: getCardBg(index), width: CARD_WIDTH }]}
+            style={[styles.statCard, { backgroundColor: stat.bg, width: cardWidth }]}
             onPress={stat.onPress}
             activeOpacity={0.8}
           >
             <Text style={styles.cardLabel}>{stat.label}</Text>
-            <View style={styles.valueBlock}>
-              {stat.valueText ? (
-                <Text style={[styles.cardValueText, { color: stat.color }]}>
-                  {stat.valueText}
-                </Text>
-              ) : (
-                <Text style={[styles.cardValue, { color: stat.color }]}>{stat.value}</Text>
-              )}
-              {stat.sub && <Text style={styles.cardSub}>{stat.sub}</Text>}
-            </View>
+            {stat.valueText ? (
+              <Text style={[styles.cardValueText, { color: stat.accent }]}>{stat.valueText}</Text>
+            ) : (
+              <Text style={[styles.cardValue, { color: stat.accent }]}>{stat.value}</Text>
+            )}
+            {stat.sub && <Text style={styles.cardSub}>{stat.sub}</Text>}
           </TouchableOpacity>
         ))}
-      </View>
+      </ScrollView>
     </View>
   );
-};
+});
 
 const styles = StyleSheet.create({
   container: {
-    marginBottom: 32,
-    marginTop: 8,
+    marginBottom: 24,
   },
-  grid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 12,
+  scrollContent: {
+    paddingHorizontal: 24,
+    gap: 10,
   },
   statCard: {
-    borderRadius: 20,
-    padding: 16,
-    minHeight: 120,
+    borderRadius: 16,
+    padding: 14,
+    height: 100,
     justifyContent: "space-between",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
   },
   cardLabel: {
-    fontSize: 10,
+    fontSize: 9,
     fontWeight: "800",
     color: color.textSecondary,
     textTransform: "uppercase",
-    letterSpacing: 1.5,
-  },
-  valueBlock: {
-    flexDirection: "column",
-    gap: 2,
+    letterSpacing: 1,
   },
   cardValue: {
-    fontSize: 32,
+    fontSize: 28,
     fontWeight: "900",
-    lineHeight: 36,
+    letterSpacing: -0.5,
   },
   cardValueText: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: "700",
-    lineHeight: 20,
   },
   cardSub: {
-    fontSize: 12,
-    color: color.textSecondary,
+    fontSize: 11,
+    color: color.textLight,
     fontWeight: "500",
   },
 });

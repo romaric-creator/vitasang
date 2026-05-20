@@ -77,7 +77,7 @@ export default function MessagesInbox() {
                         <View
                             style={styles.unreadBadge}
                             accessibilityRole="text"
-                            accessibilityLabel={`${item.unread_count} ${item.unread_count === 1 ? "message non lu" : "messages non lus"}`}
+                            accessibilityLabel={`${item.unread_count} ${t("messages.unread")}`}
                         >
                             <Text style={styles.unreadText}>{item.unread_count}</Text>
                         </View>

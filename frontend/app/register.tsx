@@ -149,12 +149,12 @@ export default function RegisterScreen() {
               <View style={[styles.stepDot, step === 2 && styles.stepDotActive]} />
             </View>
             <Text style={styles.title}>
-              {step === 1 ? t("register.joinUs") || "Rejoignez-nous" : t("register.bloodGroup") || "Groupe Sanguin"}
+              {step === 1 ? t("register.joinUs") : t("register.bloodGroup")}
             </Text>
             <Text style={styles.subtitle}>
               {step === 1
-                ? t("register.createProfile") || "Créez votre profil de donneur"
-                : t("register.vitalInfo") || "Cette information est vitale"}
+                ? t("register.createProfile")
+                : t("register.vitalInfo")}
             </Text>
           </View>
 
@@ -186,7 +186,7 @@ export default function RegisterScreen() {
                     <View style={styles.row}>
                       <View style={{ flex: 1 }}>
                         <FormField
-                          label={t("register.firstName") || "Prénom"}
+                          label={t("register.fields.firstName")}
                           value={values.prenom}
                           onChangeText={handleChange("prenom")}
                           onBlur={handleBlur("prenom")}
@@ -236,7 +236,7 @@ export default function RegisterScreen() {
                     />
 
                     <PrimaryButton
-                      title={t("register.continue") || "CONTINUER"}
+                      title={t("register.continue")}
                       onPress={() => handleNextStep(validateForm, values, setTouched)}
                       style={styles.primaryBtn}
                     />
@@ -247,7 +247,7 @@ export default function RegisterScreen() {
                   <>
                     <View style={styles.bloodSection}>
                       <Text style={styles.sectionLabel}>
-                        {t("register.bloodGroupQuestion") || "Quel est votre groupe sanguin ?"}
+                        {t("register.bloodGroupQuestion")}
                       </Text>
                       <BloodGroupSelector
                         value={values.groupe_sanguin}
@@ -265,7 +265,7 @@ export default function RegisterScreen() {
                         onPress={() => setFieldValue("groupe_sanguin", "INCONNU")}
                         activeOpacity={0.7}
                         accessibilityRole="radio"
-                        accessibilityLabel={t("register.unknownBloodGroup") || "Je ne connais pas mon groupe sanguin"}
+                        accessibilityLabel={t("register.unknownBloodGroup")}
                         accessibilityState={{ selected: values.groupe_sanguin === "INCONNU" || values.groupe_sanguin === "" }}
                       >
                         <TabBarIcon 
@@ -280,7 +280,7 @@ export default function RegisterScreen() {
                               styles.unknownTextActive,
                           ]}
                         >
-                          {t("register.unknownBloodGroup") || "Je ne connais pas mon groupe sanguin"}
+                          {t("register.unknownBloodGroup")}
                         </Text>
                       </TouchableOpacity>
                     </View>
@@ -302,7 +302,7 @@ export default function RegisterScreen() {
                       </TouchableOpacity>
 
                       <PrimaryButton
-                        title={t("register.submit") || "S'INSCRIRE"}
+                        title={t("register.submit")}
                         onPress={() => handleSubmit()}
                         loading={loading}
                         style={{ flex: 1, marginTop: 0 }}
@@ -315,11 +315,11 @@ export default function RegisterScreen() {
                   onPress={() => router.replace("/login")}
                   style={styles.loginFooter}
                   accessibilityRole="link"
-                  accessibilityLabel={t("register.alreadyRegistered") || "Déjà inscrit ? Se connecter"}
+                  accessibilityLabel={t("register.alreadyRegistered")}
                 >
                   <Text style={styles.loginText}>
-                    {t("register.alreadyHaveAccount") || "Déjà inscrit ?"}{" "}
-                    <Text style={styles.loginHighlight}>{t("register.signIn") || "Se connecter"}</Text>
+                    {t("register.alreadyHaveAccount")}{" "}
+                    <Text style={styles.loginHighlight}>{t("register.signIn")}</Text>
                   </Text>
                 </TouchableOpacity>
               </View>

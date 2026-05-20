@@ -134,7 +134,7 @@ export default function CreateAlertScreen() {
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
           <TabBarIcon name="arrow-left" size={20} color="white" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>LANCER SOS</Text>
+        <Text style={styles.headerTitle}>{t("createAlert.headerTitle")}</Text>
         <View style={{ width: 40 }} />
       </View>
 
@@ -146,12 +146,12 @@ export default function CreateAlertScreen() {
           </View>
           <View style={{ flex: 1 }}>
             <Text style={styles.introText}>
-              Incitez la communauté à donner pour votre cas urgent.
+              {t("createAlert.introText")}
             </Text>
             {isLocating && (
               <View style={styles.locatingBadge}>
                 <ModernSpinner size="small" color={color.primary} />
-                <Text style={styles.locatingText}>Calcul de votre position...</Text>
+                <Text style={styles.locatingText}>{t("createAlert.locating")}</Text>
               </View>
             )}
           </View>
@@ -183,7 +183,7 @@ export default function CreateAlertScreen() {
               setFieldValue,
             }) => (
               <View style={styles.formContainer}>
-                <Text style={styles.groupLabel}>GROUPE SANGUIN REQUIS</Text>
+                <Text style={styles.groupLabel}>{t("createAlert.bloodGroupRequired")}</Text>
                 <BloodGroupSelector
                   value={values.groupe_sanguin}
                   onSelect={(group) => {
@@ -249,7 +249,7 @@ export default function CreateAlertScreen() {
                 </View>
 
                 <View style={styles.urgencySection}>
-                   <Text style={styles.fieldLabel}>NIVEAU D'URGENCE <Text style={{ color: color.primary }}>*</Text></Text>
+                   <Text style={styles.fieldLabel}>{t("createAlert.urgencyLevel")} <Text style={{ color: color.primary }}>*</Text></Text>
                    <View style={styles.urgencyGrid}>
                     {["NORMAL", "URGENT", "TRES_URGENT"].map((level) => (
                       <TouchableOpacity
@@ -292,7 +292,7 @@ export default function CreateAlertScreen() {
                 {errorMsg && <Text style={styles.errorBanner}>{errorMsg}</Text>}
 
                 <PrimaryButton
-                  title={isLocating ? "PATIENTEZ..." : (t("alert.submit") || "LANCER L'ALERTE")}
+                  title={isLocating ? t("createAlert.pleaseWait") : t("alert.submit")}
                   onPress={() => handleSubmit()}
                   loading={loading}
                   disabled={loading || (isLocating && !location)}

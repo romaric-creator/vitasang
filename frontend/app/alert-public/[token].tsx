@@ -16,6 +16,7 @@ import { color } from "@/constant/color";
 import { apiClient } from "@/config/axiosConfig";
 import { useToast } from "@/context/ToastContext";
 import { useAuth } from "@/context/AuthContext";
+import { useTranslation } from "react-i18next";
 
 type AlertData = {
   id_alerte: number;
@@ -42,6 +43,7 @@ const URGENCY_LABELS: Record<string, string> = {
 };
 
 export default function AlertPublicScreen() {
+  const { t } = useTranslation();
   const { token } = useLocalSearchParams<{ token: string }>();
   const router = useRouter();
   const { success, error: showError } = useToast();
@@ -55,7 +57,7 @@ export default function AlertPublicScreen() {
 
   useEffect(() => {
     if (!token) {
-      setFetchError("Lien invalide.");
+      setFetchError(t("alertPublic.invalidLink"));
       setLoading(false);
       return;
     }
@@ -70,7 +72,7 @@ export default function AlertPublicScreen() {
         const msg =
           e?.message ||
           e?.response?.data?.message ||
-          "Impossible de charger cette alerte.";
+          t("alertPublic.loadError");
         setFetchError(msg);
       } finally {
         setLoading(false);
@@ -93,9 +95,9 @@ export default function AlertPublicScreen() {
         response: "accepte",
       });
       setResponded("accepte");
-      success("Merci pour votre engagement !");
+      success(t("alertPublic.thankYou"));
     } catch (e: any) {
-      showError(e?.message || "Erreur lors de la réponse.");
+      showError(e?.message || t("alertPublic.responseError"));
     } finally {
       setResponding(false);
     }
@@ -136,7 +138,7 @@ export default function AlertPublicScreen() {
     return (
       <ThemedView style={styles.centered}>
         <ActivityIndicator size="large" color={color.primary} />
-        <Text style={styles.loadingText}>Chargement de l'alerte...</Text>
+        <Text style={styles.loadingText}>{t("alertPublic.loading")}</Text>
       </ThemedView>
     );
   }
@@ -146,15 +148,15 @@ export default function AlertPublicScreen() {
     return (
       <ThemedView style={styles.centered}>
         <TabBarIcon name="exclamation-circle" size={48} color={color.error} />
-        <Text style={styles.errorTitle}>Alerte introuvable</Text>
+        <Text style={styles.errorTitle}>{t("alertPublic.notFound")}</Text>
         <Text style={styles.errorSub}>
-          {fetchError ?? "Cette alerte n'existe pas ou le lien est expiré."}
+          {fetchError ?? t("alertPublic.notFoundDesc")}
         </Text>
         <TouchableOpacity
           style={styles.homeLink}
           onPress={() => router.replace("/(tabs)")}
         >
-          <Text style={styles.homeLinkText}>Retour à l'accueil</Text>
+          <Text style={styles.homeLinkText}>{t("alertPublic.backHome")}</Text>
         </TouchableOpacity>
       </ThemedView>
     );
@@ -181,18 +183,18 @@ export default function AlertPublicScreen() {
           color={isResolved ? color.success : color.textMuted}
         />
         <Text style={styles.resolvedTitle}>
-          {isResolved ? "Alerte résolue" : "Alerte annulée"}
+          {isResolved ? t("alertPublic.resolved") : t("alertPublic.cancelled")}
         </Text>
         <Text style={styles.resolvedSub}>
           {isResolved
-            ? "Merci ! Le besoin en sang a été satisfait grâce à des donneurs comme vous."
-            : "Cette alerte a été annulée par le demandeur."}
+            ? t("alertPublic.resolvedDesc")
+            : t("alertPublic.cancelledDesc")}
         </Text>
         <TouchableOpacity
           style={styles.homeLink}
           onPress={() => router.replace("/(tabs)")}
         >
-          <Text style={styles.homeLinkText}>Voir les alertes en cours</Text>
+          <Text style={styles.homeLinkText}>{t("alertPublic.seeActive")}</Text>
         </TouchableOpacity>
       </ThemedView>
     );
@@ -205,13 +207,12 @@ export default function AlertPublicScreen() {
         <View style={styles.checkCircle}>
           <TabBarIcon name="check" size={32} color="white" />
         </View>
-        <Text style={styles.resolvedTitle}>Merci, Héros !</Text>
+        <Text style={styles.resolvedTitle}>{t("alertPublic.heroTitle")}</Text>
         <Text style={styles.resolvedSub}>
-          Le demandeur a été notifié de votre arrivée. Rendez-vous sur place dès
-          que possible.
+          {t("alertPublic.heroDesc")}
         </Text>
         <PrimaryButton
-          title="Voir mes missions"
+          title={t("alertPublic.seeMissions")}
           onPress={() => router.replace("/(tabs)")}
           style={styles.ctaBtn}
         />
@@ -231,7 +232,7 @@ export default function AlertPublicScreen() {
         >
           <TabBarIcon name="arrow-left" size={20} color="#1E293B" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>APPEL AU DON</Text>
+        <Text style={styles.headerTitle}>{t("alertPublic.headerTitle")}</Text>
         <View style={{ width: 40 }} />
       </View>
 
@@ -280,7 +281,7 @@ export default function AlertPublicScreen() {
               <View style={styles.detailItem}>
                 <TabBarIcon name="user" size={16} color="#64748B" />
                 <Text style={styles.detailText}>
-                  Pour :{" "}
+                  {t("alertPublic.forPatient")}{" "}
                   <Text style={styles.detailStrong}>
                     {alertData.nom_patient}
                   </Text>
@@ -290,9 +291,9 @@ export default function AlertPublicScreen() {
             <View style={styles.detailItem}>
               <TabBarIcon name="tint" size={16} color="#64748B" />
               <Text style={styles.detailText}>
-                Besoin :{" "}
+                {t("alertPublic.need")}{" "}
                 <Text style={styles.detailStrong}>
-                  {alertData.quantite_requise ?? 1} poche(s)
+                  {alertData.quantite_requise ?? 1} {t("alertPublic.bags")}
                 </Text>
               </Text>
             </View>
@@ -309,18 +310,18 @@ export default function AlertPublicScreen() {
         <View style={styles.securityNote}>
           <TabBarIcon name="shield" size={14} color="#059669" />
           <Text style={styles.securityText}>
-            Votre don peut sauver 3 vies aujourd'hui.
+            {t("alertPublic.securityNote")}
           </Text>
         </View>
 
         {/* ACTION BUTTONS */}
         <View style={styles.actionsContainer}>
           <PrimaryButton
-            title="Accepter"
+            title={t("alert.actions.accept")}
             onPress={handleAccept}
             loading={responding}
             style={styles.acceptBtn}
-            accessibilityLabel="Accepter l'alerte de don de sang"
+            accessibilityLabel={t("alert.actions.accept")}
           />
 
           <TouchableOpacity
@@ -329,7 +330,7 @@ export default function AlertPublicScreen() {
             accessibilityLabel="Discuter avec le demandeur"
           >
             <TabBarIcon name="comment" size={18} color={color.primary} />
-            <Text style={styles.discuterText}>Discuter</Text>
+            <Text style={styles.discuterText}>{t("alertPublic.chat")}</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -338,13 +339,13 @@ export default function AlertPublicScreen() {
             disabled={responding}
             accessibilityLabel="Refuser l'alerte"
           >
-            <Text style={styles.refuseText}>Refuser</Text>
+            <Text style={styles.refuseText}>{t("alertPublic.refuse")}</Text>
           </TouchableOpacity>
         </View>
 
         {!isAuth && (
           <Text style={styles.loginHint}>
-            Vous devrez vous connecter pour confirmer votre don.
+            {t("alertPublic.loginHint")}
           </Text>
         )}
       </ScrollView>

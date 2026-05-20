@@ -1,5 +1,5 @@
-import React, { useEffect, useRef } from "react";
-import { StyleSheet, TouchableOpacity, View, Text, Animated } from "react-native";
+import React from "react";
+import { StyleSheet, TouchableOpacity, View, Text } from "react-native";
 import { TabBarIcon } from "@/components/TabBarIcon";
 import { color } from "@/constant/color";
 import { useRouter } from "expo-router";
@@ -9,32 +9,11 @@ interface LaunchAlertButtonProps {
   t: (key: string) => string;
 }
 
-export const LaunchAlertButton = ({ t }: LaunchAlertButtonProps) => {
+export const LaunchAlertButton = React.memo(({ t }: LaunchAlertButtonProps) => {
   const router = useRouter();
   const { isAuth } = useAuth();
-  const pulseAnim = useRef(new Animated.Value(1)).current;
-
-  useEffect(() => {
-    const pulse = Animated.loop(
-      Animated.sequence([
-        Animated.timing(pulseAnim, {
-          toValue: 1.02,
-          duration: 1000,
-          useNativeDriver: true,
-        }),
-        Animated.timing(pulseAnim, {
-          toValue: 1.0,
-          duration: 1000,
-          useNativeDriver: true,
-        }),
-      ])
-    );
-    pulse.start();
-    return () => pulse.stop();
-  }, [pulseAnim]);
 
   const handlePress = () => {
-    console.log("[LaunchAlertButton] Redirecting, isAuth:", isAuth);
     if (isAuth) {
       router.push("/create-alert");
     } else {
@@ -43,96 +22,99 @@ export const LaunchAlertButton = ({ t }: LaunchAlertButtonProps) => {
   };
 
   return (
-    <Animated.View style={[styles.animatedWrapper, { transform: [{ scale: pulseAnim }] }]}>
-      <TouchableOpacity
-        style={styles.container}
-        onPress={handlePress}
-        activeOpacity={0.8}
-        accessibilityRole="button"
-        accessibilityLabel={t("home.launchAlert")}
-      >
-        {/* Overlay gradient simulé */}
-        <View style={styles.overlayBottom} pointerEvents="none" />
+    <TouchableOpacity
+      style={styles.container}
+      onPress={handlePress}
+      activeOpacity={0.85}
+      accessibilityRole="button"
+      accessibilityLabel={t("home.launchAlert")}
+    >
+      {/* Top highlight overlay */}
+      <View style={styles.overlayTop} pointerEvents="none" />
 
-        <View style={styles.content}>
+      <View style={styles.content}>
+        <View style={styles.leftSection}>
           <View style={styles.iconWrapper}>
-            <Text style={styles.iconEmoji}>🩸</Text>
+            <TabBarIcon name="plus" size={20} color="white" />
           </View>
           <View style={styles.textBlock}>
             <Text style={styles.text}>{t("home.launchAlert")}</Text>
-            <Text style={styles.subtitle}>{"Don de sang urgent • Besoin maintenant"}</Text>
-          </View>
-          <View style={styles.arrowWrapper}>
-            <TabBarIcon name="arrow-right" size={16} color="white" />
+            <Text style={styles.subtitle}>{t("home.launchAlertSubtitle")}</Text>
           </View>
         </View>
-      </TouchableOpacity>
-    </Animated.View>
+        <View style={styles.arrowWrapper}>
+          <TabBarIcon name="arrow-right" size={14} color={color.primary} />
+        </View>
+      </View>
+    </TouchableOpacity>
   );
-};
+});
 
 const styles = StyleSheet.create({
-  animatedWrapper: {
-    marginBottom: 24,
-  },
   container: {
-    borderRadius: 24,
-    backgroundColor: color.primary,
-    borderWidth: 1,
-    borderColor: color.primaryLight,
+    marginBottom: color.spacing.m,
+    borderRadius: color.radius.xl,
+    backgroundColor: color.primaryDark,
     shadowColor: color.primaryDark,
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.25,
-    shadowRadius: 16,
-    elevation: 8,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.3,
+    shadowRadius: 20,
+    elevation: 10,
     overflow: "hidden",
   },
-  overlayBottom: {
+  overlayTop: {
     position: "absolute",
-    bottom: 0,
+    top: 0,
     left: 0,
     right: 0,
-    height: "50%",
-    backgroundColor: "rgba(255,255,255,0.08)",
+    height: "55%",
+    backgroundColor: "rgba(255,255,255,0.06)",
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
   },
   content: {
     flexDirection: "row",
     alignItems: "center",
-    paddingVertical: 20,
-    paddingHorizontal: 16,
-    gap: 16,
+    justifyContent: "space-between",
+    paddingVertical: 16,
+    paddingHorizontal: 18,
+  },
+  leftSection: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 14,
+    flex: 1,
   },
   iconWrapper: {
-    width: 48,
-    height: 48,
-    borderRadius: 12,
-    backgroundColor: "rgba(255,255,255,0.25)",
+    width: 44,
+    height: 44,
+    borderRadius: 14,
+    backgroundColor: "rgba(255,255,255,0.15)",
     justifyContent: "center",
     alignItems: "center",
-  },
-  iconEmoji: {
-    fontSize: 24,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.1)",
   },
   textBlock: {
     flex: 1,
   },
   text: {
     color: "white",
-    fontSize: 17,
+    fontSize: 16,
     fontWeight: "800",
+    letterSpacing: -0.2,
   },
   subtitle: {
-    color: "white",
+    color: "rgba(255,255,255,0.6)",
     fontSize: 12,
-    opacity: 0.8,
     marginTop: 3,
-    fontWeight: "400",
+    fontWeight: "500",
   },
   arrowWrapper: {
-    width: 36,
-    height: 36,
-    borderRadius: 99,
-    backgroundColor: "rgba(255,255,255,0.15)",
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: "white",
     justifyContent: "center",
     alignItems: "center",
   },

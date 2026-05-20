@@ -38,9 +38,9 @@ export default function Home() {
   useFocusEffect(
     useCallback(() => {
       posthog?.capture("home_visited");
-      profileQuery.refetch();
+      if (userId) profileQuery.refetch();
       alertsQuery.refetch();
-    }, [posthog]),
+    }, [posthog, userId]),
   );
 
   const onRefresh = () => {

@@ -7,11 +7,8 @@ import {
   ScrollView,
   Linking,
   Platform,
-  Alert,
   Animated,
-  Easing,
-  Dimensions,
-  Modal
+  Modal,
 } from "react-native";
 import { PrimaryButton } from "@/components/PrimaryButton";
 import { LoadingOverlay } from "@/components/LoadingOverlay";
@@ -25,26 +22,15 @@ import { useTranslation } from "react-i18next";
 import ThemedView from "@/components/ThemedView";
 import { useToast } from "@/context/ToastContext";
 
-const { width } = Dimensions.get("window");
-
-const PulseBadge = ({ label, color }: any) => {
-  const opacity = useRef(new Animated.Value(0.4)).current;
-  
-  useEffect(() => {
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(opacity, { toValue: 1, duration: 800, useNativeDriver: true }),
-        Animated.timing(opacity, { toValue: 0.4, duration: 800, useNativeDriver: true })
-      ])
-    ).start();
-  }, []);
-
-  return (
-    <View style={[styles.urgencyBadge, { backgroundColor: color + "15", borderColor: color + "30" }]}>
-      <Animated.View style={[styles.pulseDot, { backgroundColor: color, opacity }]} />
-      <Text style={[styles.urgencyLabel, { color }]}>{label}</Text>
-    </View>
-  );
+const getUrgencyConfig = (urgence: string) => {
+  const key = (urgence || "NORMAL").toUpperCase();
+  if (key === "TRES_URGENT" || key === "TRES URGENT") {
+    return { color: color.error, bg: color.errorLight, label: "TRÈS URGENT" };
+  }
+  if (key === "URGENT") {
+    return { color: color.warning, bg: color.warningLight, label: "URGENT" };
+  }
+  return { color: color.success, bg: color.successLight, label: "NORMAL" };
 };
 
 export default function AlertResponse() {
@@ -55,7 +41,9 @@ export default function AlertResponse() {
   const { success, error } = useToast();
 
   const [alertData, setAlertData] = useState<any>(null);
+  const [alertStats, setAlertStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState(false);
   const [isResponding, setIsResponding] = useState(false);
   const [hasAccepted, setHasAccepted] = useState(false);
   const [isEligibilityVisible, setIsEligibilityVisible] = useState(false);
@@ -63,7 +51,18 @@ export default function AlertResponse() {
     q1: false, q2: false, q3: false, q4: false, q5: false, q6: false,
   });
 
-  const isEligible = !answers.q4 && !answers.q5 && !answers.q6 && answers.q1 && answers.q2 && answers.q3;
+  const pulseAnim = useRef(new Animated.Value(1)).current;
+
+  const isEligible = answers.q1 && answers.q2 && answers.q3 && !answers.q4 && !answers.q5 && !answers.q6;
+
+  useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulseAnim, { toValue: 1.05, duration: 1000, useNativeDriver: true }),
+        Animated.timing(pulseAnim, { toValue: 1, duration: 1000, useNativeDriver: true }),
+      ])
+    ).start();
+  }, []);
 
   useEffect(() => {
     const fetchAlert = async () => {
@@ -71,12 +70,13 @@ export default function AlertResponse() {
       try {
         const data = await getAlertStatus(Number(id));
         setAlertData(data.alerte);
-        // Check if user already accepted in the past
+        setAlertStats(data.stats);
         const myResponse = data.details?.find((d: any) => d.isMe) ?? null;
-        if (myResponse && (myResponse.statut === 'accepte' || myResponse.statut === 'don_effectue')) {
+        if (myResponse && (myResponse.statut === "accepte" || myResponse.statut === "don_effectue")) {
           setHasAccepted(true);
-        }      } catch (error) {
-        console.error("Fetch Error:", error);
+        }
+      } catch (err) {
+        setFetchError(true);
       } finally {
         setLoading(false);
       }
@@ -100,13 +100,14 @@ export default function AlertResponse() {
         setIsEligibilityVisible(false);
         const refreshed = await getAlertStatus(Number(id));
         if (refreshed?.alerte) setAlertData(refreshed.alerte);
+        if (refreshed?.stats) setAlertStats(refreshed.stats);
         setHasAccepted(true);
-        success("Merci pour votre engagement !");
+        success(t("alertPublic.thankYou"));
       } else {
         router.replace("/(tabs)");
       }
-    } catch (error: any) {
-      error(error.message || t("common.error"));
+    } catch (err: any) {
+      error(err.message || t("common.error"));
     } finally {
       setIsResponding(false);
     }
@@ -132,195 +133,301 @@ export default function AlertResponse() {
     }
   };
 
+  // --- LOADING ---
   if (loading) return <LoadingOverlay visible={true} fullScreen />;
-  if (!alertData) return null;
 
-  const urgencyKey = (alertData.urgence || alertData.degre_urgence || "NORMAL").toUpperCase();
-  const urgencyColor = urgencyKey === "TRES_URGENT" ? "#DC2626" : urgencyKey === "URGENT" ? "#EA580C" : "#059669";
+  // --- ERROR STATE ---
+  if (fetchError || !alertData) {
+    return (
+      <ThemedView style={styles.container}>
+        <View style={styles.errorContainer}>
+          <View style={styles.errorIcon}>
+            <TabBarIcon name="exclamation-circle" size={40} color={color.textLight} />
+          </View>
+          <Text style={styles.errorTitle}>{t("alertResponse.notFound")}</Text>
+          <Text style={styles.errorDesc}>{t("alertResponse.notFoundDesc")}</Text>
+          <TouchableOpacity style={styles.errorBtn} onPress={() => router.replace("/(tabs)")}>
+            <Text style={styles.errorBtnText}>{t("common.actions.backHome") || "Retour"}</Text>
+          </TouchableOpacity>
+        </View>
+      </ThemedView>
+    );
+  }
 
+  const urgency = getUrgencyConfig(alertData.urgence || alertData.degre_urgence);
+  const initiatorName = alertData.initiateur
+    ? `${alertData.initiateur.prenom} ${alertData.initiateur.nom}`
+    : alertData.nom_contact || t("alertResponse.emergencyContact");
+
+  // ==========================================
+  // MODE MISSION (après acceptation)
+  // ==========================================
+  if (hasAccepted) {
+    return (
+      <ThemedView style={styles.container}>
+        <ScrollView contentContainerStyle={styles.missionScroll} showsVerticalScrollIndicator={false}>
+          {/* Success header */}
+          <View style={styles.missionHeader}>
+            <View style={styles.successCircle}>
+              <TabBarIcon name="check" size={28} color={color.textWhite} />
+            </View>
+            <Text style={styles.missionTitle}>{t("alertPublic.heroTitle")}</Text>
+            <Text style={styles.missionSubtitle}>{t("alertPublic.heroDesc")}</Text>
+          </View>
+
+          {/* Recap card */}
+          <View style={styles.missionCard}>
+            <View style={styles.missionRecapRow}>
+              <View style={[styles.missionBadge, { backgroundColor: urgency.bg }]}>
+                <Text style={[styles.missionBadgeText, { color: urgency.color }]}>
+                  {alertData.groupe}
+                </Text>
+              </View>
+              <View style={styles.missionRecapInfo}>
+                <Text style={styles.missionLocation} numberOfLines={1}>{alertData.lieu}</Text>
+                <Text style={styles.missionQuantity}>
+                  {alertData.quantite_requise || 1} {t("alertPublic.bags")}
+                </Text>
+              </View>
+            </View>
+          </View>
+
+          {/* Contact card */}
+          <View style={styles.contactSection}>
+            <Text style={styles.sectionLabel}>{t("alertResponse.requesterContact")}</Text>
+
+            <View style={styles.contactCard}>
+              <View style={styles.contactRow}>
+                <View style={styles.contactAvatar}>
+                  <Text style={styles.contactInitial}>{initiatorName.charAt(0)}</Text>
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.contactName}>{initiatorName}</Text>
+                  <Text style={styles.contactRole}>{t("alert.response.initiator")}</Text>
+                </View>
+              </View>
+
+              {/* Action buttons */}
+              <View style={styles.actionGrid}>
+                <TouchableOpacity style={styles.actionCall} onPress={handleCall} accessibilityLabel={t("alertResponse.call")}>
+                  <TabBarIcon name="phone" size={20} color={color.textWhite} />
+                  <Text style={styles.actionCallText}>{t("alertResponse.call")}</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity style={styles.actionWa} onPress={handleWhatsApp} accessibilityLabel="WhatsApp">
+                  <TabBarIcon name="whatsapp" size={20} color={color.textWhite} />
+                  <Text style={styles.actionWaText}>WhatsApp</Text>
+                </TouchableOpacity>
+              </View>
+
+              <TouchableOpacity style={styles.actionGps} onPress={handleItinerary} accessibilityLabel={t("alertResponse.openGPS")}>
+                <TabBarIcon name="location-arrow" size={16} color={color.primary} />
+                <Text style={styles.actionGpsText}>{t("alertResponse.openGPS")}</Text>
+                <Text style={styles.actionGpsLocation} numberOfLines={1}>{alertData.lieu}</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          {/* Back button */}
+          <TouchableOpacity style={styles.backHomeBtn} onPress={() => router.replace("/(tabs)")}>
+            <Text style={styles.backHomeText}>{t("alertPublic.backHome")}</Text>
+          </TouchableOpacity>
+        </ScrollView>
+      </ThemedView>
+    );
+  }
+
+  // ==========================================
+  // VUE AVANT ACCEPTATION
+  // ==========================================
   return (
     <ThemedView style={styles.container}>
+      {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
-          <TabBarIcon name="arrow-left" size={20} color="#1E293B" />
+        <TouchableOpacity style={styles.headerBack} onPress={() => router.back()} accessibilityLabel="Retour">
+          <TabBarIcon name="arrow-left" size={18} color={color.textMain} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>{hasAccepted ? "MISSION EN COURS" : "APPEL AU DON"}</Text>
+        <Text style={styles.headerTitle}>{t("alertPublic.headerTitle")}</Text>
         <View style={{ width: 40 }} />
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
-        
-        {!hasAccepted ? (
-          <>
-            {/* CARTE D'APPEL (Vue Avant Acceptation) */}
-            <View style={styles.mainCard}>
-              <View style={styles.cardHeader}>
-                <View style={[styles.bloodBadge, { backgroundColor: "#FFF1F2" }]}>
-                  <Text style={styles.bloodText}>{alertData.groupe || alertData.groupe_requis}</Text>
-                </View>
-                <View style={{ flex: 1, paddingLeft: 16 }}>
-                  <PulseBadge label={t(`alert.urgencyLevels.${urgencyKey}`)} color={urgencyColor} />
-                  <Text style={styles.locationTitle} numberOfLines={2}>{alertData.lieu}</Text>
-                  {distance && (
-                    <View style={styles.distanceRow}>
-                      <TabBarIcon name="map-marker" size={12} color="#64748B" />
-                      <Text style={styles.distanceText}>À {distance} de vous</Text>
-                    </View>
-                  )}
-                </View>
-              </View>
+        {/* Hero: Blood group + Urgency */}
+        <Animated.View style={[styles.heroCard, { transform: [{ scale: pulseAnim }], borderColor: urgency.color + "40" }]}>
+          <View style={[styles.heroBadge, { backgroundColor: urgency.bg }]}>
+            <Text style={[styles.heroBloodText, { color: urgency.color }]}>
+              {alertData.groupe || alertData.groupe_requis}
+            </Text>
+          </View>
+          <View style={[styles.heroUrgencyTag, { backgroundColor: urgency.color }]}>
+            <Text style={styles.heroUrgencyText}>{urgency.label}</Text>
+          </View>
+        </Animated.View>
 
-              <View style={styles.divider} />
-
-              <View style={styles.detailsRow}>
-                <View style={styles.detailItem}>
-                  <TabBarIcon name="user" size={16} color="#64748B" />
-                  <Text style={styles.detailText}>
-                    Pour: <Text style={{ fontWeight: '700', color: '#1E293B' }}>{alertData.nom_patient || "Patient inconnu"}</Text>
-                  </Text>
-                </View>
-                <View style={styles.detailItem}>
-                  <TabBarIcon name="tint" size={16} color="#64748B" />
-                  <Text style={styles.detailText}>
-                    Besoin: <Text style={{ fontWeight: '700', color: '#1E293B' }}>{alertData.quantite_requise || "1"} poche(s)</Text>
-                  </Text>
-                </View>
-              </View>
-
-              {alertData.description && (
-                <View style={styles.noteBox}>
-                  <Text style={styles.noteText}>"{alertData.description}"</Text>
-                </View>
-              )}
+        {/* Info card */}
+        <View style={styles.infoCard}>
+          {/* Location */}
+          <View style={styles.infoRow}>
+            <View style={styles.infoIcon}>
+              <TabBarIcon name="map-marker" size={16} color={color.primary} />
             </View>
-
-            {/* BARRE D'ACTION */}
-            <View style={styles.actionContainer}>
-              <View style={styles.securityNote}>
-                <TabBarIcon name="shield" size={14} color="#059669" />
-                <Text style={styles.securityText}>Votre don peut sauver 3 vies aujourd'hui.</Text>
-              </View>
-
-              <View style={styles.btnRow}>
-                <TouchableOpacity style={styles.ignoreBtn} onPress={() => handleResponse("ignore")}>
-                  <Text style={styles.ignoreText}>Passer</Text>
-                </TouchableOpacity>
-                 <TouchableOpacity 
-                  style={styles.acceptBtn} 
-                  onPress={() => setIsEligibilityVisible(true)}
-                >
-                  {isResponding ? <ModernSpinner color="white" size="small" /> : (
-                    <>
-                      <Text style={styles.acceptText}>J'Y VAIS</Text>
-                      <TabBarIcon name="arrow-right" size={18} color="white" />
-                    </>
-                  )}
-                </TouchableOpacity>
-              </View>
+            <View style={styles.infoContent}>
+              <Text style={styles.infoLabel}>{t("alertResponse.location") || "Lieu"}</Text>
+              <Text style={styles.infoValue}>{alertData.lieu}</Text>
             </View>
-          </>
-        ) : (
-          /* VUE APRÈS ACCEPTATION (MODE MISSION) */
-          <View style={styles.missionContainer}>
-            <View style={styles.congratsHeader}>
-              <View style={styles.checkCircle}>
-                <TabBarIcon name="check" size={32} color="white" />
+            {distance && (
+              <View style={styles.distancePill}>
+                <Text style={styles.distanceText}>{distance} km</Text>
               </View>
-              <Text style={styles.congratsTitle}>Merci, Héros !</Text>
-              <Text style={styles.congratsSub}>Le demandeur a été notifié de votre arrivée.</Text>
+            )}
+          </View>
+
+          {/* Quantity */}
+          <View style={styles.infoRow}>
+            <View style={styles.infoIcon}>
+              <TabBarIcon name="tint" size={16} color={color.error} />
             </View>
-
-            <View style={styles.contactCard}>
-              <Text style={styles.cardLabel}>COORDONNÉES DU DEMANDEUR</Text>
-              
-              <View style={styles.contactRow}>
-                <View style={styles.avatarPlaceholder}>
-                  <Text style={styles.avatarLetter}>
-                    {(alertData.initiateur?.prenom || alertData.nom_contact || "C").charAt(0)}
-                  </Text>
-                </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.contactName}>
-                    {alertData.initiateur ? `${alertData.initiateur.prenom} ${alertData.initiateur.nom}` : (alertData.nom_contact || "Contact Urgence")}
-                  </Text>
-                  <Text style={styles.contactRole}>Demandeur</Text>
-                </View>
-              </View>
-
-              <View style={styles.commButtons}>
-                <TouchableOpacity style={styles.callBigBtn} onPress={handleCall}>
-                  <TabBarIcon name="phone" size={24} color="white" />
-                  <Text style={styles.callBigText}>APPELER</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity style={styles.waBigBtn} onPress={handleWhatsApp}>
-                  <TabBarIcon name="whatsapp" size={24} color="white" family="fontawesome" />
-                  <Text style={styles.waBigText}>WHATSAPP</Text>
-                </TouchableOpacity>
-              </View>
-
-              <TouchableOpacity style={styles.gpsBtn} onPress={handleItinerary}>
-                <TabBarIcon name="location-arrow" size={18} color="#1E293B" />
-                <Text style={styles.gpsText}>Ouvrir le GPS ({alertData.lieu})</Text>
-              </TouchableOpacity>
+            <View style={styles.infoContent}>
+              <Text style={styles.infoLabel}>{t("alertPublic.need")}</Text>
+              <Text style={styles.infoValue}>
+                {alertData.quantite_requise || 1} {t("alertPublic.bags")}
+              </Text>
             </View>
+          </View>
 
-            <TouchableOpacity style={styles.doneBtn} onPress={() => router.replace("/(tabs)")}>
-              <Text style={styles.doneText}>Retour à l'accueil</Text>
-            </TouchableOpacity>
+          {/* Patient */}
+          <View style={styles.infoRow}>
+            <View style={styles.infoIcon}>
+              <TabBarIcon name="user" size={16} color={color.accent} />
+            </View>
+            <View style={styles.infoContent}>
+              <Text style={styles.infoLabel}>{t("alertPublic.forPatient")}</Text>
+              <Text style={styles.infoValue}>
+                {alertData.nom_patient || t("alertResponse.unknownPatient")}
+              </Text>
+            </View>
+          </View>
+
+          {/* Initiator */}
+          <View style={[styles.infoRow, { borderBottomWidth: 0 }]}>
+            <View style={styles.infoIcon}>
+              <TabBarIcon name="phone" size={16} color={color.success} />
+            </View>
+            <View style={styles.infoContent}>
+              <Text style={styles.infoLabel}>{t("alertResponse.requesterContact")}</Text>
+              <Text style={styles.infoValue}>{initiatorName}</Text>
+            </View>
+          </View>
+        </View>
+
+        {/* Description */}
+        {alertData.description ? (
+          <View style={styles.descCard}>
+            <TabBarIcon name="quote-left" size={12} color={color.textLight} />
+            <Text style={styles.descText}>{alertData.description}</Text>
+          </View>
+        ) : null}
+
+        {/* Stats */}
+        {alertStats && alertStats.total > 0 && (
+          <View style={styles.statsCard}>
+            <View style={styles.statBox}>
+              <Text style={styles.statNum}>{alertStats.total}</Text>
+              <Text style={styles.statLbl}>{t("alertResponse.notified")}</Text>
+            </View>
+            <View style={styles.statSep} />
+            <View style={styles.statBox}>
+              <Text style={[styles.statNum, { color: color.success }]}>{alertStats.accepte}</Text>
+              <Text style={styles.statLbl}>{t("alertResponse.accepted")}</Text>
+            </View>
+            <View style={styles.statSep} />
+            <View style={styles.statBox}>
+              <Text style={styles.statNum}>{alertStats.lu}</Text>
+              <Text style={styles.statLbl}>{t("alertResponse.read")}</Text>
+            </View>
           </View>
         )}
+
+        {/* Security note */}
+        <View style={styles.securityBanner}>
+          <TabBarIcon name="shield" size={14} color={color.success} />
+          <Text style={styles.securityText}>{t("alertPublic.securityNote")}</Text>
+        </View>
       </ScrollView>
 
-      {/* MODAL D'ÉLIGIBILITÉ INTÉGRÉE (Simplification du flux) */}
+      {/* Fixed bottom actions */}
+      <View style={styles.bottomBar}>
+        <TouchableOpacity style={styles.skipBtn} onPress={() => handleResponse("ignore")}>
+          <Text style={styles.skipText}>{t("common.actions.skip")}</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.goBtn, { backgroundColor: urgency.color }]}
+          onPress={() => setIsEligibilityVisible(true)}
+          activeOpacity={0.8}
+        >
+          {isResponding ? (
+            <ModernSpinner color="white" size="small" />
+          ) : (
+            <>
+              <TabBarIcon name="heartbeat" size={18} color={color.textWhite} />
+              <Text style={styles.goText}>{t("alertResponse.goingText")}</Text>
+            </>
+          )}
+        </TouchableOpacity>
+      </View>
+
+      {/* Eligibility modal */}
       <Modal visible={isEligibilityVisible} animationType="slide" transparent>
         <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>{t("alert.response.eligibility.title") || "Vérification de sécurité"}</Text>
-              <TouchableOpacity onPress={() => setIsEligibilityVisible(false)}>
-                <TabBarIcon name="times" size={20} color="#64748B" />
+          <View style={styles.modalSheet}>
+            <View style={styles.modalHandle} />
+            <View style={styles.modalTop}>
+              <Text style={styles.modalTitle}>{t("alert.response.eligibility.title")}</Text>
+              <TouchableOpacity onPress={() => setIsEligibilityVisible(false)} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+                <TabBarIcon name="times" size={20} color={color.textSecondary} />
               </TouchableOpacity>
             </View>
-            
-            <ScrollView showsVerticalScrollIndicator={false} style={{ maxHeight: 500 }}>
-              <Text style={styles.modalSubtitle}>{t("alert.response.eligibility.subtitle")}</Text>
-              
-              <View style={styles.questionsContainer}>
+
+            <Text style={styles.modalDesc}>{t("alert.response.eligibility.subtitle")}</Text>
+
+            <ScrollView showsVerticalScrollIndicator={false} style={{ maxHeight: 420 }}>
+              <View style={styles.questionsGrid}>
                 {[1, 2, 3, 4, 5, 6].map((num) => {
                   const key = `q${num}`;
                   const isNeg = num >= 4;
+                  const isActive = isNeg ? answers[key] : !answers[key];
                   return (
                     <TouchableOpacity
                       key={num}
-                      style={[styles.qCard, (isNeg ? answers[key] : !answers[key]) && styles.qCardActive]}
-                      onPress={() => setAnswers(prev => ({ ...prev, [key]: !prev[key] }))}
+                      style={[styles.qRow, isActive && styles.qRowActive]}
+                      onPress={() => setAnswers((prev) => ({ ...prev, [key]: !prev[key] }))}
+                      activeOpacity={0.7}
                     >
-                      <Text style={[styles.qText, (isNeg ? answers[key] : !answers[key]) && styles.qTextActive]}>
+                      <View style={[styles.qCheck, answers[key] && styles.qCheckActive]}>
+                        {answers[key] && <TabBarIcon name="check" size={12} color={color.textWhite} />}
+                      </View>
+                      <Text style={[styles.qLabel, isActive && styles.qLabelActive]}>
                         {t(`alert.response.eligibility.questions.q${num}.text`)}
                       </Text>
-                      <View style={[styles.checkbox, answers[key] && styles.checkboxActive]}>
-                        {answers[key] && <TabBarIcon name="check" size={14} color="white" />}
-                      </View>
                     </TouchableOpacity>
                   );
                 })}
               </View>
 
               {!isEligible && (
-                <View style={styles.warningBox}>
-                  <TabBarIcon name="exclamation-triangle" size={18} color={color.error} />
+                <View style={styles.warningBanner}>
+                  <TabBarIcon name="exclamation-triangle" size={16} color={color.error} />
                   <Text style={styles.warningText}>{t("alert.response.eligibility.warning")}</Text>
                 </View>
               )}
             </ScrollView>
 
             <PrimaryButton
-              title={t("alert.response.eligibility.confirmBtn") || "JE CONFIRME"}
+              title={t("alert.response.eligibility.confirmBtn") || "CONFIRMER"}
               onPress={() => handleResponse("accepte")}
               disabled={!isEligible || isResponding}
               loading={isResponding}
-              style={{ marginTop: 20 }}
+              style={{ marginTop: color.spacing.m }}
             />
           </View>
         </View>
@@ -330,117 +437,266 @@ export default function AlertResponse() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#F8FAFC" },
+  container: { flex: 1, backgroundColor: color.background },
+
+  // --- ERROR STATE ---
+  errorContainer: { flex: 1, justifyContent: "center", alignItems: "center", padding: color.spacing.xl },
+  errorIcon: { width: 80, height: 80, borderRadius: 40, backgroundColor: color.surfaceContainer, justifyContent: "center", alignItems: "center", marginBottom: color.spacing.l },
+  errorTitle: { fontSize: 18, fontWeight: "800", color: color.textMain, textAlign: "center" },
+  errorDesc: { fontSize: 14, color: color.textSecondary, textAlign: "center", marginTop: color.spacing.s, marginBottom: color.spacing.l },
+  errorBtn: { paddingVertical: 14, paddingHorizontal: 32, backgroundColor: color.primary, borderRadius: color.radius.m },
+  errorBtnText: { color: color.textWhite, fontWeight: "700", fontSize: 15 },
+
+  // --- HEADER ---
   header: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingHorizontal: 20,
-    paddingTop: Platform.OS === "ios" ? 60 : 40,
-    paddingBottom: 20,
-    backgroundColor: "white",
-    borderBottomWidth: 1,
-    borderBottomColor: "#F1F5F9",
+    paddingHorizontal: color.spacing.l,
+    paddingTop: Platform.OS === "ios" ? 60 : 44,
+    paddingBottom: color.spacing.m,
   },
-  backBtn: { width: 40, height: 40, justifyContent: "center", alignItems: "center", backgroundColor: "#F1F5F9", borderRadius: 12 },
-  headerTitle: { fontSize: 14, fontWeight: "900", color: "#1E293B", letterSpacing: 1 },
-  scrollContent: { padding: 20 },
+  headerBack: { width: 40, height: 40, borderRadius: color.radius.m, backgroundColor: color.surface, justifyContent: "center", alignItems: "center", borderWidth: 1, borderColor: color.borderLight },
+  headerTitle: { fontSize: 15, fontWeight: "800", color: color.textMain },
+  scrollContent: { paddingHorizontal: color.spacing.l, paddingBottom: 120 },
 
-  // MAIN CARD
-  mainCard: {
-    backgroundColor: "white",
-    borderRadius: 24,
-    padding: 20,
-    shadowColor: "#000",
+  // --- HERO ---
+  heroCard: {
+    alignItems: "center",
+    paddingVertical: color.spacing.xl,
+    marginBottom: color.spacing.l,
+    backgroundColor: color.surface,
+    borderRadius: color.radius.xl,
+    borderWidth: 2,
+    shadowColor: color.shadow,
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.05,
-    shadowRadius: 12,
-    elevation: 3,
-    marginBottom: 24,
-    borderWidth: 1,
-    borderColor: "#E2E8F0"
+    shadowOpacity: 1,
+    shadowRadius: 16,
+    elevation: 4,
   },
-  cardHeader: { flexDirection: "row", alignItems: "flex-start" },
-  bloodBadge: {
-    width: 64,
-    height: 64,
-    borderRadius: 20,
+  heroBadge: {
+    width: 88,
+    height: 88,
+    borderRadius: 44,
     justifyContent: "center",
     alignItems: "center",
-    borderWidth: 1,
-    borderColor: "#FECDD3"
+    marginBottom: color.spacing.m,
   },
-  bloodText: { fontSize: 22, fontWeight: "900", color: "#E11D48" },
-  
-  urgencyBadge: { flexDirection: "row", alignItems: "center", alignSelf: "flex-start", paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12, borderWidth: 1, marginBottom: 8 },
-  pulseDot: { width: 6, height: 6, borderRadius: 3, marginRight: 6 },
-  urgencyLabel: { fontSize: 10, fontWeight: "800", letterSpacing: 0.5 },
+  heroBloodText: { fontSize: 32, fontWeight: "900", letterSpacing: -1 },
+  heroUrgencyTag: { paddingHorizontal: 16, paddingVertical: 6, borderRadius: color.radius.full },
+  heroUrgencyText: { color: color.textWhite, fontSize: 11, fontWeight: "800", letterSpacing: 1 },
 
-  locationTitle: { fontSize: 18, fontWeight: "800", color: "#1E293B", marginBottom: 4, lineHeight: 24 },
-  distanceRow: { flexDirection: "row", alignItems: "center", gap: 4 },
-  distanceText: { fontSize: 13, color: "#64748B", fontWeight: "600" },
+  // --- INFO CARD ---
+  infoCard: {
+    backgroundColor: color.surface,
+    borderRadius: color.radius.l,
+    paddingHorizontal: color.spacing.m,
+    marginBottom: color.spacing.m,
+    borderWidth: 1,
+    borderColor: color.borderLight,
+  },
+  infoRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: color.borderLight,
+    gap: color.spacing.m,
+  },
+  infoIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: color.surfaceContainer,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  infoContent: { flex: 1 },
+  infoLabel: { fontSize: 11, fontWeight: "600", color: color.textLight, textTransform: "uppercase", letterSpacing: 0.5 },
+  infoValue: { fontSize: 15, fontWeight: "700", color: color.textMain, marginTop: 2 },
+  distancePill: { backgroundColor: color.primaryGhost, paddingHorizontal: 10, paddingVertical: 4, borderRadius: color.radius.full },
+  distanceText: { fontSize: 12, fontWeight: "700", color: color.primary },
 
-  divider: { height: 1, backgroundColor: "#F1F5F9", marginVertical: 16 },
+  // --- DESCRIPTION ---
+  descCard: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: color.spacing.s,
+    backgroundColor: color.secondaryGhost,
+    padding: color.spacing.m,
+    borderRadius: color.radius.m,
+    marginBottom: color.spacing.m,
+    borderLeftWidth: 3,
+    borderLeftColor: color.borderDark,
+  },
+  descText: { flex: 1, fontSize: 13, color: color.textSecondary, fontStyle: "italic", lineHeight: 20 },
 
-  detailsRow: { gap: 12 },
-  detailItem: { flexDirection: "row", alignItems: "center", gap: 10 },
-  detailText: { fontSize: 14, color: "#64748B" },
+  // --- STATS ---
+  statsCard: {
+    flexDirection: "row",
+    backgroundColor: color.surface,
+    borderRadius: color.radius.l,
+    paddingVertical: color.spacing.m,
+    marginBottom: color.spacing.m,
+    borderWidth: 1,
+    borderColor: color.borderLight,
+  },
+  statBox: { flex: 1, alignItems: "center" },
+  statNum: { fontSize: 20, fontWeight: "900", color: color.textMain },
+  statLbl: { fontSize: 10, fontWeight: "600", color: color.textLight, marginTop: 4, textTransform: "uppercase" },
+  statSep: { width: 1, height: 32, backgroundColor: color.borderLight, alignSelf: "center" },
 
-  noteBox: { backgroundColor: "#F8FAFC", padding: 12, borderRadius: 12, marginTop: 16, borderLeftWidth: 3, borderLeftColor: "#CBD5E1" },
-  noteText: { fontSize: 13, color: "#475569", fontStyle: "italic" },
+  // --- SECURITY ---
+  securityBanner: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: color.spacing.s,
+    backgroundColor: color.successLight,
+    padding: color.spacing.m,
+    borderRadius: color.radius.m,
+  },
+  securityText: { flex: 1, fontSize: 12, color: color.success, fontWeight: "600" },
 
-  // ACTION AREA
-  actionContainer: { gap: 16 },
-  securityNote: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6, backgroundColor: "#ECFDF5", padding: 10, borderRadius: 12 },
-  securityText: { fontSize: 12, color: "#059669", fontWeight: "700" },
+  // --- BOTTOM BAR ---
+  bottomBar: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    flexDirection: "row",
+    gap: color.spacing.m,
+    paddingHorizontal: color.spacing.l,
+    paddingTop: color.spacing.m,
+    paddingBottom: Platform.OS === "ios" ? 36 : color.spacing.l,
+    backgroundColor: color.surface,
+    borderTopWidth: 1,
+    borderTopColor: color.borderLight,
+  },
+  skipBtn: {
+    flex: 1,
+    height: 54,
+    justifyContent: "center",
+    alignItems: "center",
+    borderRadius: color.radius.l,
+    borderWidth: 1.5,
+    borderColor: color.border,
+  },
+  skipText: { fontSize: 15, fontWeight: "700", color: color.textSecondary },
+  goBtn: {
+    flex: 2,
+    height: 54,
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    borderRadius: color.radius.l,
+    gap: color.spacing.s,
+    shadowOpacity: 0.3,
+    shadowOffset: { width: 0, height: 4 },
+    shadowRadius: 12,
+    elevation: 6,
+  },
+  goText: { fontSize: 16, fontWeight: "900", color: color.textWhite, letterSpacing: 0.5 },
 
-  btnRow: { flexDirection: "row", gap: 12, height: 56 },
-  ignoreBtn: { flex: 1, backgroundColor: "white", borderWidth: 1, borderColor: "#E2E8F0", borderRadius: 16, justifyContent: "center", alignItems: "center" },
-  ignoreText: { color: "#64748B", fontWeight: "700", fontSize: 15 },
-  acceptBtn: { flex: 2, backgroundColor: "#E11D48", borderRadius: 16, flexDirection: "row", justifyContent: "center", alignItems: "center", gap: 8, shadowColor: "#E11D48", shadowOpacity: 0.3, shadowOffset: { width: 0, height: 4 }, elevation: 6 },
-  acceptText: { color: "white", fontWeight: "900", fontSize: 16, letterSpacing: 1 },
+  // --- MISSION MODE ---
+  missionScroll: { paddingHorizontal: color.spacing.l, paddingTop: Platform.OS === "ios" ? 80 : 60, paddingBottom: 40 },
+  missionHeader: { alignItems: "center", marginBottom: color.spacing.xl },
+  successCircle: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    backgroundColor: color.success,
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: color.spacing.m,
+    shadowColor: color.success,
+    shadowOpacity: 0.4,
+    shadowRadius: 16,
+    elevation: 8,
+  },
+  missionTitle: { fontSize: 22, fontWeight: "900", color: color.textMain, marginBottom: color.spacing.s },
+  missionSubtitle: { fontSize: 14, color: color.textSecondary, textAlign: "center", lineHeight: 20 },
 
-  // MISSION VIEW
-  missionContainer: { alignItems: "center", paddingTop: 20 },
-  congratsHeader: { alignItems: "center", marginBottom: 30 },
-  checkCircle: { width: 72, height: 72, borderRadius: 36, backgroundColor: "#10B981", justifyContent: "center", alignItems: "center", marginBottom: 16, shadowColor: "#10B981", shadowOpacity: 0.3, shadowRadius: 10, elevation: 5 },
-  congratsTitle: { fontSize: 24, fontWeight: "900", color: "#1E293B", marginBottom: 8 },
-  congratsSub: { fontSize: 14, color: "#64748B", textAlign: "center", paddingHorizontal: 20 },
+  missionCard: {
+    backgroundColor: color.surface,
+    borderRadius: color.radius.l,
+    padding: color.spacing.m,
+    marginBottom: color.spacing.l,
+    borderWidth: 1,
+    borderColor: color.borderLight,
+  },
+  missionRecapRow: { flexDirection: "row", alignItems: "center", gap: color.spacing.m },
+  missionBadge: { width: 48, height: 48, borderRadius: 14, justifyContent: "center", alignItems: "center" },
+  missionBadgeText: { fontSize: 18, fontWeight: "900" },
+  missionRecapInfo: { flex: 1 },
+  missionLocation: { fontSize: 15, fontWeight: "700", color: color.textMain },
+  missionQuantity: { fontSize: 12, color: color.textSecondary, marginTop: 2 },
 
-  contactCard: { width: "100%", backgroundColor: "white", borderRadius: 24, padding: 20, elevation: 2 },
-  cardLabel: { fontSize: 11, fontWeight: "800", color: "#94A3B8", letterSpacing: 1, marginBottom: 16 },
-  
-  contactRow: { flexDirection: "row", alignItems: "center", gap: 12, marginBottom: 20 },
-  avatarPlaceholder: { width: 50, height: 50, borderRadius: 16, backgroundColor: "#F1F5F9", justifyContent: "center", alignItems: "center" },
-  avatarLetter: { fontSize: 20, fontWeight: "800", color: "#64748B" },
-  contactName: { fontSize: 16, fontWeight: "800", color: "#1E293B" },
-  contactRole: { fontSize: 12, color: "#64748B" },
+  // --- CONTACT ---
+  contactSection: { marginBottom: color.spacing.l },
+  sectionLabel: { fontSize: 11, fontWeight: "800", color: color.textLight, letterSpacing: 1, textTransform: "uppercase", marginBottom: color.spacing.s },
+  contactCard: {
+    backgroundColor: color.surface,
+    borderRadius: color.radius.l,
+    padding: color.spacing.l,
+    borderWidth: 1,
+    borderColor: color.borderLight,
+  },
+  contactRow: { flexDirection: "row", alignItems: "center", gap: color.spacing.m, marginBottom: color.spacing.l },
+  contactAvatar: { width: 48, height: 48, borderRadius: 16, backgroundColor: color.primaryGhost, justifyContent: "center", alignItems: "center" },
+  contactInitial: { fontSize: 20, fontWeight: "800", color: color.primary },
+  contactName: { fontSize: 16, fontWeight: "800", color: color.textMain },
+  contactRole: { fontSize: 12, color: color.textSecondary, marginTop: 2 },
 
-  commButtons: { flexDirection: "row", gap: 12, marginBottom: 16 },
-  callBigBtn: { flex: 1, height: 56, backgroundColor: "#0F172A", borderRadius: 16, flexDirection: "row", justifyContent: "center", alignItems: "center", gap: 8 },
-  callBigText: { color: "white", fontWeight: "800", fontSize: 14 },
-  waBigBtn: { flex: 1, height: 56, backgroundColor: "#25D366", borderRadius: 16, flexDirection: "row", justifyContent: "center", alignItems: "center", gap: 8 },
-  waBigText: { color: "white", fontWeight: "800", fontSize: 14 },
+  actionGrid: { flexDirection: "row", gap: color.spacing.m, marginBottom: color.spacing.m },
+  actionCall: { flex: 1, height: 52, backgroundColor: color.secondaryDark, borderRadius: color.radius.m, flexDirection: "row", justifyContent: "center", alignItems: "center", gap: 8 },
+  actionCallText: { color: color.textWhite, fontWeight: "700", fontSize: 14 },
+  actionWa: { flex: 1, height: 52, backgroundColor: color.whatsapp, borderRadius: color.radius.m, flexDirection: "row", justifyContent: "center", alignItems: "center", gap: 8 },
+  actionWaText: { color: color.textWhite, fontWeight: "700", fontSize: 14 },
+  actionGps: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: color.spacing.s,
+    paddingVertical: 14,
+    paddingHorizontal: color.spacing.m,
+    backgroundColor: color.primaryGhost,
+    borderRadius: color.radius.m,
+  },
+  actionGpsText: { fontSize: 13, fontWeight: "700", color: color.primary },
+  actionGpsLocation: { flex: 1, fontSize: 12, color: color.textSecondary, textAlign: "right" },
 
-  gpsBtn: { flexDirection: "row", justifyContent: "center", alignItems: "center", gap: 8, paddingVertical: 14, backgroundColor: "#F8FAFC", borderRadius: 16, borderWidth: 1, borderColor: "#E2E8F0" },
-  gpsText: { fontSize: 13, fontWeight: "700", color: "#475569" },
+  backHomeBtn: { alignItems: "center", paddingVertical: color.spacing.m },
+  backHomeText: { fontSize: 14, fontWeight: "600", color: color.textLight },
 
-  doneBtn: { marginTop: 30, padding: 15 },
-  doneText: { color: "#94A3B8", fontWeight: "700" },
-
-  // MODAL STYLES
+  // --- MODAL ---
   modalOverlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.5)", justifyContent: "flex-end" },
-  modalContent: { backgroundColor: "white", borderTopLeftRadius: 30, borderTopRightRadius: 30, padding: 24, paddingBottom: Platform.OS === 'ios' ? 40 : 24 },
-  modalHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 16 },
-  modalTitle: { fontSize: 18, fontWeight: "900", color: "#1E293B" },
-  modalSubtitle: { fontSize: 13, color: "#64748B", marginBottom: 20, lineHeight: 18 },
-  questionsContainer: { gap: 10 },
-  qCard: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", padding: 14, backgroundColor: color.surface, borderRadius: 16, borderWidth: 1, borderColor: color.borderLight, gap: 12 },
-  qCardActive: { borderColor: color.primary, backgroundColor: color.primaryGhost },
-  qText: { fontSize: 13, color: color.textMain, flex: 1, fontWeight: "600" },
-  qTextActive: { color: color.primary },
-  checkbox: { width: 22, height: 22, borderRadius: 6, borderWidth: 2, borderColor: color.border, backgroundColor: "white", justifyContent: "center", alignItems: "center" },
-  checkboxActive: { borderColor: color.primary, backgroundColor: color.primary },
-  warningBox: { flexDirection: "row", alignItems: "center", backgroundColor: color.errorLight, padding: 14, borderRadius: 12, gap: 10, marginTop: 16 },
-  warningText: { flex: 1, fontSize: 12, color: color.error, fontWeight: "700" },
+  modalSheet: {
+    backgroundColor: color.surface,
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    padding: color.spacing.l,
+    paddingBottom: Platform.OS === "ios" ? 40 : color.spacing.l,
+  },
+  modalHandle: { width: 40, height: 4, borderRadius: 2, backgroundColor: color.borderLight, alignSelf: "center", marginBottom: color.spacing.m },
+  modalTop: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: color.spacing.s },
+  modalTitle: { fontSize: 18, fontWeight: "900", color: color.textMain },
+  modalDesc: { fontSize: 13, color: color.textSecondary, marginBottom: color.spacing.l, lineHeight: 18 },
+
+  questionsGrid: { gap: color.spacing.s },
+  qRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 14,
+    backgroundColor: color.surfaceContainer,
+    borderRadius: color.radius.m,
+    borderWidth: 1.5,
+    borderColor: "transparent",
+    gap: color.spacing.m,
+  },
+  qRowActive: { borderColor: color.primary, backgroundColor: color.primaryGhost },
+  qCheck: { width: 22, height: 22, borderRadius: 6, borderWidth: 2, borderColor: color.border, justifyContent: "center", alignItems: "center" },
+  qCheckActive: { borderColor: color.primary, backgroundColor: color.primary },
+  qLabel: { flex: 1, fontSize: 13, fontWeight: "600", color: color.textMain },
+  qLabelActive: { color: color.primary },
+  warningBanner: { flexDirection: "row", alignItems: "center", gap: color.spacing.s, backgroundColor: color.errorLight, padding: color.spacing.m, borderRadius: color.radius.m, marginTop: color.spacing.m },
+  warningText: { flex: 1, fontSize: 12, fontWeight: "700", color: color.error },
 });

@@ -60,12 +60,12 @@ export default function AlertesScreen() {
   const getStatutConfig = (statut: string) => {
     switch (statut) {
       case "en_cours":
-        return { color: color.primary, label: "En cours" };
+        return { color: color.primary, label: t("alert.status.en_cours") };
       case "resolu":
       case "satisfaite":
-        return { color: color.secondary, label: "Terminé" };
+        return { color: color.secondary, label: t("alert.status.resolu") };
       case "annule":
-        return { color: color.error, label: "Annulé" };
+        return { color: color.error, label: t("alert.status.annule") };
       default:
         return { color: color.textLight, label: statut };
     }
@@ -121,7 +121,7 @@ export default function AlertesScreen() {
               <View style={styles.pill}>
                 <TabBarIcon name="bell" size={12} color={color.textSecondary} />
                 <Text style={styles.pillText}>
-                  {item.notifiedCount} alertes envoyées
+                  {item.notifiedCount} {t("alertes.alertsSent")}
                 </Text>
               </View>
               <TouchableOpacity
@@ -168,7 +168,7 @@ export default function AlertesScreen() {
     <ThemedView style={styles.container}>
       <View style={styles.header}>
         <View>
-          <Text style={styles.welcomeText}>Mes Activités</Text>
+          <Text style={styles.welcomeText}>{t("alertes.myActivities")}</Text>
           <Text style={styles.title}>{t("profile.alerts")}</Text>
         </View>
         <TouchableOpacity style={styles.refreshBtn} onPress={onRefresh}>
@@ -222,7 +222,7 @@ export default function AlertesScreen() {
                   color={color.textLight}
                 />
               </View>
-              <Text style={styles.emptyTitle}>Aucune alerte ici</Text>
+              <Text style={styles.emptyTitle}>{t("alertes.noAlertHere")}</Text>
               <Text style={styles.emptySub}>
                 {activeTab === "sent"
                   ? t("alert.empty.subSent")

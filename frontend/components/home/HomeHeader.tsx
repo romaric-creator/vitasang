@@ -11,7 +11,7 @@ interface HomeHeaderProps {
   t: (key: string) => string;
 }
 
-export const HomeHeader = ({ fullName, profileImage, hasActiveAlerts, t }: HomeHeaderProps) => {
+export const HomeHeader = React.memo(({ fullName, profileImage, hasActiveAlerts, t }: HomeHeaderProps) => {
   const router = useRouter();
 
   return (
@@ -22,13 +22,13 @@ export const HomeHeader = ({ fullName, profileImage, hasActiveAlerts, t }: HomeH
             <Image source={profileImage} style={styles.profileImage as any} />
           ) : (
             <View style={[styles.profileImage, styles.profilePlaceholder]}>
-              <TabBarIcon name="user" size={24} color={color.textSecondary} />
+              <TabBarIcon name="user" size={22} color={color.textSecondary} />
             </View>
           )}
         </View>
         <View style={styles.textContainer}>
-          <Text style={styles.greeting}>{"Bonjour,"}</Text>
           <Text style={styles.userName} numberOfLines={1}>{fullName}</Text>
+          <Text style={styles.tagline}>{t("home.tagline")}</Text>
         </View>
       </View>
       <TouchableOpacity
@@ -36,40 +36,39 @@ export const HomeHeader = ({ fullName, profileImage, hasActiveAlerts, t }: HomeH
         onPress={() => router.push("/(tabs)/alertes")}
         activeOpacity={0.7}
         accessibilityRole="button"
-        accessibilityLabel={t("home.alertsLabel") || "Alertes"}
+        accessibilityLabel={t("home.alertsLabel")}
       >
         <View style={[styles.iconCircle, hasActiveAlerts ? styles.iconCircleActive : styles.iconCircleIdle]}>
           <TabBarIcon
             name="bell-o"
-            size={22}
-            color={hasActiveAlerts ? color.primary : color.secondary}
+            size={20}
+            color={hasActiveAlerts ? color.primary : color.textSecondary}
           />
           {hasActiveAlerts && <View style={styles.badge} />}
         </View>
       </TouchableOpacity>
     </View>
   );
-};
+});
 
 const styles = StyleSheet.create({
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    paddingHorizontal: 20,
-    paddingTop: 60,
-    paddingBottom: 20,
-    backgroundColor: color.background,
+    paddingHorizontal: 24,
+    paddingTop: 52,
+    paddingBottom: 8,
   },
   headerContent: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 16,
+    gap: 14,
     flex: 1,
   },
   profileWrapper: {
     padding: 2,
-    borderRadius: 30,
+    borderRadius: 24,
     borderWidth: 2,
     borderColor: "transparent",
   },
@@ -77,10 +76,10 @@ const styles = StyleSheet.create({
     borderColor: color.primary,
   },
   profileImage: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: color.secondaryGhost,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: color.surfaceContainer,
   },
   profilePlaceholder: {
     justifyContent: "center",
@@ -89,54 +88,46 @@ const styles = StyleSheet.create({
   textContainer: {
     flex: 1,
   },
-  greeting: {
-    fontSize: 14,
-    color: color.textSecondary,
-    fontWeight: "400",
-    fontStyle: "italic",
-    marginBottom: 2,
-  },
   userName: {
-    fontSize: 24,
-    fontWeight: "900",
+    fontSize: 20,
+    fontWeight: "800",
     color: color.text,
-    letterSpacing: 0,
+    letterSpacing: -0.3,
+  },
+  tagline: {
+    fontSize: 13,
+    color: color.textLight,
+    fontWeight: "500",
+    marginTop: 2,
   },
   headerAction: {
     justifyContent: "center",
     alignItems: "center",
   },
   iconCircle: {
-    width: 52,
-    height: 52,
-    borderRadius: color.radius.l,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     justifyContent: "center",
     alignItems: "center",
-    shadowColor: "black",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 5,
-    elevation: 2,
   },
   iconCircleActive: {
     backgroundColor: color.primaryGhost,
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: color.primaryLight,
   },
   iconCircleIdle: {
-    backgroundColor: color.secondaryGhost,
-    borderWidth: 1,
-    borderColor: color.borderLight,
+    backgroundColor: color.surfaceContainer,
   },
   badge: {
     position: "absolute",
     top: 8,
     right: 8,
-    width: 10,
-    height: 10,
+    width: 9,
+    height: 9,
     borderRadius: 5,
-    backgroundColor: color.primary,
-    borderWidth: 2.5,
+    backgroundColor: color.error,
+    borderWidth: 2,
     borderColor: "white",
   },
 });

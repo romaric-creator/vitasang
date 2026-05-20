@@ -10,7 +10,7 @@ import {
   ActivityIndicator,
   Switch,
 } from "react-native";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { SkeletonLoader } from "@/components/SkeletonLoader";
 import { color } from "@/constant/color";
@@ -48,12 +48,12 @@ const ActionItem = ({ icon, label, onPress, isLast }: ActionItemProps) => (
 export default function Profile() {
   const router = useRouter();
   const { t } = useTranslation();
-  const { signOut, user: authUser } = useAuth();
+  const { signOut, user: authUser, isLoading: authLoading } = useAuth();
   const { success, error: showError } = useToast();
 
   const userId = authUser?.id_utilisateur ?? authUser?.id ?? null;
   const profileQuery = useUserProfile(userId as number, !!userId);
-  const loading = !userId || (profileQuery.isLoading && !profileQuery.data);
+  const loading = authLoading || (!userId && !authUser) || (!!userId && profileQuery.isLoading && !profileQuery.data);
   const userData = profileQuery.data?.user;
 
   // ─── Toggle Disponibilité ─────────────────────────────────────
@@ -116,6 +116,15 @@ export default function Profile() {
         <SkeletonLoader width={110} height={110} borderRadius={55} style={{ marginBottom: 16 }} />
         <SkeletonLoader width="60%" height={24} style={{ marginBottom: 8 }} />
         <SkeletonLoader width="40%" height={16} />
+      </View>
+    );
+  }
+
+  // Pas d'utilisateur connecté → ne pas afficher une page vide
+  if (!authUser) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color={color.primary} />
       </View>
     );
   }
