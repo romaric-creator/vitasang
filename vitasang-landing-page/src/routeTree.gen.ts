@@ -10,11 +10,18 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AdminIndexRouteImport } from './routes/admin/index'
 import { Route as AlerteTokenRouteImport } from './routes/alerte/$token'
+import { Route as AdminWaitlistRouteImport } from './routes/admin/waitlist'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminIndexRoute = AdminIndexRouteImport.update({
+  id: '/admin/',
+  path: '/admin/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AlerteTokenRoute = AlerteTokenRouteImport.update({
@@ -22,31 +29,44 @@ const AlerteTokenRoute = AlerteTokenRouteImport.update({
   path: '/alerte/$token',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminWaitlistRoute = AdminWaitlistRouteImport.update({
+  id: '/admin/waitlist',
+  path: '/admin/waitlist',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/admin/waitlist': typeof AdminWaitlistRoute
   '/alerte/$token': typeof AlerteTokenRoute
+  '/admin/': typeof AdminIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/admin/waitlist': typeof AdminWaitlistRoute
   '/alerte/$token': typeof AlerteTokenRoute
+  '/admin': typeof AdminIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/admin/waitlist': typeof AdminWaitlistRoute
   '/alerte/$token': typeof AlerteTokenRoute
+  '/admin/': typeof AdminIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/alerte/$token'
+  fullPaths: '/' | '/admin/waitlist' | '/alerte/$token' | '/admin/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/alerte/$token'
-  id: '__root__' | '/' | '/alerte/$token'
+  to: '/' | '/admin/waitlist' | '/alerte/$token' | '/admin'
+  id: '__root__' | '/' | '/admin/waitlist' | '/alerte/$token' | '/admin/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AdminWaitlistRoute: typeof AdminWaitlistRoute
   AlerteTokenRoute: typeof AlerteTokenRoute
+  AdminIndexRoute: typeof AdminIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -58,6 +78,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/': {
+      id: '/admin/'
+      path: '/admin'
+      fullPath: '/admin/'
+      preLoaderRoute: typeof AdminIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/alerte/$token': {
       id: '/alerte/$token'
       path: '/alerte/$token'
@@ -65,12 +92,21 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AlerteTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/waitlist': {
+      id: '/admin/waitlist'
+      path: '/admin/waitlist'
+      fullPath: '/admin/waitlist'
+      preLoaderRoute: typeof AdminWaitlistRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AdminWaitlistRoute: AdminWaitlistRoute,
   AlerteTokenRoute: AlerteTokenRoute,
+  AdminIndexRoute: AdminIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

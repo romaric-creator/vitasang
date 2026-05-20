@@ -3,18 +3,83 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>VitaSang — Sauvez une vie en 47 secondes au Cameroun</title>
-    <meta name="description" content="L'app qui révolutionne le don de sang au Cameroun. Connectez-vous instantanément aux banques de sang et aux donneurs en urgence." />
-    <meta property="og:title" content="VitaSang — L'Urgence n'attend pas, nous non plus." />
-    <meta property="og:description" content="Rejoignez la communauté de donneurs qui sauve le Cameroun, une goutte à la fois." />
+
+    <!-- Primary SEO -->
+    <title>VitaSang — Trouvez un donneur de sang en quelques clics au Cameroun</title>
+    <meta name="description" content="VitaSang connecte instantanément donneurs bénévoles, familles et banques de sang au Cameroun. Alertes en temps réel, réservation de créneau, 100% gratuit." />
+    <meta name="keywords" content="don de sang, Cameroun, donneur de sang, urgence médicale, banque de sang, Douala, Yaoundé, application mobile" />
+    <meta name="author" content="Christian Tenda" />
+    <meta name="robots" content="index, follow" />
+    <link rel="canonical" href="https://vitasangs.netlify.app/" />
+
+    <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website" />
-    <meta property="og:image" content="/og-image.png" />
+    <meta property="og:url" content="https://vitasangs.netlify.app/" />
+    <meta property="og:site_name" content="VitaSang" />
+    <meta property="og:title" content="VitaSang — Trouvez un donneur de sang en quelques clics" />
+    <meta property="og:description" content="L'application qui connecte instantanément donneurs bénévoles, familles et banques de sang au Cameroun. Alertes en temps réel, 100% gratuit." />
+    <meta property="og:image" content="https://vitasangs.netlify.app/og-image.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="VitaSang — Application de don de sang au Cameroun" />
+    <meta property="og:locale" content="fr_CM" />
+
+    <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="VitaSang — Trouvez un donneur de sang en quelques clics" />
+    <meta name="twitter:description" content="L'application qui connecte instantanément donneurs bénévoles, familles et banques de sang au Cameroun. 100% gratuit." />
+    <meta name="twitter:image" content="https://vitasangs.netlify.app/og-image.png" />
+    <meta name="twitter:image:alt" content="VitaSang — Application de don de sang au Cameroun" />
+
+    <!-- Theme & PWA -->
+    <meta name="theme-color" content="#c0392b" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="VitaSang" />
+
+    <!-- Structured Data (JSON-LD) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "VitaSang",
+      "url": "https://vitasangs.netlify.app/",
+      "description": "Application mobile qui connecte instantanément les donneurs de sang, les familles et les banques de sang au Cameroun.",
+      "applicationCategory": "HealthApplication",
+      "operatingSystem": "Android, iOS",
+      "offers": { "@type": "Offer", "price": "0", "priceCurrency": "XAF" },
+      "creator": {
+        "@type": "Person",
+        "name": "Christian Tenda",
+        "email": "christiantendainfo2006@gmail.com"
+      },
+      "areaServed": {
+        "@type": "Country",
+        "name": "Cameroun"
+      }
+    }
+    </script>
+
+    <!-- Preconnect for performance -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&display=swap" rel="stylesheet" />
+    <link rel="dns-prefetch" href="https://vitasang.christiantendainfo2006.workers.dev" />
+
+    <!-- Fonts: preload critical weight first, then full range -->
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@700;800&display=swap" />
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" />
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,600;0,700;0,800;1,700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
   </head>
   <body>
+    <!-- Mark JS as available to prevent reveal elements from being permanently hidden -->
+    <script>document.body.classList.add('js-loaded')</script>
+    <noscript>
+      <style>.reveal { opacity: 1 !important; transform: none !important; }</style>
+      <p style="text-align:center;padding:1rem;background:#c0392b;color:#fff;font-family:sans-serif">
+        VitaSang nécessite JavaScript pour fonctionner correctement.
+        Veuillez l'activer dans votre navigateur.
+      </p>
+    </noscript>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
