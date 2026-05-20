@@ -68,7 +68,7 @@ const DEFAULT_ORIGINS = [
 const corsOrigins = corsOriginEnv === "*"
   ? true
   : corsOriginEnv
-    ? corsOriginEnv.split(",").map(o => o.trim())
+    ? [...new Set([...DEFAULT_ORIGINS, ...corsOriginEnv.split(",").map(o => o.trim())])]
     : DEFAULT_ORIGINS;
 
 app.use(cors({
