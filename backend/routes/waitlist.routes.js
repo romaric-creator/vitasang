@@ -4,14 +4,15 @@ const Joi = require("joi");
 const db = require("../models/index");
 const logger = require("../config/logger");
 
-const emailSchema = Joi.object({
-  email: Joi.string().email({ tlds: { allow: false } }).max(255).required(),
+const waitlistSchema = Joi.object({
+  email: Joi.string().email({ tlds: { allow: false } }).max(255).optional().allow("", null),
+  whatsapp: Joi.string().pattern(/^[0-9+\s\-().]{6,20}$/).max(30).optional().allow("", null),
   source: Joi.string().max(50).optional(),
-});
+}).or("email", "whatsapp");
 
 // POST /api/waitlist - Public, no JWT required
 router.post("/", async (req, res) => {
-  const { error, value } = emailSchema.validate(req.body, { abortEarly: false, stripUnknown: true });
+  const { error, value } = waitlistSchema.validate(req.body, { abortEarly: false, stripUnknown: true });
   if (error) {
     return res.status(400).json({
       success: false,
@@ -19,28 +20,39 @@ router.post("/", async (req, res) => {
     });
   }
 
+  const email = value.email ? value.email.toLowerCase() : null;
+  const whatsapp = value.whatsapp ? value.whatsapp.replace(/[^0-9+]/g, "") : null;
+
   try {
-    const [, created] = await db.Waitlist.findOrCreate({
-      where: { email: value.email.toLowerCase() },
-      defaults: {
-        email: value.email.toLowerCase(),
-        source: value.source || "landing_page",
+    // Vérifie doublon par email OU whatsapp
+    const existing = await db.Waitlist.findOne({
+      where: {
+        [db.Sequelize.Op.or]: [
+          ...(email ? [{ email }] : []),
+          ...(whatsapp ? [{ whatsapp }] : []),
+        ],
       },
     });
 
-    if (!created) {
+    if (existing) {
       return res.status(200).json({ success: true, alreadyExists: true });
     }
 
-    logger.info("Waitlist: new email registered", { email: value.email, source: value.source });
+    await db.Waitlist.create({
+      email,
+      whatsapp,
+      source: value.source || "landing_page",
+    });
+
+    logger.info("Waitlist: new entry registered", { email, whatsapp, source: value.source });
     return res.status(201).json({ success: true, message: "Inscrit !" });
   } catch (err) {
-    logger.error("Waitlist: error saving email", { error: err.message });
+    logger.error("Waitlist: error saving entry", { error: err.message });
     return res.status(500).json({ success: false, message: "Erreur serveur" });
   }
 });
 
-// GET /api/waitlist?key=ADMIN_KEY - Liste tous les emails
+// GET /api/waitlist?key=ADMIN_KEY
 router.get("/", async (req, res) => {
   const adminKey = process.env.ADMIN_KEY || "vitasang-admin-2026";
   if (req.query.key !== adminKey) {
@@ -48,7 +60,7 @@ router.get("/", async (req, res) => {
   }
   try {
     const list = await db.Waitlist.findAll({
-      attributes: ["id", "email", "source", "createdAt"],
+      attributes: ["id", "email", "whatsapp", "source", "createdAt"],
       order: [["createdAt", "DESC"]],
     });
     return res.json({ success: true, count: list.length, data: list });

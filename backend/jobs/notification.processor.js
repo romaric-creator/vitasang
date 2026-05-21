@@ -3,17 +3,15 @@ const logger = require("../config/logger");
 const expoNotifications = require("../utils/expoNotifications");
 const { haversineSQL, getBoundingBox } = require("../utils/geoHelpers");
 const { BLOOD_COMPATIBILITY } = require("../utils/bloodCompatibility");
+const { sendWhatsApp, sendWhatsAppBatch } = require("../utils/whatsappService");
 
-// Réels canaux de communication (Interface d'implémentation)
+// Réels canaux de communication
 const deliveryService = {
-  sendWhatsApp: async (phone, message) => {
-    logger.info(`[WhatsApp SOS] Tentative d'envoi à ${phone}`);
-    return { success: true, service: "mock" };
-  },
+  sendWhatsApp,
   sendSMS: async (phone, message) => {
     logger.info(`[SMS SOS] Tentative d'envoi à ${phone}`);
     return { success: true, service: "mock" };
-  }
+  },
 };
 
 /**
@@ -56,6 +54,22 @@ const notificationProcessor = async (job) => {
       await expoNotifications.sendPushNotifications([pushMessage]);
     }
     return { processed: 1 };
+  }
+
+  // 2.3. WHATSAPP DIRECT (Job dédié)
+  if (job.name === "sendWhatsAppAlert") {
+    const { phone, message, alertId, donorId } = job.data;
+    const result = await deliveryService.sendWhatsApp(phone, message);
+    if (donorId) {
+      db.LogNotification.create({
+        id_utilisateur: donorId || null,
+        id_alerte: alertId || null,
+        canal: "whatsapp",
+        statut_reception: result.success ? "reçu" : "échec",
+        details_echec: result.success ? null : result.error,
+      }).catch(() => {});
+    }
+    return result;
   }
 
   // 2.5. GESTION DES NOTIFICATIONS INITIATEUR (Donneur a accepté)
@@ -142,7 +156,10 @@ const notificationProcessor = async (job) => {
 
   const logsToCreate = [];
   const pushMessages = [];
+  const whatsappTargets = [];
   const donorMap = new Map();
+
+  const whatsappEnabled = process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN;
 
   for (const donor of donors) {
     const distance = parseFloat(donor.dataValues.distance).toFixed(2);
@@ -156,6 +173,14 @@ const notificationProcessor = async (job) => {
         data: { alertId, groupe_sanguin: groupe_requis, distance },
       }));
       donorMap.set(donor.push_token, { donor, distance, messageText });
+    } else if (whatsappEnabled && donor.telephone) {
+      // Fallback WhatsApp pour les donors sans app / push token
+      const waMessage = `🩸 *VitaSang — Urgence Don de Sang*\n\nBesoin urgent de sang *${groupe_requis}* à ${distance} km de vous.\n\nRépondez OUI pour confirmer ou ignorez ce message.\n\n_Répondez STOP pour ne plus recevoir ces alertes._`;
+      whatsappTargets.push({
+        phone: donor.telephone,
+        message: waMessage,
+        donorId: donor.id_utilisateur,
+      });
     }
   }
 
@@ -175,11 +200,34 @@ const notificationProcessor = async (job) => {
     });
   }
 
+  if (whatsappTargets.length > 0) {
+    logger.info(`[WhatsApp] Envoi à ${whatsappTargets.length} donors sans push token`, { alertId });
+    const { sent, failed, results } = await sendWhatsAppBatch(
+      whatsappTargets.map((t) => ({ phone: t.phone, message: t.message }))
+    );
+
+    whatsappTargets.forEach((target, i) => {
+      logsToCreate.push({
+        id_utilisateur: target.donorId,
+        id_alerte: alertId,
+        canal: "whatsapp",
+        statut_reception: results[i]?.success ? "reçu" : "échec",
+        details_echec: results[i]?.success ? null : results[i]?.error,
+      });
+    });
+
+    logger.info(`[WhatsApp] ${sent} envoyés, ${failed} échecs`, { alertId });
+  }
+
   if (logsToCreate.length > 0) {
     await LogNotification.bulkCreate(logsToCreate);
   }
 
-  return { processed: donors.length };
+  return {
+    processed: donors.length,
+    push: pushMessages.length,
+    whatsapp: whatsappTargets.length,
+  };
 };
 
 module.exports = notificationProcessor;
